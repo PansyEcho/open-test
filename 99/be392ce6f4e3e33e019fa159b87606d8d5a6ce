@@ -1,0 +1,71 @@
+ai_test_platform/server.py
+  s_f0c4a4c7dff541::t_dcb74fa3318c5e 1-171
+.gitignore
+  s_bfd71af58367e4::t_0aa29cd50a99ea 206-213
+ai_test_platform/web/index.html
+  s_f0c4a4c7dff541::t_dcb74fa3318c5e 1-159
+README.md
+  s_f0c4a4c7dff541::t_dcb74fa3318c5e 1,3,8,11,14-28
+  s_bf5f8eae92e783::t_6e96b75f65a9e6 2,4-7,9-10,12-13
+docs/superpowers/specs/2026-05-25-ai-test-platform-mvp-design.md
+  s_f0c4a4c7dff541::t_b3924c4dd1ccae 1-24
+tests/test_mvp_flow.py
+  s_f0c4a4c7dff541::t_b3924c4dd1ccae 1-65
+ai_test_platform/cli.py
+  s_f0c4a4c7dff541::t_dcb74fa3318c5e 1-7
+tests/test_execution_service.py
+  s_f0c4a4c7dff541::t_b3924c4dd1ccae 1-126
+ai_test_platform/web/app.js
+  s_f0c4a4c7dff541::t_dcb74fa3318c5e 1-247,249-264
+  s_f0c4a4c7dff541::t_9c31c5fda12642 248
+docs/superpowers/plans/2026-05-25-ai-test-platform-mvp.md
+  s_f0c4a4c7dff541::t_b3924c4dd1ccae 1-50
+scripts/run_mvp_flow.py
+  s_f0c4a4c7dff541::t_eb655b4a29651b 1-4,6,9-90
+  s_f0c4a4c7dff541::t_f30208bf57fc9a 5,7-8
+ai_test_platform/services.py
+  s_f0c4a4c7dff541::t_c6c2d9912b994b 1-819
+ai_test_platform/execution.py
+  s_f0c4a4c7dff541::t_c6c2d9912b994b 1-365
+ai_test_platform/web/styles.css
+  s_f0c4a4c7dff541::t_dcb74fa3318c5e 1-186
+ai_test_platform/__init__.py
+  s_f0c4a4c7dff541::t_c6c2d9912b994b 1-5
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.1",
+  "base_commit_sha": "99be392ce6f4e3e33e019fa159b87606d8d5a6ce",
+  "prompts": {},
+  "humans": {
+    "h_3484aac7699d62": {
+      "author": "shizhen <yuuu.shizhen@gmail.com>"
+    }
+  },
+  "sessions": {
+    "s_bf5f8eae92e783": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019e49c7-cdb1-7020-994d-4b1cb0d29f10",
+        "model": "gpt-5.5"
+      },
+      "human_author": "shizhen <yuuu.shizhen@gmail.com>"
+    },
+    "s_bfd71af58367e4": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019e2a7f-6f53-76f3-9d86-e0f308d472f6",
+        "model": "gpt-5.5"
+      },
+      "human_author": "shizhen <yuuu.shizhen@gmail.com>"
+    },
+    "s_f0c4a4c7dff541": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019e5e7d-0ac0-7723-be01-8eea3cc2bd1f",
+        "model": "gpt-5.5"
+      },
+      "human_author": "shizhen <yuuu.shizhen@gmail.com>"
+    }
+  }
+}
