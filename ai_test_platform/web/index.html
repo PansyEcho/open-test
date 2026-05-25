@@ -1,0 +1,159 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>AI 自动测试平台 MVP</title>
+  <link rel="stylesheet" href="/styles.css">
+</head>
+<body>
+  <div class="shell">
+    <aside class="sidebar">
+      <div class="brand">
+        <span class="mark">AT</span>
+        <div>
+          <strong>AI 自动测试平台</strong>
+          <small>Local MVP</small>
+        </div>
+      </div>
+      <nav id="nav">
+        <button class="active" data-panel="dashboard">工作台</button>
+        <button data-panel="project">项目配置</button>
+        <button data-panel="knowledge">知识库</button>
+        <button data-panel="cli">CLI 工具</button>
+        <button data-panel="cases">主流程 Case</button>
+        <button data-panel="review">变更确认</button>
+        <button data-panel="run">回归执行</button>
+      </nav>
+    </aside>
+
+    <main>
+      <header class="topbar">
+        <div>
+          <h1>本地 AI 后端自动化测试闭环</h1>
+          <p>AI 负责生成草稿，脚本负责稳定执行，平台负责确认、版本和报告。</p>
+        </div>
+        <div class="actions">
+          <button id="detectAgents" class="secondary">检测 Agent</button>
+          <button id="runMvp" class="primary">一键跑通 MVP</button>
+        </div>
+      </header>
+
+      <section id="dashboard" class="panel active">
+        <div class="metrics">
+          <article><span>项目</span><strong id="metricProject">0</strong><em>本机配置</em></article>
+          <article><span>知识库</span><strong id="metricKb">-</strong><em>active</em></article>
+          <article><span>CLI</span><strong id="metricCli">-</strong><em>active</em></article>
+          <article><span>Case</span><strong id="metricCase">-</strong><em>active</em></article>
+        </div>
+        <div class="stagebar">
+          <div data-stage="project">1 项目</div>
+          <div data-stage="knowledge">2 知识库</div>
+          <div data-stage="cli">3 CLI</div>
+          <div data-stage="case">4 Case</div>
+          <div data-stage="snapshot">5 Snapshot</div>
+          <div data-stage="run">6 回归</div>
+        </div>
+        <section class="band">
+          <h2>最近状态</h2>
+          <pre id="statusLog">等待操作。推荐直接点击“一键跑通 MVP”。</pre>
+        </section>
+      </section>
+
+      <section id="project" class="panel">
+        <div class="section-head">
+          <div><h2>项目配置</h2><p>业务代码目录只读，所有平台产物写入平台数据目录。</p></div>
+          <button id="createProject" class="primary">新建 / 更新本地项目</button>
+        </div>
+        <div class="form-grid">
+          <label>项目名称<input id="projectName" value="订单系统自动化测试项目"></label>
+          <label>项目标识<input id="projectKey" value="order-system"></label>
+          <label class="wide">业务代码目录<input id="sourcePath" value="/Users/user/data/code/tc/travelsystem.java.dsf.supplychain.booking.core"></label>
+          <label>Agent<select id="agentProfile"><option value="codex-local">codex-local</option><option value="claude-code-local">claude-code-local</option></select></label>
+          <label>Skill 目录<input id="skillDir" value="/Users/user/temp/self-skill/code-knowledge-builder-cl"></label>
+          <label>QA 环境<input id="envName" value="test"></label>
+          <label class="wide">Facade / Labrador HTTP 前缀<input id="facadePrefix" value="http://servicegw.test.ly.com/gateway/travelsystem.supplychain.booking.core/v2"></label>
+          <label class="wide">Job 包路径<input id="jobPackage" value="com.ly.travel.train.supplychain.bookingcore.biz.job"></label>
+          <label class="wide">Job URL 前缀<input id="jobPrefix" value="http://servicegw.test.ly.com/gateway/travelsystem.supplychain.booking.core/job"></label>
+        </div>
+        <div class="split">
+          <div><h3>Agent 检测</h3><div id="agentList" class="list empty">尚未检测</div></div>
+          <div><h3>当前项目</h3><pre id="projectJson">{}</pre></div>
+        </div>
+      </section>
+
+      <section id="knowledge" class="panel">
+        <div class="section-head">
+          <div><h2>知识库补全</h2><p>生成草稿后进入确认，不直接改 active 版本。</p></div>
+          <div class="actions">
+            <button id="generateKnowledge" class="primary">生成知识库草稿</button>
+            <button data-confirm="knowledge" class="secondary">确认知识库</button>
+          </div>
+        </div>
+        <textarea id="knowledgeMessage">请补全订单创建、支付成功、取消订单、Job 补偿相关知识，重点沉淀测试断言。</textarea>
+        <div class="split">
+          <div><h3>草稿摘要</h3><pre id="knowledgeDraft">等待生成</pre></div>
+          <div><h3>Diff 摘要</h3><pre id="knowledgeDiff">无</pre></div>
+        </div>
+      </section>
+
+      <section id="cli" class="panel">
+        <div class="section-head">
+          <div><h2>CLI 工具生成</h2><p>优先调用本机 scriptgen，同时写入本地离线 shim 以便 MVP 回归可稳定执行。</p></div>
+          <div class="actions">
+            <button id="generateCli" class="primary">生成 CLI 草稿</button>
+            <button data-confirm="cli" class="secondary">确认 CLI</button>
+          </div>
+        </div>
+        <div class="split">
+          <div><h3>生成结果</h3><pre id="cliDraft">等待生成</pre></div>
+          <div><h3>工具索引</h3><pre id="cliTools">等待确认后可查看</pre></div>
+        </div>
+      </section>
+
+      <section id="cases" class="panel">
+        <div class="section-head">
+          <div><h2>主流程 Case</h2><p>Case 绑定已确认知识库和 CLI 版本，执行时按绑定版本解析工具。</p></div>
+          <div class="actions">
+            <button id="generateCases" class="primary">生成 Case 草稿</button>
+            <button data-confirm="case" class="secondary">确认 Case</button>
+          </div>
+        </div>
+        <div class="split">
+          <div><h3>Case 草稿</h3><pre id="caseDraft">等待生成</pre></div>
+          <div><h3>绑定来源</h3><pre id="caseBinding">无</pre></div>
+        </div>
+      </section>
+
+      <section id="review" class="panel">
+        <div class="section-head">
+          <div><h2>变更确认</h2><p>知识库、CLI、Case 都需要确认后才成为版本；CLI 旧工具默认保留。</p></div>
+          <button id="confirmAll" class="primary">全部确认</button>
+        </div>
+        <div id="draftQueue" class="queue empty">暂无待确认草稿</div>
+      </section>
+
+      <section id="run" class="panel">
+        <div class="section-head">
+          <div><h2>回归执行</h2><p>执行已确认 Case 与脚本，执行阶段不调用 LLM。</p></div>
+          <div class="actions">
+            <button id="createSnapshot" class="secondary">创建 snapshot</button>
+            <button id="runRegression" class="primary">执行主流程回归</button>
+          </div>
+        </div>
+        <div class="metrics compact">
+          <article><span>Snapshot</span><strong id="metricSnapshot">-</strong><em>active</em></article>
+          <article><span>通过</span><strong id="metricPassed">0</strong><em>cases</em></article>
+          <article><span>失败</span><strong id="metricFailed">0</strong><em>cases</em></article>
+          <article><span>LLM 调用</span><strong id="metricLlm">0</strong><em>execution</em></article>
+        </div>
+        <div class="split uneven">
+          <div><h3>执行结果</h3><div id="runCases" class="list empty">尚未执行</div></div>
+          <div><h3>失败步骤详情</h3><pre id="failureDetail">无失败</pre></div>
+        </div>
+      </section>
+    </main>
+  </div>
+  <script src="/app.js"></script>
+</body>
+</html>
