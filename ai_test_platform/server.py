@@ -81,10 +81,39 @@ class PlatformRequestHandler(BaseHTTPRequestHandler):
             project_id = segments[2]
             if method == "GET" and len(segments) == 3:
                 return {"success": True, "project": platform.get_project(project_id)}
+            if method == "POST" and segments[3:] == ["skills", "knowledge"]:
+                return {"success": True, "skill": platform.update_knowledge_skill(project_id, body.get("skill_dir", ""))}
+            if method == "GET" and segments[3:] == ["knowledge", "catalog"]:
+                return {"success": True, "catalog": platform.get_knowledge_catalog(project_id)}
+            if method == "POST" and segments[3:] == ["knowledge", "chat", "start"]:
+                return {
+                    "success": True,
+                    "session": platform.start_knowledge_chat(
+                        project_id,
+                        body.get("node_id", "project_background"),
+                        bool(body.get("regenerate", False)),
+                    ),
+                }
+            if method == "GET" and segments[3:] == ["knowledge", "chats"]:
+                node_id = (query.get("node_id") or [""])[0] or None
+                return {"success": True, "chats": platform.list_knowledge_chats(project_id, node_id)}
+            if method == "GET" and len(segments) == 6 and segments[3] == "knowledge" and segments[4] == "chats":
+                return {"success": True, "session": platform.get_knowledge_chat(project_id, segments[5])}
+            if method == "POST" and segments[3:] == ["knowledge", "chat"]:
+                return {"success": True, "result": platform.send_knowledge_chat(project_id, body)}
+            if method == "POST" and segments[3:] == ["knowledge", "chat", "confirm"]:
+                return {"success": True, "result": platform.confirm_knowledge_chat(project_id, body)}
+            if method == "GET" and len(segments) == 6 and segments[3] == "knowledge" and segments[4] == "nodes":
+                return {"success": True, "node": platform.get_knowledge_node(project_id, segments[5])}
+            if method == "POST" and len(segments) == 6 and segments[3] == "knowledge" and segments[4] == "nodes":
+                return {"success": True, "node": platform.update_knowledge_node(project_id, segments[5], body.get("content", ""))}
             if method == "POST" and segments[3:] == ["knowledge", "generate"]:
                 return {"success": True, "draft": platform.generate_knowledge(project_id, body.get("message", ""))}
             if method == "POST" and segments[3:] == ["cli", "build-all"]:
                 return {"success": True, "draft": platform.generate_cli(project_id, body)}
+            if method == "GET" and segments[3:] == ["cli", "catalog"]:
+                draft_id = (query.get("draft_id") or [""])[0] or None
+                return {"success": True, "catalog": platform.get_cli_catalog(project_id, draft_id)}
             if method == "POST" and segments[3:] == ["cases", "generate"]:
                 return {"success": True, "draft": platform.generate_cases(project_id, body.get("scope", "main-flow"))}
             if method == "POST" and len(segments) == 6 and segments[3] == "drafts" and segments[5] == "confirm":

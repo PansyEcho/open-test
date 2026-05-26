@@ -19,8 +19,8 @@
       <nav id="nav">
         <button class="active" data-panel="dashboard">工作台</button>
         <button data-panel="project">项目配置</button>
-        <button data-panel="knowledge">知识库</button>
         <button data-panel="cli">CLI 工具</button>
+        <button data-panel="knowledge">知识库</button>
         <button data-panel="cases">主流程 Case</button>
         <button data-panel="review">变更确认</button>
         <button data-panel="run">回归执行</button>
@@ -38,6 +38,7 @@
           <button id="runMvp" class="primary">一键跑通 MVP</button>
         </div>
       </header>
+      <div id="globalNotice" class="notice idle">等待操作</div>
 
       <section id="dashboard" class="panel active">
         <div class="metrics">
@@ -70,6 +71,7 @@
           <label>项目标识<input id="projectKey" value="order-system"></label>
           <label class="wide">业务代码目录<input id="sourcePath" value="/Users/user/data/code/tc/travelsystem.java.dsf.supplychain.booking.core"></label>
           <label>Agent<select id="agentProfile"><option value="codex-local">codex-local</option><option value="claude-code-local">claude-code-local</option></select></label>
+          <label>本地 Agent 对话<select id="executeAgent"><option value="true" selected>开启（调用 Codex/Claude CLI）</option><option value="false">关闭（仅测试用模拟）</option></select></label>
           <label>Skill 目录<input id="skillDir" value="/Users/user/temp/self-skill/code-knowledge-builder-cl"></label>
           <label>QA 环境<input id="envName" value="test"></label>
           <label class="wide">Facade / Labrador HTTP 前缀<input id="facadePrefix" value="http://servicegw.test.ly.com/gateway/travelsystem.supplychain.booking.core/v2"></label>
@@ -83,17 +85,87 @@
       </section>
 
       <section id="knowledge" class="panel">
-        <div class="section-head">
-          <div><h2>知识库补全</h2><p>生成草稿后进入确认，不直接改 active 版本。</p></div>
-          <div class="actions">
-            <button id="generateKnowledge" class="primary">生成知识库草稿</button>
-            <button data-confirm="knowledge" class="secondary">确认知识库</button>
+        <div class="knowledge-layout">
+          <div class="knowledge-main">
+            <div class="section-head">
+              <div>
+                <h2>知识库补全对话</h2>
+                <p id="knowledgeHint">请先扫描项目生成 CLI。</p>
+              </div>
+              <div class="actions">
+                <button id="clearKnowledgeChat" class="secondary">清空对话</button>
+                <button id="backToKnowledgeChat" class="secondary">返回聊天</button>
+              </div>
+            </div>
+            <div class="form-grid compact-form">
+              <label class="wide">从代码生成知识库的 Skill 目录
+                <input id="knowledgeSkillDir" value="/Users/user/temp/self-skill/code-knowledge-builder-cl">
+              </label>
+              <button id="saveKnowledgeSkill" class="secondary">保存 Skill</button>
+            </div>
+
+            <div id="knowledgeChatPanel" class="chat-surface">
+              <div id="knowledgeChatMessages" class="chat-messages"></div>
+              <div class="chat-input">
+                <textarea id="knowledgeMessage" placeholder="继续描述业务、补充知识点，或要求重新生成...">你好</textarea>
+                <div class="actions">
+                  <button id="sendKnowledgeMessage" class="primary">发送</button>
+                  <button id="confirmKnowledgeWrite" class="primary">确认写入</button>
+                  <button id="cancelKnowledgeReturn" class="secondary">取消返回</button>
+                </div>
+              </div>
+            </div>
           </div>
-        </div>
-        <textarea id="knowledgeMessage">请补全订单创建、支付成功、取消订单、Job 补偿相关知识，重点沉淀测试断言。</textarea>
-        <div class="split">
-          <div><h3>草稿摘要</h3><pre id="knowledgeDraft">等待生成</pre></div>
-          <div><h3>Diff 摘要</h3><pre id="knowledgeDiff">无</pre></div>
+
+          <aside class="knowledge-side">
+            <div class="side-head">
+              <h2>知识库生成情况</h2>
+              <button id="newKnowledge" class="primary">新建知识</button>
+            </div>
+            <div class="tree-filter">
+              <input id="knowledgeSearch" placeholder="搜索知识点名称">
+            </div>
+            <div id="knowledgeTree" class="knowledge-tree">请先扫描项目生成 CLI。</div>
+            <div class="legend"><span class="dot ok"></span> 已生成 <span class="dot missing"></span> 未生成</div>
+
+            <div id="knowledgeViewPanel" class="knowledge-view">
+              <div class="crumb" id="knowledgeBreadcrumb">知识库 / 项目背景</div>
+              <div class="content-title-row">
+                <div>
+                  <h2 id="knowledgeNodeTitle">项目背景</h2>
+                  <p id="knowledgeNodeMeta">未生成</p>
+                </div>
+                <div id="knowledgeDependencies" class="dependencies"></div>
+              </div>
+              <div class="content-tabs" id="knowledgeTabs">
+                <button class="active" data-knowledge-tab="draft">当前 / 草稿</button>
+                <button data-knowledge-tab="original">原先快照</button>
+              </div>
+              <div id="knowledgeContent" class="markdown-view">请先扫描项目生成 CLI。</div>
+              <textarea id="knowledgeEditor" class="hidden"></textarea>
+              <div id="knowledgeOriginal" class="markdown-view hidden">暂无原先快照。</div>
+              <div class="content-actions">
+                <button id="editKnowledge" class="secondary">人工编辑</button>
+                <button id="saveKnowledgeEdit" class="primary hidden">保存编辑</button>
+                <button id="cancelKnowledgeEdit" class="secondary hidden">取消编辑</button>
+                <button id="regenerateKnowledge" class="primary">重新生成</button>
+                <button id="cancelRegenerate" class="secondary hidden">取消重新生成</button>
+              </div>
+              <div class="chat-history">
+                <div class="history-head">
+                  <h3>历史聊天记录</h3>
+                  <button id="refreshKnowledgeHistory" class="secondary">刷新</button>
+                </div>
+                <div id="knowledgeChatHistory" class="history-list empty">暂无历史聊天</div>
+              </div>
+            </div>
+
+            <div class="info-box">
+              <p>可新建对话窗口生成新的目录与子知识库。</p>
+              <p>已生成的知识库支持人工编辑。</p>
+              <p>点击知识库默认进入“项目背景”页面。</p>
+            </div>
+          </aside>
         </div>
       </section>
 
@@ -105,9 +177,20 @@
             <button data-confirm="cli" class="secondary">确认 CLI</button>
           </div>
         </div>
-        <div class="split">
-          <div><h3>生成结果</h3><pre id="cliDraft">等待生成</pre></div>
-          <div><h3>工具索引</h3><pre id="cliTools">等待确认后可查看</pre></div>
+        <div class="cli-layout">
+          <div class="cli-summary">
+            <h3>生成结果</h3>
+            <div id="cliDraft" class="summary-box">等待生成</div>
+          </div>
+          <aside class="cli-side">
+            <div class="side-head">
+              <h3>工具目录</h3>
+              <span id="cliToolCount" class="tag">0 tools</span>
+            </div>
+            <input id="cliSearch" placeholder="搜索工具名称或脚本">
+            <div id="cliTree" class="knowledge-tree">等待生成或确认 CLI 后查看。</div>
+            <pre id="cliTools" class="hidden">等待确认后可查看</pre>
+          </aside>
         </div>
       </section>
 

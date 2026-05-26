@@ -28,6 +28,7 @@ def main() -> None:
             "project_key": "order-system",
             "source_path": args.source_path,
             "agent_profile": "codex-local",
+            "execute_agent": False,
             "skill_dir": args.skill_dir,
             "env_name": "test",
             "facade_http_prefix": "http://servicegw.test.ly.com/gateway/travelsystem.supplychain.booking.core/v2",
@@ -42,10 +43,43 @@ def main() -> None:
             ],
         }
     )
-    kb_draft = platform.generate_knowledge(project["id"], "重点覆盖创建订单、支付成功、取消订单、Job 补偿相关知识。")
-    kb_version = platform.confirm_draft(project["id"], kb_draft["draft_id"])
     cli_draft = platform.generate_cli(project["id"], {"types": "facade,job", "timeout": 240})
     cli_version = platform.confirm_draft(project["id"], cli_draft["draft_id"])
+    background_chat = platform.start_knowledge_chat(project["id"], "project_background")
+    background_reply = platform.send_knowledge_chat(
+        project["id"],
+        {
+            "session_id": background_chat["session_id"],
+            "node_id": "project_background",
+            "message": "输出最终文档：请生成订单系统的项目背景与核心交易知识。",
+        },
+    )
+    platform.confirm_knowledge_chat(
+        project["id"],
+        {
+            "session_id": background_chat["session_id"],
+            "node_id": "project_background",
+            "content": background_reply["draft_content"],
+        },
+    )
+    create_order_chat = platform.start_knowledge_chat(project["id"], "facade.trade.create_order")
+    create_order_reply = platform.send_knowledge_chat(
+        project["id"],
+        {
+            "session_id": create_order_chat["session_id"],
+            "node_id": "facade.trade.create_order",
+            "message": "输出最终文档：请生成创建订单知识，并关联项目背景和计算最晚出票时间。",
+        },
+    )
+    platform.confirm_knowledge_chat(
+        project["id"],
+        {
+            "session_id": create_order_chat["session_id"],
+            "node_id": "facade.trade.create_order",
+            "content": create_order_reply["draft_content"],
+        },
+    )
+    kb_version = platform.get_project(project["id"])["active_versions"]["knowledge"]
     case_draft = platform.generate_cases(project["id"], "main-flow")
     case_version = platform.confirm_draft(project["id"], case_draft["draft_id"])
     snapshot = platform.create_snapshot(project["id"])

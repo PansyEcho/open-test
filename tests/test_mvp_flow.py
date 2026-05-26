@@ -22,6 +22,7 @@ def test_platform_completes_mvp_flow_without_llm(tmp_path: Path):
             "project_key": "order-system",
             "source_path": str(source),
             "agent_profile": "codex-local",
+            "execute_agent": False,
             "skill_dir": str(skill_dir),
             "facade_http_prefix": "http://qa.example/gateway/order/v1",
             "headers": {"LABRADOR_TRACE_LOG": "true"},
@@ -36,14 +37,41 @@ def test_platform_completes_mvp_flow_without_llm(tmp_path: Path):
         }
     )
 
-    kb_draft = platform.generate_knowledge(project["id"], "重点覆盖创建订单、支付、取消与补偿 Job。")
-    kb_version = platform.confirm_draft(project["id"], kb_draft["draft_id"])
-    assert kb_version["version_key"] == "kb-v1"
-
     cli_draft = platform.generate_cli(project["id"], {"types": "facade,job"})
     cli_version = platform.confirm_draft(project["id"], cli_draft["draft_id"])
     assert cli_version["version_key"] == "cli-v1"
     assert (Path(cli_version["path"]) / "_meta" / "platform-tool-index.json").exists()
+
+    catalog = platform.get_knowledge_catalog(project["id"])
+    assert catalog["ready"] is True
+    chat = platform.start_knowledge_chat(project["id"], "project_background")
+    background_reply = platform.send_knowledge_chat(
+        project["id"],
+        {
+            "session_id": chat["session_id"],
+            "node_id": "project_background",
+            "message": "输出最终文档：本项目是火车票预定系统。",
+        },
+    )
+    platform.confirm_knowledge_chat(
+        project["id"],
+        {"session_id": chat["session_id"], "node_id": "project_background", "content": background_reply["draft_content"]},
+    )
+    chat = platform.start_knowledge_chat(project["id"], "facade.trade.create_order")
+    create_order_reply = platform.send_knowledge_chat(
+        project["id"],
+        {
+            "session_id": chat["session_id"],
+            "node_id": "facade.trade.create_order",
+            "message": "输出最终文档：生成创建订单知识。",
+        },
+    )
+    platform.confirm_knowledge_chat(
+        project["id"],
+        {"session_id": chat["session_id"], "node_id": "facade.trade.create_order", "content": create_order_reply["draft_content"]},
+    )
+    kb_version = platform.get_project(project["id"])["active_versions"]["knowledge"]
+    assert kb_version["version_key"] == "kb-v1"
 
     case_draft = platform.generate_cases(project["id"], "main-flow")
     case_version = platform.confirm_draft(project["id"], case_draft["draft_id"])
