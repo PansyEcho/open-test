@@ -19,6 +19,13 @@ const state = {
     catalog: null,
     collapsedGroups: {},
   },
+  case: {
+    catalog: null,
+    selectedNodeId: "facade.trade.create_order",
+    selectedCaseId: "",
+    detail: null,
+    collapsedGroups: {},
+  },
 };
 
 const $ = (id) => document.getElementById(id);
@@ -153,6 +160,7 @@ async function loadExistingProject() {
     showNotice(`已加载项目：${state.project.name}`, "ok");
     updateMetrics();
     await loadKnowledgeCatalog();
+    await loadCaseCatalog();
   } catch (error) {
     showNotice(`加载已有项目失败：${error.message}`, "error");
   }
@@ -650,14 +658,206 @@ async function cancelRegenerate() {
 
 async function generateCases() {
   ensureProject();
-  $("caseDraft").textContent = "正在生成 Case 草稿...";
+  const nodeId = state.case.selectedNodeId || "facade.trade.create_order";
+  $("caseDraft").textContent = "正在为当前知识节点生成 Case...";
   $("caseBinding").textContent = pretty(state.project.active_versions || {});
-  const payload = await api(`/api/projects/${state.project.id}/cases/generate`, { method: "POST", body: { scope: "main-flow" } });
+  const payload = await api(`/api/projects/${state.project.id}/cases/generate`, { method: "POST", body: { scope: "main-flow", node_id: nodeId } });
   state.drafts.case = payload.draft;
   $("caseDraft").textContent = pretty(payload.draft);
   $("caseBinding").textContent = pretty(state.project.active_versions);
+  await loadCaseCatalog();
+  await selectCaseNode(nodeId);
   log("Case 草稿已生成", payload.draft);
   updateMetrics();
+}
+
+function caseDraftQuery() {
+  return state.drafts.case?.draft_id ? `?draft_id=${encodeURIComponent(state.drafts.case.draft_id)}` : "";
+}
+
+async function loadCaseCatalog() {
+  if (!state.project) return;
+  const payload = await api(`/api/projects/${state.project.id}/cases/catalog${caseDraftQuery()}`);
+  state.case.catalog = payload.catalog;
+  renderCaseCatalog();
+  if (state.case.selectedNodeId) await selectCaseNode(state.case.selectedNodeId);
+}
+
+function renderCaseCatalog() {
+  const root = $("caseKnowledgeTree");
+  if (!root) return;
+  const catalog = state.case.catalog;
+  if (!catalog || !catalog.tree?.length) {
+    root.className = "knowledge-tree empty";
+    root.textContent = "请先确认 CLI 与知识库。";
+    return;
+  }
+  const search = ($("caseSearch")?.value || "").trim();
+  root.className = "knowledge-tree";
+  root.innerHTML = catalog.tree.map((node) => caseTreeHtml(node, search)).join("");
+}
+
+function caseTreeHtml(node, search = "") {
+  if (node.type === "group") {
+    const groupId = node.id;
+    const collapsed = Boolean(state.case.collapsedGroups[groupId]) && !search;
+    const children = (node.children || []).filter((child) => !search || child.title.includes(search) || child.id.includes(search));
+    if (!children.length && search) return "";
+    return `
+      <div class="tree-group">
+        <button class="tree-group-title" data-case-group-id="${escapeHtml(groupId)}">${collapsed ? "›" : "⌄"} ${escapeHtml(node.title)}</button>
+        <div class="${collapsed ? "hidden" : ""}">${children.map((child) => caseTreeHtml(child, search)).join("")}</div>
+      </div>`;
+  }
+  if (search && !node.title.includes(search) && !node.id.includes(search)) return "";
+  const active = node.id === state.case.selectedNodeId ? " active" : "";
+  const label = node.case_status_label || "可生成";
+  const tagClass = node.case_count ? "ok" : "warn";
+  return `<button class="tree-node${active}" data-case-node-id="${escapeHtml(node.id)}">▧ ${escapeHtml(node.title)} <span class="tag ${tagClass}">${escapeHtml(label)}</span></button>`;
+}
+
+function toggleCaseGroup(groupId) {
+  state.case.collapsedGroups[groupId] = !state.case.collapsedGroups[groupId];
+  renderCaseCatalog();
+}
+
+async function selectCaseNode(nodeId) {
+  state.case.selectedNodeId = nodeId;
+  renderCaseCatalog();
+  const node = findCaseCatalogNode(nodeId);
+  $("caseNodeTitle").textContent = node?.title || "接口概览";
+  $("caseNodeMeta").textContent = node ? `${node.category || "知识库"} · ${node.case_status_label || "可生成"}` : "选择左侧知识节点后生成或查看 Case。";
+  renderCaseList(nodeId);
+}
+
+function findCaseCatalogNode(nodeId, nodes = state.case.catalog?.tree || []) {
+  for (const node of nodes) {
+    if (node.id === nodeId) return node;
+    const found = findCaseCatalogNode(nodeId, node.children || []);
+    if (found) return found;
+  }
+  return null;
+}
+
+function renderCaseList(nodeId = state.case.selectedNodeId) {
+  const root = $("caseList");
+  if (!root) return;
+  const cases = (state.case.catalog?.cases || []).filter((item) => item.node_id === nodeId);
+  $("caseSuggestedCount").textContent = cases.length;
+  $("caseConfirmedCount").textContent = cases.filter((item) => item.status === "confirmed").length;
+  $("caseDraftCount").textContent = cases.filter((item) => item.status !== "confirmed").length;
+  if (!cases.length) {
+    root.className = "case-list empty";
+    root.textContent = "当前知识节点还没有 Case，点击“一键生成 Case”。";
+    return;
+  }
+  root.className = "case-list";
+  root.innerHTML = cases
+    .map((item, index) => {
+      const active = item.case_id === state.case.selectedCaseId ? " active" : "";
+      return `<button class="case-row${active}" data-case-id="${escapeHtml(item.case_id)}">
+        <strong>${index + 1}. ${escapeHtml(item.name)}</strong>
+        <span>${item.steps_count || 0} 步</span>
+        <span class="tag ${item.status === "confirmed" ? "ok" : "warn"}">${escapeHtml(item.status_label || item.status || "草稿")}</span>
+        <small>${escapeHtml(item.description || "")}</small>
+      </button>`;
+    })
+    .join("");
+}
+
+async function openCaseDetail(caseId) {
+  state.case.selectedCaseId = caseId;
+  const payload = await api(`/api/projects/${state.project.id}/cases/detail/${encodeURIComponent(caseId)}${caseDraftQuery()}`);
+  state.case.detail = payload.detail;
+  renderCaseList();
+  renderCaseDetail(payload.detail);
+}
+
+function renderCaseDetail(detail) {
+  const item = detail.case;
+  $("caseSummary").innerHTML = `
+    <h4>${escapeHtml(item.name)}</h4>
+    <p>${escapeHtml(item.description || "暂无描述")}</p>
+    <dl>
+      <dt>来源接口</dt><dd>${escapeHtml(findCaseCatalogNode(item.node_id)?.title || item.node_id)}</dd>
+      <dt>步骤数</dt><dd>${item.steps_count || detail.steps.length}</dd>
+      <dt>涉及 CLI</dt><dd>${(item.cli_tools || []).map((tool) => `<span class="tag">${escapeHtml(tool)}</span>`).join(" ") || "无"}</dd>
+      <dt>断言数</dt><dd>${item.assertions_count || 0}</dd>
+      <dt>生成方式</dt><dd>${escapeHtml(item.generated_by || "AI 自动生成")}</dd>
+    </dl>`;
+  $("caseJsonEditor").value = pretty({ case: item, steps: detail.steps });
+  renderCaseFlow(detail.flow);
+}
+
+function renderCaseFlow(flow) {
+  $("caseFlow").innerHTML = flow
+    .map((step) => `<article class="flow-step">
+      <b>${escapeHtml(step.index)}</b>
+      <div>
+        <h4>${escapeHtml(step.name)}</h4>
+        <p>${escapeHtml(step.description || "")}</p>
+        <code>${escapeHtml(step.tool || step.type)}</code>
+        <small>${escapeHtml(JSON.stringify(step.assertion || {}))}</small>
+      </div>
+    </article>`)
+    .join("");
+}
+
+function showCaseFlow() {
+  $("caseFlow").classList.remove("hidden");
+  $("caseJsonEditor").classList.add("hidden");
+}
+
+function showCaseJson() {
+  $("caseJsonEditor").classList.remove("hidden");
+  $("caseFlow").classList.add("hidden");
+}
+
+async function saveCaseJson() {
+  ensureProject();
+  if (!state.drafts.case?.draft_id) throw new Error("请先生成 Case 草稿，再编辑保存");
+  const parsed = JSON.parse($("caseJsonEditor").value || "{}");
+  const payload = await api(`/api/projects/${state.project.id}/cases/upsert`, {
+    method: "POST",
+    body: {
+      draft_id: state.drafts.case.draft_id,
+      case_id: parsed.case?.case_id || state.case.selectedCaseId,
+      node_id: parsed.case?.node_id || state.case.selectedNodeId,
+      case: parsed.case,
+      steps: parsed.steps || [],
+    },
+  });
+  state.case.detail = payload.detail;
+  await loadCaseCatalog();
+  renderCaseDetail(payload.detail);
+  log("Case JSON 已保存", payload.detail.case);
+}
+
+async function addCase() {
+  ensureProject();
+  if (!state.drafts.case?.draft_id) throw new Error("请先生成当前接口的 Case 草稿");
+  const payload = await api(`/api/projects/${state.project.id}/cases/upsert`, {
+    method: "POST",
+    body: {
+      draft_id: state.drafts.case.draft_id,
+      node_id: state.case.selectedNodeId,
+      case: { name: "人工新增 Case", description: "请在 JSON 中补充场景描述。", priority: "P1" },
+      steps: [
+        {
+          step_index: 1,
+          name: "执行目标入口",
+          execution_type: "script",
+          execution_tool: `tool://${state.case.selectedNodeId}`,
+          input_params: {},
+          verification_type: "assertion",
+          verification_assertion: { success: true },
+        },
+      ],
+    },
+  });
+  state.case.selectedCaseId = payload.detail.case.case_id;
+  await loadCaseCatalog();
+  renderCaseDetail(payload.detail);
 }
 
 async function confirmDraft(kind) {
@@ -671,6 +871,9 @@ async function confirmDraft(kind) {
   if (kind === "cli") {
     $("cliDraft").innerHTML = `<div class="summary-line"><strong>CLI 已确认：${escapeHtml(payload.version.version_key)}</strong></div><div class="summary-meta">${escapeHtml(payload.version.path)}</div>`;
     await loadCliCatalog();
+  }
+  if (kind === "case") {
+    await loadCaseCatalog();
   }
   log(`${kind} 已确认`, { version_key: payload.version.version_key, artifact_type: payload.version.artifact_type });
 }
@@ -774,6 +977,9 @@ document.getElementById("nav").addEventListener("click", (event) => {
   if (button.dataset.panel === "cli") {
     loadCliCatalog();
   }
+  if (button.dataset.panel === "cases") {
+    loadCaseCatalog();
+  }
 });
 
 bindClick("detectAgents", () => withBusy($("detectAgents"), detectAgents));
@@ -781,6 +987,10 @@ bindClick("createProject", () => withBusy($("createProject"), createProject));
 bindClick("generateKnowledge", () => withBusy($("generateKnowledge"), generateKnowledge));
 bindClick("generateCli", () => withBusy($("generateCli"), generateCli));
 bindClick("generateCases", () => withBusy($("generateCases"), generateCases));
+bindClick("addCase", () => withBusy($("addCase"), addCase));
+bindClick("saveCaseJson", () => withBusy($("saveCaseJson"), saveCaseJson));
+bindClick("showCaseFlow", showCaseFlow);
+bindClick("showCaseJson", showCaseJson);
 bindClick("confirmAll", () => withBusy($("confirmAll"), confirmAll));
 bindClick("createSnapshot", () => withBusy($("createSnapshot"), createSnapshot));
 bindClick("runRegression", () => withBusy($("runRegression"), runRegression));
@@ -831,6 +1041,20 @@ $("cliSearch")?.addEventListener("input", renderCliCatalog);
 $("cliTree")?.addEventListener("click", (event) => {
   const group = event.target.closest("[data-cli-group-id]");
   if (group) toggleCliGroup(group.dataset.cliGroupId);
+});
+$("caseSearch")?.addEventListener("input", renderCaseCatalog);
+$("caseKnowledgeTree")?.addEventListener("click", (event) => {
+  const group = event.target.closest("[data-case-group-id]");
+  if (group) {
+    toggleCaseGroup(group.dataset.caseGroupId);
+    return;
+  }
+  const node = event.target.closest("[data-case-node-id]");
+  if (node) selectCaseNode(node.dataset.caseNodeId);
+});
+$("caseList")?.addEventListener("click", (event) => {
+  const row = event.target.closest("[data-case-id]");
+  if (row) openCaseDetail(row.dataset.caseId);
 });
 document.querySelectorAll("[data-confirm]").forEach((button) => {
   button.addEventListener("click", () => withBusy(button, () => confirmDraft(button.dataset.confirm)));

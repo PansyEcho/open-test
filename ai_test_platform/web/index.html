@@ -196,16 +196,48 @@
 
       <section id="cases" class="panel">
         <div class="section-head">
-          <div><h2>主流程 Case</h2><p>Case 绑定已确认知识库和 CLI 版本，执行时按绑定版本解析工具。</p></div>
+          <div><h2>主流程 Case</h2><p>按知识库目录进入接口维度，由 AI 扫描知识库、代码与 CLI 后生成对应接口的 Case 列表。</p></div>
           <div class="actions">
-            <button id="generateCases" class="primary">生成 Case 草稿</button>
+            <button id="generateCases" class="primary">一键生成 Case</button>
             <button data-confirm="case" class="secondary">确认 Case</button>
           </div>
         </div>
-        <div class="split">
-          <div><h3>Case 草稿</h3><pre id="caseDraft">等待生成</pre></div>
-          <div><h3>绑定来源</h3><pre id="caseBinding">无</pre></div>
+        <div class="case-layout">
+          <aside class="case-tree-panel">
+            <h3>知识目录 / 接口维度</h3>
+            <input id="caseSearch" placeholder="搜索知识或接口">
+            <div id="caseKnowledgeTree" class="knowledge-tree">请先确认 CLI 与知识库。</div>
+          </aside>
+          <section class="case-main">
+            <div id="caseOverview" class="case-overview">
+              <div>
+                <h3 id="caseNodeTitle">接口概览</h3>
+                <p id="caseNodeMeta">选择左侧知识节点后生成或查看 Case。</p>
+              </div>
+              <button id="addCase" class="secondary">新增 Case</button>
+            </div>
+            <div class="case-stats">
+              <article><span>建议 Case</span><strong id="caseSuggestedCount">0</strong></article>
+              <article><span>已确认</span><strong id="caseConfirmedCount">0</strong></article>
+              <article><span>草稿</span><strong id="caseDraftCount">0</strong></article>
+            </div>
+            <h3>接口范围内的 Case 列表</h3>
+            <div id="caseList" class="case-list empty">请选择知识节点并生成 Case。</div>
+          </section>
+          <aside class="case-detail-panel">
+            <h3>Case 摘要</h3>
+            <div id="caseSummary" class="case-summary">尚未选择 Case。</div>
+            <div class="actions stacked">
+              <button id="showCaseFlow" class="secondary">查看流程图</button>
+              <button id="showCaseJson" class="secondary">查看 JSON</button>
+              <button id="saveCaseJson" class="primary">保存 JSON</button>
+            </div>
+            <div id="caseFlow" class="case-flow hidden">暂无流程图。</div>
+            <textarea id="caseJsonEditor" class="hidden" spellcheck="false"></textarea>
+          </aside>
         </div>
+        <pre id="caseDraft" class="hidden">等待生成</pre>
+        <pre id="caseBinding" class="hidden">无</pre>
       </section>
 
       <section id="review" class="panel">

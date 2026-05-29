@@ -58,6 +58,41 @@ public interface TicketFacade {
 """.strip(),
         encoding="utf-8",
     )
+    actor_dir = source / "app" / "biz" / "src" / "main" / "java" / "com" / "ly" / "travel" / "train" / "supplychain" / "bookingcore" / "biz" / "actor" / "pre"
+    actor_dir.mkdir(parents=True)
+    (actor_dir / "TicketSuccessPreActor.java").write_text(
+        """
+package com.ly.travel.train.supplychain.bookingcore.biz.actor.pre;
+
+import com.ly.travel.train.supplychain.bookingcore.biz.annotations.State;
+import com.ly.travel.train.supplychain.bookingcore.model.enums.OrderStateEnum;
+
+/**
+ * 出票成功前置处理
+ */
+@State(from = { OrderStateEnum.TICKETING }, to = { OrderStateEnum.ISSUE_SUCCESS })
+public class TicketSuccessPreActor {
+}
+""".strip(),
+        encoding="utf-8",
+    )
+    (actor_dir / "OrderCancelPreActor.java").write_text(
+        """
+package com.ly.travel.train.supplychain.bookingcore.biz.actor.pre;
+
+import com.ly.travel.train.supplychain.bookingcore.biz.annotations.State;
+import com.ly.travel.train.supplychain.bookingcore.model.enums.OrderStateEnum;
+
+/**
+ * 订单取消前置处理
+ */
+@State(from = { OrderStateEnum.INIT, OrderStateEnum.TICKETING },
+        to = { OrderStateEnum.CANCEL })
+public class OrderCancelPreActor {
+}
+""".strip(),
+        encoding="utf-8",
+    )
     skill_dir = tmp_path / "knowledge-skill"
     skill_dir.mkdir()
     (skill_dir / "SKILL.md").write_text("# knowledge builder\n", encoding="utf-8")
@@ -117,6 +152,72 @@ def test_knowledge_catalog_is_seeded_from_confirmed_cli(tmp_path: Path):
 
     ticket_group = next(group for group in catalog["tree"] if group["title"] == "TicketFacade")
     assert any(child["title"] == "issueTicket【出票】" for child in ticket_group["children"])
+
+
+def test_knowledge_catalog_includes_state_machine_nodes_from_actor_annotations(tmp_path: Path):
+    platform, project = create_demo_project(tmp_path)
+    cli_draft = platform.generate_cli(project["id"], {"types": "facade,job"})
+    platform.confirm_draft(project["id"], cli_draft["draft_id"])
+
+    catalog = platform.get_knowledge_catalog(project["id"])
+
+    machine_group = next(group for group in catalog["tree"] if group["title"] == "状态机")
+    order_machine = next(child for child in machine_group["children"] if child["id"] == "state_machine.order_state_enum")
+    assert order_machine["title"] == "OrderStateEnum 状态流转"
+    assert order_machine["type"] == "state_machine"
+    assert order_machine["source"]["transition_count"] == 2
+    assert {
+        "from": ["TICKETING"],
+        "to": ["ISSUE_SUCCESS"],
+        "actor": "TicketSuccessPreActor",
+        "phase": "pre",
+    } in [
+        {
+            "from": item["from"],
+            "to": item["to"],
+            "actor": item["actor"],
+            "phase": item["phase"],
+        }
+        for item in order_machine["source"]["transitions"]
+    ]
+
+
+def test_state_machine_knowledge_content_summarizes_transitions(tmp_path: Path):
+    platform, project = create_demo_project(tmp_path)
+    cli_draft = platform.generate_cli(project["id"], {"types": "facade,job"})
+    platform.confirm_draft(project["id"], cli_draft["draft_id"])
+
+    node = platform.get_knowledge_node(project["id"], "state_machine.order_state_enum")
+    content = platform._generate_knowledge_content(project, node, "输出最终文档：生成状态机知识")
+
+    assert "# OrderStateEnum 状态流转" in content
+    assert "TICKETING -> ISSUE_SUCCESS" in content
+    assert "TicketSuccessPreActor" in content
+
+
+def test_state_machine_scanner_accepts_refund_style_annotation_order(tmp_path: Path):
+    source = tmp_path / "refund-source"
+    actor_dir = source / "app" / "biz" / "src" / "main" / "java" / "com" / "example" / "actor" / "post"
+    actor_dir.mkdir(parents=True)
+    (actor_dir / "RefundOrderSuccessPostActor.java").write_text(
+        """
+import com.example.State;
+
+@State(from = { RefundOrderStateEnum.WAIT_REFUND, RefundOrderStateEnum.REFUNDING },
+        to = { RefundOrderStateEnum.REFUND_SUCCESS })
+@Service
+public class RefundOrderSuccessPostActor {
+}
+""".strip(),
+        encoding="utf-8",
+    )
+    platform = Platform(tmp_path / "home")
+
+    machines = platform._scan_state_machines(source)
+
+    assert machines[0]["node_id"] == "state_machine.refund_order_state_enum"
+    assert machines[0]["transitions"][0]["actor"] == "RefundOrderSuccessPostActor"
+    assert machines[0]["transitions"][0]["from"] == ["WAIT_REFUND", "REFUNDING"]
 
 
 def test_platform_tool_index_enriches_facade_comments_from_scan_manifest(tmp_path: Path):

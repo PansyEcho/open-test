@@ -330,6 +330,11 @@ class Platform:
                     },
                 )
             )
+            state_nodes = self._state_machine_nodes(project, Path(cli["path"]))
+            if state_nodes:
+                if "状态机" not in grouped:
+                    group_order.append("状态机")
+                grouped.setdefault("状态机", []).extend(self._knowledge_node_summary(project, node) for node in state_nodes)
             for category in group_order:
                 children = self._dedupe_nodes(grouped.get(category, []))
                 if children:
@@ -563,6 +568,7 @@ class Platform:
         draft_root = Path(project["workspace_path"]) / "drafts" / "cli" / draft_id
         draft_root.mkdir(parents=True, exist_ok=True)
         scriptgen_result = self._run_scriptgen(project, draft_root, options)
+        write_json(draft_root / "_meta" / "state-machines.json", {"machines": self._scan_state_machines(Path(project["source_path"]))})
         self._write_offline_tools(draft_root)
         platform_index = self._build_platform_tool_index(draft_root)
         write_json(draft_root / "_meta" / "platform-tool-index.json", {"tools": list(platform_index.values())})
@@ -691,6 +697,76 @@ class Platform:
             return {"success": completed.returncode == 0, "return_code": completed.returncode, "stdout_tail": completed.stdout[-1000:], "stderr_tail": completed.stderr[-1000:]}
         except Exception as exc:
             return {"success": False, "reason": str(exc)}
+
+    def _scan_state_machines(self, source: Path) -> list[dict[str, Any]]:
+        machines: dict[str, dict[str, Any]] = {}
+        for path in source.rglob("*.java"):
+            if "target" in path.parts:
+                continue
+            text = path.read_text(encoding="utf-8", errors="ignore")
+            for match in re.finditer(r"@State\s*\((?P<body>.*?)\)(?:\s*@\w+(?:\([^)]*\))?)*\s*(?:public\s+)?class\s+(?P<class>\w+)", text, flags=re.S):
+                body = match.group("body")
+                from_match = re.search(r"from\s*=\s*\{(?P<states>.*?)\}", body, flags=re.S)
+                to_match = re.search(r"to\s*=\s*\{(?P<states>.*?)\}", body, flags=re.S)
+                if not from_match or not to_match:
+                    continue
+                from_states, enum_name = self._parse_state_refs(from_match.group("states"))
+                to_states, to_enum_name = self._parse_state_refs(to_match.group("states"))
+                enum_name = enum_name or to_enum_name or "StateEnum"
+                if not from_states or not to_states:
+                    continue
+                machine_id = self._snake_case(enum_name)
+                machine = machines.setdefault(
+                    machine_id,
+                    {
+                        "machine_id": machine_id,
+                        "node_id": f"state_machine.{machine_id}",
+                        "title": f"{enum_name} 状态流转",
+                        "state_enum": enum_name,
+                        "annotation": "State",
+                        "transitions": [],
+                    },
+                )
+                class_name = match.group("class")
+                phase = self._actor_phase(path)
+                comment = self._clean_javadoc(self._last_javadoc_before(text[: match.start()]))
+                machine["transitions"].append(
+                    {
+                        "id": f"{machine['node_id']}.{self._snake_case(class_name)}",
+                        "actor": class_name,
+                        "phase": phase,
+                        "from": from_states,
+                        "to": to_states,
+                        "title": f"{'/'.join(from_states)} -> {'/'.join(to_states)}",
+                        "comment": comment,
+                        "source_path": str(path),
+                        "relative_path": str(path.relative_to(source)),
+                        "annotation_line": text[: match.start()].count("\n") + 1,
+                    }
+                )
+        return sorted(machines.values(), key=lambda item: item["title"])
+
+    def _parse_state_refs(self, fragment: str) -> tuple[list[str], str]:
+        states: list[str] = []
+        enum_name = ""
+        for match in re.finditer(r"(?P<enum>\w+Enum)\.(?P<state>[A-Z][A-Z0-9_]*)", fragment):
+            enum_name = enum_name or match.group("enum")
+            state = match.group("state")
+            if state not in states:
+                states.append(state)
+        return states, enum_name
+
+    def _actor_phase(self, path: Path) -> str:
+        parts = {item.lower() for item in path.parts}
+        if "pre" in parts:
+            return "pre"
+        if "post" in parts:
+            return "post"
+        return "actor"
+
+    def _snake_case(self, value: str) -> str:
+        text = re.sub(r"([a-z0-9])([A-Z])", r"\1_\2", value).replace("-", "_")
+        return re.sub(r"[^a-zA-Z0-9_]+", "_", text).strip("_").lower()
 
     def _write_offline_tools(self, cli_dir: Path) -> None:
         platform = cli_dir / "platform"
@@ -919,10 +995,12 @@ class Platform:
             parts[-1] = snake
         return ".".join(parts)
 
-    def generate_cases(self, project_id: str, scope: str = "main-flow") -> dict[str, Any]:
+    def generate_cases(self, project_id: str, scope: str = "main-flow", node_id: str | None = None) -> dict[str, Any]:
         project = self.get_project(project_id)
         self._require_active(project, "knowledge")
         self._require_active(project, "cli")
+        if node_id:
+            return self._generate_cases_for_node(project, scope, node_id)
         draft_id = short_id("cases")
         draft_root = Path(project["workspace_path"]) / "drafts" / "cases" / draft_id
         cases_root = draft_root / "cases"
@@ -1024,6 +1102,235 @@ class Platform:
         }
         write_json(draft_root / "suite.json", suite)
         return self._add_proposal(project, "case", draft_id, draft_root, "生成主流程 Case 草稿：2 个 case，包含一个可展示断言差异的失败样例。")
+
+    def _generate_cases_for_node(self, project: dict[str, Any], scope: str, node_id: str) -> dict[str, Any]:
+        node = self.get_knowledge_node(project["id"], node_id)
+        draft_id = short_id("cases")
+        draft_root = Path(project["workspace_path"]) / "drafts" / "cases" / draft_id
+        cases_root = draft_root / "cases"
+        case_specs = self._suggest_cases_for_node(project, node)
+        suite_cases: list[dict[str, Any]] = []
+        for index, item in enumerate(case_specs, start=1):
+            case_id = f"{node_id}.{slugify(item['name'])}"
+            case_dir = cases_root / node_id.replace(".", "/") / slugify(item["name"])
+            case_dir.mkdir(parents=True, exist_ok=True)
+            steps = item["steps"]
+            (case_dir / "case.md").write_text(f"# {item['name']}\n\n{item['description']}\n", encoding="utf-8")
+            write_json(case_dir / "steps.json", steps)
+            suite_cases.append(
+                {
+                    "case_id": case_id,
+                    "node_id": node_id,
+                    "name": item["name"],
+                    "description": item["description"],
+                    "priority": item.get("priority", "P1"),
+                    "status": item.get("status", "draft" if index > 2 else "confirmed"),
+                    "status_label": "已确认" if index <= 2 else "草稿",
+                    "steps_count": len(steps),
+                    "assertions_count": self._count_step_assertions(steps),
+                    "cli_tools": self._case_cli_tools(steps),
+                    "case_doc": str((case_dir / "case.md").relative_to(draft_root)),
+                    "steps_file": str((case_dir / "steps.json").relative_to(draft_root)),
+                    "enabled": True,
+                    "generated_by": "AI 自动生成",
+                }
+            )
+        suite = {
+            "suite_id": f"{scope}-{node_id}",
+            "name": f"{node.get('title', node_id)} Case 集",
+            "scope": scope,
+            "source": {
+                "node_id": node_id,
+                "node_title": node.get("title", node_id),
+                "knowledge_version": project["active_versions"]["knowledge"]["version_key"],
+                "cli_version": project["active_versions"]["cli"]["version_key"],
+                "code_baseline": project.get("code_baseline"),
+                "skill_hash": project.get("skill_hash"),
+                "agent_profile": project.get("agent_profile"),
+            },
+            "cases": suite_cases,
+        }
+        write_json(draft_root / "suite.json", suite)
+        return self._add_proposal(project, "case", draft_id, draft_root, f"为《{node.get('title', node_id)}》生成 Case 草稿：{len(suite_cases)} 个 case。")
+
+    def _suggest_cases_for_node(self, project: dict[str, Any], node: dict[str, Any]) -> list[dict[str, Any]]:
+        node_id = node["id"]
+        primary_tool = node_id if node.get("type") == "facade" else "facade.trade.create_order"
+        query_tool = "facade.order.query_detail"
+        if node_id == "facade.trade.create_order":
+            names = [
+                ("正常创建订单成功", "正常成人乘客创建订单，返回 HT 单号和交易流水。", "P0"),
+                ("港铁 2 乘客非 HK_PAYMENT - 后位儿童仍应补价", "在港铁场景下，当第 2 名乘客非 HK_PAYMENT 且后位为儿童时，系统应正确识别并按补价规则补价。", "P0"),
+                ("参数缺失导致创建失败", "缺少乘客或车次关键参数时，创建订单应失败并返回可断言错误。", "P1"),
+                ("下游超时后的重试与回滚", "供应商或价格服务超时时，校验重试、回滚和错误映射。", "P1"),
+            ]
+        else:
+            title = node.get("title", node_id)
+            names = [
+                (f"{title} 正常路径", "覆盖该知识节点对应入口或公共逻辑的成功主链路。", "P0"),
+                (f"{title} 参数边界", "覆盖必要参数缺失、格式错误和边界值。", "P1"),
+                (f"{title} 下游异常", "覆盖下游异常、超时和补偿路径。", "P1"),
+            ]
+        cases: list[dict[str, Any]] = []
+        for case_index, (name, description, priority) in enumerate(names, start=1):
+            steps = [
+                {
+                    "step_index": 1,
+                    "name": "准备测试数据",
+                    "description": "构造订单、乘客、车次和外部依赖 mock 数据。",
+                    "execution_type": "script",
+                    "execution_tool": "tool://facade.trade.create_order" if primary_tool != "facade.trade.create_order" else f"tool://{primary_tool}",
+                    "input_params": {"trainCode": "G300", "passengerCount": 2, "caseIndex": case_index},
+                    "verification_type": "assertion",
+                    "verification_assertion": {"success": True, "orderSerialId": "not_null"},
+                },
+                {
+                    "step_index": 2,
+                    "name": "执行目标入口",
+                    "description": description,
+                    "execution_type": "script",
+                    "execution_tool": f"tool://{primary_tool}",
+                    "input_params": {"orderSerialNo": "${steps[0].output.orderSerialId}", "scenario": slugify(name)},
+                    "verification_type": "assertion",
+                    "verification_assertion": {"success": True},
+                },
+                {
+                    "step_index": 3,
+                    "name": "查询并断言结果",
+                    "description": "查询订单详情，断言状态、关键字段和业务结果。",
+                    "execution_type": "script",
+                    "execution_tool": f"tool://{query_tool}",
+                    "input_params": {"order-serial-no": "${steps[0].output.orderSerialId}"},
+                    "verification_type": "assertion",
+                    "verification_assertion": {"success": True, "orderCount": 1},
+                },
+            ]
+            cases.append({"name": name, "description": description, "priority": priority, "steps": steps})
+        return cases
+
+    def _count_step_assertions(self, steps: list[dict[str, Any]]) -> int:
+        total = 0
+        for step in steps:
+            assertion = step.get("verification_assertion")
+            total += len(assertion) if isinstance(assertion, dict) else int(bool(assertion))
+        return total
+
+    def _case_cli_tools(self, steps: list[dict[str, Any]]) -> list[str]:
+        tools: list[str] = []
+        for step in steps:
+            tool = str(step.get("execution_tool", "")).removeprefix("tool://")
+            if tool and tool not in tools:
+                tools.append(tool)
+        return tools
+
+    def get_case_catalog(self, project_id: str, draft_id: str | None = None) -> dict[str, Any]:
+        project = self.get_project(project_id)
+        case_dir = self._resolve_case_path(project, draft_id or "")
+        suite = read_json(case_dir / "suite.json", {}) if case_dir else {}
+        counts: dict[str, int] = {}
+        for case in suite.get("cases", []):
+            node_id = case.get("node_id") or suite.get("source", {}).get("node_id") or ""
+            if node_id:
+                counts[node_id] = counts.get(node_id, 0) + 1
+        catalog = self.get_knowledge_catalog(project_id)
+        tree = [self._case_tree_node(item, counts) for item in catalog.get("tree", [])]
+        return {
+            "ready": bool(case_dir),
+            "source": "draft" if draft_id else "active",
+            "draft_id": draft_id or "",
+            "tree": tree,
+            "case_count": sum(counts.values()),
+            "suite": {
+                "name": suite.get("name", ""),
+                "source": suite.get("source", {}),
+            },
+            "cases": suite.get("cases", []),
+        }
+
+    def _case_tree_node(self, node: dict[str, Any], counts: dict[str, int]) -> dict[str, Any]:
+        copied = dict(node)
+        if node.get("type") == "group":
+            copied["children"] = [self._case_tree_node(child, counts) for child in node.get("children", [])]
+            return copied
+        count = counts.get(node.get("id", ""), 0)
+        copied["case_count"] = count
+        copied["case_status_label"] = f"已有 {count} 个 Case" if count else "可生成"
+        return copied
+
+    def get_case_detail(self, project_id: str, case_id: str, draft_id: str | None = None) -> dict[str, Any]:
+        project = self.get_project(project_id)
+        case_dir = self._resolve_case_path(project, draft_id or "")
+        if not case_dir:
+            raise KeyError("case suite not found")
+        suite = read_json(case_dir / "suite.json", {}) or {}
+        case = next((item for item in suite.get("cases", []) if item.get("case_id") == case_id), None)
+        if not case:
+            raise KeyError(f"case not found: {case_id}")
+        steps = read_json(case_dir / case["steps_file"], []) or []
+        return {"suite": suite, "case": case, "steps": steps, "flow": self._case_flow(steps)}
+
+    def upsert_case(self, project_id: str, payload: dict[str, Any]) -> dict[str, Any]:
+        project = self.get_project(project_id)
+        draft_id = payload.get("draft_id", "")
+        case_dir = self._resolve_case_path(project, draft_id)
+        if not case_dir:
+            raise KeyError("case draft not found")
+        suite_path = case_dir / "suite.json"
+        suite = read_json(suite_path, {}) or {"suite_id": "manual", "name": "Case 集", "source": {}, "cases": []}
+        incoming_case = dict(payload.get("case") or {})
+        steps = payload.get("steps") or []
+        node_id = payload.get("node_id") or incoming_case.get("node_id") or suite.get("source", {}).get("node_id") or "project_background"
+        case_id = payload.get("case_id") or incoming_case.get("case_id") or f"{node_id}.{slugify(incoming_case.get('name', 'manual-case'))}"
+        existing = next((item for item in suite.setdefault("cases", []) if item.get("case_id") == case_id), None)
+        if existing:
+            case = existing
+        else:
+            case = {"case_id": case_id, "enabled": True}
+            suite["cases"].append(case)
+        case.update(incoming_case)
+        case.setdefault("name", case_id)
+        case["case_id"] = case_id
+        case["node_id"] = node_id
+        case["description"] = case.get("description", "")
+        case["priority"] = case.get("priority", "P1")
+        case["status"] = case.get("status", "draft")
+        case["status_label"] = "已确认" if case["status"] == "confirmed" else "草稿"
+        case["steps_count"] = len(steps)
+        case["assertions_count"] = self._count_step_assertions(steps)
+        case["cli_tools"] = self._case_cli_tools(steps)
+        case_path = Path(case.get("steps_file", "")) if case.get("steps_file") else Path("cases") / node_id.replace(".", "/") / slugify(case["name"]) / "steps.json"
+        doc_path = case_path.with_name("case.md")
+        (case_dir / case_path).parent.mkdir(parents=True, exist_ok=True)
+        write_json(case_dir / case_path, steps)
+        (case_dir / doc_path).write_text(f"# {case['name']}\n\n{case['description']}\n", encoding="utf-8")
+        case["steps_file"] = str(case_path)
+        case["case_doc"] = str(doc_path)
+        write_json(suite_path, suite)
+        return {"suite": suite, "case": case, "steps": steps, "flow": self._case_flow(steps)}
+
+    def _case_flow(self, steps: list[dict[str, Any]]) -> list[dict[str, Any]]:
+        return [
+            {
+                "index": step.get("step_index", index),
+                "name": step.get("name", f"Step {index}"),
+                "type": step.get("execution_type", "script"),
+                "tool": step.get("execution_tool", ""),
+                "params": step.get("input_params", {}),
+                "assertion": step.get("verification_assertion", {}),
+                "description": step.get("description", ""),
+            }
+            for index, step in enumerate(steps, start=1)
+        ]
+
+    def _resolve_case_path(self, project: dict[str, Any], draft_id: str) -> Path | None:
+        if draft_id:
+            for proposal in project.get("diff_proposals", []):
+                if proposal.get("artifact_type") == "case" and proposal.get("draft_id") == draft_id:
+                    return Path(proposal["draft_path"])
+            return None
+        active = project.get("active_versions", {}).get("case", {})
+        path = active.get("path")
+        return Path(path) if path else None
 
     def confirm_draft(self, project_id: str, draft_id: str) -> dict[str, Any]:
         project = self.get_project(project_id)
@@ -1254,6 +1561,39 @@ class Platform:
             },
         }
 
+    def _state_machine_nodes(self, project: dict[str, Any], cli_dir: Path | None = None) -> list[dict[str, Any]]:
+        payload = read_json((cli_dir or Path()) / "_meta" / "state-machines.json", {}) if cli_dir else {}
+        machines = payload.get("machines") if isinstance(payload, dict) else None
+        if machines is None:
+            machines = self._scan_state_machines(Path(project["source_path"]))
+        nodes: list[dict[str, Any]] = []
+        for machine in machines or []:
+            transitions = machine.get("transitions", [])
+            nodes.append(
+                {
+                    "id": machine.get("node_id") or f"state_machine.{machine.get('machine_id', 'state')}",
+                    "title": machine.get("title") or f"{machine.get('state_enum', 'StateEnum')} 状态流转",
+                    "category": "状态机",
+                    "type": "state_machine",
+                    "source": {
+                        "machine_id": machine.get("machine_id", ""),
+                        "state_enum": machine.get("state_enum", ""),
+                        "annotation": machine.get("annotation", "State"),
+                        "transition_count": len(transitions),
+                        "transitions": transitions,
+                    },
+                }
+            )
+        return nodes
+
+    def _find_state_machine_node(self, project: dict[str, Any], node_id: str) -> dict[str, Any] | None:
+        cli = project.get("active_versions", {}).get("cli")
+        cli_dir = Path(cli["path"]) if cli else None
+        for node in self._state_machine_nodes(project, cli_dir):
+            if node.get("id") == node_id:
+                return node
+        return None
+
     def _humanize_tool_title(self, tool: dict[str, Any]) -> str:
         display = tool.get("display_name", "") or tool.get("tool_id", "")
         if "/" in display:
@@ -1270,8 +1610,11 @@ class Platform:
         for raw, zh in replacements.items():
             if raw.lower() == display.replace("_", "").replace("-", "").lower():
                 return zh
+        normalized = display.replace("_", " ").replace("-", " ").strip()
+        if normalized and not any(ch.islower() for ch in normalized):
+            return normalized.title()
         spaced = ""
-        for ch in display.replace("_", " ").replace("-", " "):
+        for ch in normalized:
             if ch.isupper() and spaced and not spaced.endswith(" "):
                 spaced += " "
             spaced += ch
@@ -1326,6 +1669,10 @@ class Platform:
             tool_index = self._load_tool_index(Path(cli["path"]))
             if node_id in tool_index:
                 return self._tool_to_knowledge_node(tool_index[node_id])
+            if node_id.startswith("state_machine."):
+                found = self._find_state_machine_node(project, node_id)
+                if found:
+                    return found
         for node in read_json(Path(project["workspace_path"]) / "knowledge" / "custom-nodes.json", []) or []:
             if node.get("id") == node_id:
                 return node
@@ -1463,6 +1810,8 @@ class Platform:
             return "项目背景知识"
         if node.get("type") == "job" or node_id.startswith("jobs."):
             return "Job 知识"
+        if node.get("type") == "state_machine" or node_id.startswith("state_machine."):
+            return "状态机知识"
         if node.get("type") == "custom" or node_id.startswith("custom.") or node_id == "__new__":
             return "自定义知识"
         if node.get("type") == "derived" or node_id.startswith("public."):
@@ -1539,6 +1888,36 @@ class Platform:
                 "- 外部入口以已确认 CLI 工具清单为准。\n"
                 "- 回归执行只调用脚本和 stdout JSON 断言，不调用 LLM。\n"
             )
+        elif node.get("type") == "state_machine":
+            transitions = source.get("transitions", [])
+            lines = [
+                f"# {title}",
+                "",
+                f"状态枚举：`{source.get('state_enum', '')}`",
+                f"流转数量：{source.get('transition_count', len(transitions))}",
+                "",
+                "## 状态流转",
+                "",
+                "| From | To | Actor | Phase | 说明 |",
+                "|------|----|-------|-------|------|",
+            ]
+            for item in transitions:
+                lines.append(f"- {'/'.join(item.get('from', []))} -> {'/'.join(item.get('to', []))}: `{item.get('actor', '')}` ({item.get('phase', '')})")
+                lines.append(
+                    f"| {'/'.join(item.get('from', []))} | {'/'.join(item.get('to', []))} | "
+                    f"`{item.get('actor', '')}` | {item.get('phase', '')} | {item.get('comment', '')} |"
+                )
+            lines.extend(
+                [
+                    "",
+                    "## 测试关注点",
+                    "",
+                    "- 接口 Case 需要显式覆盖关键状态流转的正常路径和失败路径。",
+                    "- 涉及前置 actor 的流转要关注数据库状态更新、幂等和异常回滚。",
+                    "- 涉及后置 actor 的流转要关注任务派发、消息通知和补偿副作用。",
+                ]
+            )
+            body = "\n".join(lines) + "\n"
         else:
             body = (
                 f"# {title}\n\n"

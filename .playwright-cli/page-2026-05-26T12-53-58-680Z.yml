@@ -1,0 +1,52 @@
+- generic [ref=e2]:
+  - complementary [ref=e3]:
+    - generic [ref=e4]:
+      - generic [ref=e5]: AT
+      - generic [ref=e6]:
+        - strong [ref=e7]: AI 自动测试平台
+        - generic [ref=e8]: Local MVP
+    - navigation [ref=e9]:
+      - button "工作台" [ref=e10] [cursor=pointer]
+      - button "项目配置" [ref=e11] [cursor=pointer]
+      - button "CLI 工具" [ref=e12] [cursor=pointer]
+      - button "知识库" [ref=e13] [cursor=pointer]
+      - button "主流程 Case" [ref=e14] [cursor=pointer]
+      - button "变更确认" [ref=e15] [cursor=pointer]
+      - button "回归执行" [ref=e16] [cursor=pointer]
+  - main [ref=e17]:
+    - generic [ref=e18]:
+      - generic [ref=e19]:
+        - heading "本地 AI 后端自动化测试闭环" [level=1] [ref=e20]
+        - paragraph [ref=e21]: AI 负责生成草稿，脚本负责稳定执行，平台负责确认、版本和报告。
+      - generic [ref=e22]:
+        - button "检测 Agent" [ref=e23] [cursor=pointer]
+        - button "一键跑通 MVP" [ref=e24] [cursor=pointer]
+    - generic [ref=e25]: 已加载项目：订单系统自动化测试项目
+    - generic [ref=e26]:
+      - generic [ref=e27]:
+        - article [ref=e28]:
+          - generic [ref=e29]: 项目
+          - strong [ref=e30]: "1"
+          - emphasis [ref=e31]: 本机配置
+        - article [ref=e32]:
+          - generic [ref=e33]: 知识库
+          - strong [ref=e34]: kb-v1
+          - emphasis [ref=e35]: active
+        - article [ref=e36]:
+          - generic [ref=e37]: CLI
+          - strong [ref=e38]: cli-v1
+          - emphasis [ref=e39]: active
+        - article [ref=e40]:
+          - generic [ref=e41]: Case
+          - strong [ref=e42]: case-v1
+          - emphasis [ref=e43]: active
+      - generic [ref=e44]:
+        - generic [ref=e45]: 1 项目
+        - generic [ref=e46]: 2 知识库
+        - generic [ref=e47]: 3 CLI
+        - generic [ref=e48]: 4 Case
+        - generic [ref=e49]: 5 Snapshot
+        - generic [ref=e50]: 6 回归
+      - generic [ref=e51]:
+        - heading "最近状态" [level=2] [ref=e52]
+        - generic [ref=e53]: 等待操作。推荐直接点击“一键跑通 MVP”。

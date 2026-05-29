@@ -115,7 +115,15 @@ class PlatformRequestHandler(BaseHTTPRequestHandler):
                 draft_id = (query.get("draft_id") or [""])[0] or None
                 return {"success": True, "catalog": platform.get_cli_catalog(project_id, draft_id)}
             if method == "POST" and segments[3:] == ["cases", "generate"]:
-                return {"success": True, "draft": platform.generate_cases(project_id, body.get("scope", "main-flow"))}
+                return {"success": True, "draft": platform.generate_cases(project_id, body.get("scope", "main-flow"), body.get("node_id"))}
+            if method == "GET" and segments[3:] == ["cases", "catalog"]:
+                draft_id = (query.get("draft_id") or [""])[0] or None
+                return {"success": True, "catalog": platform.get_case_catalog(project_id, draft_id)}
+            if method == "GET" and len(segments) == 6 and segments[3] == "cases" and segments[4] == "detail":
+                draft_id = (query.get("draft_id") or [""])[0] or None
+                return {"success": True, "detail": platform.get_case_detail(project_id, segments[5], draft_id)}
+            if method == "POST" and segments[3:] == ["cases", "upsert"]:
+                return {"success": True, "detail": platform.upsert_case(project_id, body)}
             if method == "POST" and len(segments) == 6 and segments[3] == "drafts" and segments[5] == "confirm":
                 return {"success": True, "version": platform.confirm_draft(project_id, segments[4])}
             if method == "POST" and segments[3:] == ["snapshots"]:

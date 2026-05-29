@@ -61,7 +61,15 @@ Knowledge nodes are seeded from the confirmed CLI version. Facade grouping must 
 
 Do not group all Facade methods under a generic label such as `交易接口`. Existing confirmed CLI indexes may be stale, so `services.py` re-enriches `platform-tool-index.json` from `_meta/scan-manifest.json` at read time.
 
+State-machine knowledge is not a CLI tool. `generate_cli()` writes `_meta/state-machines.json` by scanning Java `@State(from=..., to=...)` actor annotations, including `actor/pre` and `actor/post` classes. The knowledge catalog renders these as a separate `状态机` group, for example `OrderStateEnum 状态流转`, so interface knowledge and Case generation can depend on common state transitions.
+
 The knowledge page keeps chat and editable content visible together. Sending a chat message should keep the user in chat mode, update the selected knowledge draft, and leave confirmation/cancel controls available.
+
+## Case Module
+
+The `主流程 Case` page is organized by the same knowledge catalog tree. A user selects a knowledge node, generates a Case draft for that node, then reviews a list of cases. Each case stores metadata in `suite.json` and executable steps in `steps.json`; the UI can switch between a visual flow view and editable JSON. `upsert_case()` is the service entry point for manual edits and newly added cases.
+
+Keep the existing deterministic MVP path intact: calling `generate_cases(project_id, "main-flow")` without a node still creates the small offline regression suite used by `scripts/run_mvp_flow.py`. Node-scoped generation should pass `node_id` and may create multiple cases for one interface.
 
 ## Verification
 
@@ -70,6 +78,7 @@ Run focused tests while changing behavior:
 ```bash
 python3 -m pytest tests/test_knowledge_catalog_flow.py -q
 python3 -m pytest tests/test_frontend_contract.py tests/test_knowledge_frontend_contract.py -q
+python3 -m pytest tests/test_case_builder_flow.py -q
 ```
 
 Run the full suite before finishing:

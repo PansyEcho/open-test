@@ -1,0 +1,502 @@
+- generic [ref=e2]:
+  - complementary [ref=e3]:
+    - generic [ref=e4]:
+      - generic [ref=e5]: AT
+      - generic [ref=e6]:
+        - strong [ref=e7]: AI 自动测试平台
+        - generic [ref=e8]: Local MVP
+    - navigation [ref=e9]:
+      - button "工作台" [ref=e10] [cursor=pointer]
+      - button "项目配置" [ref=e11] [cursor=pointer]
+      - button "CLI 工具" [ref=e12] [cursor=pointer]
+      - button "知识库" [active] [ref=e13] [cursor=pointer]
+      - button "主流程 Case" [ref=e14] [cursor=pointer]
+      - button "变更确认" [ref=e15] [cursor=pointer]
+      - button "回归执行" [ref=e16] [cursor=pointer]
+  - main [ref=e17]:
+    - generic [ref=e18]:
+      - generic [ref=e19]:
+        - heading "本地 AI 后端自动化测试闭环" [level=1] [ref=e20]
+        - paragraph [ref=e21]: AI 负责生成草稿，脚本负责稳定执行，平台负责确认、版本和报告。
+      - generic [ref=e22]:
+        - button "检测 Agent" [ref=e23] [cursor=pointer]
+        - button "一键跑通 MVP" [ref=e24] [cursor=pointer]
+    - generic [ref=e25]: 已加载项目：订单系统自动化测试项目
+    - generic [ref=e55]:
+      - generic [ref=e56]:
+        - generic [ref=e57]:
+          - generic [ref=e58]:
+            - heading "知识库补全对话" [level=2] [ref=e59]
+            - paragraph [ref=e60]: 请选择右侧知识节点，通过聊天逐个生成或查看内容。
+          - generic [ref=e61]:
+            - button "清空对话" [ref=e62] [cursor=pointer]
+            - button "返回聊天" [ref=e63] [cursor=pointer]
+        - generic [ref=e64]:
+          - generic [ref=e65]:
+            - text: 从代码生成知识库的 Skill 目录
+            - textbox "从代码生成知识库的 Skill 目录" [ref=e66]: /Users/user/temp/self-skill/code-knowledge-builder-cl
+          - button "保存 Skill" [ref=e67] [cursor=pointer]
+        - generic [ref=e70]:
+          - textbox "继续描述业务、补充知识点，或要求重新生成..." [ref=e71]: 你好
+          - generic [ref=e72]:
+            - button "发送" [ref=e73] [cursor=pointer]
+            - button "确认写入" [ref=e74] [cursor=pointer]
+            - button "取消返回" [ref=e75] [cursor=pointer]
+      - complementary [ref=e76]:
+        - generic [ref=e77]:
+          - heading "知识库生成情况" [level=2] [ref=e78]
+          - button "新建知识" [ref=e79] [cursor=pointer]
+        - textbox "搜索知识点名称" [ref=e81]
+        - generic [ref=e82]:
+          - generic [ref=e84] [cursor=pointer]:
+            - generic [ref=e85]: ▧ 项目背景
+            - generic [ref=e86]: 已生成
+          - generic [ref=e87]:
+            - button "⌄ CustomInfoFacade" [ref=e88] [cursor=pointer]
+            - generic [ref=e89]:
+              - generic [ref=e90] [cursor=pointer]:
+                - generic [ref=e91]: ▧ detail【查询单个定制文案详情】
+                - generic [ref=e92]: 未生成
+              - generic [ref=e93] [cursor=pointer]:
+                - generic [ref=e94]: ▧ listDistinctCustomType【查询所有定制组合】
+                - generic [ref=e95]: 未生成
+              - generic [ref=e96] [cursor=pointer]:
+                - generic [ref=e97]: ▧ pageQueryCustomData【分页查询定制组合数据】
+                - generic [ref=e98]: 未生成
+              - generic [ref=e99] [cursor=pointer]:
+                - generic [ref=e100]: ▧ queryCustomContentList【查询定制文案组合数据列表】
+                - generic [ref=e101]: 未生成
+              - generic [ref=e102] [cursor=pointer]:
+                - generic [ref=e103]: ▧ queryCustomTypeList【查询定制组合选项列表】
+                - generic [ref=e104]: 未生成
+              - generic [ref=e105] [cursor=pointer]:
+                - generic [ref=e106]: ▧ saveOrUpdateCustomInfo【保存或更新定制组合数据】
+                - generic [ref=e107]: 未生成
+          - generic [ref=e108]:
+            - button "⌄ FreezeFacade" [ref=e109] [cursor=pointer]
+            - generic [ref=e110]:
+              - generic [ref=e111] [cursor=pointer]:
+                - generic [ref=e112]: ▧ freeze【发起冻结】
+                - generic [ref=e113]: 未生成
+              - generic [ref=e114] [cursor=pointer]:
+                - generic [ref=e115]: ▧ queryFreeze【查询冻结记录】
+                - generic [ref=e116]: 未生成
+          - generic [ref=e117]:
+            - button "⌄ InquireFacade" [ref=e118] [cursor=pointer]
+            - generic [ref=e119]:
+              - generic [ref=e120] [cursor=pointer]:
+                - generic [ref=e121]: ▧ dealCandidateInfo【定制查询（余票查询）处理】
+                - generic [ref=e122]: 未生成
+              - generic [ref=e123] [cursor=pointer]:
+                - generic [ref=e124]: ▧ dealRefundChange【退改核验处理】
+                - generic [ref=e125]: 未生成
+              - generic [ref=e126] [cursor=pointer]:
+                - generic [ref=e127]: ▧ dealSeatCount【定制查询（余票查询）处理】
+                - generic [ref=e128]: 未生成
+              - generic [ref=e129] [cursor=pointer]:
+                - generic [ref=e130]: ▧ dealStopInfo【列车停运处理】
+                - generic [ref=e131]: 未生成
+              - generic [ref=e132] [cursor=pointer]:
+                - generic [ref=e133]: ▧ dealTicketInfo【出票核验处理】
+                - generic [ref=e134]: 未生成
+              - generic [ref=e135] [cursor=pointer]:
+                - generic [ref=e136]: ▧ getList【list】
+                - generic [ref=e137]: 未生成
+              - generic [ref=e138] [cursor=pointer]:
+                - generic [ref=e139]: ▧ listExport【TODO 后续升级版本删除 查询导出】
+                - generic [ref=e140]: 未生成
+              - generic [ref=e141] [cursor=pointer]:
+                - generic [ref=e142]: ▧ queryInquireCount【查询页面未处理订单的数量】
+                - generic [ref=e143]: 未生成
+              - generic [ref=e144] [cursor=pointer]:
+                - generic [ref=e145]: ▧ queryMerchantTicketingCount【查询供应商堆单值】
+                - generic [ref=e146]: 未生成
+          - generic [ref=e147]:
+            - button "⌄ InterceptOrderFacade" [ref=e148] [cursor=pointer]
+            - generic [ref=e150] [cursor=pointer]:
+              - generic [ref=e151]: ▧ list【查询创单拦截订单列表】
+              - generic [ref=e152]: 未生成
+          - generic [ref=e153]:
+            - button "⌄ InterceptWhiteListConfigFacade" [ref=e154] [cursor=pointer]
+            - generic [ref=e155]:
+              - generic [ref=e156] [cursor=pointer]:
+                - generic [ref=e157]: ▧ list【查询创单拦截白名单配置列表】
+                - generic [ref=e158]: 未生成
+              - generic [ref=e159] [cursor=pointer]:
+                - generic [ref=e160]: ▧ save【查询创单拦截白名单配置列表】
+                - generic [ref=e161]: 未生成
+          - generic [ref=e162]:
+            - button "⌄ OrderFacade" [ref=e163] [cursor=pointer]
+            - generic [ref=e164]:
+              - generic [ref=e165] [cursor=pointer]:
+                - generic [ref=e166]: ▧ batchQueryOrderInfo【批量查询订单信息，不进行联程单关联 批量申诉时候需要查询订单数据 退改服务费结算线上化】
+                - generic [ref=e167]: 未生成
+              - generic [ref=e168] [cursor=pointer]:
+                - generic [ref=e169]: ▧ batchQueryTicketingCount【TODO--后续删除 批量查询供应商出票堆单值】
+                - generic [ref=e170]: 未生成
+              - generic [ref=e171] [cursor=pointer]:
+                - generic [ref=e172]: ▧ compareTicketingInfo【TODO -- 后续下线 比较堆单值】
+                - generic [ref=e173]: 未生成
+              - generic [ref=e174] [cursor=pointer]:
+                - generic [ref=e175]: ▧ getOrderMachine【根据订单号获取票机名称，c端使用】
+                - generic [ref=e176]: 未生成
+              - generic [ref=e177] [cursor=pointer]:
+                - generic [ref=e178]: ▧ getPassengerInfo【根据订单号、乘客流水号 获取证件号码 默认前端页面加密的，需要展示全部明文数据调该接口】
+                - generic [ref=e179]: 未生成
+              - generic [ref=e180] [cursor=pointer]:
+                - generic [ref=e181]: ▧ getPaySerialNo【获取支付流水号 出票查询支付流失号】
+                - generic [ref=e182]: 未生成
+              - generic [ref=e183] [cursor=pointer]:
+                - generic [ref=e184]: ▧ lock【锁单 ebk供应商处理订单使用】
+                - generic [ref=e185]: 未生成
+              - generic [ref=e186] [cursor=pointer]:
+                - generic [ref=e187]: ▧ orderDealDone【完结订单】
+                - generic [ref=e188]: 未生成
+              - generic [ref=e189] [cursor=pointer]:
+                - generic [ref=e190]: ▧ orderDealingList【待处理订单列表 订单列表】
+                - generic [ref=e191]: 未生成
+              - generic [ref=e192] [cursor=pointer]:
+                - generic [ref=e193]: ▧ orderDetail【查询订单详情】
+                - generic [ref=e194]: 未生成
+              - generic [ref=e195] [cursor=pointer]:
+                - generic [ref=e196]: ▧ orderInfo【查询订单详情及打款记录 退改使用】
+                - generic [ref=e197]: 未生成
+              - generic [ref=e198] [cursor=pointer]:
+                - generic [ref=e199]: ▧ orderQueryList【订单查询 订单列表】
+                - generic [ref=e200]: 未生成
+              - generic [ref=e201] [cursor=pointer]:
+                - generic [ref=e202]: ▧ queryDashboardData【EBK供应商查询数据看板相关信息】
+                - generic [ref=e203]: 未生成
+              - generic [ref=e204] [cursor=pointer]:
+                - generic [ref=e205]: ▧ queryDetail【查询详情】
+                - generic [ref=e206]: 未生成
+              - generic [ref=e207] [cursor=pointer]:
+                - generic [ref=e208]: ▧ queryDistributingCount【查询待分单订单量 分单定时job调用. 老分单使用。新分单逻辑和老的不一样】
+                - generic [ref=e209]: 未生成
+              - generic [ref=e210] [cursor=pointer]:
+                - generic [ref=e211]: ▧ queryGroupByCollectionStatus【无票收单池-数据汇总】
+                - generic [ref=e212]: 未生成
+              - generic [ref=e213] [cursor=pointer]:
+                - generic [ref=e214]: ▧ queryHkPayIssueSuccessOrder【港币支付出票成功-数据汇总】
+                - generic [ref=e215]: 未生成
+              - generic [ref=e216] [cursor=pointer]:
+                - generic [ref=e217]: ▧ queryLackCollectionPageList【无票收单池-列表查询】
+                - generic [ref=e218]: 未生成
+              - generic [ref=e219] [cursor=pointer]:
+                - generic [ref=e220]: ▧ queryMerchantSpecialAbility【TODO 后续删除 查询供应商出票堆单值--特殊能力项】
+                - generic [ref=e221]: 未生成
+              - generic [ref=e222] [cursor=pointer]:
+                - generic [ref=e223]: ▧ queryOrderCountForOperator【查询出票员个人分单、出单数, 及绑定票机分单、出单数 ebk页面展示使用】
+                - generic [ref=e224]: 未生成
+              - generic [ref=e225] [cursor=pointer]:
+                - generic [ref=e226]: ▧ queryOrderCountForTicketMachine【查询票机当日最大出票数, 及剩余可出票数 ebk页面展示使用】
+                - generic [ref=e227]: 未生成
+              - generic [ref=e228] [cursor=pointer]:
+                - generic [ref=e229]: ▧ queryOrderCountGroupByAbility【按能力项查询堆单分布 堆单能力项列表展示需要调用该接口】
+                - generic [ref=e230]: 未生成
+              - generic [ref=e231] [cursor=pointer]:
+                - generic [ref=e232]: ▧ queryOrderCountGroupByHour【查询大盘订单量 主要用途：分单计算供应商下限值使用】
+                - generic [ref=e233]: 未生成
+              - generic [ref=e234] [cursor=pointer]:
+                - generic [ref=e235]: ▧ queryOrderCount【查询页面未处理订单的数量 ebk页面展示使用 更换支付宝时候使用，交易订单是否处理完毕】
+                - generic [ref=e236]: 未生成
+              - generic [ref=e237] [cursor=pointer]:
+                - generic [ref=e238]: ▧ queryOrderInfo【查询订单详情】
+                - generic [ref=e239]: 未生成
+              - generic [ref=e240] [cursor=pointer]:
+                - generic [ref=e241]: ▧ queryOrderListByPaySerialNo【根据支付流水，查订单信息 退改使用】
+                - generic [ref=e242]: 未生成
+              - generic [ref=e243] [cursor=pointer]:
+                - generic [ref=e244]: ▧ queryPendingHandleCount【查询待处理订单数量（待出票、待占座） ebk展示供应商待处理订单量使用】
+                - generic [ref=e245]: 未生成
+              - generic [ref=e246] [cursor=pointer]:
+                - generic [ref=e247]: ▧ queryTicketingInfo【TODO 后续删除 查询待出票信息】
+                - generic [ref=e248]: 未生成
+              - generic [ref=e249] [cursor=pointer]:
+                - generic [ref=e250]: ▧ rejectDistributePercentPageInfo【境内二次分单占比】
+                - generic [ref=e251]: 未生成
+              - generic [ref=e252] [cursor=pointer]:
+                - generic [ref=e253]: ▧ updatePaySerialNo【修改支付流水号】
+                - generic [ref=e254]: 未生成
+          - generic [ref=e255]:
+            - button "⌄ PaySerialNoFacade" [ref=e256] [cursor=pointer]
+            - generic [ref=e257]:
+              - generic [ref=e258] [cursor=pointer]:
+                - generic [ref=e259]: ▧ confirm【确认无误】
+                - generic [ref=e260]: 未生成
+              - generic [ref=e261] [cursor=pointer]:
+                - generic [ref=e262]: ▧ finish【强制结束】
+                - generic [ref=e263]: 未生成
+              - generic [ref=e264] [cursor=pointer]:
+                - generic [ref=e265]: ▧ queryList【支付流水校验列表】
+                - generic [ref=e266]: 未生成
+          - generic [ref=e267]:
+            - button "⌄ RemitFacade" [ref=e268] [cursor=pointer]
+            - generic [ref=e269]:
+              - generic [ref=e270] [cursor=pointer]:
+                - generic [ref=e271]: ▧ callback【打款回调】
+                - generic [ref=e272]: 未生成
+              - generic [ref=e273] [cursor=pointer]:
+                - generic [ref=e274]: ▧ queryRemit【查询打款记录】
+                - generic [ref=e275]: 未生成
+              - generic [ref=e276] [cursor=pointer]:
+                - generic [ref=e277]: ▧ remit【发起打款】
+                - generic [ref=e278]: 未生成
+              - generic [ref=e279] [cursor=pointer]:
+                - generic [ref=e280]: ▧ syncCustomer【发起同步c端】
+                - generic [ref=e281]: 未生成
+          - generic [ref=e282]:
+            - button "⌄ ServiceFeeFacade" [ref=e283] [cursor=pointer]
+            - generic [ref=e284]:
+              - generic [ref=e285] [cursor=pointer]:
+                - generic [ref=e286]: ▧ appeal【发起扣款】
+                - generic [ref=e287]: 未生成
+              - generic [ref=e288] [cursor=pointer]:
+                - generic [ref=e289]: ▧ queryServiceFee【查询打款记录】
+                - generic [ref=e290]: 未生成
+              - generic [ref=e291] [cursor=pointer]:
+                - generic [ref=e292]: ▧ serviceFeeCallback【服务费发起申诉接口回写】
+                - generic [ref=e293]: 未生成
+              - generic [ref=e294] [cursor=pointer]:
+                - generic [ref=e295]: ▧ syncCustomer【发起同步c端】
+                - generic [ref=e296]: 未生成
+          - generic [ref=e297]:
+            - button "⌄ TicketFacade" [ref=e298] [cursor=pointer]
+            - generic [ref=e299]:
+              - generic [ref=e300] [cursor=pointer]:
+                - generic [ref=e301]: ▧ applyOccupyIssue【申请占座出票】
+                - generic [ref=e302]: 未生成
+              - generic [ref=e303] [cursor=pointer]:
+                - generic [ref=e304]: ▧ batchIssueTicket【联程批量出票】
+                - generic [ref=e305]: 未生成
+              - generic [ref=e306] [cursor=pointer]:
+                - generic [ref=e307]: ▧ batchRejectIssue【联程批量出票驳回】
+                - generic [ref=e308]: 未生成
+              - generic [ref=e309] [cursor=pointer]:
+                - generic [ref=e310]: ▧ batchRevokeOrder【批量撤单(供应商点击批量撤单后,将其所有订单都撤单)】
+                - generic [ref=e311]: 未生成
+              - generic [ref=e312] [cursor=pointer]:
+                - generic [ref=e313]: ▧ issueTicket【出票】
+                - generic [ref=e314]: 未生成
+              - generic [ref=e315] [cursor=pointer]:
+                - generic [ref=e316]: ▧ modifyIssueTicket【修改出票信息】
+                - generic [ref=e317]: 未生成
+              - generic [ref=e318] [cursor=pointer]:
+                - generic [ref=e319]: ▧ occupyIssueResult【占座出票】
+                - generic [ref=e320]: 未生成
+              - generic [ref=e321] [cursor=pointer]:
+                - generic [ref=e322]: ▧ occupyResult【占座】
+                - generic [ref=e323]: 未生成
+              - generic [ref=e324] [cursor=pointer]:
+                - generic [ref=e325]: ▧ rejectIssue【出票驳回】
+                - generic [ref=e326]: 未生成
+              - generic [ref=e327] [cursor=pointer]:
+                - generic [ref=e328]: ▧ submitTicketImage【提交出票凭条图片】
+                - generic [ref=e329]: 未生成
+          - generic [ref=e330]:
+            - button "⌄ TicketMachineFacade" [ref=e331] [cursor=pointer]
+            - generic [ref=e332]:
+              - generic [ref=e333] [cursor=pointer]:
+                - generic [ref=e334]: ▧ mtrTicketMachineHandle【MTR 票机监控】
+                - generic [ref=e335]: 未生成
+              - generic [ref=e336] [cursor=pointer]:
+                - generic [ref=e337]: ▧ queryTicketMachineHandle【查询票机待处理任务集合(待出票、待占座、查询)】
+                - generic [ref=e338]: 未生成
+          - generic [ref=e339]:
+            - button "⌄ TradeFacade" [ref=e340] [cursor=pointer]
+            - generic [ref=e341]:
+              - generic [ref=e342] [cursor=pointer]:
+                - generic [ref=e343]: ▧ cancel【取消订单】
+                - generic [ref=e344]: 未生成
+              - generic [ref=e345] [cursor=pointer]:
+                - generic [ref=e346]: ▧ candidateInfo【候补订单】
+                - generic [ref=e347]: 未生成
+              - generic [ref=e348] [cursor=pointer]:
+                - generic [ref=e349]: ▧ createOrder【下单】
+                - generic [ref=e350]: 已生成
+              - generic [ref=e351] [cursor=pointer]:
+                - generic [ref=e352]: ▧ hkDzCapacityCheck【港铁电子票产能校验】
+                - generic [ref=e353]: 未生成
+              - generic [ref=e354] [cursor=pointer]:
+                - generic [ref=e355]: ▧ inquireRefundChange【退改核验】
+                - generic [ref=e356]: 未生成
+              - generic [ref=e357] [cursor=pointer]:
+                - generic [ref=e358]: ▧ inquireSeatCount【定制查询（余票查询）】
+                - generic [ref=e359]: 未生成
+              - generic [ref=e360] [cursor=pointer]:
+                - generic [ref=e361]: ▧ inquireStopInfo【列车停运】
+                - generic [ref=e362]: 未生成
+              - generic [ref=e363] [cursor=pointer]:
+                - generic [ref=e364]: ▧ inquireTicketInfo【出票核验】
+                - generic [ref=e365]: 未生成
+              - generic [ref=e366] [cursor=pointer]:
+                - generic [ref=e367]: ▧ saleDateQuery【销售时间检查】
+                - generic [ref=e368]: 未生成
+          - generic [ref=e369]:
+            - button "⌄ WarningOrderFacade" [ref=e370] [cursor=pointer]
+            - generic [ref=e371]:
+              - generic [ref=e372] [cursor=pointer]:
+                - generic [ref=e373]: ▧ detail【查详情】
+                - generic [ref=e374]: 未生成
+              - generic [ref=e375] [cursor=pointer]:
+                - generic [ref=e376]: ▧ pageInfo【分页查询】
+                - generic [ref=e377]: 未生成
+              - generic [ref=e378] [cursor=pointer]:
+                - generic [ref=e379]: ▧ update【更新】
+                - generic [ref=e380]: 未生成
+          - generic [ref=e381]:
+            - button "⌄ Job 补偿" [ref=e382] [cursor=pointer]
+            - generic [ref=e383]:
+              - generic [ref=e384] [cursor=pointer]:
+                - generic [ref=e385]: ▧ A B I L I T Y T I M E O U T C A N C E L J O B
+                - generic [ref=e386]: 未生成
+              - generic [ref=e387] [cursor=pointer]:
+                - generic [ref=e388]: ▧ C L E A N T I C K E T M A C H I N E O R D E R J O B
+                - generic [ref=e389]: 未生成
+              - generic [ref=e390] [cursor=pointer]:
+                - generic [ref=e391]: ▧ D I S T R I B U T I O N S I N G L E O R D E R
+                - generic [ref=e392]: 未生成
+              - generic [ref=e393] [cursor=pointer]:
+                - generic [ref=e394]: ▧ E X P I R E O C C U P Y A P P L Y
+                - generic [ref=e395]: 未生成
+              - generic [ref=e396] [cursor=pointer]:
+                - generic [ref=e397]: ▧ H I S T O R Y T I C K E T I N G R E C O R D J O B
+                - generic [ref=e398]: 未生成
+              - generic [ref=e399] [cursor=pointer]:
+                - generic [ref=e400]: ▧ I N N E R R E V O K E S W I T C H
+                - generic [ref=e401]: 未生成
+              - generic [ref=e402] [cursor=pointer]:
+                - generic [ref=e403]: ▧ I N Q U I R E C A L L B A C K
+                - generic [ref=e404]: 未生成
+              - generic [ref=e405] [cursor=pointer]:
+                - generic [ref=e406]: ▧ I N Q U I R E C A P A C I T Y R E S E T J O B
+                - generic [ref=e407]: 未生成
+              - generic [ref=e408] [cursor=pointer]:
+                - generic [ref=e409]: ▧ I N Q U I R E M E R C H A N T A P I
+                - generic [ref=e410]: 未生成
+              - generic [ref=e411] [cursor=pointer]:
+                - generic [ref=e412]: ▧ I N Q U I R E R E F U N D C H A N G E D I S T R I B U T E M E R C H A N T J O B
+                - generic [ref=e413]: 未生成
+              - generic [ref=e414] [cursor=pointer]:
+                - generic [ref=e415]: ▧ I N Q U I R E T I M E O U T
+                - generic [ref=e416]: 未生成
+              - generic [ref=e417] [cursor=pointer]:
+                - generic [ref=e418]: ▧ I S S U E R U L E P O L I C Y C H E C K
+                - generic [ref=e419]: 未生成
+              - generic [ref=e420] [cursor=pointer]:
+                - generic [ref=e421]: ▧ L A C K T I C K E T R E T R Y J O B
+                - generic [ref=e422]: 未生成
+              - generic [ref=e423] [cursor=pointer]:
+                - generic [ref=e424]: ▧ M T R S T O P E X C E P T I O N O R D E R J O B
+                - generic [ref=e425]: 未生成
+              - generic [ref=e426] [cursor=pointer]:
+                - generic [ref=e427]: ▧ N E W D I S T R I B U T I O N M U L T I P L E C O N N E C T O R D E R
+                - generic [ref=e428]: 未生成
+              - generic [ref=e429] [cursor=pointer]:
+                - generic [ref=e430]: ▧ O C C O U P A P P L Y T I C K E T
+                - generic [ref=e431]: 未生成
+              - generic [ref=e432] [cursor=pointer]:
+                - generic [ref=e433]: ▧ O R D E R B O A R D J O B
+                - generic [ref=e434]: 未生成
+              - generic [ref=e435] [cursor=pointer]:
+                - generic [ref=e436]: ▧ R E J E C T O R D E R D I S T R I B U T E I N C R J O B
+                - generic [ref=e437]: 未生成
+              - generic [ref=e438] [cursor=pointer]:
+                - generic [ref=e439]: ▧ R E S E T C O L L E C T I O N C O U N T J O B
+                - generic [ref=e440]: 未生成
+              - generic [ref=e441] [cursor=pointer]:
+                - generic [ref=e442]: ▧ R E S E T M E R C H A N T A L L T I C K E T I N G I N F O J O B
+                - generic [ref=e443]: 未生成
+              - generic [ref=e444] [cursor=pointer]:
+                - generic [ref=e445]: ▧ R E T R Y C A L L B A C K J O B
+                - generic [ref=e446]: 未生成
+              - generic [ref=e447] [cursor=pointer]:
+                - generic [ref=e448]: ▧ R E T R Y C R E A T E M E R C H A N T O R D E R J O B
+                - generic [ref=e449]: 未生成
+              - generic [ref=e450] [cursor=pointer]:
+                - generic [ref=e451]: ▧ R E T R Y C R E A T E O R D E R
+                - generic [ref=e452]: 未生成
+              - generic [ref=e453] [cursor=pointer]:
+                - generic [ref=e454]: ▧ R E T R Y D I S T R I B U T I O N H K O R D E R J O B
+                - generic [ref=e455]: 未生成
+              - generic [ref=e456] [cursor=pointer]:
+                - generic [ref=e457]: ▧ R E T R Y F R E E Z E
+                - generic [ref=e458]: 未生成
+              - generic [ref=e459] [cursor=pointer]:
+                - generic [ref=e460]: ▧ R E T R Y O C C U P Y C A L L B A C K
+                - generic [ref=e461]: 未生成
+              - generic [ref=e462] [cursor=pointer]:
+                - generic [ref=e463]: ▧ R E T R Y R E M I T
+                - generic [ref=e464]: 未生成
+              - generic [ref=e465] [cursor=pointer]:
+                - generic [ref=e466]: ▧ R E T R Y R E M I T S Y N C C U S T O M E R
+                - generic [ref=e467]: 未生成
+              - generic [ref=e468] [cursor=pointer]:
+                - generic [ref=e469]: ▧ R E T R Y S E R V I C E F E E R E M I T
+                - generic [ref=e470]: 未生成
+              - generic [ref=e471] [cursor=pointer]:
+                - generic [ref=e472]: ▧ R E T R Y S E R V I C E F E E R E M I T S Y N C C U S T O M E R
+                - generic [ref=e473]: 未生成
+              - generic [ref=e474] [cursor=pointer]:
+                - generic [ref=e475]: ▧ R E V O K E N E W
+                - generic [ref=e476]: 未生成
+              - generic [ref=e477] [cursor=pointer]:
+                - generic [ref=e478]: ▧ S T A T T R A I N O R D E R T R A N S F E R H K
+                - generic [ref=e479]: 未生成
+              - generic [ref=e480] [cursor=pointer]:
+                - generic [ref=e481]: ▧ S T A T T R A I N O R D E R T R A N S F E R I N N E R
+                - generic [ref=e482]: 未生成
+              - generic [ref=e483] [cursor=pointer]:
+                - generic [ref=e484]: ▧ T I M E O U T C A N C E L J O B
+                - generic [ref=e485]: 未生成
+              - generic [ref=e486] [cursor=pointer]:
+                - generic [ref=e487]: ▧ T R A I N O R D E R I N F O S I M P L E D E L
+                - generic [ref=e488]: 未生成
+              - generic [ref=e489] [cursor=pointer]:
+                - generic [ref=e490]: ▧ 自动补单任务
+                - generic [ref=e491]: 未生成
+          - generic [ref=e492]:
+            - button "⌄ PaymentFacade" [ref=e493] [cursor=pointer]
+            - generic [ref=e495] [cursor=pointer]:
+              - generic [ref=e496]: ▧ payOrder【支付订单】
+              - generic [ref=e497]: 未生成
+          - generic [ref=e498]:
+            - button "⌄ 公共接口" [ref=e499] [cursor=pointer]
+            - generic [ref=e500]:
+              - generic [ref=e501] [cursor=pointer]:
+                - generic [ref=e502]: ▧ 查询币种汇率
+                - generic [ref=e503]: 未生成
+              - generic [ref=e504] [cursor=pointer]:
+                - generic [ref=e505]: ▧ 计算最晚出票时间
+                - generic [ref=e506]: 未生成
+          - generic [ref=e507]:
+            - button "⌄ 状态机" [ref=e508] [cursor=pointer]
+            - generic [ref=e510] [cursor=pointer]:
+              - generic [ref=e511]: ▧ OrderStateEnum 状态流转
+              - generic [ref=e512]: 未生成
+        - generic [ref=e513]:
+          - text: 已生成
+          - text: 未生成
+        - generic [ref=e516]:
+          - generic [ref=e517]: 知识库 / 项目背景 / 项目背景
+          - generic [ref=e519]:
+            - heading "项目背景" [level=2] [ref=e520]
+            - paragraph [ref=e521]: 已生成 · 最近更新 2026-05-26T20:47:28+0800
+          - generic [ref=e522]:
+            - button "当前 / 草稿" [ref=e523] [cursor=pointer]
+            - button "原先快照" [ref=e524] [cursor=pointer]
+          - generic [ref=e525]:
+            - heading "项目背景" [level=1] [ref=e526]
+            - text: booking-core 是火车票票台预定出票系统，包含下单、占座、出票、取消和撤单。
+          - generic [ref=e527]:
+            - button "人工编辑" [ref=e528] [cursor=pointer]
+            - button "重新生成" [ref=e529] [cursor=pointer]
+          - generic [ref=e530]:
+            - generic [ref=e531]:
+              - heading "历史聊天记录" [level=3] [ref=e532]
+              - button "刷新" [ref=e533] [cursor=pointer]
+            - generic [ref=e534]: 暂无历史聊天
+        - generic [ref=e535]:
+          - paragraph [ref=e536]: 可新建对话窗口生成新的目录与子知识库。
+          - paragraph [ref=e537]: 已生成的知识库支持人工编辑。
+          - paragraph [ref=e538]: 点击知识库默认进入“项目背景”页面。

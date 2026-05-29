@@ -1,0 +1,545 @@
+- generic [ref=e2]:
+  - complementary [ref=e3]:
+    - generic [ref=e4]:
+      - generic [ref=e5]: AT
+      - generic [ref=e6]:
+        - strong [ref=e7]: AI 自动测试平台
+        - generic [ref=e8]: Local MVP
+    - navigation [ref=e9]:
+      - button "工作台" [ref=e10] [cursor=pointer]
+      - button "项目配置" [ref=e11] [cursor=pointer]
+      - button "CLI 工具" [ref=e12] [cursor=pointer]
+      - button "知识库" [ref=e13] [cursor=pointer]
+      - button "主流程 Case" [ref=e14] [cursor=pointer]
+      - button "变更确认" [ref=e15] [cursor=pointer]
+      - button "回归执行" [ref=e16] [cursor=pointer]
+  - main [ref=e17]:
+    - generic [ref=e18]:
+      - generic [ref=e19]:
+        - heading "本地 AI 后端自动化测试闭环" [level=1] [ref=e20]
+        - paragraph [ref=e21]: AI 负责生成草稿，脚本负责稳定执行，平台负责确认、版本和报告。
+      - generic [ref=e22]:
+        - button "检测 Agent" [ref=e23] [cursor=pointer]
+        - button "一键跑通 MVP" [ref=e24] [cursor=pointer]
+    - generic [ref=e25]: 已加载项目：订单系统自动化测试项目
+    - generic [ref=e539]:
+      - generic [ref=e540]:
+        - generic [ref=e541]:
+          - heading "主流程 Case" [level=2] [ref=e542]
+          - paragraph [ref=e543]: 按知识库目录进入接口维度，由 AI 扫描知识库、代码与 CLI 后生成对应接口的 Case 列表。
+        - generic [ref=e544]:
+          - button "一键生成 Case" [ref=e545] [cursor=pointer]
+          - button "确认 Case" [ref=e546] [cursor=pointer]
+      - generic [ref=e547]:
+        - complementary [ref=e548]:
+          - heading "知识目录 / 接口维度" [level=3] [ref=e549]
+          - textbox "搜索知识或接口" [ref=e550]
+          - generic [ref=e551]:
+            - button "▧ 项目背景 可生成" [ref=e552] [cursor=pointer]:
+              - text: ▧ 项目背景
+              - generic [ref=e553]: 可生成
+            - generic [ref=e554]:
+              - button "⌄ CustomInfoFacade" [ref=e555] [cursor=pointer]
+              - generic [ref=e556]:
+                - button "▧ detail【查询单个定制文案详情】 可生成" [ref=e557] [cursor=pointer]:
+                  - text: ▧ detail【查询单个定制文案详情】
+                  - generic [ref=e558]: 可生成
+                - button "▧ listDistinctCustomType【查询所有定制组合】 可生成" [ref=e559] [cursor=pointer]:
+                  - text: ▧ listDistinctCustomType【查询所有定制组合】
+                  - generic [ref=e560]: 可生成
+                - button "▧ pageQueryCustomData【分页查询定制组合数据】 可生成" [ref=e561] [cursor=pointer]:
+                  - text: ▧ pageQueryCustomData【分页查询定制组合数据】
+                  - generic [ref=e562]: 可生成
+                - button "▧ queryCustomContentList【查询定制文案组合数据列表】 可生成" [ref=e563] [cursor=pointer]:
+                  - text: ▧ queryCustomContentList【查询定制文案组合数据列表】
+                  - generic [ref=e564]: 可生成
+                - button "▧ queryCustomTypeList【查询定制组合选项列表】 可生成" [ref=e565] [cursor=pointer]:
+                  - text: ▧ queryCustomTypeList【查询定制组合选项列表】
+                  - generic [ref=e566]: 可生成
+                - button "▧ saveOrUpdateCustomInfo【保存或更新定制组合数据】 可生成" [ref=e567] [cursor=pointer]:
+                  - text: ▧ saveOrUpdateCustomInfo【保存或更新定制组合数据】
+                  - generic [ref=e568]: 可生成
+            - generic [ref=e569]:
+              - button "⌄ FreezeFacade" [ref=e570] [cursor=pointer]
+              - generic [ref=e571]:
+                - button "▧ freeze【发起冻结】 可生成" [ref=e572] [cursor=pointer]:
+                  - text: ▧ freeze【发起冻结】
+                  - generic [ref=e573]: 可生成
+                - button "▧ queryFreeze【查询冻结记录】 可生成" [ref=e574] [cursor=pointer]:
+                  - text: ▧ queryFreeze【查询冻结记录】
+                  - generic [ref=e575]: 可生成
+            - generic [ref=e576]:
+              - button "⌄ InquireFacade" [ref=e577] [cursor=pointer]
+              - generic [ref=e578]:
+                - button "▧ dealCandidateInfo【定制查询（余票查询）处理】 可生成" [ref=e579] [cursor=pointer]:
+                  - text: ▧ dealCandidateInfo【定制查询（余票查询）处理】
+                  - generic [ref=e580]: 可生成
+                - button "▧ dealRefundChange【退改核验处理】 可生成" [ref=e581] [cursor=pointer]:
+                  - text: ▧ dealRefundChange【退改核验处理】
+                  - generic [ref=e582]: 可生成
+                - button "▧ dealSeatCount【定制查询（余票查询）处理】 可生成" [ref=e583] [cursor=pointer]:
+                  - text: ▧ dealSeatCount【定制查询（余票查询）处理】
+                  - generic [ref=e584]: 可生成
+                - button "▧ dealStopInfo【列车停运处理】 可生成" [ref=e585] [cursor=pointer]:
+                  - text: ▧ dealStopInfo【列车停运处理】
+                  - generic [ref=e586]: 可生成
+                - button "▧ dealTicketInfo【出票核验处理】 可生成" [ref=e587] [cursor=pointer]:
+                  - text: ▧ dealTicketInfo【出票核验处理】
+                  - generic [ref=e588]: 可生成
+                - button "▧ getList【list】 可生成" [ref=e589] [cursor=pointer]:
+                  - text: ▧ getList【list】
+                  - generic [ref=e590]: 可生成
+                - button "▧ listExport【TODO 后续升级版本删除 查询导出】 可生成" [ref=e591] [cursor=pointer]:
+                  - text: ▧ listExport【TODO 后续升级版本删除 查询导出】
+                  - generic [ref=e592]: 可生成
+                - button "▧ queryInquireCount【查询页面未处理订单的数量】 可生成" [ref=e593] [cursor=pointer]:
+                  - text: ▧ queryInquireCount【查询页面未处理订单的数量】
+                  - generic [ref=e594]: 可生成
+                - button "▧ queryMerchantTicketingCount【查询供应商堆单值】 可生成" [ref=e595] [cursor=pointer]:
+                  - text: ▧ queryMerchantTicketingCount【查询供应商堆单值】
+                  - generic [ref=e596]: 可生成
+            - generic [ref=e597]:
+              - button "⌄ InterceptOrderFacade" [ref=e598] [cursor=pointer]
+              - button "▧ list【查询创单拦截订单列表】 可生成" [ref=e600] [cursor=pointer]:
+                - text: ▧ list【查询创单拦截订单列表】
+                - generic [ref=e601]: 可生成
+            - generic [ref=e602]:
+              - button "⌄ InterceptWhiteListConfigFacade" [ref=e603] [cursor=pointer]
+              - generic [ref=e604]:
+                - button "▧ list【查询创单拦截白名单配置列表】 可生成" [ref=e605] [cursor=pointer]:
+                  - text: ▧ list【查询创单拦截白名单配置列表】
+                  - generic [ref=e606]: 可生成
+                - button "▧ save【查询创单拦截白名单配置列表】 可生成" [ref=e607] [cursor=pointer]:
+                  - text: ▧ save【查询创单拦截白名单配置列表】
+                  - generic [ref=e608]: 可生成
+            - generic [ref=e609]:
+              - button "⌄ OrderFacade" [ref=e610] [cursor=pointer]
+              - generic [ref=e611]:
+                - button "▧ batchQueryOrderInfo【批量查询订单信息，不进行联程单关联 批量申诉时候需要查询订单数据 退改服务费结算线上化】 可生成" [ref=e612] [cursor=pointer]:
+                  - text: ▧ batchQueryOrderInfo【批量查询订单信息，不进行联程单关联 批量申诉时候需要查询订单数据 退改服务费结算线上化】
+                  - generic [ref=e613]: 可生成
+                - button "▧ batchQueryTicketingCount【TODO--后续删除 批量查询供应商出票堆单值】 可生成" [ref=e614] [cursor=pointer]:
+                  - text: ▧ batchQueryTicketingCount【TODO--后续删除 批量查询供应商出票堆单值】
+                  - generic [ref=e615]: 可生成
+                - button "▧ compareTicketingInfo【TODO -- 后续下线 比较堆单值】 可生成" [ref=e616] [cursor=pointer]:
+                  - text: ▧ compareTicketingInfo【TODO -- 后续下线 比较堆单值】
+                  - generic [ref=e617]: 可生成
+                - button "▧ getOrderMachine【根据订单号获取票机名称，c端使用】 可生成" [ref=e618] [cursor=pointer]:
+                  - text: ▧ getOrderMachine【根据订单号获取票机名称，c端使用】
+                  - generic [ref=e619]: 可生成
+                - button "▧ getPassengerInfo【根据订单号、乘客流水号 获取证件号码 默认前端页面加密的，需要展示全部明文数据调该接口】 可生成" [ref=e620] [cursor=pointer]:
+                  - text: ▧ getPassengerInfo【根据订单号、乘客流水号 获取证件号码 默认前端页面加密的，需要展示全部明文数据调该接口】
+                  - generic [ref=e621]: 可生成
+                - button "▧ getPaySerialNo【获取支付流水号 出票查询支付流失号】 可生成" [ref=e622] [cursor=pointer]:
+                  - text: ▧ getPaySerialNo【获取支付流水号 出票查询支付流失号】
+                  - generic [ref=e623]: 可生成
+                - button "▧ lock【锁单 ebk供应商处理订单使用】 可生成" [ref=e624] [cursor=pointer]:
+                  - text: ▧ lock【锁单 ebk供应商处理订单使用】
+                  - generic [ref=e625]: 可生成
+                - button "▧ orderDealDone【完结订单】 可生成" [ref=e626] [cursor=pointer]:
+                  - text: ▧ orderDealDone【完结订单】
+                  - generic [ref=e627]: 可生成
+                - button "▧ orderDealingList【待处理订单列表 订单列表】 可生成" [ref=e628] [cursor=pointer]:
+                  - text: ▧ orderDealingList【待处理订单列表 订单列表】
+                  - generic [ref=e629]: 可生成
+                - button "▧ orderDetail【查询订单详情】 可生成" [ref=e630] [cursor=pointer]:
+                  - text: ▧ orderDetail【查询订单详情】
+                  - generic [ref=e631]: 可生成
+                - button "▧ orderInfo【查询订单详情及打款记录 退改使用】 可生成" [ref=e632] [cursor=pointer]:
+                  - text: ▧ orderInfo【查询订单详情及打款记录 退改使用】
+                  - generic [ref=e633]: 可生成
+                - button "▧ orderQueryList【订单查询 订单列表】 可生成" [ref=e634] [cursor=pointer]:
+                  - text: ▧ orderQueryList【订单查询 订单列表】
+                  - generic [ref=e635]: 可生成
+                - button "▧ queryDashboardData【EBK供应商查询数据看板相关信息】 可生成" [ref=e636] [cursor=pointer]:
+                  - text: ▧ queryDashboardData【EBK供应商查询数据看板相关信息】
+                  - generic [ref=e637]: 可生成
+                - button "▧ queryDetail【查询详情】 可生成" [ref=e638] [cursor=pointer]:
+                  - text: ▧ queryDetail【查询详情】
+                  - generic [ref=e639]: 可生成
+                - button "▧ queryDistributingCount【查询待分单订单量 分单定时job调用. 老分单使用。新分单逻辑和老的不一样】 可生成" [ref=e640] [cursor=pointer]:
+                  - text: ▧ queryDistributingCount【查询待分单订单量 分单定时job调用. 老分单使用。新分单逻辑和老的不一样】
+                  - generic [ref=e641]: 可生成
+                - button "▧ queryGroupByCollectionStatus【无票收单池-数据汇总】 可生成" [ref=e642] [cursor=pointer]:
+                  - text: ▧ queryGroupByCollectionStatus【无票收单池-数据汇总】
+                  - generic [ref=e643]: 可生成
+                - button "▧ queryHkPayIssueSuccessOrder【港币支付出票成功-数据汇总】 可生成" [ref=e644] [cursor=pointer]:
+                  - text: ▧ queryHkPayIssueSuccessOrder【港币支付出票成功-数据汇总】
+                  - generic [ref=e645]: 可生成
+                - button "▧ queryLackCollectionPageList【无票收单池-列表查询】 可生成" [ref=e646] [cursor=pointer]:
+                  - text: ▧ queryLackCollectionPageList【无票收单池-列表查询】
+                  - generic [ref=e647]: 可生成
+                - button "▧ queryMerchantSpecialAbility【TODO 后续删除 查询供应商出票堆单值--特殊能力项】 可生成" [ref=e648] [cursor=pointer]:
+                  - text: ▧ queryMerchantSpecialAbility【TODO 后续删除 查询供应商出票堆单值--特殊能力项】
+                  - generic [ref=e649]: 可生成
+                - button "▧ queryOrderCountForOperator【查询出票员个人分单、出单数, 及绑定票机分单、出单数 ebk页面展示使用】 可生成" [ref=e650] [cursor=pointer]:
+                  - text: ▧ queryOrderCountForOperator【查询出票员个人分单、出单数, 及绑定票机分单、出单数 ebk页面展示使用】
+                  - generic [ref=e651]: 可生成
+                - button "▧ queryOrderCountForTicketMachine【查询票机当日最大出票数, 及剩余可出票数 ebk页面展示使用】 可生成" [ref=e652] [cursor=pointer]:
+                  - text: ▧ queryOrderCountForTicketMachine【查询票机当日最大出票数, 及剩余可出票数 ebk页面展示使用】
+                  - generic [ref=e653]: 可生成
+                - button "▧ queryOrderCountGroupByAbility【按能力项查询堆单分布 堆单能力项列表展示需要调用该接口】 可生成" [ref=e654] [cursor=pointer]:
+                  - text: ▧ queryOrderCountGroupByAbility【按能力项查询堆单分布 堆单能力项列表展示需要调用该接口】
+                  - generic [ref=e655]: 可生成
+                - button "▧ queryOrderCountGroupByHour【查询大盘订单量 主要用途：分单计算供应商下限值使用】 可生成" [ref=e656] [cursor=pointer]:
+                  - text: ▧ queryOrderCountGroupByHour【查询大盘订单量 主要用途：分单计算供应商下限值使用】
+                  - generic [ref=e657]: 可生成
+                - button "▧ queryOrderCount【查询页面未处理订单的数量 ebk页面展示使用 更换支付宝时候使用，交易订单是否处理完毕】 可生成" [ref=e658] [cursor=pointer]:
+                  - text: ▧ queryOrderCount【查询页面未处理订单的数量 ebk页面展示使用 更换支付宝时候使用，交易订单是否处理完毕】
+                  - generic [ref=e659]: 可生成
+                - button "▧ queryOrderInfo【查询订单详情】 可生成" [ref=e660] [cursor=pointer]:
+                  - text: ▧ queryOrderInfo【查询订单详情】
+                  - generic [ref=e661]: 可生成
+                - button "▧ queryOrderListByPaySerialNo【根据支付流水，查订单信息 退改使用】 可生成" [ref=e662] [cursor=pointer]:
+                  - text: ▧ queryOrderListByPaySerialNo【根据支付流水，查订单信息 退改使用】
+                  - generic [ref=e663]: 可生成
+                - button "▧ queryPendingHandleCount【查询待处理订单数量（待出票、待占座） ebk展示供应商待处理订单量使用】 可生成" [ref=e664] [cursor=pointer]:
+                  - text: ▧ queryPendingHandleCount【查询待处理订单数量（待出票、待占座） ebk展示供应商待处理订单量使用】
+                  - generic [ref=e665]: 可生成
+                - button "▧ queryTicketingInfo【TODO 后续删除 查询待出票信息】 可生成" [ref=e666] [cursor=pointer]:
+                  - text: ▧ queryTicketingInfo【TODO 后续删除 查询待出票信息】
+                  - generic [ref=e667]: 可生成
+                - button "▧ rejectDistributePercentPageInfo【境内二次分单占比】 可生成" [ref=e668] [cursor=pointer]:
+                  - text: ▧ rejectDistributePercentPageInfo【境内二次分单占比】
+                  - generic [ref=e669]: 可生成
+                - button "▧ updatePaySerialNo【修改支付流水号】 可生成" [ref=e670] [cursor=pointer]:
+                  - text: ▧ updatePaySerialNo【修改支付流水号】
+                  - generic [ref=e671]: 可生成
+            - generic [ref=e672]:
+              - button "⌄ PaySerialNoFacade" [ref=e673] [cursor=pointer]
+              - generic [ref=e674]:
+                - button "▧ confirm【确认无误】 可生成" [ref=e675] [cursor=pointer]:
+                  - text: ▧ confirm【确认无误】
+                  - generic [ref=e676]: 可生成
+                - button "▧ finish【强制结束】 可生成" [ref=e677] [cursor=pointer]:
+                  - text: ▧ finish【强制结束】
+                  - generic [ref=e678]: 可生成
+                - button "▧ queryList【支付流水校验列表】 可生成" [ref=e679] [cursor=pointer]:
+                  - text: ▧ queryList【支付流水校验列表】
+                  - generic [ref=e680]: 可生成
+            - generic [ref=e681]:
+              - button "⌄ RemitFacade" [ref=e682] [cursor=pointer]
+              - generic [ref=e683]:
+                - button "▧ callback【打款回调】 可生成" [ref=e684] [cursor=pointer]:
+                  - text: ▧ callback【打款回调】
+                  - generic [ref=e685]: 可生成
+                - button "▧ queryRemit【查询打款记录】 可生成" [ref=e686] [cursor=pointer]:
+                  - text: ▧ queryRemit【查询打款记录】
+                  - generic [ref=e687]: 可生成
+                - button "▧ remit【发起打款】 可生成" [ref=e688] [cursor=pointer]:
+                  - text: ▧ remit【发起打款】
+                  - generic [ref=e689]: 可生成
+                - button "▧ syncCustomer【发起同步c端】 可生成" [ref=e690] [cursor=pointer]:
+                  - text: ▧ syncCustomer【发起同步c端】
+                  - generic [ref=e691]: 可生成
+            - generic [ref=e692]:
+              - button "⌄ ServiceFeeFacade" [ref=e693] [cursor=pointer]
+              - generic [ref=e694]:
+                - button "▧ appeal【发起扣款】 可生成" [ref=e695] [cursor=pointer]:
+                  - text: ▧ appeal【发起扣款】
+                  - generic [ref=e696]: 可生成
+                - button "▧ queryServiceFee【查询打款记录】 可生成" [ref=e697] [cursor=pointer]:
+                  - text: ▧ queryServiceFee【查询打款记录】
+                  - generic [ref=e698]: 可生成
+                - button "▧ serviceFeeCallback【服务费发起申诉接口回写】 可生成" [ref=e699] [cursor=pointer]:
+                  - text: ▧ serviceFeeCallback【服务费发起申诉接口回写】
+                  - generic [ref=e700]: 可生成
+                - button "▧ syncCustomer【发起同步c端】 可生成" [ref=e701] [cursor=pointer]:
+                  - text: ▧ syncCustomer【发起同步c端】
+                  - generic [ref=e702]: 可生成
+            - generic [ref=e703]:
+              - button "⌄ TicketFacade" [ref=e704] [cursor=pointer]
+              - generic [ref=e705]:
+                - button "▧ applyOccupyIssue【申请占座出票】 可生成" [ref=e706] [cursor=pointer]:
+                  - text: ▧ applyOccupyIssue【申请占座出票】
+                  - generic [ref=e707]: 可生成
+                - button "▧ batchIssueTicket【联程批量出票】 可生成" [ref=e708] [cursor=pointer]:
+                  - text: ▧ batchIssueTicket【联程批量出票】
+                  - generic [ref=e709]: 可生成
+                - button "▧ batchRejectIssue【联程批量出票驳回】 可生成" [ref=e710] [cursor=pointer]:
+                  - text: ▧ batchRejectIssue【联程批量出票驳回】
+                  - generic [ref=e711]: 可生成
+                - button "▧ batchRevokeOrder【批量撤单(供应商点击批量撤单后,将其所有订单都撤单)】 可生成" [ref=e712] [cursor=pointer]:
+                  - text: ▧ batchRevokeOrder【批量撤单(供应商点击批量撤单后,将其所有订单都撤单)】
+                  - generic [ref=e713]: 可生成
+                - button "▧ issueTicket【出票】 可生成" [ref=e714] [cursor=pointer]:
+                  - text: ▧ issueTicket【出票】
+                  - generic [ref=e715]: 可生成
+                - button "▧ modifyIssueTicket【修改出票信息】 可生成" [ref=e716] [cursor=pointer]:
+                  - text: ▧ modifyIssueTicket【修改出票信息】
+                  - generic [ref=e717]: 可生成
+                - button "▧ occupyIssueResult【占座出票】 可生成" [ref=e718] [cursor=pointer]:
+                  - text: ▧ occupyIssueResult【占座出票】
+                  - generic [ref=e719]: 可生成
+                - button "▧ occupyResult【占座】 可生成" [ref=e720] [cursor=pointer]:
+                  - text: ▧ occupyResult【占座】
+                  - generic [ref=e721]: 可生成
+                - button "▧ rejectIssue【出票驳回】 可生成" [ref=e722] [cursor=pointer]:
+                  - text: ▧ rejectIssue【出票驳回】
+                  - generic [ref=e723]: 可生成
+                - button "▧ submitTicketImage【提交出票凭条图片】 可生成" [ref=e724] [cursor=pointer]:
+                  - text: ▧ submitTicketImage【提交出票凭条图片】
+                  - generic [ref=e725]: 可生成
+            - generic [ref=e726]:
+              - button "⌄ TicketMachineFacade" [ref=e727] [cursor=pointer]
+              - generic [ref=e728]:
+                - button "▧ mtrTicketMachineHandle【MTR 票机监控】 可生成" [ref=e729] [cursor=pointer]:
+                  - text: ▧ mtrTicketMachineHandle【MTR 票机监控】
+                  - generic [ref=e730]: 可生成
+                - button "▧ queryTicketMachineHandle【查询票机待处理任务集合(待出票、待占座、查询)】 可生成" [ref=e731] [cursor=pointer]:
+                  - text: ▧ queryTicketMachineHandle【查询票机待处理任务集合(待出票、待占座、查询)】
+                  - generic [ref=e732]: 可生成
+            - generic [ref=e733]:
+              - button "⌄ TradeFacade" [ref=e734] [cursor=pointer]
+              - generic [ref=e735]:
+                - button "▧ cancel【取消订单】 可生成" [ref=e736] [cursor=pointer]:
+                  - text: ▧ cancel【取消订单】
+                  - generic [ref=e737]: 可生成
+                - button "▧ candidateInfo【候补订单】 可生成" [ref=e738] [cursor=pointer]:
+                  - text: ▧ candidateInfo【候补订单】
+                  - generic [ref=e739]: 可生成
+                - button "▧ createOrder【下单】 已有 4 个 Case" [ref=e740] [cursor=pointer]:
+                  - text: ▧ createOrder【下单】
+                  - generic [ref=e741]: 已有 4 个 Case
+                - button "▧ hkDzCapacityCheck【港铁电子票产能校验】 可生成" [ref=e742] [cursor=pointer]:
+                  - text: ▧ hkDzCapacityCheck【港铁电子票产能校验】
+                  - generic [ref=e743]: 可生成
+                - button "▧ inquireRefundChange【退改核验】 可生成" [ref=e744] [cursor=pointer]:
+                  - text: ▧ inquireRefundChange【退改核验】
+                  - generic [ref=e745]: 可生成
+                - button "▧ inquireSeatCount【定制查询（余票查询）】 可生成" [ref=e746] [cursor=pointer]:
+                  - text: ▧ inquireSeatCount【定制查询（余票查询）】
+                  - generic [ref=e747]: 可生成
+                - button "▧ inquireStopInfo【列车停运】 可生成" [ref=e748] [cursor=pointer]:
+                  - text: ▧ inquireStopInfo【列车停运】
+                  - generic [ref=e749]: 可生成
+                - button "▧ inquireTicketInfo【出票核验】 可生成" [ref=e750] [cursor=pointer]:
+                  - text: ▧ inquireTicketInfo【出票核验】
+                  - generic [ref=e751]: 可生成
+                - button "▧ saleDateQuery【销售时间检查】 可生成" [ref=e752] [cursor=pointer]:
+                  - text: ▧ saleDateQuery【销售时间检查】
+                  - generic [ref=e753]: 可生成
+            - generic [ref=e754]:
+              - button "⌄ WarningOrderFacade" [ref=e755] [cursor=pointer]
+              - generic [ref=e756]:
+                - button "▧ detail【查详情】 可生成" [ref=e757] [cursor=pointer]:
+                  - text: ▧ detail【查详情】
+                  - generic [ref=e758]: 可生成
+                - button "▧ pageInfo【分页查询】 可生成" [ref=e759] [cursor=pointer]:
+                  - text: ▧ pageInfo【分页查询】
+                  - generic [ref=e760]: 可生成
+                - button "▧ update【更新】 可生成" [ref=e761] [cursor=pointer]:
+                  - text: ▧ update【更新】
+                  - generic [ref=e762]: 可生成
+            - generic [ref=e763]:
+              - button "⌄ Job 补偿" [ref=e764] [cursor=pointer]
+              - generic [ref=e765]:
+                - button "▧ A B I L I T Y T I M E O U T C A N C E L J O B 可生成" [ref=e766] [cursor=pointer]:
+                  - text: ▧ A B I L I T Y T I M E O U T C A N C E L J O B
+                  - generic [ref=e767]: 可生成
+                - button "▧ C L E A N T I C K E T M A C H I N E O R D E R J O B 可生成" [ref=e768] [cursor=pointer]:
+                  - text: ▧ C L E A N T I C K E T M A C H I N E O R D E R J O B
+                  - generic [ref=e769]: 可生成
+                - button "▧ D I S T R I B U T I O N S I N G L E O R D E R 可生成" [ref=e770] [cursor=pointer]:
+                  - text: ▧ D I S T R I B U T I O N S I N G L E O R D E R
+                  - generic [ref=e771]: 可生成
+                - button "▧ E X P I R E O C C U P Y A P P L Y 可生成" [ref=e772] [cursor=pointer]:
+                  - text: ▧ E X P I R E O C C U P Y A P P L Y
+                  - generic [ref=e773]: 可生成
+                - button "▧ H I S T O R Y T I C K E T I N G R E C O R D J O B 可生成" [ref=e774] [cursor=pointer]:
+                  - text: ▧ H I S T O R Y T I C K E T I N G R E C O R D J O B
+                  - generic [ref=e775]: 可生成
+                - button "▧ I N N E R R E V O K E S W I T C H 可生成" [ref=e776] [cursor=pointer]:
+                  - text: ▧ I N N E R R E V O K E S W I T C H
+                  - generic [ref=e777]: 可生成
+                - button "▧ I N Q U I R E C A L L B A C K 可生成" [ref=e778] [cursor=pointer]:
+                  - text: ▧ I N Q U I R E C A L L B A C K
+                  - generic [ref=e779]: 可生成
+                - button "▧ I N Q U I R E C A P A C I T Y R E S E T J O B 可生成" [ref=e780] [cursor=pointer]:
+                  - text: ▧ I N Q U I R E C A P A C I T Y R E S E T J O B
+                  - generic [ref=e781]: 可生成
+                - button "▧ I N Q U I R E M E R C H A N T A P I 可生成" [ref=e782] [cursor=pointer]:
+                  - text: ▧ I N Q U I R E M E R C H A N T A P I
+                  - generic [ref=e783]: 可生成
+                - button "▧ I N Q U I R E R E F U N D C H A N G E D I S T R I B U T E M E R C H A N T J O B 可生成" [ref=e784] [cursor=pointer]:
+                  - text: ▧ I N Q U I R E R E F U N D C H A N G E D I S T R I B U T E M E R C H A N T J O B
+                  - generic [ref=e785]: 可生成
+                - button "▧ I N Q U I R E T I M E O U T 可生成" [ref=e786] [cursor=pointer]:
+                  - text: ▧ I N Q U I R E T I M E O U T
+                  - generic [ref=e787]: 可生成
+                - button "▧ I S S U E R U L E P O L I C Y C H E C K 可生成" [ref=e788] [cursor=pointer]:
+                  - text: ▧ I S S U E R U L E P O L I C Y C H E C K
+                  - generic [ref=e789]: 可生成
+                - button "▧ L A C K T I C K E T R E T R Y J O B 可生成" [ref=e790] [cursor=pointer]:
+                  - text: ▧ L A C K T I C K E T R E T R Y J O B
+                  - generic [ref=e791]: 可生成
+                - button "▧ M T R S T O P E X C E P T I O N O R D E R J O B 可生成" [ref=e792] [cursor=pointer]:
+                  - text: ▧ M T R S T O P E X C E P T I O N O R D E R J O B
+                  - generic [ref=e793]: 可生成
+                - button "▧ N E W D I S T R I B U T I O N M U L T I P L E C O N N E C T O R D E R 可生成" [ref=e794] [cursor=pointer]:
+                  - text: ▧ N E W D I S T R I B U T I O N M U L T I P L E C O N N E C T O R D E R
+                  - generic [ref=e795]: 可生成
+                - button "▧ O C C O U P A P P L Y T I C K E T 可生成" [ref=e796] [cursor=pointer]:
+                  - text: ▧ O C C O U P A P P L Y T I C K E T
+                  - generic [ref=e797]: 可生成
+                - button "▧ O R D E R B O A R D J O B 可生成" [ref=e798] [cursor=pointer]:
+                  - text: ▧ O R D E R B O A R D J O B
+                  - generic [ref=e799]: 可生成
+                - button "▧ R E J E C T O R D E R D I S T R I B U T E I N C R J O B 可生成" [ref=e800] [cursor=pointer]:
+                  - text: ▧ R E J E C T O R D E R D I S T R I B U T E I N C R J O B
+                  - generic [ref=e801]: 可生成
+                - button "▧ R E S E T C O L L E C T I O N C O U N T J O B 可生成" [ref=e802] [cursor=pointer]:
+                  - text: ▧ R E S E T C O L L E C T I O N C O U N T J O B
+                  - generic [ref=e803]: 可生成
+                - button "▧ R E S E T M E R C H A N T A L L T I C K E T I N G I N F O J O B 可生成" [ref=e804] [cursor=pointer]:
+                  - text: ▧ R E S E T M E R C H A N T A L L T I C K E T I N G I N F O J O B
+                  - generic [ref=e805]: 可生成
+                - button "▧ R E T R Y C A L L B A C K J O B 可生成" [ref=e806] [cursor=pointer]:
+                  - text: ▧ R E T R Y C A L L B A C K J O B
+                  - generic [ref=e807]: 可生成
+                - button "▧ R E T R Y C R E A T E M E R C H A N T O R D E R J O B 可生成" [ref=e808] [cursor=pointer]:
+                  - text: ▧ R E T R Y C R E A T E M E R C H A N T O R D E R J O B
+                  - generic [ref=e809]: 可生成
+                - button "▧ R E T R Y C R E A T E O R D E R 可生成" [ref=e810] [cursor=pointer]:
+                  - text: ▧ R E T R Y C R E A T E O R D E R
+                  - generic [ref=e811]: 可生成
+                - button "▧ R E T R Y D I S T R I B U T I O N H K O R D E R J O B 可生成" [ref=e812] [cursor=pointer]:
+                  - text: ▧ R E T R Y D I S T R I B U T I O N H K O R D E R J O B
+                  - generic [ref=e813]: 可生成
+                - button "▧ R E T R Y F R E E Z E 可生成" [ref=e814] [cursor=pointer]:
+                  - text: ▧ R E T R Y F R E E Z E
+                  - generic [ref=e815]: 可生成
+                - button "▧ R E T R Y O C C U P Y C A L L B A C K 可生成" [ref=e816] [cursor=pointer]:
+                  - text: ▧ R E T R Y O C C U P Y C A L L B A C K
+                  - generic [ref=e817]: 可生成
+                - button "▧ R E T R Y R E M I T 可生成" [ref=e818] [cursor=pointer]:
+                  - text: ▧ R E T R Y R E M I T
+                  - generic [ref=e819]: 可生成
+                - button "▧ R E T R Y R E M I T S Y N C C U S T O M E R 可生成" [ref=e820] [cursor=pointer]:
+                  - text: ▧ R E T R Y R E M I T S Y N C C U S T O M E R
+                  - generic [ref=e821]: 可生成
+                - button "▧ R E T R Y S E R V I C E F E E R E M I T 可生成" [ref=e822] [cursor=pointer]:
+                  - text: ▧ R E T R Y S E R V I C E F E E R E M I T
+                  - generic [ref=e823]: 可生成
+                - button "▧ R E T R Y S E R V I C E F E E R E M I T S Y N C C U S T O M E R 可生成" [ref=e824] [cursor=pointer]:
+                  - text: ▧ R E T R Y S E R V I C E F E E R E M I T S Y N C C U S T O M E R
+                  - generic [ref=e825]: 可生成
+                - button "▧ R E V O K E N E W 可生成" [ref=e826] [cursor=pointer]:
+                  - text: ▧ R E V O K E N E W
+                  - generic [ref=e827]: 可生成
+                - button "▧ S T A T T R A I N O R D E R T R A N S F E R H K 可生成" [ref=e828] [cursor=pointer]:
+                  - text: ▧ S T A T T R A I N O R D E R T R A N S F E R H K
+                  - generic [ref=e829]: 可生成
+                - button "▧ S T A T T R A I N O R D E R T R A N S F E R I N N E R 可生成" [ref=e830] [cursor=pointer]:
+                  - text: ▧ S T A T T R A I N O R D E R T R A N S F E R I N N E R
+                  - generic [ref=e831]: 可生成
+                - button "▧ T I M E O U T C A N C E L J O B 可生成" [ref=e832] [cursor=pointer]:
+                  - text: ▧ T I M E O U T C A N C E L J O B
+                  - generic [ref=e833]: 可生成
+                - button "▧ T R A I N O R D E R I N F O S I M P L E D E L 可生成" [ref=e834] [cursor=pointer]:
+                  - text: ▧ T R A I N O R D E R I N F O S I M P L E D E L
+                  - generic [ref=e835]: 可生成
+                - button "▧ 自动补单任务 可生成" [ref=e836] [cursor=pointer]:
+                  - text: ▧ 自动补单任务
+                  - generic [ref=e837]: 可生成
+            - generic [ref=e838]:
+              - button "⌄ PaymentFacade" [ref=e839] [cursor=pointer]
+              - button "▧ payOrder【支付订单】 可生成" [ref=e841] [cursor=pointer]:
+                - text: ▧ payOrder【支付订单】
+                - generic [ref=e842]: 可生成
+            - generic [ref=e843]:
+              - button "⌄ 公共接口" [ref=e844] [cursor=pointer]
+              - generic [ref=e845]:
+                - button "▧ 查询币种汇率 可生成" [ref=e846] [cursor=pointer]:
+                  - text: ▧ 查询币种汇率
+                  - generic [ref=e847]: 可生成
+                - button "▧ 计算最晚出票时间 可生成" [ref=e848] [cursor=pointer]:
+                  - text: ▧ 计算最晚出票时间
+                  - generic [ref=e849]: 可生成
+            - generic [ref=e850]:
+              - button "⌄ 状态机" [ref=e851] [cursor=pointer]
+              - button "▧ OrderStateEnum 状态流转 可生成" [ref=e853] [cursor=pointer]:
+                - text: ▧ OrderStateEnum 状态流转
+                - generic [ref=e854]: 可生成
+        - generic [ref=e855]:
+          - generic [ref=e856]:
+            - generic [ref=e857]:
+              - heading "接口概览" [level=3] [ref=e858]
+              - paragraph [ref=e859]: 选择左侧知识节点后生成或查看 Case。
+            - button "新增 Case" [ref=e860] [cursor=pointer]
+          - generic [ref=e861]:
+            - article [ref=e862]:
+              - generic [ref=e863]: 建议 Case
+              - strong [ref=e864]: "4"
+            - article [ref=e865]:
+              - generic [ref=e866]: 已确认
+              - strong [ref=e867]: "2"
+            - article [ref=e868]:
+              - generic [ref=e869]: 草稿
+              - strong [ref=e870]: "2"
+          - heading "接口范围内的 Case 列表" [level=3] [ref=e871]
+          - generic [ref=e872]:
+            - button "1. 正常创建订单成功 3 步 已确认 正常成人乘客创建订单，返回 HT 单号和交易流水。" [ref=e900] [cursor=pointer]:
+              - strong [ref=e901]: 1. 正常创建订单成功
+              - generic [ref=e902]: 3 步
+              - generic [ref=e903]: 已确认
+              - generic [ref=e904]: 正常成人乘客创建订单，返回 HT 单号和交易流水。
+            - button "2. 港铁 2 乘客非 HK_PAYMENT - 后位儿童仍应补价 3 步 已确认 在港铁场景下，当第 2 名乘客非 HK_PAYMENT 且后位为儿童时，系统应正确识别并按补价规则补价。" [ref=e905] [cursor=pointer]:
+              - strong [ref=e906]: 2. 港铁 2 乘客非 HK_PAYMENT - 后位儿童仍应补价
+              - generic [ref=e907]: 3 步
+              - generic [ref=e908]: 已确认
+              - generic [ref=e909]: 在港铁场景下，当第 2 名乘客非 HK_PAYMENT 且后位为儿童时，系统应正确识别并按补价规则补价。
+            - button "3. 参数缺失导致创建失败 3 步 草稿 缺少乘客或车次关键参数时，创建订单应失败并返回可断言错误。" [ref=e910] [cursor=pointer]:
+              - strong [ref=e911]: 3. 参数缺失导致创建失败
+              - generic [ref=e912]: 3 步
+              - generic [ref=e913]: 草稿
+              - generic [ref=e914]: 缺少乘客或车次关键参数时，创建订单应失败并返回可断言错误。
+            - button "4. 下游超时后的重试与回滚 3 步 草稿 供应商或价格服务超时时，校验重试、回滚和错误映射。" [ref=e915] [cursor=pointer]:
+              - strong [ref=e916]: 4. 下游超时后的重试与回滚
+              - generic [ref=e917]: 3 步
+              - generic [ref=e918]: 草稿
+              - generic [ref=e919]: 供应商或价格服务超时时，校验重试、回滚和错误映射。
+        - complementary [ref=e893]:
+          - heading "Case 摘要" [level=3] [ref=e894]
+          - generic [ref=e895]:
+            - heading "港铁 2 乘客非 HK_PAYMENT - 后位儿童仍应补价" [level=4] [ref=e920]
+            - paragraph [ref=e921]: 在港铁场景下，当第 2 名乘客非 HK_PAYMENT 且后位为儿童时，系统应正确识别并按补价规则补价。
+            - generic [ref=e922]:
+              - term [ref=e923]: 来源接口
+              - definition [ref=e924]: createOrder【下单】
+              - term [ref=e925]: 步骤数
+              - definition [ref=e926]: "3"
+              - term [ref=e927]: 涉及 CLI
+              - definition [ref=e928]:
+                - generic [ref=e929]: facade.trade.create_order
+                - generic [ref=e930]: facade.order.query_detail
+              - term [ref=e931]: 断言数
+              - definition [ref=e932]: "5"
+              - term [ref=e933]: 生成方式
+              - definition [ref=e934]: AI 自动生成
+          - generic [ref=e896]:
+            - button "查看流程图" [active] [ref=e897] [cursor=pointer]
+            - button "查看 JSON" [ref=e898] [cursor=pointer]
+            - button "保存 JSON" [ref=e899] [cursor=pointer]
+          - generic [ref=e935]:
+            - article [ref=e936]:
+              - generic [ref=e937]: "1"
+              - generic [ref=e938]:
+                - heading "准备测试数据" [level=4] [ref=e939]
+                - paragraph [ref=e940]: 构造订单、乘客、车次和外部依赖 mock 数据。
+                - code [ref=e941]: tool://facade.trade.create_order
+                - generic [ref=e942]: "{\"success\":true,\"orderSerialId\":\"not_null\"}"
+            - article [ref=e943]:
+              - generic [ref=e944]: "2"
+              - generic [ref=e945]:
+                - heading "执行目标入口" [level=4] [ref=e946]
+                - paragraph [ref=e947]: 在港铁场景下，当第 2 名乘客非 HK_PAYMENT 且后位为儿童时，系统应正确识别并按补价规则补价。
+                - code [ref=e948]: tool://facade.trade.create_order
+                - generic [ref=e949]: "{\"success\":true}"
+            - article [ref=e950]:
+              - generic [ref=e951]: "3"
+              - generic [ref=e952]:
+                - heading "查询并断言结果" [level=4] [ref=e953]
+                - paragraph [ref=e954]: 查询订单详情，断言状态、关键字段和业务结果。
+                - code [ref=e955]: tool://facade.order.query_detail
+                - generic [ref=e956]: "{\"success\":true,\"orderCount\":1}"
