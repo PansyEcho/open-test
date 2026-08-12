@@ -1,4 +1,23 @@
-# AI 自动测试平台 MVP
+# OpenTest
+
+## V2：单系统DSF闭环
+
+V2位于 `opentest` 包，使用FastAPI、Pydantic、Git Markdown/YAML知识真相和可删除重建的SQLite索引。当前验证目标是 `train-booking-core` 的 `TradeFacade#createOrder`；不使用向量数据库，也不验证跨系统知识。
+
+安装开发依赖并启动：
+
+```bash
+python3 -m pip install -e '.[dev]'
+uvicorn opentest.api:app --host 127.0.0.1 --port 8788
+```
+
+打开 `http://127.0.0.1:8788/console`。CLI可通过 `opentest --help` 查看；源码扫描还需设置 `--scriptgen-pythonpath` 或环境变量 `OPENTEST_SCRIPTGEN_PYTHONPATH`。
+
+知识与Case位于 `open-test-knowledge/`；SQLite、扫描工具、任务、Snapshot、QA环境和运行报告位于被Git忽略的 `open-test-knowledge/.opentest/`。真实执行前按 [QA本地环境配置](docs/development/qa-environment.md) 创建本地YAML并通过环境变量引用密钥。
+
+开发进度见 [docs/status.md](docs/status.md)，架构见 [docs/architecture/overview.md](docs/architecture/overview.md)。
+
+## Legacy MVP
 
 本项目是一个本地 Web MVP，用 Python 标准库实现后端服务和静态前端，不依赖外部安装包。
 

@@ -1,0 +1,19 @@
+schema_version: opentest.variant/v2alpha1
+variant_id: variant:core-order-lifecycle:019-hkd-partial-price-missing
+suite_id: suite:train-booking-core:core-order-lifecycle-v2
+system_id: train-booking-core
+category_id: hkd-multi-passenger
+title: 港币成人儿童部分缺价
+business_goal: 构造仅部分乘客缺少港币价的多乘客请求，并在业务口径确认后验证成功或拒绝。
+priority: P0
+lifecycle: blocked
+missing_conditions: [qa_hkd_partial_price_fixture, hk_payment_enum, exact_missing_price_passenger, hk_partial_missing_expected_outcome, oracle_catalog_snapshot]
+source_scan_id: scan-20260811091050-dc8391e426-0a843ec3
+source_refs: [{path: app/biz/src/main/java/com/ly/travel/train/supplychain/bookingcore/biz/builder/OrderBuilder.java, symbol: 'OrderBuilder#verifyHkPayment'}, {path: app/biz/src/main/java/com/ly/travel/train/supplychain/bookingcore/biz/builder/OrderBuilder.java, symbol: 'OrderBuilder#fillPlanForeignPrice'}]
+fixture_requirements: [{fixture_id: 'fixture:hkd:adult-child-partial-missing', purpose: 提供成人儿童完整DTO，仅指定一名乘客缺价并保留路线报价证据}]
+fixed_execution_order: [execute-create, observe-transactions]
+steps:
+- {step_id: execute-create, action: execute, tool_id: facade.trade.create_order, input: {request: '${fixtures.hkd_partial_missing.create_request}'}}
+- {step_id: observe-transactions, action: oracle, oracle: {kind: TIDB, resource_id: 'resource:train-booking-core:tidb:database:bookingcoretidbdatasource', operation_id: order.list_transactions_by_ht, evidence_mode: DIRECT}, input: {order_serial_no: '${fixtures.hkd_partial_missing.order_serial_no}'}}
+expected_business_outcome: {response: requires_confirmation, passenger_mix: adult_child, foreign_price_completeness: partial}
+cleanup_policy: {mode: CONDITIONAL_EXTERNAL_OWNER, key: '${fixtures.hkd_partial_missing.order_serial_no}'}

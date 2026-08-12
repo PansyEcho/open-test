@@ -1,0 +1,4 @@
+interface:
+  display_name: "OpenTest 业务知识"
+  short_description: "查询业务流程、接口规则、测试场景、需求评审与回归影响证据"
+  default_prompt: "请根据OpenTest知识库回答业务问题，并引用可核查的源码或确认依据。"

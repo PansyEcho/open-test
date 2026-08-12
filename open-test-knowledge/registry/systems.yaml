@@ -1,0 +1,8 @@
+systems:
+- system_id: train-booking-core
+  name: 火车票预订核心
+  source_path: /Users/user/data/code/tc/travelsystem.java.dsf.supplychain.booking.core
+  language: java
+  description: 一期DSF真实扫描与测试闭环目标系统
+  baseline: null
+  created_at: '2026-08-11T08:18:20.412140Z'

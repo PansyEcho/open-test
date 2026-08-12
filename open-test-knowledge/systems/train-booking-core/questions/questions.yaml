@@ -1,0 +1,20 @@
+questions:
+- question_id: question:create-order:hk-quote-missing
+  system_id: train-booking-core
+  title: 港币路线报价缺失的业务口径
+  detail: 代码在verifyHkPayment中对无路线报价继续通过，但儿童计划价可能返回缺失；请确认QA场景应成功、告警还是失败。
+  affected_node_ids:
+  - rule:create-order:hk-payment-verify
+  - rule:create-order:hk-plan-price
+  impact: high
+  status: open
+  answer: ''
+- question_id: question:create-order:hk-verify-exception
+  system_id: train-booking-core
+  title: 港币校验异常是否应fail-open
+  detail: verifyHkPayment捕获任意异常后返回true。请确认这是稳定业务容错还是需要作为风险评审项。
+  affected_node_ids:
+  - rule:create-order:hk-payment-verify
+  impact: high
+  status: open
+  answer: ''

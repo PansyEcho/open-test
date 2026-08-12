@@ -1,0 +1,19 @@
+schema_version: opentest.variant/v2alpha1
+variant_id: variant:core-order-lifecycle:008-grab-outside-sale-time
+suite_id: suite:train-booking-core:core-order-lifecycle-v2
+system_id: train-booking-core
+category_id: grab-immediate-failure
+title: 抢票单非可售时间即时失败
+business_goal: 验证抢票请求不满足可售时间窗口时在创单入口被拒绝，不生成可复用交易。
+priority: P0
+lifecycle: blocked
+missing_conditions: [qa_grab_outside_sale_time_fixture, sale_time_boundary_contract, stable_error_code, oracle_catalog_snapshot]
+source_scan_id: scan-20260811091050-dc8391e426-0a843ec3
+source_refs: [{path: app/biz/src/main/java/com/ly/travel/train/supplychain/bookingcore/biz/manager/trade/CreateOrderServiceInvoker.java, symbol: 'CreateOrderServiceInvoker#check'}]
+fixture_requirements: [{fixture_id: 'fixture:grab:outside-sale-time', purpose: 提供明确落在非可售时间窗口内的抢票请求和唯一HT号}]
+fixed_execution_order: [execute-create, observe-transactions]
+steps:
+- {step_id: execute-create, action: execute, tool_id: facade.trade.create_order, input: {request: '${fixtures.grab_outside_sale.create_request}'}}
+- {step_id: observe-transactions, action: oracle, oracle: {kind: TIDB, resource_id: 'resource:train-booking-core:tidb:database:bookingcoretidbdatasource', operation_id: order.list_transactions_by_ht, evidence_mode: DIRECT}, input: {order_serial_no: '${fixtures.grab_outside_sale.order_serial_no}'}}
+expected_business_outcome: {response: rejected_by_sale_time, new_transaction_count: 0}
+cleanup_policy: {mode: NONE, reason: validation_rejects_before_persist}

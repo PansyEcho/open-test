@@ -1,0 +1,21 @@
+schema_version: opentest.variant/v2alpha1
+variant_id: variant:core-order-lifecycle:016-mtr-standard
+suite_id: suite:train-booking-core:core-order-lifecycle-v2
+system_id: train-booking-core
+category_id: mtr-orders
+title: 普通港铁订单直接收单
+business_goal: 验证普通港铁路线按直接收单规则创建订单，并持久化港铁分单属性。
+priority: P0
+lifecycle: blocked
+missing_conditions: [qa_mtr_standard_fixture, mtr_station_and_merchant_enum, verified_mtr_quote, oracle_catalog_snapshot, cleanup_capability]
+source_scan_id: scan-20260811091050-dc8391e426-0a843ec3
+source_refs: [{path: app/biz/src/main/java/com/ly/travel/train/supplychain/bookingcore/biz/manager/trade/CreateOrderServiceInvoker.java, symbol: CreateOrderServiceInvoker}, {path: app/biz/src/main/java/com/ly/travel/train/supplychain/bookingcore/biz/builder/OrderBuilder.java, symbol: OrderBuilder}]
+fixture_requirements: [{fixture_id: 'fixture:mtr:standard', purpose: 提供合法港铁OD、供应商类型、有效报价和完整乘客请求}]
+fixed_execution_order: [execute-create, observe-order, observe-collection, observe-projection]
+steps:
+- {step_id: execute-create, action: execute, tool_id: facade.trade.create_order, input: {request: '${fixtures.mtr_standard.create_request}'}}
+- {step_id: observe-order, action: oracle, oracle: {kind: MYSQL, resource_id: 'resource:train-booking-core:mysql:database:bookingcoredatasource', operation_id: order.primary_detail, evidence_mode: DIRECT}, input: {order_serial_no: '${fixtures.mtr_standard.order_serial_no}', transaction_serial_no: '${fixtures.mtr_standard.transaction_serial_no}'}}
+- {step_id: observe-collection, action: oracle, oracle: {kind: MYSQL, resource_id: 'resource:train-booking-core:mysql:database:temporderdatasource', operation_id: collection.detail, evidence_mode: DIRECT}, input: {order_serial_no: '${fixtures.mtr_standard.order_serial_no}'}}
+- {step_id: observe-projection, action: oracle, oracle: {kind: TIDB, resource_id: 'resource:train-booking-core:tidb:database:bookingcoretidbdatasource', operation_id: order.tidb_projection, evidence_mode: DIRECT}, input: {order_serial_no: '${fixtures.mtr_standard.order_serial_no}', transaction_serial_no: '${fixtures.mtr_standard.transaction_serial_no}'}}
+expected_business_outcome: {response: accepted, route: MTR, direct_accept: true}
+cleanup_policy: {mode: EXTERNAL_FIXTURE_OWNER, key: '${fixtures.mtr_standard.order_serial_no}'}
