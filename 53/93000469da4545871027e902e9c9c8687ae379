@@ -1,0 +1,947 @@
+opentest/application/regression_service.py
+  s_dd6ae313b13d0d::t_75d909a50f77ce 22,272-274,294,303,310,315-318,323,367
+  s_dd6ae313b13d0d::t_600519ed654489 295-300
+  s_dd6ae313b13d0d::t_e0348cdf14c4f8 1-4,6-7,9-15,17,19-21,23-35,37-47,49-56,58-66,68-73,75-112,114-123,125-126,147-223,225-258,260,262-264,266-267,269-270,275-277,306,308,314,328-354,357-363,409-427
+  s_dd6ae313b13d0d::t_b1705fa39486f4 5,36,74,124,224,259,261,265,268,271,278-293,301-302,304-305,307,309,311-313,319-322,324-327,355-356,364-366,368-408
+  s_dd6ae313b13d0d::t_fbd2c1409ae2d2 113
+  s_dd6ae313b13d0d::t_d99e2079dbff4a 8,16,18,48,57,67,127-146
+opentest/domain/__init__.py
+  s_dd6ae313b13d0d::t_6eee7da5430d54 1
+open-test-knowledge/systems/train-booking-core/cases/custom/031-ht-terminal-repeat-book.yaml
+  s_dd6ae313b13d0d::t_5501366903d423 1-20
+open-test-knowledge/systems/train-booking-core/cases/custom/001-realtime-ebk-success.yaml
+  s_dd6ae313b13d0d::t_57bd58de2da68d 1-9,11-13,15,115
+  s_dd6ae313b13d0d::t_adea67c583c607 10,14,16-92,103-114
+  s_dd6ae313b13d0d::t_9dd04189037761 93-102
+  s_dd6ae313b13d0d::t_79bab1d0bd475e 116
+open-test-knowledge/systems/train-booking-core/SKILL.md
+  s_dd6ae313b13d0d::t_21ba70b70ed192 1-2,4-7,9,11,18,20,27,29
+  s_dd6ae313b13d0d::t_5dc8b338185cff 3,8,10,12-17,19,21-26,28,30-33
+tests/v2/test_regression.py
+  s_dd6ae313b13d0d::t_2e85664a2da883 1-8,10-14,16-139,151-273,280-294,301-328,330-332,336-348,361-368,370-378,385,387-411,413-448
+  s_dd6ae313b13d0d::t_abc35860fd5025 9,349-360
+  s_dd6ae313b13d0d::t_1ea4ab523d76b5 274-279,295-300,379-384
+  s_dd6ae313b13d0d::t_64fa83b5f54ffe 15,140-150,329,333-335,369,386,412
+opentest/adapters/dsf_executor.py
+  s_dd6ae313b13d0d::t_81887efbcd2624 112
+  s_dd6ae313b13d0d::t_795527c5b3fe67 1-7,9-37,39-57,59,84-96,98,101-111,113-129
+  s_dd6ae313b13d0d::t_9ba8b8791f34b6 8,38,58,60-83,97,99-100,130-145
+workers/qa-oracle-worker/src/test/java/com/opentest/qaoracle/resource/CompanySdkResourceFactoryTest.java
+  s_dd6ae313b13d0d::t_b6f9b297a2b2c0 1-45
+tests/v2/test_cli.py
+  s_dd6ae313b13d0d::t_7bde8a81af7a8f 1-59
+openspec/changes/dsf-execution-and-oracles/design.md
+  s_dd6ae313b13d0d::t_625eb2579fc518 7
+  s_dd6ae313b13d0d::t_0029b076a884ae 15,17-18,20-24,26-28,30,33,41-43
+  s_dd6ae313b13d0d::t_fcf2846b5f7716 1-6,8-10,12-14,16,31-32,34-40,44
+  s_dd6ae313b13d0d::t_c9e0aa857ba13a 11,19,25,29
+open-test-knowledge/systems/train-booking-core/questions/questions.yaml
+  s_dd6ae313b13d0d::t_4b6502981122d3 1-20
+tests/v2/test_qa_worker.py
+  s_dd6ae313b13d0d::t_e382d1795376da 50-51,53-57,59-60,95-97
+  s_dd6ae313b13d0d::t_3972c9ba09a8d3 1-5,7-49,52,58,61-70,73-94,98,101-128
+  s_dd6ae313b13d0d::t_ecff8e947cedc5 6,71-72,99-100
+open-test-knowledge/systems/train-booking-core/references/data/sources/data-source-base-ticket-price-5917eb04b151.md
+  s_dd6ae313b13d0d::t_4b6502981122d3 1-36
+open-test-knowledge/systems/train-booking-core/cases/suites/core-order-lifecycle.yaml
+  s_dd6ae313b13d0d::t_be794dc10f7a16 9,69-109
+  s_dd6ae313b13d0d::t_e574b33f93de05 1-8,10-68
+tests/v2/test_console_contract.py
+  s_dd6ae313b13d0d::t_24fe4de9900b97 18-19,26-27
+  s_dd6ae313b13d0d::t_2d1c2167150393 1-17,24-25
+  s_dd6ae313b13d0d::t_75079175f8088c 21
+  s_dd6ae313b13d0d::t_21b38da94111b2 20,22-23
+opentest/cli.py
+  s_dd6ae313b13d0d::t_7bde8a81af7a8f 12-13,339-342,344-349
+  s_dd6ae313b13d0d::t_3e7aacb3d160db 17,19-20,24-27,95-108,198-213
+  s_dd6ae313b13d0d::t_c5953759771144 1-10,14-16,28-54,56-78,80-82,149-161,164-181,183-184,251,320-333,335-338,343,350-357
+  s_dd6ae313b13d0d::t_3281675d49d507 79,182
+  s_dd6ae313b13d0d::t_30f2682a32dc66 194-195
+  s_dd6ae313b13d0d::t_79824db17fbf56 11,23,125-132,231-235,300-319
+  s_dd6ae313b13d0d::t_5fea10e95f72b9 162-163
+  s_dd6ae313b13d0d::t_32ebc4551779b6 55,83-94,185-193,196-197,252-276,334
+  s_dd6ae313b13d0d::t_935a09453ccfb5 18,124,133-148,236-250
+  s_dd6ae313b13d0d::t_27bb368c67e60a 21-22,109-123,214-230,277-299
+workers/qa-oracle-worker/src/main/java/com/opentest/qaoracle/resource/RedisValueMatch.java
+  s_dd6ae313b13d0d::t_da5dc8012330cb 1-26
+workers/qa-oracle-worker/src/main/java/com/opentest/qaoracle/resource/CompanySdkResourceFactory.java
+  s_dd6ae313b13d0d::t_2f81ac5992586f 1-234,250-287
+  s_dd6ae313b13d0d::t_6d4d75a20e4a8a 235-249
+.claude/skills/openspec-propose/SKILL.md
+  s_dd6ae313b13d0d::t_be9c99b8abe2d9 1-110
+.claude/commands/opsx/explore.md
+  s_dd6ae313b13d0d::t_be9c99b8abe2d9 1-173
+opentest/application/source_analysis.py
+  s_dd6ae313b13d0d::t_167e816578daa4 113-124
+  s_dd6ae313b13d0d::t_5fea10e95f72b9 88
+  s_dd6ae313b13d0d::t_294cd16f4d5554 7
+  s_dd6ae313b13d0d::t_1c295daf4241b8 6,50,71-87,89-112,125-133,135-144,147
+  s_dd6ae313b13d0d::t_e389fe5cc126fa 1-5,8-16,19-49,51-70,148-161
+  s_dd6ae313b13d0d::t_5460309efabb87 17
+  s_dd6ae313b13d0d::t_5089dd6a780a6f 18,134,145-146
+tests/v2/test_execution.py
+  s_dd6ae313b13d0d::t_bb91740c174b78 629,635
+  s_dd6ae313b13d0d::t_c6d49b442032dc 14,565,792-800,802-821,932-958
+  s_dd6ae313b13d0d::t_c7a3d71c21913a 489-518
+  s_dd6ae313b13d0d::t_6ee48fe1a30b0c 409-454
+  s_dd6ae313b13d0d::t_8598077fe55113 519-531
+  s_dd6ae313b13d0d::t_6bab780211875b 630-634
+  s_dd6ae313b13d0d::t_c2ef4d6971e57d 49-55,482-483,790-791,822-845,864-931
+  s_dd6ae313b13d0d::t_82f050d7d6731c 208,212
+  s_dd6ae313b13d0d::t_f5bb6d3b787550 354-359
+  s_dd6ae313b13d0d::t_56acc88743a732 1-13,16-48,56-207,209-211,214-222,407-408,455-481,484-488,550-564,566-568,691,699,707-757,771-789
+  s_dd6ae313b13d0d::t_ac0b42902b27fe 384
+  s_dd6ae313b13d0d::t_d69adb0d322080 846-859,861-863
+  s_dd6ae313b13d0d::t_8b6f0d6ae80577 532-549,569-628,645-690,692-698,700-706,758-770
+  s_dd6ae313b13d0d::t_ae929dcb7abce4 15,223-292,361-383,385-406
+  s_dd6ae313b13d0d::t_3a025a6186c4d0 801
+  s_dd6ae313b13d0d::t_726d8a8c9e5b57 213
+  s_dd6ae313b13d0d::t_7c1ac3a6db49f8 293-353,360
+  s_dd6ae313b13d0d::t_413a8227b0a41e 636-644
+  s_dd6ae313b13d0d::t_f82c053b83b476 860
+workers/qa-oracle-worker/src/main/java/com/opentest/qaoracle/catalog/OperationKind.java
+  s_dd6ae313b13d0d::t_da5dc8012330cb 10
+  s_dd6ae313b13d0d::t_8e239ad3c49a3d 1-9,11-14
+workers/qa-oracle-worker/src/test/java/com/opentest/qaoracle/catalog/CatalogManifestLoaderTest.java
+  s_dd6ae313b13d0d::t_f8fda9a34fb50d 13,51-52,59-61,69-70
+  s_dd6ae313b13d0d::t_35a17fc6d7c455 14-15,48,50,164-182
+  s_dd6ae313b13d0d::t_6249fc0e72a70c 16,85-91,108-114,124-125,130,132-134,137,139-140
+  s_dd6ae313b13d0d::t_c282b27b58bff5 53-58,63-65
+  s_dd6ae313b13d0d::t_dfe83af3e978d2 62
+  s_dd6ae313b13d0d::t_c256a294f3bcd9 66-68
+  s_dd6ae313b13d0d::t_193f95022376d0 1-3,5-12,19-29,42-47,49,71-84,115-123,126-127,141-145,183-184
+  s_dd6ae313b13d0d::t_5016fe249a3e8d 135-136,146-163
+  s_dd6ae313b13d0d::t_3efd24473def2b 4,138
+  s_dd6ae313b13d0d::t_34ef44ea1d826d 17-18,30-41,92-107
+  s_dd6ae313b13d0d::t_1b5eda73274808 128-129,131
+open-test-knowledge/systems/train-booking-core/cases/custom/002-realtime-api-success.yaml
+  s_dd6ae313b13d0d::t_57bd58de2da68d 1-22
+openspec/specs/v2-api/spec.md
+  s_dd6ae313b13d0d::t_b31ed598cbb6f7 1-21
+opentest/application/scenarios.py
+  s_dd6ae313b13d0d::t_4212a0422aead3 193-206,218,220
+  s_dd6ae313b13d0d::t_2843c5529c6d9e 449-450,452-462,464-475,482-524,526-560,564,566,568-589,607,609-613,615-619,668
+  s_dd6ae313b13d0d::t_c354842bdc9c75 677,680-681,691-692,698-699,704-705,710-716,722-735,739,743
+  s_dd6ae313b13d0d::t_f620b45963af9e 80-85
+  s_dd6ae313b13d0d::t_9a6a86e06bb125 174,243,251,279,358,415,682,695,852
+  s_dd6ae313b13d0d::t_f8ea0bbdcb7c0e 372,375-376,525
+  s_dd6ae313b13d0d::t_cb366e2a4b2099 721
+  s_dd6ae313b13d0d::t_e5f002a19a3c50 242,254-260
+  s_dd6ae313b13d0d::t_17f7b8f62e5d31 755,758,761-764,767-774,781,783-800,803-808,824
+  s_dd6ae313b13d0d::t_801d996a963698 463,476,590,640
+  s_dd6ae313b13d0d::t_5760c4509cd81c 418-428,437
+  s_dd6ae313b13d0d::t_da43b63e106a05 719-720,809-823,838-842,859,917,926-928,931-933,936-937,964
+  s_dd6ae313b13d0d::t_a0f9d4d6862fd9 440,620-639,641-647
+  s_dd6ae313b13d0d::t_f43412dc2cc050 477-481,591,604-606,608
+  s_dd6ae313b13d0d::t_0a7a32c23617b0 831-832,834,855-858,860-861,884-888,897,900-904,906,918,920,922-924,929-930,938-942,944-963,965-967
+  s_dd6ae313b13d0d::t_00c8a093e539d4 592-603,659-661,843-851,876,891,905
+  s_dd6ae313b13d0d::t_95d0307a359b60 1-15,17-79,86-139,141-147,149-153,155-173,175-186,188-192,209-217,219,221,223-241,244-250,252-253,261-278,280-308,310,313-342,344-353,355,357,359-365,370-371,373-374,377-383,385,391,395,406-414,416,429-436,438-439,441,444-445,447-448,451,561-563,565,567,614,648-658,662-667,669-676,678-679,683-690,693-694,696-697,700-703,706-709,717-718,736-738,740-742,744-754,756-757,759-760,765-766,775-780,782,801-802,825-830,833,835-837,853-854,862-875,877-883,889-890,892-896,898-899,907-916,919,921,925,934-935,943,968-978
+  s_dd6ae313b13d0d::t_920d21d3c8c3aa 16,140,148,154,187,207-208,222,309,311-312,343,354,356,366-369,384,386-390,392-394,396-405,417,442-443,446
+open-test-knowledge/systems/train-booking-core/cases/custom/017-mtr-12306-eticket.yaml
+  s_dd6ae313b13d0d::t_9ca319ca3b6bde 1-21
+open-test-knowledge/systems/train-booking-core/cases/custom/025-cancel-occupy-success.yaml
+  s_dd6ae313b13d0d::t_5501366903d423 1-20
+open-test-knowledge/systems/train-booking-core/cases/variants/variant-create-order-031d02d55cb92538bdfe-d9b2e292a375.yaml
+  s_dd6ae313b13d0d::t_79ec4e47725e14 1-97,101-103
+  s_dd6ae313b13d0d::t_dbbe55c5426226 98-100,104
+opentest/application/knowledge.py
+  s_dd6ae313b13d0d::t_335c367a2082f9 1-92,95-154,157-237
+  s_dd6ae313b13d0d::t_d63b1fb5964a37 93-94,155-156
+tests/v2/test_api_cli.py
+  s_dd6ae313b13d0d::t_152c68afbc90f1 1-36
+  s_dd6ae313b13d0d::t_2d1c2167150393 37-66,72-86
+  s_dd6ae313b13d0d::t_2d859fe69d362c 70-71
+  s_dd6ae313b13d0d::t_458c1d0dfcfb7a 67-69
+open-test-knowledge/systems/train-booking-core/cases/variants/variant-create-order-1b52141cb6b5cc9254c9-58974815ba41.yaml
+  s_dd6ae313b13d0d::t_dbbe55c5426226 98-100,104
+  s_dd6ae313b13d0d::t_79ec4e47725e14 1-97,101-103
+workers/qa-oracle-worker/src/main/java/com/opentest/qaoracle/catalog/OracleOperation.java
+  s_dd6ae313b13d0d::t_38e71003a7cbc9 149,152-156
+  s_dd6ae313b13d0d::t_da5dc8012330cb 20,115-130,167
+  s_dd6ae313b13d0d::t_d3f0d485c2fc95 16-19,23,25-30,33,52-57,72-77,91-95,108-111,141
+  s_dd6ae313b13d0d::t_8e239ad3c49a3d 1-15,21-22,24,31-32,34-51,58-71,78-90,96-107,112-114,131-140,142-148,150-151,157-166,168
+docs/decisions/ADR-0001-v2-strangler-architecture.md
+  s_dd6ae313b13d0d::t_410eaa6930d4c2 1-20
+workers/qa-oracle-worker/src/main/java/com/opentest/qaoracle/service/WorkerProtocol.java
+  s_dd6ae313b13d0d::t_5c83d992fdd87a 3,32
+  s_dd6ae313b13d0d::t_83b6db5bfd5e5d 15,24-25,83-84
+  s_dd6ae313b13d0d::t_5a1937fb30bea2 68-69
+  s_dd6ae313b13d0d::t_8e239ad3c49a3d 1-2,4-14,16-23,26-31,33-67,70-82,85-95
+openspec/changes/dsf-execution-and-oracles/specs/dsf-execution/spec.md
+  s_dd6ae313b13d0d::t_47e79889f3c326 5,14-17
+  s_dd6ae313b13d0d::t_fcf2846b5f7716 1-4,6-13,18-25
+open-test-knowledge/systems/train-booking-core/cases/custom/018-hkd-all-priced.yaml
+  s_dd6ae313b13d0d::t_9ca319ca3b6bde 1-21
+tests/v2/test_source_analysis.py
+  s_dd6ae313b13d0d::t_37fc9cb0d50835 296-317,416-430,433-437,439,579,581-582,586-587,589,614-640,644
+  s_dd6ae313b13d0d::t_45e0abd09f6b2c 477-489,515-516,523-524
+  s_dd6ae313b13d0d::t_4c979d130807cd 7-8,24,26,184-243,285-293,345-415,490-514,517-522,546-578,580,583-585,588,590-592,645-673
+  s_dd6ae313b13d0d::t_6d8b26d39edbd9 9-10,25,30,43,59-63,69-70,76,91,130,322-323,325,341-342,431,470
+  s_dd6ae313b13d0d::t_5fa1048f795368 1-6,11-23,27-29,31-42,54-58,64-68,71-75,77-90,92-124,126-129,131-143,157-183,244-284,294-295,318-321,324,326-340,343-344,432,438,440-469,471-476,525-545
+  s_dd6ae313b13d0d::t_bc3344783f09f8 44-53,144-156,593-613,641-643
+  s_dd6ae313b13d0d::t_5460309efabb87 125
+.claude/commands/opsx/apply.md
+  s_dd6ae313b13d0d::t_be9c99b8abe2d9 1-152
+docs/decisions/ADR-0002-git-source-and-sqlite-index.md
+  s_dd6ae313b13d0d::t_410eaa6930d4c2 1-21
+opentest/web/styles.css
+  s_dd6ae313b13d0d::t_50f35317ec6466 79-81
+  s_dd6ae313b13d0d::t_2a6334f6f1a907 66-78
+  s_dd6ae313b13d0d::t_2b8e332520f1cc 1-65,82-89
+workers/qa-oracle-worker/src/main/java/com/opentest/qaoracle/catalog/RedisSetMemberSpec.java
+  s_dd6ae313b13d0d::t_8e239ad3c49a3d 1-42
+open-test-knowledge/systems/train-booking-core/references/core-lifecycle/lifecycle-and-recovery-flows.md
+  s_dd6ae313b13d0d::t_3c95f88a55daf8 8
+  s_dd6ae313b13d0d::t_fc026d95e5d28f 1-7,9-35,42-49
+  s_dd6ae313b13d0d::t_adea67c583c607 36-41
+openspec/specs/git-knowledge-store/spec.md
+  s_dd6ae313b13d0d::t_b31ed598cbb6f7 1-26
+open-test-knowledge/systems/train-booking-core/cases/custom/026-cancel-occupying-unlocked.yaml
+  s_dd6ae313b13d0d::t_5501366903d423 1-20
+open-test-knowledge/systems/train-booking-core/references/shared/business-rules/rule-create-order-hk-plan-price-63c753295709.md
+  s_dd6ae313b13d0d::t_4b6502981122d3 1-37
+openspec/specs/sqlite-knowledge-index/spec.md
+  s_dd6ae313b13d0d::t_b31ed598cbb6f7 1-26
+open-test-knowledge/systems/train-booking-core/cases/variants/variant-create-order-25283822dfac3864cb45-78192f19baf5.yaml
+  s_dd6ae313b13d0d::t_5d97472593ece7 1-106,108
+  s_dd6ae313b13d0d::t_dbbe55c5426226 110
+  s_dd6ae313b13d0d::t_79ec4e47725e14 107,109
+workers/qa-oracle-worker/src/main/java/com/opentest/qaoracle/service/WorkerFileProtocol.java
+  s_dd6ae313b13d0d::t_d3f0d485c2fc95 1-16,18-51,61-66,68-72,74-139
+  s_dd6ae313b13d0d::t_300c82c40fd623 17,73
+  s_dd6ae313b13d0d::t_8e3b5a9d58fabe 52-60,67
+tests/v2/test_booking_lifecycle_assets.py
+  s_dd6ae313b13d0d::t_eebd0359acc465 235-236,241,246-252
+  s_dd6ae313b13d0d::t_3c95f88a55daf8 228-234,237-240,243-245,253-254
+  s_dd6ae313b13d0d::t_cb9dde92379b13 1-9,11,16,18-23,25-91,272-307,309-354
+  s_dd6ae313b13d0d::t_79bab1d0bd475e 202-206
+  s_dd6ae313b13d0d::t_e382d1795376da 12-14,17,24,92-120,255-268,270-271
+  s_dd6ae313b13d0d::t_1b32793a995201 121-201,226-227
+  s_dd6ae313b13d0d::t_f5bb6d3b787550 219-225
+  s_dd6ae313b13d0d::t_ac0b42902b27fe 269,308
+  s_dd6ae313b13d0d::t_e9494a3c1febfd 242
+  s_dd6ae313b13d0d::t_7c1ac3a6db49f8 10,15,207-218
+opentest/domain/errors.py
+  s_dd6ae313b13d0d::t_6eee7da5430d54 1-21
+opentest/domain/models.py
+  s_dd6ae313b13d0d::t_a516fc51ef13ca 283-305
+  s_dd6ae313b13d0d::t_403830f966d0f8 579,842-845
+  s_dd6ae313b13d0d::t_00c8a093e539d4 636
+  s_dd6ae313b13d0d::t_dda04732bec72b 828
+  s_dd6ae313b13d0d::t_6eee7da5430d54 1-9,11-74,104-111,188-189,210-282,337-355,357-359,363-364,397-410,428-432,434-436,438,466-475,477-478,480-490,568-572,574-578,580-593,788-807,809-810,813,815-825,829-841
+  s_dd6ae313b13d0d::t_c3b636de61a688 10,190-209,630-632,811-812
+  s_dd6ae313b13d0d::t_ce2578505b7c6f 701-720
+  s_dd6ae313b13d0d::t_afc083c7af01d7 306-336
+  s_dd6ae313b13d0d::t_dd701b0e4c5d37 652,660,663,666,676
+  s_dd6ae313b13d0d::t_40e99e0e382cb0 158-159
+  s_dd6ae313b13d0d::t_3a92a46d7d617f 144-145,498-507,509-526,612,637-651,653-659,661-662,664-665,667-668,672,677-700,721-767
+  s_dd6ae313b13d0d::t_5fea10e95f72b9 573
+  s_dd6ae313b13d0d::t_7992603a346d6c 356,360-362,365-396
+  s_dd6ae313b13d0d::t_f9df4cd6dd319e 496
+  s_dd6ae313b13d0d::t_08e71ca0966857 594-605
+  s_dd6ae313b13d0d::t_7c1ac3a6db49f8 441-460,673-675
+  s_dd6ae313b13d0d::t_04152d89ff5699 606-611,613-629,633-635,768-787,808,814
+  s_dd6ae313b13d0d::t_d37bcc15552953 433,437,439-440,464-465,495,826-827,846-847
+  s_dd6ae313b13d0d::t_0ee34e07ed61ad 75-103,112-143,146-157,160-187
+  s_dd6ae313b13d0d::t_f5bb6d3b787550 461-463,669-671
+  s_dd6ae313b13d0d::t_eb94658d1cebeb 411-427,476,479,491-494,497,508,527-567
+open-test-knowledge/systems/train-booking-core/oracles/catalog.yaml
+  s_dd6ae313b13d0d::t_5b4d40f6c69701 1-108
+open-test-knowledge/systems/train-booking-core/references/shared/common-logic/logic-CreateOrderServiceInvoker-invokeInner-abcd8a7a8d18.md
+  s_dd6ae313b13d0d::t_4b6502981122d3 1-36
+workers/qa-oracle-worker/src/main/java/com/opentest/qaoracle/resource/ReadOnlyRedisClient.java
+  s_dd6ae313b13d0d::t_da5dc8012330cb 34-43
+  s_dd6ae313b13d0d::t_8e239ad3c49a3d 1-6,13-14,22-23,32-33,51-52,58-60
+  s_dd6ae313b13d0d::t_cd48b307cd7763 7-12,15-21,24-31,44-50,53-57
+opentest/adapters/qa_worker.py
+  s_dd6ae313b13d0d::t_d2ae7a7660cfaa 1-22,24-83,87-183,192-225
+  s_dd6ae313b13d0d::t_86fa6a17855372 23,184-191
+  s_dd6ae313b13d0d::t_0a097acd86c7de 84-86
+opentest/adapters/agent_runner.py
+  s_dd6ae313b13d0d::t_fb7abfdae3f885 128-141
+  s_dd6ae313b13d0d::t_815014ca4fc5cd 1-127,142-151,155-212
+  s_dd6ae313b13d0d::t_504c7c4c8d8f3f 152-154
+openspec/specs/knowledge-draft-and-confirmation/spec.md
+  s_dd6ae313b13d0d::t_b31ed598cbb6f7 1-25
+workers/qa-oracle-worker/src/main/java/com/opentest/qaoracle/model/OracleResponse.java
+  s_dd6ae313b13d0d::t_3ecc2a6f81c5d8 3-4,12,14,16-17,19,21-22,24,26-27
+  s_dd6ae313b13d0d::t_8e239ad3c49a3d 1-2,5-11,13,18,20,23,28-34,36-39,41-42,45-46,48-64,66-68,70-77,79-81,83,85-88
+  s_dd6ae313b13d0d::t_5a1937fb30bea2 15,25,35,40,43-44,47,65,69,78,82,84
+open-test-knowledge/systems/train-booking-core/cases/custom/016-mtr-standard.yaml
+  s_dd6ae313b13d0d::t_9ca319ca3b6bde 1-21
+openspec/specs/java-structure-scan/spec.md
+  s_dd6ae313b13d0d::t_b31ed598cbb6f7 1-21
+openspec/changes/dsf-execution-and-oracles/specs/qa-worker-and-resource-status/spec.md
+  s_dd6ae313b13d0d::t_8e7ac072be0d3a 1-4,6-29
+  s_dd6ae313b13d0d::t_47e79889f3c326 5,30-33
+open-test-knowledge/systems/train-booking-core/cases/custom/029-supplier-batch-revoke.yaml
+  s_dd6ae313b13d0d::t_d2040d03811cad 20
+  s_dd6ae313b13d0d::t_5501366903d423 1-19,21-22
+open-test-knowledge/systems/train-booking-core/cases/custom/005-occupy-ebk-full-success.yaml
+  s_dd6ae313b13d0d::t_6af7e10917085b 1-24
+README.md
+  s_dd6ae313b13d0d::t_0eb765a1c5d6e8 1-20
+open-test-knowledge/systems/train-booking-core/cases/custom/009-grab-no-merchant.yaml
+  s_dd6ae313b13d0d::t_6af7e10917085b 1-20
+opentest/api.py
+  s_dd6ae313b13d0d::t_c5953759771144 1-10,13-16,44-76,78-79,82-95,97-110,114-122,124-128,130-134,136-140,142-144,320-321,323-332,334-336,338-340,342-344,346-348,359-363
+  s_dd6ae313b13d0d::t_bce3f2689c3f02 11-12,23,29,35,111-113,217,219-223,225-229,231-238,349-354,356-358
+  s_dd6ae313b13d0d::t_01e84d6487462f 123,129,135,141,147,155,161,172,178,187,198,209,218,224,230,240,299,310,316,322,333,345,355
+  s_dd6ae313b13d0d::t_3281675d49d507 337,341
+  s_dd6ae313b13d0d::t_a779eac4055e0d 77,96
+  s_dd6ae313b13d0d::t_d22842429b6deb 17-22,264-291,293-296
+  s_dd6ae313b13d0d::t_32ebc4551779b6 80-81,145-146,148-154,156-158
+  s_dd6ae313b13d0d::t_50bc0a7236d06c 30,34,36-37,185-186,188-197,199-208,210-215
+  s_dd6ae313b13d0d::t_4ecc38975044ca 24,26-28,33,40-43,159-160,162-171,173-177,179-184
+  s_dd6ae313b13d0d::t_55fbbcfc3fb249 25,38-39,216,239,241-243,297-298,300-309,311-315,317-319
+  s_dd6ae313b13d0d::t_41cccaec482b6a 31-32,244-263
+  s_dd6ae313b13d0d::t_fbd2c1409ae2d2 292
+open-test-knowledge/systems/train-booking-core/cases/custom/028-timeout-job.yaml
+  s_dd6ae313b13d0d::t_5501366903d423 1-9,11-22
+  s_dd6ae313b13d0d::t_ee8e824e4d3e68 10
+open-test-knowledge/systems/train-booking-core/references/shared/common-logic/logic-CreateOrderValidator-validate-6afe6197793b.md
+  s_dd6ae313b13d0d::t_4b6502981122d3 1-36
+workers/qa-oracle-worker/src/main/java/com/opentest/qaoracle/resource/CompanyResourceFactory.java
+  s_dd6ae313b13d0d::t_8e239ad3c49a3d 1-33
+open-test-knowledge/systems/train-booking-core/cases/variants/variant-create-order-3d37ffdd4e37e963388b-a8d4302d2644.yaml
+  s_dd6ae313b13d0d::t_5d97472593ece7 1-105,107
+  s_dd6ae313b13d0d::t_dbbe55c5426226 109
+  s_dd6ae313b13d0d::t_79ec4e47725e14 106,108
+pyproject.toml
+  s_dd6ae313b13d0d::t_1ea99820ed02b3 19
+  s_dd6ae313b13d0d::t_0eb765a1c5d6e8 27-29
+  s_dd6ae313b13d0d::t_6eee7da5430d54 1-18,20-26,30-31
+workers/qa-oracle-worker/src/main/java/com/opentest/qaoracle/service/IdentityGate.java
+  s_dd6ae313b13d0d::t_8e239ad3c49a3d 1-61
+openspec/changes/dsf-execution-and-oracles/specs/snapshot-version-binding/spec.md
+  s_dd6ae313b13d0d::t_8ab2b862944a63 14-17
+  s_dd6ae313b13d0d::t_fcf2846b5f7716 1-13
+opentest/web/app.js
+  s_dd6ae313b13d0d::t_6c911ac62734a6 19-23,326-408,451-453
+  s_dd6ae313b13d0d::t_111cb3dad22203 33-40
+  s_dd6ae313b13d0d::t_2b8e332520f1cc 1-18,24-32,41-111,201-325,409-438,442-450,454-458
+  s_dd6ae313b13d0d::t_a68e1428a83e92 112-200,439-441
+openspec/specs/v2-console/spec.md
+  s_dd6ae313b13d0d::t_b31ed598cbb6f7 1-17
+open-test-knowledge/systems/train-booking-core/cases/custom/022-connect-three-leg.yaml
+  s_dd6ae313b13d0d::t_5501366903d423 1-23
+open-test-knowledge/systems/train-booking-core/cases/custom/012-reject-final-fail.yaml
+  s_dd6ae313b13d0d::t_d2040d03811cad 19
+  s_dd6ae313b13d0d::t_9ca319ca3b6bde 1-18,20-21
+workers/qa-oracle-worker/src/main/resources/META-INF/services/com.opentest.qaoracle.resource.CompanyResourceFactory
+  s_dd6ae313b13d0d::t_2f81ac5992586f 1
+openspec/specs/source-baseline-capture/spec.md
+  s_dd6ae313b13d0d::t_b31ed598cbb6f7 1-21
+openspec/changes/dsf-execution-and-oracles/.openspec.yaml
+  s_dd6ae313b13d0d::t_4949cc9f7d8ca8 1-2
+opentest/adapters/sqlite_index.py
+  s_dd6ae313b13d0d::t_6e9d62b4d4d747 154-173,309-313
+  s_dd6ae313b13d0d::t_3281675d49d507 191-198,204,214-219,222-253
+  s_dd6ae313b13d0d::t_a779eac4055e0d 9-10,29,48-49,53,108-110,142,146-148
+  s_dd6ae313b13d0d::t_52cc46b96cafbf 1-8,11-28,30-47,50-52,54-107,111-141,143-145,149-153,174-190,199-203,205-213,220-221,254-308,314-329
+open-test-knowledge/systems/train-booking-core/cases/variants/variant-create-order-43b9ed529ca00c5856e7-66b8148ea7cc.yaml
+  s_dd6ae313b13d0d::t_5d97472593ece7 1-108,110
+  s_dd6ae313b13d0d::t_dbbe55c5426226 112
+  s_dd6ae313b13d0d::t_79ec4e47725e14 109,111
+workers/qa-oracle-worker/src/main/java/com/opentest/qaoracle/service/WorkerException.java
+  s_dd6ae313b13d0d::t_8e239ad3c49a3d 1-24
+openspec/specs/java-knowledge-tracing/spec.md
+  s_dd6ae313b13d0d::t_b31ed598cbb6f7 1-17
+tests/v2/test_regression_service.py
+  s_dd6ae313b13d0d::t_1ea4ab523d76b5 97-98,212,225
+  s_dd6ae313b13d0d::t_6ee48fe1a30b0c 5,10,19,23,52,55-56,58-68,289-364
+  s_dd6ae313b13d0d::t_bb3035e5d7eb78 8-9,12
+  s_dd6ae313b13d0d::t_0bdbcfafa36459 1-4,6-7,11,13-18,20-22,24-51,53-54,57,69-96,99-211,213-224,226-288
+workers/qa-oracle-worker/src/main/java/com/opentest/qaoracle/catalog/CatalogManifestLoader.java
+  s_dd6ae313b13d0d::t_3efd24473def2b 8,17-18,133
+  s_dd6ae313b13d0d::t_b34f440a7a5dd5 96,100,106,126-127,178-188
+  s_dd6ae313b13d0d::t_d3f0d485c2fc95 1-2,4-7,9-14,23-28,37-42,44-50,52,54-55,59,61-91,94-95,97-98,101-105,107-108,209-210
+  s_dd6ae313b13d0d::t_0462db34ae8265 19-22,29-36,92,99,109-125,128-132,134-140,147-177
+  s_dd6ae313b13d0d::t_5016fe249a3e8d 141-146
+  s_dd6ae313b13d0d::t_986c195fbce781 15-16,51,53,56-58,60,93,189-208
+  s_dd6ae313b13d0d::t_0dbbcfa215bcfd 3,43
+tests/v2/test_resources.py
+  s_dd6ae313b13d0d::t_1ea4ab523d76b5 127-128
+  s_dd6ae313b13d0d::t_d7afd94cb01a7a 1-126,129-262
+tests/v2/test_resource_service.py
+  s_dd6ae313b13d0d::t_3ae382390e673f 127-128
+  s_dd6ae313b13d0d::t_368011228eea20 177-178
+  s_dd6ae313b13d0d::t_43c0be19dff5ea 53,63
+  s_dd6ae313b13d0d::t_1ea4ab523d76b5 158-159
+  s_dd6ae313b13d0d::t_64a5d1aca38385 1-52,54-62,64-126,129-157,160-176,179-181
+openspec/changes/dsf-execution-and-oracles/specs/regression-suite-and-global-job/spec.md
+  s_dd6ae313b13d0d::t_8e7ac072be0d3a 1-4,6-10,19-20,22-29
+  s_dd6ae313b13d0d::t_47e79889f3c326 5,11-18,21,30-33
+tests/v2/test_knowledge_tracing.py
+  s_dd6ae313b13d0d::t_504c7c4c8d8f3f 296-319
+  s_dd6ae313b13d0d::t_be6a861aaa94ad 161-189
+  s_dd6ae313b13d0d::t_1936c054e95329 73
+  s_dd6ae313b13d0d::t_3edd3f1a230ce2 1-72,74-160,190-226,228-232,235,237-295
+  s_dd6ae313b13d0d::t_3281675d49d507 227,233-234,236
+workers/qa-oracle-worker/src/main/java/com/opentest/qaoracle/resource/UnavailableCompanyResourceFactory.java
+  s_dd6ae313b13d0d::t_8e239ad3c49a3d 1-8,16-20,28-32,38-42
+  s_dd6ae313b13d0d::t_cd48b307cd7763 9-15,21-27,33-37
+open-test-knowledge/systems/train-booking-core/cases/custom/020-hkd-price-mismatch.yaml
+  s_dd6ae313b13d0d::t_9ca319ca3b6bde 1-19
+workers/qa-oracle-worker/src/main/java/com/opentest/qaoracle/model/ResourceType.java
+  s_dd6ae313b13d0d::t_8e239ad3c49a3d 1-11
+opentest/adapters/oracles.py
+  s_dd6ae313b13d0d::t_0bb043d3123306 1-4,6-7,10-26,34-44,51-66,68,72,74-75,78-89,96-102,104,112-118,126-139,153,172-178,180-191,198-199,202-203,205,207-208,211,213-218,226-255,262-268,270,272-274,281-315,320-323,326-330,333-334,342-346,348-349
+  s_dd6ae313b13d0d::t_767e47108b1d0d 9,76-77,335-341
+  s_dd6ae313b13d0d::t_44d263f944d84d 122-125
+  s_dd6ae313b13d0d::t_367d600f2399d5 222-225
+  s_dd6ae313b13d0d::t_c3b636de61a688 67,69,73,107,201,204,206,269,271,276
+  s_dd6ae313b13d0d::t_092d1a01fb7efe 8,27-33,45-50,70-71,90-95,105,108-111,119-121,140-152,154-171,179,192-197,209-210,212,219-221,256-261,275,277-280,331-332
+  s_dd6ae313b13d0d::t_9a6a86e06bb125 103,106,200,319
+  s_dd6ae313b13d0d::t_8c7e0df3232f36 316-318
+  s_dd6ae313b13d0d::t_00c8a093e539d4 5,324-325,347
+docs/roadmap.md
+  s_dd6ae313b13d0d::t_410eaa6930d4c2 1-23
+open-test-knowledge/systems/train-booking-core/references/core-lifecycle/oracle-and-execution-boundaries.md
+  s_dd6ae313b13d0d::t_94dab4c7150e64 44
+  s_dd6ae313b13d0d::t_fc026d95e5d28f 1-43,45-49
+open-test-knowledge/systems/train-booking-core/cases/coverage-targets.yaml
+  s_dd6ae313b13d0d::t_8d37cb080f144e 1-36
+open-test-knowledge/systems/train-booking-core/cases/variants/variant-create-order-5b595e7d0be1aa89ab17-5a84edc24a0a.yaml
+  s_dd6ae313b13d0d::t_79ec4e47725e14 1-67,69-85,89-91
+  s_dd6ae313b13d0d::t_dbbe55c5426226 68,86-88,92
+open-test-knowledge/systems/train-booking-core/agents/openai.yaml
+  s_dd6ae313b13d0d::t_21ba70b70ed192 1-4
+open-test-knowledge/systems/train-booking-core/cases/variants/variant-create-order-f58d4d4da592e808dbd7-90932b312080.yaml
+  s_dd6ae313b13d0d::t_5d97472593ece7 1-67,69-78,81-82,84-85,89-91
+  s_dd6ae313b13d0d::t_dbbe55c5426226 68,86-88,92
+  s_dd6ae313b13d0d::t_79ec4e47725e14 79-80,83
+open-test-knowledge/systems/train-booking-core/cases/variants/variant-create-order-be666cc76401caa0b5d2-db1b6a7cf388.yaml
+  s_dd6ae313b13d0d::t_79ec4e47725e14 1-67,69-85,89-91
+  s_dd6ae313b13d0d::t_dbbe55c5426226 68,86-88,92
+open-test-knowledge/systems/train-booking-core/cases/custom/003-realtime-empty-fallback.yaml
+  s_dd6ae313b13d0d::t_ee8e824e4d3e68 10
+  s_dd6ae313b13d0d::t_57bd58de2da68d 1-9,11-13,15-24
+  s_dd6ae313b13d0d::t_7b2b79c6ed2f68 14
+openspec/changes/dsf-execution-and-oracles/tasks.md
+  s_dd6ae313b13d0d::t_12db3363722bea 22,24-27
+  s_dd6ae313b13d0d::t_d4292d1d7d415c 3-5,9-11,15-18
+  s_dd6ae313b13d0d::t_0029b076a884ae 20-21,28-32,34
+  s_dd6ae313b13d0d::t_771fc4ba2f736b 23,33,36
+  s_dd6ae313b13d0d::t_60e84b5c59bbf8 35
+  s_dd6ae313b13d0d::t_fcf2846b5f7716 1-2,6-8,12-14,19
+open-test-knowledge/systems/train-booking-core/cases/suites/core-order-lifecycle-coverage.yaml
+  s_dd6ae313b13d0d::t_e574b33f93de05 1-57
+open-test-knowledge/systems/train-booking-core/cases/custom/013-reject-switch-ticket-machine.yaml
+  s_dd6ae313b13d0d::t_d2040d03811cad 19
+  s_dd6ae313b13d0d::t_9ca319ca3b6bde 1-18,20-21
+open-test-knowledge/systems/train-booking-core/cases/custom/011-occupy-second-dispatch.yaml
+  s_dd6ae313b13d0d::t_7b2b79c6ed2f68 14
+  s_dd6ae313b13d0d::t_ee8e824e4d3e68 10
+  s_dd6ae313b13d0d::t_d2040d03811cad 22
+  s_dd6ae313b13d0d::t_6af7e10917085b 1-9,11-13,15-21,23-25
+openspec/changes/dsf-execution-and-oracles/specs/oracle-and-polling/spec.md
+  s_dd6ae313b13d0d::t_fcf2846b5f7716 1-4,6-13
+  s_dd6ae313b13d0d::t_47e79889f3c326 5,14-17
+open-test-knowledge/systems/train-booking-core/cases/custom/019-hkd-partial-price-missing.yaml
+  s_dd6ae313b13d0d::t_9ca319ca3b6bde 1-19
+docs/development/qa-fixture-checklist.md
+  s_dd6ae313b13d0d::t_adea67c583c607 19,55-56
+  s_dd6ae313b13d0d::t_ec7ed3580af685 1-18,20-54,57
+workers/qa-oracle-worker/src/test/java/com/opentest/qaoracle/service/WorkerFileProtocolTest.java
+  s_dd6ae313b13d0d::t_193f95022376d0 1-74
+open-test-knowledge/systems/train-booking-core/cases/variants/variant-create-order-84019840d828a2e0092e-f4cf0952c75e.yaml
+  s_dd6ae313b13d0d::t_dbbe55c5426226 94-96,100
+  s_dd6ae313b13d0d::t_79ec4e47725e14 1-93,97-99
+opentest/adapters/case_store.py
+  s_dd6ae313b13d0d::t_9a6a86e06bb125 103,448,474
+  s_dd6ae313b13d0d::t_f324c08993d7da 1-4,8,10,12-18,21-22,24,26-40,46-49,51-63,69-80,83-86,89-100,104-119,445-447,449-473,476-482,489-490,492-495,505,531-549
+  s_dd6ae313b13d0d::t_d3066b4f30f0a7 6-7,9,19-20,23,102,282,286-359,371-386,388-443
+  s_dd6ae313b13d0d::t_dd701b0e4c5d37 360-370,387
+  s_dd6ae313b13d0d::t_590f92cb558672 149-164,166-169,171-281,283-285,444
+  s_dd6ae313b13d0d::t_cba22f97d260d2 25
+  s_dd6ae313b13d0d::t_00c8a093e539d4 165,170
+  s_dd6ae313b13d0d::t_98b647c872caba 475,483-488,491,496-504,506-530
+  s_dd6ae313b13d0d::t_ef18ca7147a89d 5,11,41-45,50,64-68,81-82,87-88,101,136-146
+  s_dd6ae313b13d0d::t_b5f25f04e3b089 120-135,147-148
+docs/development/quality-gates.md
+  s_dd6ae313b13d0d::t_410eaa6930d4c2 1-22
+workers/qa-oracle-worker/src/main/java/com/opentest/qaoracle/model/ResourceStatus.java
+  s_dd6ae313b13d0d::t_8e239ad3c49a3d 1-13
+workers/qa-oracle-worker/src/test/java/com/opentest/qaoracle/service/WorkerProtocolTest.java
+  s_dd6ae313b13d0d::t_193f95022376d0 1-18,23-26,28-29,41-51,63-65,67-71,83,95
+  s_dd6ae313b13d0d::t_6249fc0e72a70c 19-20,30-40,72-82
+  s_dd6ae313b13d0d::t_b5aa1ca57e63e5 52-62
+  s_dd6ae313b13d0d::t_35a17fc6d7c455 22
+  s_dd6ae313b13d0d::t_83b6db5bfd5e5d 66
+  s_dd6ae313b13d0d::t_5c83d992fdd87a 84-94
+  s_dd6ae313b13d0d::t_8ebfbcc75c44e8 21,27
+open-test-knowledge/systems/train-booking-core/cases/variants/variant-create-order-4cba6175d79964aa7b20-2aa72f57c86a.yaml
+  s_dd6ae313b13d0d::t_79ec4e47725e14 105,107
+  s_dd6ae313b13d0d::t_5d97472593ece7 1-104,106
+  s_dd6ae313b13d0d::t_dbbe55c5426226 108
+open-test-knowledge/systems/train-booking-core/cases/variants/variant-create-order-5b687b076eb8e01804ed-140365ec6751.yaml
+  s_dd6ae313b13d0d::t_5d97472593ece7 1-88,91-92,95-96,100-102
+  s_dd6ae313b13d0d::t_79ec4e47725e14 89-90,93-94
+  s_dd6ae313b13d0d::t_dbbe55c5426226 97-99,103
+opentest/application/snapshots.py
+  s_dd6ae313b13d0d::t_167e816578daa4 47,50-64,191,196-227,247-248,250-275,277,280-283
+  s_dd6ae313b13d0d::t_9a6a86e06bb125 65,70,92
+  s_dd6ae313b13d0d::t_1d7ac5548f0196 88-91,99-100,116-117,294-295,322-340
+  s_dd6ae313b13d0d::t_2180702604b419 1-12,15-46,48-49,66-69,71-81,83-85,87,93-98,101-115,118-148,152,300-321,341-371
+  s_dd6ae313b13d0d::t_334fc06aa7a0d2 228-240,243-246
+  s_dd6ae313b13d0d::t_17d2f3825458a2 13-14,82,86,149-151,153-190,192-195,249,276,278-279,284-293,296-299
+  s_dd6ae313b13d0d::t_dc57915d77db57 241-242
+open-test-knowledge/systems/train-booking-core/cases/variants/variant-create-order-3dc642b0be146b808382-16b01ff204dc.yaml
+  s_dd6ae313b13d0d::t_5d97472593ece7 1-88,91-92,94,96-98
+  s_dd6ae313b13d0d::t_dbbe55c5426226 95,99
+  s_dd6ae313b13d0d::t_79ec4e47725e14 89-90,93
+open-test-knowledge/systems/train-booking-core/cases/variants/variant-create-order-bdb3e4e788a55f8ecda7-545998e04181.yaml
+  s_dd6ae313b13d0d::t_dbbe55c5426226 68,85,89
+  s_dd6ae313b13d0d::t_5d97472593ece7 1-67,69-78,81-82,84,86-88
+  s_dd6ae313b13d0d::t_79ec4e47725e14 79-80,83
+open-test-knowledge/systems/train-booking-core/cases/variants/variant-create-order-f8022b541d393ea4ae1e-3c3400cdcf10.yaml
+  s_dd6ae313b13d0d::t_dbbe55c5426226 108
+  s_dd6ae313b13d0d::t_5d97472593ece7 1-104,106
+  s_dd6ae313b13d0d::t_79ec4e47725e14 105,107
+openspec/specs/natural-language-compilation/spec.md
+  s_dd6ae313b13d0d::t_b31ed598cbb6f7 1-17
+open-test-knowledge/systems/train-booking-core/cases/custom/008-grab-outside-sale-time.yaml
+  s_dd6ae313b13d0d::t_6af7e10917085b 1-19
+open-test-knowledge/systems/train-booking-core/references/facades/facade-TradeFacade-createOrder-ea1999f3cd0b.md
+  s_dd6ae313b13d0d::t_4b6502981122d3 1-37
+open-test-knowledge/systems/train-booking-core/cases/custom/024-cancel-ticketing.yaml
+  s_dd6ae313b13d0d::t_5501366903d423 1-18,20-21
+  s_dd6ae313b13d0d::t_d2040d03811cad 19
+opentest/web/index.html
+  s_dd6ae313b13d0d::t_2b8e332520f1cc 1-34,54,56-62,64-70,72-83,97-103
+  s_dd6ae313b13d0d::t_0cc478e3d4aa1e 84-85,87-96
+  s_dd6ae313b13d0d::t_16a4b00c82f43a 35-53,55,63,71
+  s_dd6ae313b13d0d::t_fbd2c1409ae2d2 86
+open-test-knowledge/systems/train-booking-core/cases/variants/variant-create-order-b977a8c4c409acd27512-70b3567d3034.yaml
+  s_dd6ae313b13d0d::t_5d97472593ece7 1-87,90-91,93-94,98-100
+  s_dd6ae313b13d0d::t_dbbe55c5426226 95-97,101
+  s_dd6ae313b13d0d::t_79ec4e47725e14 88-89,92
+workers/qa-oracle-worker/src/main/java/com/opentest/qaoracle/catalog/RedisValueMatchSpec.java
+  s_dd6ae313b13d0d::t_da5dc8012330cb 1-42
+open-test-knowledge/systems/train-booking-core/cases/variants/variant-create-order-657338ceccf3ea188906-90f941e17b83.yaml
+  s_dd6ae313b13d0d::t_dbbe55c5426226 109
+  s_dd6ae313b13d0d::t_79ec4e47725e14 106,108
+  s_dd6ae313b13d0d::t_5d97472593ece7 1-105,107
+openspec/specs/coverage-driven-generation/spec.md
+  s_dd6ae313b13d0d::t_b31ed598cbb6f7 1-21
+opentest/adapters/knowledge_tracing.py
+  s_dd6ae313b13d0d::t_c9dec9031a3a1a 1-5,7-23,56-90,92-98,100-129,136,141-145,147-164,166,173-178,189,191-212,214-215,222,225-227,229,242-346
+  s_dd6ae313b13d0d::t_a42056807adcda 6,24-55,130-135,137-139,146,165,167-172,179-188,190,213,216-221,223-224,228,230-241
+  s_dd6ae313b13d0d::t_be6a861aaa94ad 91,99
+  s_dd6ae313b13d0d::t_1936c054e95329 140
+tests/v2/test_scenarios.py
+  s_dd6ae313b13d0d::t_8b061170330871 244-261
+  s_dd6ae313b13d0d::t_fd748efcca3dc7 178-184,209,231,233-236,262-290,344-360
+  s_dd6ae313b13d0d::t_641deccd2e9d22 1-8,10-11,13-14,16,18,21,23-32,42-61,113-119,121-122,138-177,193-208,210-230,232,237-238,240-243
+  s_dd6ae313b13d0d::t_a443dc590bf1db 384-401
+  s_dd6ae313b13d0d::t_8b6f0d6ae80577 12,15,20,185-192,239,291-343,382-383
+  s_dd6ae313b13d0d::t_214a0ebb513e11 361-381
+  s_dd6ae313b13d0d::t_794bb1763e3dcf 9,17,19,22,33-41,62-112,120,123-137
+workers/qa-oracle-worker/src/main/java/com/opentest/qaoracle/catalog/OperationCatalog.java
+  s_dd6ae313b13d0d::t_d3f0d485c2fc95 154,156,159,161,165,238-239
+  s_dd6ae313b13d0d::t_300c82c40fd623 22-32,134
+  s_dd6ae313b13d0d::t_3ecc2a6f81c5d8 21,33
+  s_dd6ae313b13d0d::t_3efd24473def2b 12
+  s_dd6ae313b13d0d::t_5016fe249a3e8d 67-80,83-84,185-237,264-273
+  s_dd6ae313b13d0d::t_e5f36755a05a98 44,46-50,53-56,58-60,63-66,82,85-99,108,111-113,118-124,128-130
+  s_dd6ae313b13d0d::t_38e71003a7cbc9 137-138
+  s_dd6ae313b13d0d::t_cd48b307cd7763 292-296,300-301
+  s_dd6ae313b13d0d::t_8e239ad3c49a3d 1-11,13-14,16-20,34-43,45,51-52,57,62,100-103,105-107,109-110,114,116-117,125-127,139-146,148-149,152-153,240-249,252,274-287,297-299,302-313
+  s_dd6ae313b13d0d::t_70280a615c2c4b 288-291
+  s_dd6ae313b13d0d::t_b9a8de65becef2 61,81,104,115
+  s_dd6ae313b13d0d::t_006a01b08c8a5d 15,131-133,135-136,147,150-151,155,157-158,160,162-164,166-184,250-251,253-263
+open-test-knowledge/systems/train-booking-core/questions/lifecycle-questions.yaml
+  s_dd6ae313b13d0d::t_fc026d95e5d28f 1-97
+open-test-knowledge/systems/train-booking-core/cases/custom/007-grab-approach-departure.yaml
+  s_dd6ae313b13d0d::t_6af7e10917085b 1-20
+docs/status.md
+  s_dd6ae313b13d0d::t_60e84b5c59bbf8 53
+  s_dd6ae313b13d0d::t_79bab1d0bd475e 67
+  s_dd6ae313b13d0d::t_660034e9baeb02 107
+  s_dd6ae313b13d0d::t_65c228b2120ab9 124
+  s_dd6ae313b13d0d::t_fd65e79bf4627d 127
+  s_dd6ae313b13d0d::t_6f978eded4b088 11-14
+  s_dd6ae313b13d0d::t_c02624cd8f4f31 51,122-123
+  s_dd6ae313b13d0d::t_759bd7478465a6 15,97-98
+  s_dd6ae313b13d0d::t_674b9c71b311e3 49,64-66,68-70,75-76,85,88,134-136,141,143
+  s_dd6ae313b13d0d::t_d0360dce7ba5ef 19,99,101
+  s_dd6ae313b13d0d::t_e08c342f9c54b1 24-25,103
+  s_dd6ae313b13d0d::t_771fc4ba2f736b 43-48,80-81,86,89-90,116-120,144
+  s_dd6ae313b13d0d::t_defb2944a630a4 50
+  s_dd6ae313b13d0d::t_410eaa6930d4c2 1-4,6-10,72-74,77-79,82-84,92-96,138-140
+  s_dd6ae313b13d0d::t_6bfaa4e9cc0e15 31,105-106
+  s_dd6ae313b13d0d::t_13edf1c8bcbded 26,32-35
+  s_dd6ae313b13d0d::t_65728cf4e9ee48 30,36-39,108-112
+  s_dd6ae313b13d0d::t_af2874370b3464 20-23,102
+  s_dd6ae313b13d0d::t_e195454d7694e4 5,40-42,113-115
+  s_dd6ae313b13d0d::t_1342ef9219d602 54,56,128
+  s_dd6ae313b13d0d::t_4e1db3ff419daa 55
+  s_dd6ae313b13d0d::t_d809fe5c139de2 71,137
+  s_dd6ae313b13d0d::t_21c9fa8bfd5182 52,126
+  s_dd6ae313b13d0d::t_1b0448134cac4d 121
+  s_dd6ae313b13d0d::t_1b3e7eceb56c10 16-18,100
+  s_dd6ae313b13d0d::t_d4292d1d7d415c 27-29,104
+  s_dd6ae313b13d0d::t_c9c5c723520cea 125
+  s_dd6ae313b13d0d::t_dfb8d7a9c8e9ba 57-63,87,91,129-133,142
+opentest/adapters/source_analysis.py
+  s_dd6ae313b13d0d::t_4d711bf6c2562d 37-38,277,281-286,291,303,308,310,313-314,327-339,342-377,414-426,432-436,461-471,475-476,479,486,489-490,496,500-509,513-514,517,524-526,531,534-553
+  s_dd6ae313b13d0d::t_c40fa2965a4ba2 622-624,688-701,703-706,713,724-799,801-803
+  s_dd6ae313b13d0d::t_45e0abd09f6b2c 620
+  s_dd6ae313b13d0d::t_403830f966d0f8 1-11,13,16-18,20-36,39-84,87-90,92-108,130,141-142,183-188,190-276,278-280,287-290,292-302,304-307,309,311-312,340-341,378-413,427-431,437-442,446,448-460,472-474,480-485,487-488,491-495,497-499,510-512,518-523,527-530,532-533,554-619,621,625-687,702,707-712,714-723,800,804-844,846-862,888,891-898,900-907,938-969,979-982
+  s_dd6ae313b13d0d::t_5fea10e95f72b9 14-15,19,170-171,443-445,447,477-478,515-516,863-887
+  s_dd6ae313b13d0d::t_5460309efabb87 315-326
+  s_dd6ae313b13d0d::t_f9251a0e778f79 12
+  s_dd6ae313b13d0d::t_1c295daf4241b8 845,889-890,899,908-937,970-978
+  s_dd6ae313b13d0d::t_eecb7ab5bdb256 85-86,91,109-129,131-140,143-169,172-182,189
+open-test-knowledge/systems/train-booking-core/cases/variants/variant-create-order-7a7a324a0ad45a5efb03-c8f9b1beff74.yaml
+  s_dd6ae313b13d0d::t_79ec4e47725e14 93-94,97-98
+  s_dd6ae313b13d0d::t_5d97472593ece7 1-92,95-96,99-100,104-106
+  s_dd6ae313b13d0d::t_dbbe55c5426226 101-103,107
+workers/qa-oracle-worker/src/main/java/com/opentest/qaoracle/model/OracleRequest.java
+  s_dd6ae313b13d0d::t_8e239ad3c49a3d 1-2,5-13,15,18,20,23,26,28,34-35
+  s_dd6ae313b13d0d::t_3ecc2a6f81c5d8 3-4,14,16-17,19,21-22,24-25,27,29,32-33
+  s_dd6ae313b13d0d::t_f402dfb44e361f 30-31
+opentest/__init__.py
+  s_dd6ae313b13d0d::t_6eee7da5430d54 1-7
+open-test-knowledge/systems/train-booking-core/cases/variants/variant-create-order-ebe91d237462b4cab2cf-fea4527ccc4f.yaml
+  s_dd6ae313b13d0d::t_5d97472593ece7 1-102,104
+  s_dd6ae313b13d0d::t_79ec4e47725e14 103,105
+  s_dd6ae313b13d0d::t_dbbe55c5426226 106
+open-test-knowledge/systems/train-booking-core/cases/variants/variant-create-order-b2e97b718ab960ce8880-df64c33b1b8a.yaml
+  s_dd6ae313b13d0d::t_79ec4e47725e14 1-97,99-101
+  s_dd6ae313b13d0d::t_dbbe55c5426226 98,102
+open-test-knowledge/agents/openai.yaml
+  s_dd6ae313b13d0d::t_f50f40ab904c4a 1-4
+openspec/specs/agent-runner-boundary/spec.md
+  s_dd6ae313b13d0d::t_b31ed598cbb6f7 1-17
+workers/qa-oracle-worker/src/main/java/com/opentest/qaoracle/service/OracleWorkerService.java
+  s_dd6ae313b13d0d::t_55d1ca21bc0d1f 93-100
+  s_dd6ae313b13d0d::t_78792f33de9910 36,43,51,54,58,114-116,118-119,217,329
+  s_dd6ae313b13d0d::t_8e239ad3c49a3d 1-6,8-13,15-28,31-35,37,39-42,44-50,52-53,55-57,59-69,74-77,82,85-88,91-92,101-113,117,120-132,135-136,138-169,171-189,192-216,220-225,227-251,253-275,307,309-310,312-328,330-432,434,436-439,445-483,495-513
+  s_dd6ae313b13d0d::t_b34f440a7a5dd5 133-134,137
+  s_dd6ae313b13d0d::t_b9a8de65becef2 218-219,433,435,440-444
+  s_dd6ae313b13d0d::t_03bbadf7ec2aa4 484-494
+  s_dd6ae313b13d0d::t_5016fe249a3e8d 170
+  s_dd6ae313b13d0d::t_8e3b5a9d58fabe 29-30,38,70-73,78-81,83-84,89-90
+  s_dd6ae313b13d0d::t_8113fb08c2eef7 226,252,308
+  s_dd6ae313b13d0d::t_640fe80eab396d 306
+  s_dd6ae313b13d0d::t_cd48b307cd7763 7,14,190-191,276-305,311
+opentest/application/execution_core.py
+  s_dd6ae313b13d0d::t_767e47108b1d0d 102,108,111-116
+  s_dd6ae313b13d0d::t_8c7e0df3232f36 136-138
+  s_dd6ae313b13d0d::t_4e5ec7344c9a25 1-61,67-101,103,106-107,109-110,117-135,139-141,143-149,157-175,177-187,190-203,291-296,299-319,329-343
+  s_dd6ae313b13d0d::t_3c2b914a4102d4 104-105
+  s_dd6ae313b13d0d::t_7c1ac3a6db49f8 248-290
+  s_dd6ae313b13d0d::t_726d8a8c9e5b57 297-298,320-328
+  s_dd6ae313b13d0d::t_818caca9a6b7af 62-66,142,150-156
+  s_dd6ae313b13d0d::t_dd701b0e4c5d37 176,188-189,204-247
+open-test-knowledge/systems/train-booking-core/cases/custom/027-cancel-occupying-locked-delay.yaml
+  s_dd6ae313b13d0d::t_5501366903d423 1-21
+open-test-knowledge/SKILL.md
+  s_dd6ae313b13d0d::t_5dc8b338185cff 3,6,8,10,12-16,18,20-24,26,28-31,33
+  s_dd6ae313b13d0d::t_7a266d08082460 1-2,4-5,7,9,11,17,19,25,27,32
+workers/qa-oracle-worker/src/test/java/com/opentest/qaoracle/service/OracleWorkerServiceTest.java
+  s_dd6ae313b13d0d::t_df99c2016e4ab2 123
+  s_dd6ae313b13d0d::t_38e71003a7cbc9 295,303-328
+  s_dd6ae313b13d0d::t_7f19d1dd5343fc 294
+  s_dd6ae313b13d0d::t_193f95022376d0 1-9,11-54,56-60,64-70,72-76,78-80,119-122,124-130,211-214,216-221,223-226,290-293,296-298,301,329-338,340-355,357-371,410-414,449-474,481-483,491-507,515-519,526-531,630-636,642-644,651-656,664-668,683-684,691-698
+  s_dd6ae313b13d0d::t_8ebfbcc75c44e8 55,71,210,215,227-289,372-377,475-480,484-490,508-514,520-525,532-563,629,637-641,645-650,657-663,671-677,685-690
+  s_dd6ae313b13d0d::t_b5aa1ca57e63e5 415-448,564-595
+  s_dd6ae313b13d0d::t_ad630e0f1a6921 103-118,142-181
+  s_dd6ae313b13d0d::t_34ef44ea1d826d 81-102,378-409
+  s_dd6ae313b13d0d::t_8113fb08c2eef7 62
+  s_dd6ae313b13d0d::t_20c125b585ca39 131-141,182-183,197-209
+  s_dd6ae313b13d0d::t_35a17fc6d7c455 61,63,77,222,299-300,302,339,356
+  s_dd6ae313b13d0d::t_55d1ca21bc0d1f 184-196,596-628
+  s_dd6ae313b13d0d::t_6d4d75a20e4a8a 10,669-670,678-682
+.claude/commands/opsx/archive.md
+  s_dd6ae313b13d0d::t_be9c99b8abe2d9 1-157
+opentest/adapters/__init__.py
+  s_dd6ae313b13d0d::t_52cc46b96cafbf 1
+.claude/skills/openspec-explore/SKILL.md
+  s_dd6ae313b13d0d::t_be9c99b8abe2d9 1-288
+openspec/changes/dsf-execution-and-oracles/proposal.md
+  s_dd6ae313b13d0d::t_fcf2846b5f7716 1-10,16-20,22-27
+  s_dd6ae313b13d0d::t_0029b076a884ae 11-15,21,28-29
+open-test-knowledge/systems/train-booking-core/cases/custom/004-realtime-exception-fallback.yaml
+  s_dd6ae313b13d0d::t_7b2b79c6ed2f68 14
+  s_dd6ae313b13d0d::t_ee8e824e4d3e68 10
+  s_dd6ae313b13d0d::t_57bd58de2da68d 1-9,11-13,15-24
+open-test-knowledge/registry/systems.yaml
+  s_dd6ae313b13d0d::t_9bc5370322f8e2 1-6,8
+  s_dd6ae313b13d0d::t_376f9122ed6b4a 7
+open-test-knowledge/systems/train-booking-core/cases/custom/023-connect-batch-reject-compensation.yaml
+  s_dd6ae313b13d0d::t_5501366903d423 1-9,11-13,15-24
+  s_dd6ae313b13d0d::t_ee8e824e4d3e68 10
+  s_dd6ae313b13d0d::t_7b2b79c6ed2f68 14
+open-test-knowledge/systems/train-booking-core/references/data/sources/data-source-mtr-ticket-price-6fcbba3e7fa5.md
+  s_dd6ae313b13d0d::t_4b6502981122d3 1-36
+open-test-knowledge/systems/train-booking-core/cases/custom/021-connect-two-leg.yaml
+  s_dd6ae313b13d0d::t_5501366903d423 1-23
+open-test-knowledge/systems/train-booking-core/references/state-machine/state-machine-OrderStateEnum-300267b00d3e.md
+  s_dd6ae313b13d0d::t_4b6502981122d3 1-145
+workers/qa-oracle-worker/pom.xml
+  s_dd6ae313b13d0d::t_2f81ac5992586f 18-20,25-39,91-100
+  s_dd6ae313b13d0d::t_d3f0d485c2fc95 45-49
+  s_dd6ae313b13d0d::t_4c463ac0a88fd0 64,81-90,101-109
+  s_dd6ae313b13d0d::t_86fa6a17855372 9
+  s_dd6ae313b13d0d::t_8e239ad3c49a3d 1-8,10-17,21-24,40-44,50-63,65-80,110-113
+opentest/application/log_context.py
+  s_dd6ae313b13d0d::t_75220c1b2c45c4 1-109
+open-test-knowledge/systems/train-booking-core/cases/custom/014-reject-switch-merchant.yaml
+  s_dd6ae313b13d0d::t_9ca319ca3b6bde 1-21
+opentest/adapters/resource_inventory.py
+  s_dd6ae313b13d0d::t_014a68deb47bd6 1-758
+open-test-knowledge/systems/train-booking-core/references/shared/business-rules/rule-create-order-adult-required-796144fd0c88.md
+  s_dd6ae313b13d0d::t_4b6502981122d3 1-37
+open-test-knowledge/systems/train-booking-core/cases/custom/006-occupy-api-full-success.yaml
+  s_dd6ae313b13d0d::t_6af7e10917085b 1-24
+.gitignore
+  s_dd6ae313b13d0d::t_6eee7da5430d54 227-228
+  s_dd6ae313b13d0d::t_fbd2c1409ae2d2 229-231
+.claude/skills/openspec-apply-change/SKILL.md
+  s_dd6ae313b13d0d::t_be9c99b8abe2d9 1-156
+workers/qa-oracle-worker/src/main/java/com/opentest/qaoracle/resource/CompanyResourceFactories.java
+  s_dd6ae313b13d0d::t_8e239ad3c49a3d 1-31
+workers/qa-oracle-worker/src/test/java/com/opentest/qaoracle/service/IdentityGateTest.java
+  s_dd6ae313b13d0d::t_193f95022376d0 1-75
+workers/qa-oracle-worker/src/main/java/com/opentest/qaoracle/WorkerMain.java
+  s_dd6ae313b13d0d::t_8e239ad3c49a3d 1-3,5-12,14-15,20-21,23-28,30,32-35,37-38,41,50,53-54,57-59,62-65,79-81,83,86,101,103,105-132
+  s_dd6ae313b13d0d::t_8e3b5a9d58fabe 44-45,71-76
+  s_dd6ae313b13d0d::t_78792f33de9910 49,52
+  s_dd6ae313b13d0d::t_d3f0d485c2fc95 4,13,16-19,22,29,31,36,39,42-43,48,51,66-70,82,84-85,87-100,102,104
+  s_dd6ae313b13d0d::t_cd48b307cd7763 77-78
+  s_dd6ae313b13d0d::t_6c391f66da9585 40,46-47,55-56,60-61
+.claude/commands/opsx/propose.md
+  s_dd6ae313b13d0d::t_be9c99b8abe2d9 1-106
+open-test-knowledge/systems/train-booking-core/references/shared/business-rules/rule-create-order-direct-accept-066f4faf23eb.md
+  s_dd6ae313b13d0d::t_4b6502981122d3 1-36
+open-test-knowledge/systems/train-booking-core/references/core-lifecycle/core-scenario-matrix.md
+  s_dd6ae313b13d0d::t_6b2633b01fc952 4
+  s_dd6ae313b13d0d::t_fc026d95e5d28f 1-3,5-7,9-47
+  s_dd6ae313b13d0d::t_3c95f88a55daf8 8
+workers/qa-oracle-worker/README.md
+  s_dd6ae313b13d0d::t_8e239ad3c49a3d 1-2,4-11,13,17-19,21-25,27,34,65-67,70-72,75,78-81,84-86,130-133,135-136,138-141,146
+  s_dd6ae313b13d0d::t_d3f0d485c2fc95 3,14-15,88-89,92,108,129,137,143-145
+  s_dd6ae313b13d0d::t_069bb2c170786c 16,33,73-74,76,90-91,94-103,106,109-111
+  s_dd6ae313b13d0d::t_fd0522b459ee09 68-69,82-83,114-128
+  s_dd6ae313b13d0d::t_ce21e6bff1a52a 112-113
+  s_dd6ae313b13d0d::t_300c82c40fd623 28-32
+  s_dd6ae313b13d0d::t_9443a397c2699b 46,87,107
+  s_dd6ae313b13d0d::t_a45678475969b1 12,20,26,35-45,47-64,77,93,104-105,134
+  s_dd6ae313b13d0d::t_1d4504849cf8bc 142
+docs/architecture/overview.md
+  s_dd6ae313b13d0d::t_cec5f41d62de72 58-60
+  s_dd6ae313b13d0d::t_e7d1f0e24a2384 55-57,61
+  s_dd6ae313b13d0d::t_1b3e7eceb56c10 43-50,75-76
+  s_dd6ae313b13d0d::t_410eaa6930d4c2 1-9,36-42,77-81
+  s_dd6ae313b13d0d::t_800f24458cab76 10-35,62-70
+  s_dd6ae313b13d0d::t_1ea99820ed02b3 51-54,74
+  s_dd6ae313b13d0d::t_c9e0aa857ba13a 71-73
+.claude/skills/openspec-archive-change/SKILL.md
+  s_dd6ae313b13d0d::t_be9c99b8abe2d9 1-114
+tests/v2/test_foundation.py
+  s_dd6ae313b13d0d::t_152c68afbc90f1 1-5,8-17,19-50,52-166,195-218,294-302,304-305,307-315,331-345,364
+  s_dd6ae313b13d0d::t_5a8c7f0ca09458 6,167-194
+  s_dd6ae313b13d0d::t_2fbba5e687d573 18,289
+  s_dd6ae313b13d0d::t_62251f5b00ad03 7,51,219-288,290-293,303,306,316-330,346-363,365-366
+opentest/application/resources.py
+  s_dd6ae313b13d0d::t_6cf72712fa98f1 6
+  s_dd6ae313b13d0d::t_40e99e0e382cb0 1-4,7-15,17-18,20-123,129-137,141-200,209-298,301-307
+  s_dd6ae313b13d0d::t_659d731ec83d56 19,124-128
+  s_dd6ae313b13d0d::t_b00bde2f9f2d43 201-208
+  s_dd6ae313b13d0d::t_969d0335172406 5,16,138-140,299-300
+workers/qa-oracle-worker/src/main/java/com/opentest/qaoracle/model/ErrorCode.java
+  s_dd6ae313b13d0d::t_b9a8de65becef2 23
+  s_dd6ae313b13d0d::t_8e239ad3c49a3d 1-22,24-28
+workers/qa-oracle-worker/src/main/java/com/opentest/qaoracle/catalog/CatalogManifest.java
+  s_dd6ae313b13d0d::t_3ecc2a6f81c5d8 3-4,12-17
+  s_dd6ae313b13d0d::t_d3f0d485c2fc95 1-2,5-11,18-19
+opentest/application/regression.py
+  s_dd6ae313b13d0d::t_a38f4ecb561592 271-289
+  s_dd6ae313b13d0d::t_f8f30321e6c827 309-312,319-342,456-461,467,494-495,502-505
+  s_dd6ae313b13d0d::t_7e29020591b1f3 1-38,45-75,77-93,96-136,141-149,151-160,163-164,180,182-270,290-297,299-308,313-318,343-398,402-411,414-418,420-426,431-451,453-455,463-466,468-475,477-493,496-501,506-609,614-693,695-769,776-780,782-860,862
+  s_dd6ae313b13d0d::t_64fa83b5f54ffe 462,476
+  s_dd6ae313b13d0d::t_70cc03471420a4 76,94-95,137-140,150,161-162,165-179,181,298,610-613,694,770-775,781
+  s_dd6ae313b13d0d::t_8ac48c707be3ae 39-44,399-401,412-413,419,427-430,452,861,863-864
+open-test-knowledge/systems/train-booking-core/cases/scenarios/scenario-create-order-main-flow-352228ae3b64.yaml
+  s_dd6ae313b13d0d::t_5d97472593ece7 1-57
+opentest/adapters/knowledge_store.py
+  s_dd6ae313b13d0d::t_5fea10e95f72b9 174,179,188,192
+  s_dd6ae313b13d0d::t_7bde8a81af7a8f 237,505-509
+  s_dd6ae313b13d0d::t_33a0b8be3435f2 399
+  s_dd6ae313b13d0d::t_4c6fcb52d49839 173,175-178,180-187,189-191,193-194,196,199
+  s_dd6ae313b13d0d::t_c4e6905d719654 378-398,400-447
+  s_dd6ae313b13d0d::t_19c9f3165a07d7 8-9,49,122-127,132,134-136,153-154,195,197-198,200-223,566-567
+  s_dd6ae313b13d0d::t_14a78d974bcb52 10-12,50-79
+  s_dd6ae313b13d0d::t_a779eac4055e0d 88,147,150-152,472-475,511-513,517-524
+  s_dd6ae313b13d0d::t_d9ff922115b19b 128-131,133,137-138
+  s_dd6ae313b13d0d::t_90861cb6fe2d1b 19-28
+  s_dd6ae313b13d0d::t_38ec3b6a98919e 294-339
+  s_dd6ae313b13d0d::t_52cc46b96cafbf 1-7,13-18,29-33,35-48,80-87,89-121,139-146,148-149,155-172,224-236,238-293,340-377,448-471,476-504,510,514-516,525-531,534-535,538,540-565,568-593
+  s_dd6ae313b13d0d::t_6e9d62b4d4d747 34,532-533,536-537,539
+opentest/application/foundation.py
+  s_dd6ae313b13d0d::t_7224ab87f4565d 11,15,25,36,46-47,82-83,85-90,97,421-434,484-495,550-591
+  s_dd6ae313b13d0d::t_014fee0e016442 35,42,368-412
+  s_dd6ae313b13d0d::t_e78bf675abada5 81
+  s_dd6ae313b13d0d::t_4296b417860e6e 313-316
+  s_dd6ae313b13d0d::t_cba22f97d260d2 51
+  s_dd6ae313b13d0d::t_8c7e0df3232f36 413-419
+  s_dd6ae313b13d0d::t_4d895077c39626 10,24,37,41,43-45,80,302-312,317-367
+  s_dd6ae313b13d0d::t_c5953759771144 1-9,13,27,53-60,62-65,67-75,98-152,159,167,176-196,592-633,642-646,648-655,657-673
+  s_dd6ae313b13d0d::t_d09d784e4de00c 16,38-39,435-483
+  s_dd6ae313b13d0d::t_90a45bccbcc829 14,30-34,40,48-50,52,79,250-301
+  s_dd6ae313b13d0d::t_f9df4cd6dd319e 420
+  s_dd6ae313b13d0d::t_3281675d49d507 634-641,647,656
+  s_dd6ae313b13d0d::t_659d731ec83d56 84
+  s_dd6ae313b13d0d::t_0cb54f1ee48335 17-23,91-96,496-544,546-549
+  s_dd6ae313b13d0d::t_ef2af24795d8e3 29
+  s_dd6ae313b13d0d::t_a779eac4055e0d 26,153-158,160-166,168-175
+  s_dd6ae313b13d0d::t_fbd2c1409ae2d2 545
+  s_dd6ae313b13d0d::t_32ebc4551779b6 12,28,61,66,76-78,197-249
+open-test-knowledge/systems/train-booking-core/source.yaml
+  s_dd6ae313b13d0d::t_1c780f57a31a6a 13
+  s_dd6ae313b13d0d::t_dc3facae5ac9ed 6-12
+  s_dd6ae313b13d0d::t_9bc5370322f8e2 1-5,14
+openspec/specs/scriptgen-source-scan/spec.md
+  s_dd6ae313b13d0d::t_b31ed598cbb6f7 1-21
+open-test-knowledge/systems/train-booking-core/cases/custom/010-occupy-final-fail.yaml
+  s_dd6ae313b13d0d::t_6af7e10917085b 1-18,20-21
+  s_dd6ae313b13d0d::t_d2040d03811cad 19
+open-test-knowledge/systems/train-booking-core/cases/custom/015-reject-lack-ticket-accept.yaml
+  s_dd6ae313b13d0d::t_9ca319ca3b6bde 1-21
+open-test-knowledge/systems/train-booking-core/cases/custom/030-ht-active-idempotent.yaml
+  s_dd6ae313b13d0d::t_5501366903d423 1-20
+docs/development/qa-environment.md
+  s_dd6ae313b13d0d::t_5d9fb669d8147b 1,3,5,7-23,30-43,47-48,51,55,57-63,68,72-73,76-79,81-106,108-118
+  s_dd6ae313b13d0d::t_1ea99820ed02b3 2,4,6,24-29,64,67,69-70,80,107
+  s_dd6ae313b13d0d::t_ec7ed3580af685 44-46,52-53
+  s_dd6ae313b13d0d::t_c9e0aa857ba13a 66
+  s_dd6ae313b13d0d::t_1342ef9219d602 71,74-75,119-128
+  s_dd6ae313b13d0d::t_ef8c959e5fe853 49-50,54,56,65
+opentest/application/tasks.py
+  s_dd6ae313b13d0d::t_48ee8cbd29c782 10,45-54,80,109,113-115,218-219,224-229,256-296
+  s_dd6ae313b13d0d::t_a779eac4055e0d 12,83-84
+  s_dd6ae313b13d0d::t_6e9d62b4d4d747 139-140,147,196,198
+  s_dd6ae313b13d0d::t_75220c1b2c45c4 1-6,9,11,13-42,55-72,82,85-108,110-112,116-138,141-146,148-165,167-178,180-181,183-191,195,197,199
+  s_dd6ae313b13d0d::t_5f8481aa38e0c2 220-223
+  s_dd6ae313b13d0d::t_f837056e76352c 7-8,43-44,73-79,81,166,179,182,192-194,200-217,230-255
+open-test-knowledge/systems/train-booking-core/relations.yaml
+  s_dd6ae313b13d0d::t_4b6502981122d3 1-71
+workers/qa-oracle-worker/src/main/java/com/opentest/qaoracle/catalog/CatalogOperationApproval.java
+  s_dd6ae313b13d0d::t_d3f0d485c2fc95 1-2,8,12-13,15,18,31
+  s_dd6ae313b13d0d::t_3ecc2a6f81c5d8 3-7,9-11,14,16-17,19-30
+opentest/adapters/environment_config.py
+  s_dd6ae313b13d0d::t_58c9e4efb9e360 1-87
+opentest/application/__init__.py
+  s_dd6ae313b13d0d::t_75220c1b2c45c4 1
+open-test-knowledge/systems/train-booking-core/references/shared/business-rules/rule-create-order-hk-payment-verify-f91749cf24b8.md
+  s_dd6ae313b13d0d::t_4b6502981122d3 1-38
+opentest/application/execution.py
+  s_dd6ae313b13d0d::t_347bebac36cf80 20,384,387-390,394-397
+  s_dd6ae313b13d0d::t_00c8a093e539d4 134-136,148-156,457-461,463-467,469-481,483-500,502-511,513
+  s_dd6ae313b13d0d::t_4f47773fdaa6a0 8,16-19,28,34,42,44-46,48-57,115-118,138-146,160,168,190,197,205,207-208,246-255,260,262-265,268-270,274-279,281-282,287,297-299
+  s_dd6ae313b13d0d::t_413a8227b0a41e 126-131,133,462,468,482,501
+  s_dd6ae313b13d0d::t_35df81cdc1cbed 137
+  s_dd6ae313b13d0d::t_465d99a53dcbf2 33,132,437-456,512,514-524
+  s_dd6ae313b13d0d::t_1e8b9d4fea64af 1-5,7,9-15,21-27,29-32,35-41,43,47,58-104,107-114,119-125,147,157-159,161-167,169-189,191-196,198-202,206,209-245,256-259,261,266-267,271-272,280,283-286,288-296,300,425-436,525-533
+  s_dd6ae313b13d0d::t_dd701b0e4c5d37 273,301-332,398-399
+  s_dd6ae313b13d0d::t_9278ccc727d913 333-383,385-386,391-393,400-424
+  s_dd6ae313b13d0d::t_c88b920e8fafde 6
+  s_dd6ae313b13d0d::t_8c7e0df3232f36 105-106,203-204
+openspec/specs/v2-runtime-foundation/spec.md
+  s_dd6ae313b13d0d::t_b31ed598cbb6f7 1-26
+openspec/changes/archive/2026-08-11-v2-foundation-and-knowledge-store/.openspec.yaml
+  s_dd6ae313b13d0d::t_78a6d44118d0d9 1-2
+openspec/changes/archive/2026-08-11-v2-foundation-and-knowledge-store/README.md
+  s_dd6ae313b13d0d::t_0a41c2263aa7eb 1-3
+openspec/changes/archive/2026-08-11-v2-foundation-and-knowledge-store/proposal.md
+  s_eabd20293b336e::t_921b191a7b2377 1-30
+openspec/changes/archive/2026-08-11-knowledge-generation-and-indexing/.openspec.yaml
+  s_dd6ae313b13d0d::t_547082b28113f8 1-2
+openspec/changes/archive/2026-08-11-knowledge-generation-and-indexing/design.md
+  s_dd6ae313b13d0d::t_048d3d388b9543 1-54
+openspec/changes/archive/2026-08-11-knowledge-generation-and-indexing/proposal.md
+  s_dd6ae313b13d0d::t_9bbb59a4b8b764 1-30
+openspec/changes/archive/2026-08-11-knowledge-generation-and-indexing/specs/agent-runner-boundary/spec.md
+  s_dd6ae313b13d0d::t_4b2f80359ce43f 1-13
+openspec/changes/archive/2026-08-11-knowledge-generation-and-indexing/specs/java-knowledge-tracing/spec.md
+  s_dd6ae313b13d0d::t_e35124d598fb50 1-13
+openspec/changes/archive/2026-08-11-knowledge-generation-and-indexing/specs/knowledge-draft-and-confirmation/spec.md
+  s_dd6ae313b13d0d::t_8126e8b3a2d29c 1-21
+openspec/changes/archive/2026-08-11-knowledge-generation-and-indexing/tasks.md
+  s_dd6ae313b13d0d::t_039f147cf96b96 1-25
+openspec/changes/archive/2026-08-11-scenario-and-variant-generation/.openspec.yaml
+  s_dd6ae313b13d0d::t_c14ca2c14104de 1-2
+openspec/changes/archive/2026-08-11-scenario-and-variant-generation/design.md
+  s_dd6ae313b13d0d::t_43b4afea506d9d 1-30
+openspec/changes/archive/2026-08-11-scenario-and-variant-generation/proposal.md
+  s_dd6ae313b13d0d::t_a2c12d5000fa65 1-23
+openspec/changes/archive/2026-08-11-scenario-and-variant-generation/specs/coverage-driven-generation/spec.md
+  s_dd6ae313b13d0d::t_92c3aaf2779acd 1-17
+openspec/changes/archive/2026-08-11-scenario-and-variant-generation/specs/natural-language-compilation/spec.md
+  s_dd6ae313b13d0d::t_23763142f6e265 1-13
+openspec/changes/archive/2026-08-11-scenario-and-variant-generation/tasks.md
+  s_dd6ae313b13d0d::t_3ff04ac9395f4f 1-23
+openspec/changes/archive/2026-08-11-single-system-source-analysis/.openspec.yaml
+  s_dd6ae313b13d0d::t_c336381977661a 1-2
+openspec/changes/archive/2026-08-11-single-system-source-analysis/design.md
+  s_dd6ae313b13d0d::t_56825b8544ed81 1-56
+openspec/changes/archive/2026-08-11-single-system-source-analysis/proposal.md
+  s_dd6ae313b13d0d::t_3b9d467131f8fb 1-29
+openspec/changes/archive/2026-08-11-single-system-source-analysis/specs/java-structure-scan/spec.md
+  s_dd6ae313b13d0d::t_7c0d8e10235e5a 1-17
+openspec/changes/archive/2026-08-11-single-system-source-analysis/specs/scriptgen-source-scan/spec.md
+  s_dd6ae313b13d0d::t_1f63e3c0385e49 1-17
+openspec/changes/archive/2026-08-11-single-system-source-analysis/specs/source-baseline-capture/spec.md
+  s_dd6ae313b13d0d::t_ceeb5bc13fb2cc 1-17
+openspec/changes/archive/2026-08-11-single-system-source-analysis/tasks.md
+  s_dd6ae313b13d0d::t_ae762a0bf5d143 1-26
+openspec/changes/archive/2026-08-11-v2-api-and-console-cutover/.openspec.yaml
+  s_dd6ae313b13d0d::t_842471faf3f2b5 1-2
+openspec/changes/archive/2026-08-11-v2-api-and-console-cutover/design.md
+  s_dd6ae313b13d0d::t_26b5446b55182a 1-17
+openspec/changes/archive/2026-08-11-v2-api-and-console-cutover/proposal.md
+  s_dd6ae313b13d0d::t_901dc86d2913af 1-23
+openspec/changes/archive/2026-08-11-v2-api-and-console-cutover/specs/v2-api/spec.md
+  s_dd6ae313b13d0d::t_33e8bcced0e447 1-17
+openspec/changes/archive/2026-08-11-v2-api-and-console-cutover/specs/v2-console/spec.md
+  s_dd6ae313b13d0d::t_9af3dd75155539 1-13
+openspec/changes/archive/2026-08-11-v2-api-and-console-cutover/tasks.md
+  s_dd6ae313b13d0d::t_b1c8e9d78fc1a7 1-20
+openspec/changes/archive/2026-08-11-v2-foundation-and-knowledge-store/design.md
+  s_dd6ae313b13d0d::t_7d5bf2dba2743f 1-62
+openspec/changes/archive/2026-08-11-v2-foundation-and-knowledge-store/specs/git-knowledge-store/spec.md
+  s_dd6ae313b13d0d::t_cb9bc9cc587878 1-22
+openspec/changes/archive/2026-08-11-v2-foundation-and-knowledge-store/specs/sqlite-knowledge-index/spec.md
+  s_dd6ae313b13d0d::t_128ce87c956d7c 1-22
+openspec/changes/archive/2026-08-11-v2-foundation-and-knowledge-store/specs/v2-runtime-foundation/spec.md
+  s_dd6ae313b13d0d::t_d0f0180340bc01 1-22
+openspec/changes/archive/2026-08-11-v2-foundation-and-knowledge-store/tasks.md
+  s_dd6ae313b13d0d::t_9e2c0208303f11 1-28
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.18",
+  "base_commit_sha": "5393000469da4545871027e902e9c9c8687ae379",
+  "prompts": {},
+  "sessions": {
+    "s_dd6ae313b13d0d": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019fef82-2a2c-7652-ad03-63eecfd2754c",
+        "model": "gpt-5.6-sol"
+      },
+      "human_author": "shizhen <yuuu.shizhen@gmail.com>"
+    },
+    "s_eabd20293b336e": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019fefaf-9451-7813-830b-df91e9dd4adb",
+        "model": "gpt-5.6-sol"
+      },
+      "human_author": "shizhen <yuuu.shizhen@gmail.com>"
+    }
+  }
+}
