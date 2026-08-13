@@ -1,0 +1,25 @@
+candidate_id: candidate:external_application:dd074bf8255dc06c
+system_id: ifightchainsaas.java.refund.core
+kind: EXTERNAL_APPLICATION
+name: PlatformFeeClient
+suggested_meaning: 源码调用该远程协作者；请说明对应应用、业务职责和失败时的业务影响。
+business_meaning: ''
+status: STALE
+merged_into_candidate_id: ''
+source_refs:
+- repository: ''
+  path: app/biz/src/main/java/com/ly/flight/chainsaas/refund/biz/service/impl/PlatformFeeServiceImpl.java
+  symbol: com.ly.flight.chainsaas.refund.biz.service.impl.PlatformFeeServiceImpl
+  line: null
+  commit: 2b175212e26b21abd0a08edeb3a4c7c1e1e2665a
+  content_digest: ''
+- repository: ''
+  path: app/integration/src/main/java/com/ly/flight/chainsaas/refund/integration/resources/PlatformFeeClientImpl.java
+  symbol: com.ly.flight.chainsaas.refund.integration.resources.PlatformFeeClientImpl
+  line: null
+  commit: 2b175212e26b21abd0a08edeb3a4c7c1e1e2665a
+  content_digest: ''
+affected_target_ids: []
+evidence_digest: 0634de29b1493115b2b7d61ab55e56a6b76228a6cae358ea168d110e794a477c
+discovered_at: '2026-08-13T10:23:54.669491Z'
+updated_at: '2026-08-13T11:20:20.891953Z'

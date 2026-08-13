@@ -1,0 +1,20 @@
+schema_version: opentest.variant/v2alpha1
+variant_id: variant:core-order-lifecycle:007-grab-approach-departure
+suite_id: suite:train-booking-core:core-order-lifecycle-v2
+system_id: train-booking-core
+category_id: grab-immediate-failure
+title: 抢票单临近发车即时失败
+business_goal: 验证抢票单严格时间已过时立即失败，不进入后续分单。
+priority: P0
+lifecycle: blocked
+missing_conditions: [qa_grab_approach_departure_fixture, controllable_strict_time, oracle_catalog_snapshot, cleanup_capability]
+source_scan_id: scan-20260811091050-dc8391e426-0a843ec3
+source_refs: [{path: app/biz/src/main/java/com/ly/travel/train/supplychain/bookingcore/biz/manager/trade/CreateOrderServiceInvoker.java, symbol: 'CreateOrderServiceInvoker#dealGrabApproachDeparture'}]
+fixture_requirements: [{fixture_id: 'fixture:grab:approach-departure', purpose: 提供抢票请求且严格取消时间早于执行时间}]
+fixed_execution_order: [execute-create, observe-order, observe-transactions]
+steps:
+- {step_id: execute-create, action: execute, tool_id: facade.trade.create_order, input: {request: '${fixtures.grab_approach.create_request}'}}
+- {step_id: observe-order, action: oracle, oracle: {kind: MYSQL, resource_id: 'resource:train-booking-core:mysql:database:bookingcoredatasource', operation_id: order.primary_detail, evidence_mode: DIRECT}, input: {order_serial_no: '${fixtures.grab_approach.order_serial_no}', transaction_serial_no: '${fixtures.grab_approach.transaction_serial_no}'}}
+- {step_id: observe-transactions, action: oracle, oracle: {kind: TIDB, resource_id: 'resource:train-booking-core:tidb:database:bookingcoretidbdatasource', operation_id: order.list_transactions_by_ht, evidence_mode: DIRECT}, input: {order_serial_no: '${fixtures.grab_approach.order_serial_no}'}}
+expected_business_outcome: {response: AgencyException, state_transition: 'INIT -> OCCUPY_FAIL', distribution_attempted: false}
+cleanup_policy: {mode: EXTERNAL_FIXTURE_OWNER, key: '${fixtures.grab_approach.order_serial_no}'}

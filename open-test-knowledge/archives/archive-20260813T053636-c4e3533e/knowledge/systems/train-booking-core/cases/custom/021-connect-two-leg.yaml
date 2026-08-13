@@ -1,0 +1,23 @@
+schema_version: opentest.variant/v2alpha1
+variant_id: variant:core-order-lifecycle:021-connect-two-leg
+suite_id: suite:train-booking-core:core-order-lifecycle-v2
+system_id: train-booking-core
+category_id: connected-orders
+title: 二程联程订单创建
+business_goal: 验证同一联程业务键下两程请求均创建成功，程数、联程号和交易映射一致。
+priority: P0
+lifecycle: blocked
+missing_conditions: [qa_two_leg_fixture, connect_type_enum, shared_wisdom_serial_contract, oracle_catalog_snapshot, cleanup_capability]
+source_scan_id: scan-20260811091050-dc8391e426-0a843ec3
+source_refs: [{path: app/biz/src/main/java/com/ly/travel/train/supplychain/bookingcore/biz/manager/trade/CreateOrderServiceInvoker.java, symbol: CreateOrderServiceInvoker}, {path: app/biz/src/main/java/com/ly/travel/train/supplychain/bookingcore/biz/manager/ticket/AbstractIssueTicketServiceInvoker.java, symbol: 'AbstractIssueTicketServiceInvoker#validateConnectTicketOrder'}]
+fixture_requirements: [{fixture_id: 'fixture:connect:two-leg', purpose: 提供同一wisdomTravelSerialNo、connectType=2且时间路线相容的两程完整请求}]
+fixed_execution_order: [execute-first-leg, execute-second-leg, observe-first-order, observe-second-order, observe-first-collection, observe-second-collection]
+steps:
+- {step_id: execute-first-leg, action: execute, tool_id: facade.trade.create_order, input: {request: '${fixtures.connect_two_leg.first_create_request}'}}
+- {step_id: execute-second-leg, action: execute, tool_id: facade.trade.create_order, input: {request: '${fixtures.connect_two_leg.second_create_request}'}}
+- {step_id: observe-first-order, action: oracle, oracle: {kind: MYSQL, resource_id: 'resource:train-booking-core:mysql:database:bookingcoredatasource', operation_id: order.primary_detail, evidence_mode: DIRECT}, input: {order_serial_no: '${fixtures.connect_two_leg.first_order_serial_no}', transaction_serial_no: '${fixtures.connect_two_leg.first_transaction_serial_no}'}}
+- {step_id: observe-second-order, action: oracle, oracle: {kind: MYSQL, resource_id: 'resource:train-booking-core:mysql:database:bookingcoredatasource', operation_id: order.primary_detail, evidence_mode: DIRECT}, input: {order_serial_no: '${fixtures.connect_two_leg.second_order_serial_no}', transaction_serial_no: '${fixtures.connect_two_leg.second_transaction_serial_no}'}}
+- {step_id: observe-first-collection, action: oracle, oracle: {kind: MYSQL, resource_id: 'resource:train-booking-core:mysql:database:temporderdatasource', operation_id: collection.detail, evidence_mode: DIRECT}, input: {order_serial_no: '${fixtures.connect_two_leg.first_order_serial_no}'}}
+- {step_id: observe-second-collection, action: oracle, oracle: {kind: MYSQL, resource_id: 'resource:train-booking-core:mysql:database:temporderdatasource', operation_id: collection.detail, evidence_mode: DIRECT}, input: {order_serial_no: '${fixtures.connect_two_leg.second_order_serial_no}'}}
+expected_business_outcome: {response: both_accepted, leg_count: 2, shared_wisdom_serial: true}
+cleanup_policy: {mode: EXTERNAL_FIXTURE_OWNER, key: '${fixtures.connect_two_leg.wisdom_travel_serial_no}'}

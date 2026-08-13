@@ -1,0 +1,36 @@
+coverage_targets:
+- target_id: coverage:create-order:adult-required
+  system_id: train-booking-core
+  node_id: rule:create-order:adult-required
+  kind: decision
+  title: 至少一名成人
+  condition: adult_count >= 1
+  expected_outcome: 合法组合成功；全儿童返回NoAdult
+- target_id: coverage:create-order:direct-accept
+  system_id: train-booking-core
+  node_id: rule:create-order:direct-accept
+  kind: decision
+  title: 港铁直接收单
+  condition: route_type == mtr
+  expected_outcome: 不调用同步分单
+- target_id: coverage:create-order:hk-verify
+  system_id: train-booking-core
+  node_id: rule:create-order:hk-payment-verify
+  kind: dependency
+  title: 港币逐乘客校验
+  condition: payment_type == HK_PAYMENT
+  expected_outcome: 每名乘客价格完整且不低于有效报价
+- target_id: coverage:create-order:hk-quote-missing
+  system_id: train-booking-core
+  node_id: rule:create-order:hk-plan-price
+  kind: boundary
+  title: 港币报价缺失
+  condition: quote_result == missing
+  expected_outcome: 保留条件预期并等待人工口径
+- target_id: coverage:create-order:order-state
+  system_id: train-booking-core
+  node_id: state-machine:OrderStateEnum
+  kind: transition
+  title: 创建订单状态
+  condition: createOrder accepted
+  expected_outcome: 进入TICKETING或OCCUPYING

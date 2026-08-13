@@ -1,0 +1,19 @@
+candidate_id: candidate:external_application:7504c0063c3047cf
+system_id: ifightchainsaas.java.refund.core
+kind: EXTERNAL_APPLICATION
+name: ReverseCommonFacadeProxy
+suggested_meaning: 源码调用该远程协作者；请说明对应应用、业务职责和失败时的业务影响。
+business_meaning: ''
+status: STALE
+merged_into_candidate_id: ''
+source_refs:
+- repository: ''
+  path: app/biz/src/main/java/com/ly/flight/chainsaas/refund/biz/service/impl/TradeOrderServiceImpl.java
+  symbol: com.ly.flight.chainsaas.refund.biz.service.impl.TradeOrderServiceImpl
+  line: null
+  commit: 2b175212e26b21abd0a08edeb3a4c7c1e1e2665a
+  content_digest: ''
+affected_target_ids: []
+evidence_digest: f576f201798ee5472cfbc899b8540056c1aacfb8fa051b6c84a55598fb64ab0b
+discovered_at: '2026-08-13T10:23:54.669533Z'
+updated_at: '2026-08-13T11:20:20.891959Z'

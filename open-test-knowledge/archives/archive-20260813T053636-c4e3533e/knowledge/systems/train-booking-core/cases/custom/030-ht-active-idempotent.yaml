@@ -1,0 +1,20 @@
+schema_version: opentest.variant/v2alpha1
+variant_id: variant:core-order-lifecycle:030-ht-active-idempotent
+suite_id: suite:train-booking-core:core-order-lifecycle-v2
+system_id: train-booking-core
+category_id: ht-idempotency
+title: 活跃HT订单重复创单幂等成功
+business_goal: 验证相同HT业务号对应活跃或已出票成功订单时重复创单返回既有结果且不新增交易。
+priority: P0
+lifecycle: blocked
+missing_conditions: [qa_active_ht_order_fixture, active_idempotent_state_set, original_create_request, oracle_catalog_snapshot, cleanup_capability]
+source_scan_id: scan-20260811091050-dc8391e426-0a843ec3
+source_refs: [{path: app/biz/src/main/java/com/ly/travel/train/supplychain/bookingcore/biz/manager/trade/CreateOrderServiceInvoker.java, symbol: 'CreateOrderServiceInvoker#exist'}]
+fixture_requirements: [{fixture_id: 'fixture:ht:active-idempotent', purpose: 提供已存在于幂等成功状态集合的HT订单及完全相同的原始创单请求}]
+fixed_execution_order: [observe-before, execute-repeat-create, observe-after]
+steps:
+- {step_id: observe-before, action: oracle, oracle: {kind: TIDB, resource_id: 'resource:train-booking-core:tidb:database:bookingcoretidbdatasource', operation_id: order.list_transactions_by_ht, evidence_mode: DIRECT}, input: {order_serial_no: '${fixtures.ht_active.order_serial_no}'}}
+- {step_id: execute-repeat-create, action: execute, tool_id: facade.trade.create_order, input: {request: '${fixtures.ht_active.original_create_request}'}}
+- {step_id: observe-after, action: oracle, oracle: {kind: TIDB, resource_id: 'resource:train-booking-core:tidb:database:bookingcoretidbdatasource', operation_id: order.list_transactions_by_ht, evidence_mode: DIRECT}, input: {order_serial_no: '${fixtures.ht_active.order_serial_no}'}}
+expected_business_outcome: {response: existing_order_success, transaction_count_delta: 0, existing_transaction_unchanged: true}
+cleanup_policy: {mode: EXTERNAL_FIXTURE_OWNER, key: '${fixtures.ht_active.order_serial_no}'}

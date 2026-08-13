@@ -1,0 +1,21 @@
+schema_version: opentest.variant/v2alpha1
+variant_id: variant:core-order-lifecycle:014-reject-switch-merchant
+suite_id: suite:train-booking-core:core-order-lifecycle-v2
+system_id: train-booking-core
+category_id: issue-rejection
+title: 出票驳回后换供应商
+business_goal: 验证允许换供应商的驳回原因产生新的分单记录或商户待处理队列证据。
+priority: P0
+lifecycle: blocked
+missing_conditions: [qa_ticketing_switch_merchant_fixture, switch_merchant_reason, expected_merchant_rule, oracle_catalog_snapshot, cleanup_capability]
+source_scan_id: scan-20260811091050-dc8391e426-0a843ec3
+source_refs: [{path: app/biz/src/main/java/com/ly/travel/train/supplychain/bookingcore/biz/manager/ticket/AbstractRejectIssueServiceInvoker.java, symbol: AbstractRejectIssueServiceInvoker}, {path: app/biz/src/main/java/com/ly/travel/train/supplychain/bookingcore/biz/actor/post/TickeFailPostActor.java, symbol: TickeFailPostActor}]
+fixture_requirements: [{fixture_id: 'fixture:reject:switch-merchant', purpose: 提供允许换供应商的TICKETING订单、驳回原因和可选新供应商}]
+fixed_execution_order: [execute-reject, observe-order, observe-collection, observe-merchant-pending]
+steps:
+- {step_id: execute-reject, action: execute, tool_id: facade.ticket.reject_issue, input: {request: '${fixtures.reject_switch_merchant.request}'}}
+- {step_id: observe-order, action: oracle, oracle: {kind: MYSQL, resource_id: 'resource:train-booking-core:mysql:database:bookingcoredatasource', operation_id: order.primary_detail, evidence_mode: DIRECT}, input: {order_serial_no: '${fixtures.reject_switch_merchant.order_serial_no}', transaction_serial_no: '${fixtures.reject_switch_merchant.transaction_serial_no}'}}
+- {step_id: observe-collection, action: oracle, oracle: {kind: MYSQL, resource_id: 'resource:train-booking-core:mysql:database:temporderdatasource', operation_id: collection.detail, evidence_mode: DIRECT}, input: {order_serial_no: '${fixtures.reject_switch_merchant.order_serial_no}'}}
+- {step_id: observe-merchant-pending, action: oracle, oracle: {kind: REDIS, resource_id: 'resource:train-booking-core:redis:cache:redissionproxy', operation_id: redis.merchant_pending_membership, evidence_mode: DIRECT}, input: {merchant_id: '${fixtures.reject_switch_merchant.expected_merchant_id}', order_serial_no: '${fixtures.reject_switch_merchant.order_serial_no}', transaction_serial_no: '${fixtures.reject_switch_merchant.expected_transaction_serial_no}'}}
+expected_business_outcome: {final_fail: false, replacement: merchant, new_collection_or_queue_entry: observable}
+cleanup_policy: {mode: EXTERNAL_FIXTURE_OWNER, key: '${fixtures.reject_switch_merchant.order_serial_no}'}

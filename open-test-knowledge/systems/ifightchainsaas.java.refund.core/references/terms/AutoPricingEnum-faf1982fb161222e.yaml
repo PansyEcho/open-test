@@ -1,0 +1,31 @@
+candidate_id: candidate:business_term:faf1982fb161222e
+system_id: ifightchainsaas.java.refund.core
+kind: BUSINESS_TERM
+name: AutoPricingEnum
+suggested_meaning: 源码出现该枚举、缩写或领域类型；请确认业务口径以及是否需要合并到已有术语。
+business_meaning: ''
+status: STALE
+merged_into_candidate_id: ''
+source_refs:
+- repository: ''
+  path: app/model/src/main/java/com/ly/flight/chainsaas/refund/enums/AutoPricingEnum.java
+  symbol: com.ly.flight.chainsaas.refund.enums.AutoPricingEnum
+  line: null
+  commit: 2b175212e26b21abd0a08edeb3a4c7c1e1e2665a
+  content_digest: ''
+affected_target_ids:
+- facade:com.ly.flight.chainsaas.refund.facade.CallbackFacade#refundApplyCallback
+- facade:com.ly.flight.chainsaas.refund.facade.CallbackFacade#refundConfirmCallback
+- facade:com.ly.flight.chainsaas.refund.facade.CommonFacade#executeJob
+- facade:com.ly.flight.chainsaas.refund.facade.ModelFacade#confirmRefund
+- facade:com.ly.flight.chainsaas.refund.facade.ModelFacade#createRefundOrder
+- facade:com.ly.flight.chainsaas.refund.facade.OuterRefundFacade#cancel
+- facade:com.ly.flight.chainsaas.refund.facade.OuterRefundFacade#pageBusinessLog
+- facade:com.ly.flight.chainsaas.refund.facade.OuterRefundFacade#queryDetailByRefundNo
+- facade:com.ly.flight.chainsaas.refund.facade.OuterRefundFacade#queryList
+- facade:com.ly.flight.chainsaas.refund.facade.OuterRefundFacade#refundConfirm
+- facade:com.ly.flight.chainsaas.refund.facade.RefundDistributionFacade#queryDetail
+- facade:com.ly.flight.chainsaas.refund.facade.RefundDistributionFacade#queryList
+evidence_digest: 33981a1b5119bbc59893b2db86c99a0b1ac5ce37f48c69d77b278490652b28bd
+discovered_at: '2026-08-13T10:23:54.669190Z'
+updated_at: '2026-08-13T11:20:20.891896Z'

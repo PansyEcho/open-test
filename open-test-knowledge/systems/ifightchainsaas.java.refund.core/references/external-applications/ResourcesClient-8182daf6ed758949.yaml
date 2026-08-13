@@ -1,0 +1,66 @@
+candidate_id: candidate:external_application:8182daf6ed758949
+system_id: ifightchainsaas.java.refund.core
+kind: EXTERNAL_APPLICATION
+name: ResourcesClient
+suggested_meaning: 源码调用该远程协作者；请说明对应应用、业务职责和失败时的业务影响。
+business_meaning: ''
+status: OPEN
+merged_into_candidate_id: ''
+source_refs:
+- repository: ''
+  path: app/biz/src/main/java/com/ly/flight/chainsaas/refund/biz/manager/refund/RefundConfirmInvoker.java
+  symbol: com.ly.flight.chainsaas.refund.biz.manager.refund.RefundConfirmInvoker
+  line: 74
+  commit: 2b175212e26b21abd0a08edeb3a4c7c1e1e2665a
+  content_digest: 7333dec2bcbeda2eab41bf03ec77f16bee7a3b8d960a773e710c4687ee7b5e7c
+- repository: ''
+  path: app/biz/src/main/java/com/ly/flight/chainsaas/refund/biz/manager/refund/RefundReshopServiceInvoker.java
+  symbol: com.ly.flight.chainsaas.refund.biz.manager.refund.RefundReshopServiceInvoker
+  line: 54
+  commit: 2b175212e26b21abd0a08edeb3a4c7c1e1e2665a
+  content_digest: 26c56c7e61c65819ae42ec7948cfe9d9c849d37ea551ab321ada201cb6129538
+- repository: ''
+  path: app/biz/src/main/java/com/ly/flight/chainsaas/refund/biz/service/impl/CBDSServiceImpl.java
+  symbol: com.ly.flight.chainsaas.refund.biz.service.impl.CBDSServiceImpl
+  line: 29
+  commit: 2b175212e26b21abd0a08edeb3a4c7c1e1e2665a
+  content_digest: c31f2dcd3ddad07c15907cbdaf7f93698793ae09a00557e9aed404d29c722c6c
+- repository: ''
+  path: app/biz/src/main/java/com/ly/flight/chainsaas/refund/biz/service/validator/RefundValidator.java
+  symbol: com.ly.flight.chainsaas.refund.biz.service.validator.RefundValidator
+  line: 34
+  commit: 2b175212e26b21abd0a08edeb3a4c7c1e1e2665a
+  content_digest: 4747ca6487c40cf19e248c525ca752b3666e9dbf65326d7c7205206e518d2e1f
+- repository: ''
+  path: app/integration/src/main/java/com/ly/flight/chainsaas/refund/integration/resources/ResourcesClientImpl.java
+  symbol: com.ly.flight.chainsaas.refund.integration.resources.ResourcesClientImpl
+  line: 35
+  commit: 2b175212e26b21abd0a08edeb3a4c7c1e1e2665a
+  content_digest: 91ad2b9b451bd027d950bbe1c6fe698bb64cbd17c1238d07887767412993c1c5
+affected_target_ids:
+- facade:com.ly.flight.chainsaas.refund.facade.ModelFacade#confirmRefund
+- facade:com.ly.flight.chainsaas.refund.facade.ModelFacade#createRefundOrder
+- facade:com.ly.flight.chainsaas.refund.facade.RefundFacade#applyToAirline
+- facade:com.ly.flight.chainsaas.refund.facade.RefundFacade#autoRefund
+- facade:com.ly.flight.chainsaas.refund.facade.RefundFacade#autoRefundReshop
+- facade:com.ly.flight.chainsaas.refund.facade.RefundFacade#billSupplement
+- facade:com.ly.flight.chainsaas.refund.facade.RefundFacade#cancel
+- facade:com.ly.flight.chainsaas.refund.facade.RefundFacade#createLog
+- facade:com.ly.flight.chainsaas.refund.facade.RefundFacade#createOrder
+- facade:com.ly.flight.chainsaas.refund.facade.RefundFacade#createPayment
+- facade:com.ly.flight.chainsaas.refund.facade.RefundFacade#getPlatFee
+- facade:com.ly.flight.chainsaas.refund.facade.RefundFacade#lockOrder
+- facade:com.ly.flight.chainsaas.refund.facade.RefundFacade#queryDetailByOrderNo
+- facade:com.ly.flight.chainsaas.refund.facade.RefundFacade#queryDetailByRefundNo
+- facade:com.ly.flight.chainsaas.refund.facade.RefundFacade#queryList
+- facade:com.ly.flight.chainsaas.refund.facade.RefundFacade#queryListByOrderNo
+- facade:com.ly.flight.chainsaas.refund.facade.RefundFacade#refundConfirm
+- facade:com.ly.flight.chainsaas.refund.facade.RefundFacade#refundReshop
+- facade:com.ly.flight.chainsaas.refund.facade.RefundFacade#refundReshopSubmit
+- facade:com.ly.flight.chainsaas.refund.facade.RefundFacade#ticketRefunding
+- facade:com.ly.flight.chainsaas.refund.facade.RefundFacade#unLockOrder
+- facade:com.ly.flight.chainsaas.refund.facade.RefundFacade#voucherRefundSubmit
+- facade:com.ly.flight.chainsaas.refund.facade.RefundFacade#walletRefundRetry
+evidence_digest: c473029522f052f39a98f0b26d3a85e32302860b7f5120d4e33f9c4f81480dda
+discovered_at: '2026-08-13T10:23:54.669466Z'
+updated_at: '2026-08-13T11:20:20.891885Z'

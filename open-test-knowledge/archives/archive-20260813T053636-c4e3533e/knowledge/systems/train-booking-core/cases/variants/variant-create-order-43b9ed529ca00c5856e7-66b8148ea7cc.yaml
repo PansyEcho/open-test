@@ -1,0 +1,112 @@
+variant_id: variant:create-order:43b9ed529ca00c5856e7
+scenario_id: scenario:create-order:main-flow
+system_id: train-booking-core
+seed: 0
+inputs:
+  request:
+    traceId: variant:create-order:43b9ed529ca00c5856e7
+    bookInfo:
+      trainNo: ${qa.train_no}
+      serialId: variant:create-order:43b9ed529ca00c5856e7
+      electronicSerialId: variant:create-order:43b9ed529ca00c5856e7
+      trainDate: ${qa.train_date}
+      fromCityName: ${qa.departure_station}
+      toCityName: ${qa.arrival_station}
+      startTime: ${qa.start_time}
+      occupySeat: ${qa.occupy_type_default}
+      distributeMerchantType: ${qa.hk_distribute_merchant_type}
+      connectType: ${qa.connect_type}
+      userPayType: ${qa.default_user_pay_type}
+    passengers:
+    - ${qa.adult_passenger}
+    - ${qa.child_passenger}
+    contactInfo: ${qa.contact_info}
+    extend: ${qa.create_order_extend}
+  dimensions:
+    payment_type: CNY
+    passenger_mix: adult_child
+    quote_result: not_applicable
+    route_type: mtr
+    occupy_type: ticketing
+steps:
+- step_id: create-order
+  name: 调用创建订单逻辑工具
+  action: execute
+  tool_id: facade.trade.create_order
+  params:
+    request:
+      traceId: variant:create-order:43b9ed529ca00c5856e7
+      bookInfo:
+        trainNo: ${qa.train_no}
+        serialId: variant:create-order:43b9ed529ca00c5856e7
+        electronicSerialId: variant:create-order:43b9ed529ca00c5856e7
+        trainDate: ${qa.train_date}
+        fromCityName: ${qa.departure_station}
+        toCityName: ${qa.arrival_station}
+        startTime: ${qa.start_time}
+        occupySeat: ${qa.occupy_type_default}
+        distributeMerchantType: ${qa.hk_distribute_merchant_type}
+        connectType: ${qa.connect_type}
+        userPayType: ${qa.default_user_pay_type}
+      passengers:
+      - ${qa.adult_passenger}
+      - ${qa.child_passenger}
+      contactInfo: ${qa.contact_info}
+      extend: ${qa.create_order_extend}
+  assertions: {}
+  oracle: null
+- step_id: assert-create-order
+  name: 校验稳定业务结果
+  action: assert
+  tool_id: ''
+  params: {}
+  assertions:
+    $.success: true
+    $.response.success: true
+    $.response.result.orderSerialId:
+      op: not_null
+  oracle: null
+coverage_target_ids:
+- coverage:create-order:adult-required
+- coverage:create-order:direct-accept
+- coverage:create-order:order-state
+cleanup_steps:
+- step_id: capture-cleanup-key
+  name: 记录订单号供环境清理器处理
+  action: cleanup
+  tool_id: ''
+  params:
+    order_serial_no: ${steps.create-order.output.response.result.orderSerialId}
+  assertions: {}
+  oracle: null
+replay:
+  generator: create-order-pairwise-v1
+  required_config_keys:
+  - train_no
+  - train_date
+  - departure_station
+  - arrival_station
+  - start_time
+  - contact_info
+  - create_order_extend
+  - adult_passenger
+  - child_passenger
+  - adult_passenger_hk
+  - child_passenger_hk
+  - default_distribute_merchant_type
+  - hk_distribute_merchant_type
+  - default_user_pay_type
+  - hk_user_pay_type
+  - occupy_type_default
+  - occupy_type_normal
+  - connect_type
+  source_scan_id: scan-20260811091050-dc8391e426-0a843ec3
+  data_preconditions:
+    quote_result: not_applicable
+    route_type: mtr
+    note: 报价结果属于QA数据准备或Oracle观察，不是createOrder请求字段
+  blocked_reason: ''
+  stale_reason: not produced by latest scenario generation
+expected_outcome: success
+lifecycle: stale
+updated_at: '2026-08-11T10:56:32.486673Z'

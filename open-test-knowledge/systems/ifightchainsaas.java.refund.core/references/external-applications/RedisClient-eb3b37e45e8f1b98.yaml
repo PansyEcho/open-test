@@ -1,0 +1,25 @@
+candidate_id: candidate:external_application:eb3b37e45e8f1b98
+system_id: ifightchainsaas.java.refund.core
+kind: EXTERNAL_APPLICATION
+name: RedisClient
+suggested_meaning: 源码调用该远程协作者；请说明对应应用、业务职责和失败时的业务影响。
+business_meaning: ''
+status: STALE
+merged_into_candidate_id: ''
+source_refs:
+- repository: ''
+  path: app/biz/src/main/java/com/ly/flight/chainsaas/refund/biz/service/common/SerialNoGeneratorHelper.java
+  symbol: com.ly.flight.chainsaas.refund.biz.service.common.SerialNoGeneratorHelper
+  line: null
+  commit: 2b175212e26b21abd0a08edeb3a4c7c1e1e2665a
+  content_digest: ''
+- repository: ''
+  path: app/integration/src/main/java/com/ly/flight/chainsaas/refund/integration/proxy/RedisClientProxy.java
+  symbol: com.ly.flight.chainsaas.refund.integration.proxy.RedisClientProxy
+  line: null
+  commit: 2b175212e26b21abd0a08edeb3a4c7c1e1e2665a
+  content_digest: ''
+affected_target_ids: []
+evidence_digest: 661604d8569c8d706fa38a908945f799b50892c7dcb4a42c4765b71db96d0db1
+discovered_at: '2026-08-13T10:23:54.669496Z'
+updated_at: '2026-08-13T11:20:20.891957Z'

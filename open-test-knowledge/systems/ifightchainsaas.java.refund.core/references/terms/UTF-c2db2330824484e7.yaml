@@ -1,0 +1,119 @@
+candidate_id: candidate:business_term:c2db2330824484e7
+system_id: ifightchainsaas.java.refund.core
+kind: BUSINESS_TERM
+name: UTF
+suggested_meaning: 源码出现该枚举、缩写或领域类型；请确认业务口径以及是否需要合并到已有术语。
+business_meaning: ''
+status: STALE
+merged_into_candidate_id: ''
+source_refs:
+- repository: ''
+  path: app/facade/src/main/java/com/ly/flight/chainsaas/refund/facade/CallbackFacade.java
+  symbol: com.ly.flight.chainsaas.refund.facade.CallbackFacade#refundApplyCallback
+  line: null
+  commit: 2b175212e26b21abd0a08edeb3a4c7c1e1e2665a
+  content_digest: ''
+- repository: ''
+  path: app/facade/src/main/java/com/ly/flight/chainsaas/refund/facade/CallbackFacade.java
+  symbol: com.ly.flight.chainsaas.refund.facade.CallbackFacade#refundConfirmCallback
+  line: null
+  commit: 2b175212e26b21abd0a08edeb3a4c7c1e1e2665a
+  content_digest: ''
+- repository: ''
+  path: app/facade/src/main/java/com/ly/flight/chainsaas/refund/facade/CommonFacade.java
+  symbol: com.ly.flight.chainsaas.refund.facade.CommonFacade#executeJob
+  line: null
+  commit: 2b175212e26b21abd0a08edeb3a4c7c1e1e2665a
+  content_digest: ''
+- repository: ''
+  path: app/facade/src/main/java/com/ly/flight/chainsaas/refund/facade/ModelFacade.java
+  symbol: com.ly.flight.chainsaas.refund.facade.ModelFacade#createRefundOrder
+  line: null
+  commit: 2b175212e26b21abd0a08edeb3a4c7c1e1e2665a
+  content_digest: ''
+- repository: ''
+  path: app/facade/src/main/java/com/ly/flight/chainsaas/refund/facade/ModelFacade.java
+  symbol: com.ly.flight.chainsaas.refund.facade.ModelFacade#confirmRefund
+  line: null
+  commit: 2b175212e26b21abd0a08edeb3a4c7c1e1e2665a
+  content_digest: ''
+- repository: ''
+  path: app/facade/src/main/java/com/ly/flight/chainsaas/refund/facade/OuterRefundFacade.java
+  symbol: com.ly.flight.chainsaas.refund.facade.OuterRefundFacade#queryList
+  line: null
+  commit: 2b175212e26b21abd0a08edeb3a4c7c1e1e2665a
+  content_digest: ''
+- repository: ''
+  path: app/facade/src/main/java/com/ly/flight/chainsaas/refund/facade/OuterRefundFacade.java
+  symbol: com.ly.flight.chainsaas.refund.facade.OuterRefundFacade#pageBusinessLog
+  line: null
+  commit: 2b175212e26b21abd0a08edeb3a4c7c1e1e2665a
+  content_digest: ''
+- repository: ''
+  path: app/facade/src/main/java/com/ly/flight/chainsaas/refund/facade/OuterRefundFacade.java
+  symbol: com.ly.flight.chainsaas.refund.facade.OuterRefundFacade#queryDetailByRefundNo
+  line: null
+  commit: 2b175212e26b21abd0a08edeb3a4c7c1e1e2665a
+  content_digest: ''
+- repository: ''
+  path: app/facade/src/main/java/com/ly/flight/chainsaas/refund/facade/OuterRefundFacade.java
+  symbol: com.ly.flight.chainsaas.refund.facade.OuterRefundFacade#cancel
+  line: null
+  commit: 2b175212e26b21abd0a08edeb3a4c7c1e1e2665a
+  content_digest: ''
+- repository: ''
+  path: app/facade/src/main/java/com/ly/flight/chainsaas/refund/facade/OuterRefundFacade.java
+  symbol: com.ly.flight.chainsaas.refund.facade.OuterRefundFacade#refundConfirm
+  line: null
+  commit: 2b175212e26b21abd0a08edeb3a4c7c1e1e2665a
+  content_digest: ''
+- repository: ''
+  path: app/facade/src/main/java/com/ly/flight/chainsaas/refund/facade/RefundDistributionFacade.java
+  symbol: com.ly.flight.chainsaas.refund.facade.RefundDistributionFacade#queryList
+  line: null
+  commit: 2b175212e26b21abd0a08edeb3a4c7c1e1e2665a
+  content_digest: ''
+- repository: ''
+  path: app/facade/src/main/java/com/ly/flight/chainsaas/refund/facade/RefundDistributionFacade.java
+  symbol: com.ly.flight.chainsaas.refund.facade.RefundDistributionFacade#queryDetail
+  line: null
+  commit: 2b175212e26b21abd0a08edeb3a4c7c1e1e2665a
+  content_digest: ''
+affected_target_ids:
+- facade:com.ly.flight.chainsaas.refund.facade.CallbackFacade#refundApplyCallback
+- facade:com.ly.flight.chainsaas.refund.facade.CallbackFacade#refundConfirmCallback
+- facade:com.ly.flight.chainsaas.refund.facade.CommonFacade#executeJob
+- facade:com.ly.flight.chainsaas.refund.facade.ModelFacade#confirmRefund
+- facade:com.ly.flight.chainsaas.refund.facade.ModelFacade#createRefundOrder
+- facade:com.ly.flight.chainsaas.refund.facade.OuterRefundFacade#cancel
+- facade:com.ly.flight.chainsaas.refund.facade.OuterRefundFacade#pageBusinessLog
+- facade:com.ly.flight.chainsaas.refund.facade.OuterRefundFacade#queryDetailByRefundNo
+- facade:com.ly.flight.chainsaas.refund.facade.OuterRefundFacade#queryList
+- facade:com.ly.flight.chainsaas.refund.facade.OuterRefundFacade#refundConfirm
+- facade:com.ly.flight.chainsaas.refund.facade.RefundDistributionFacade#queryDetail
+- facade:com.ly.flight.chainsaas.refund.facade.RefundDistributionFacade#queryList
+- facade:com.ly.flight.chainsaas.refund.facade.RefundFacade#applyToAirline
+- facade:com.ly.flight.chainsaas.refund.facade.RefundFacade#autoRefund
+- facade:com.ly.flight.chainsaas.refund.facade.RefundFacade#autoRefundReshop
+- facade:com.ly.flight.chainsaas.refund.facade.RefundFacade#billSupplement
+- facade:com.ly.flight.chainsaas.refund.facade.RefundFacade#cancel
+- facade:com.ly.flight.chainsaas.refund.facade.RefundFacade#createLog
+- facade:com.ly.flight.chainsaas.refund.facade.RefundFacade#createOrder
+- facade:com.ly.flight.chainsaas.refund.facade.RefundFacade#createPayment
+- facade:com.ly.flight.chainsaas.refund.facade.RefundFacade#getPlatFee
+- facade:com.ly.flight.chainsaas.refund.facade.RefundFacade#lockOrder
+- facade:com.ly.flight.chainsaas.refund.facade.RefundFacade#queryDetailByOrderNo
+- facade:com.ly.flight.chainsaas.refund.facade.RefundFacade#queryDetailByRefundNo
+- facade:com.ly.flight.chainsaas.refund.facade.RefundFacade#queryList
+- facade:com.ly.flight.chainsaas.refund.facade.RefundFacade#queryListByOrderNo
+- facade:com.ly.flight.chainsaas.refund.facade.RefundFacade#refundConfirm
+- facade:com.ly.flight.chainsaas.refund.facade.RefundFacade#refundReshop
+- facade:com.ly.flight.chainsaas.refund.facade.RefundFacade#refundReshopSubmit
+- facade:com.ly.flight.chainsaas.refund.facade.RefundFacade#ticketRefunding
+- facade:com.ly.flight.chainsaas.refund.facade.RefundFacade#unLockOrder
+- facade:com.ly.flight.chainsaas.refund.facade.RefundFacade#voucherRefundSubmit
+- facade:com.ly.flight.chainsaas.refund.facade.RefundFacade#walletRefundRetry
+- facade:com.ly.flight.chainsaas.refund.facade.ToolFacade#syncOrder
+evidence_digest: 0e92c11b748ba6c3ef1843a6dc67c472e3ac677de021e8bf4e1c3add8a2f7147
+discovered_at: '2026-08-13T10:22:55.641093Z'
+updated_at: '2026-08-13T11:20:20.891946Z'

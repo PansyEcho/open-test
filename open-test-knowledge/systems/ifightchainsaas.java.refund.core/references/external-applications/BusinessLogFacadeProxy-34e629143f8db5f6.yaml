@@ -1,0 +1,24 @@
+candidate_id: candidate:external_application:34e629143f8db5f6
+system_id: ifightchainsaas.java.refund.core
+kind: EXTERNAL_APPLICATION
+name: BusinessLogFacadeProxy
+suggested_meaning: 源码调用该远程协作者；请说明对应应用、业务职责和失败时的业务影响。
+business_meaning: ''
+status: OPEN
+merged_into_candidate_id: ''
+source_refs:
+- repository: ''
+  path: app/biz/src/main/java/com/ly/flight/chainsaas/refund/biz/manager/outer/RefundBusinessLogInvoker.java
+  symbol: com.ly.flight.chainsaas.refund.biz.manager.outer.RefundBusinessLogInvoker
+  line: 27
+  commit: 2b175212e26b21abd0a08edeb3a4c7c1e1e2665a
+  content_digest: cfc055719270a3b55beb691c9f6555f51cc226da9db10884ad21d2070f335003
+affected_target_ids:
+- facade:com.ly.flight.chainsaas.refund.facade.OuterRefundFacade#cancel
+- facade:com.ly.flight.chainsaas.refund.facade.OuterRefundFacade#pageBusinessLog
+- facade:com.ly.flight.chainsaas.refund.facade.OuterRefundFacade#queryDetailByRefundNo
+- facade:com.ly.flight.chainsaas.refund.facade.OuterRefundFacade#queryList
+- facade:com.ly.flight.chainsaas.refund.facade.OuterRefundFacade#refundConfirm
+evidence_digest: 73c2c87beab83339a686fb7fea97958e7203ac9322bfa1951137626a5ff8084a
+discovered_at: '2026-08-13T10:23:54.669506Z'
+updated_at: '2026-08-13T11:20:20.891888Z'

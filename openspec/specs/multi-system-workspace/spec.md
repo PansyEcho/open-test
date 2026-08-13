@@ -1,0 +1,29 @@
+# multi-system-workspace Specification
+
+## Purpose
+TBD - created by archiving change multi-system-console-reliability-and-reset. Update Purpose after archive.
+## Requirements
+### Requirement: 同一知识仓库支持多个彼此隔离的系统
+
+系统 SHALL 允许注册、更新和读取多个系统，并按稳定系统 ID 隔离知识、扫描、Case、资源与报告；本期仍 SHALL 拒绝跨系统关系和引用。
+
+#### Scenario: 更新一个系统
+- **WHEN** 用户编辑已注册系统的名称或源码路径
+- **THEN** 注册表只替换对应 ID 的记录，其他系统定义和资产保持不变
+
+#### Scenario: 新增系统
+- **WHEN** 用户处于新增模式并提交另一个有效源码目录
+- **THEN** 系统创建基于目录名的独立 ID，而不是覆盖当前系统
+
+### Requirement: 混合系统数据可验证归档并恢复
+
+系统 SHALL 在活动系统移除前生成包含文件大小和 SHA-256 的归档清单并验证全部资产；归档失败 SHALL 回滚，成功归档 SHALL 可恢复且重建派生索引。
+
+#### Scenario: 归档当前混合数据
+- **WHEN** 管理员以“源码路径错误且资产归属混合”为原因归档 `train-booking-core`
+- **THEN** 可提交资产与本地资产分别进入对应归档根目录，活动注册表为空且任何文件都未被永久删除
+
+#### Scenario: 恢复归档系统
+- **WHEN** 归档摘要有效且活动区不存在目标冲突
+- **THEN** 系统恢复原资产、注册定义和本地权限，并重建 SQLite 索引
+

@@ -1,0 +1,25 @@
+candidate_id: candidate:external_application:ae0bcb7a5e5702b6
+system_id: ifightchainsaas.java.refund.core
+kind: EXTERNAL_APPLICATION
+name: BaseDataClient
+suggested_meaning: 源码调用该远程协作者；请说明对应应用、业务职责和失败时的业务影响。
+business_meaning: ''
+status: STALE
+merged_into_candidate_id: ''
+source_refs:
+- repository: ''
+  path: app/biz/src/main/java/com/ly/flight/chainsaas/refund/biz/utils/BaseDataTransferUtils.java
+  symbol: com.ly.flight.chainsaas.refund.biz.utils.BaseDataTransferUtils
+  line: null
+  commit: 2b175212e26b21abd0a08edeb3a4c7c1e1e2665a
+  content_digest: ''
+- repository: ''
+  path: app/integration/src/main/java/com/ly/flight/chainsaas/refund/integration/basedata/impl/BaseDataClientImpl.java
+  symbol: com.ly.flight.chainsaas.refund.integration.basedata.impl.BaseDataClientImpl
+  line: null
+  commit: 2b175212e26b21abd0a08edeb3a4c7c1e1e2665a
+  content_digest: ''
+affected_target_ids: []
+evidence_digest: 31a4ee8c9ac493416ac36821c2cb36f6a06acef7a0edecf0f451c377c0541a33
+discovered_at: '2026-08-13T10:23:54.669472Z'
+updated_at: '2026-08-13T11:20:20.891947Z'

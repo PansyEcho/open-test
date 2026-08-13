@@ -1,0 +1,24 @@
+schema_version: opentest.variant/v2alpha1
+variant_id: variant:core-order-lifecycle:003-realtime-empty-fallback
+suite_id: suite:train-booking-core:core-order-lifecycle-v2
+system_id: train-booking-core
+category_id: realtime-distribution-fallback
+title: 实时分单返回空结果后降级收单
+business_goal: 验证实时分单无有效结果时仍真实收单，并由后续分单Job继续处理。
+priority: P0
+lifecycle: blocked
+missing_conditions: [qa_distribution_empty_fixture, fallback_accept_policy, qa_job_url_binding, global_job_confirmation_token, oracle_catalog_snapshot, cleanup_capability]
+source_scan_id: scan-20260811091050-dc8391e426-0a843ec3
+source_refs: [{path: app/biz/src/main/java/com/ly/travel/train/supplychain/bookingcore/biz/manager/trade/CreateOrderServiceInvoker.java, symbol: CreateOrderServiceInvoker}, {path: app/biz/src/main/java/com/ly/travel/train/supplychain/bookingcore/biz/job/collection/DistributionSingleOrderJob.java, symbol: DistributionSingleOrderJob}]
+fixture_requirements: [{fixture_id: 'fixture:realtime:empty-fallback', purpose: 使同步分单返回空结果但满足降级收单条件，并可按业务键隔离后续Job}]
+global_job_guard: {required: true, impact_preview: required, one_time_confirmation: required, qa_only: true}
+fixed_execution_order: [execute-create, execute-distribution-job, observe-order, observe-task, observe-collection, observe-job-effect]
+steps:
+- {step_id: execute-create, action: execute, tool_id: facade.trade.create_order, input: {request: '${fixtures.empty_fallback.create_request}'}}
+- {step_id: execute-distribution-job, action: execute, tool_id: job.distribution_single_order, input: {args: '${fixtures.empty_fallback.job_args}'}}
+- {step_id: observe-order, action: oracle, oracle: {kind: MYSQL, resource_id: 'resource:train-booking-core:mysql:database:bookingcoredatasource', operation_id: order.primary_detail, evidence_mode: DIRECT}, input: {order_serial_no: '${fixtures.empty_fallback.order_serial_no}', transaction_serial_no: '${fixtures.empty_fallback.transaction_serial_no}'}}
+- {step_id: observe-task, action: oracle, oracle: {kind: TIDB, resource_id: 'resource:train-booking-core:tidb:database:bookingcoretidbdatasource', operation_id: order.query_tasks, evidence_mode: DIRECT}, input: {order_serial_no: '${fixtures.empty_fallback.order_serial_no}'}}
+- {step_id: observe-collection, action: oracle, oracle: {kind: MYSQL, resource_id: 'resource:train-booking-core:mysql:database:temporderdatasource', operation_id: collection.detail, evidence_mode: DIRECT}, input: {order_serial_no: '${fixtures.empty_fallback.order_serial_no}'}}
+- {step_id: observe-job-effect, action: oracle, oracle: {kind: MQ, resource_id: 'resource:train-booking-core:mq:consumer:jobmessagelistener', operation_id: mq.trace_match, evidence_mode: EFFECT_ONLY}, input: {trace_id: '${fixtures.empty_fallback.trace_id}'}}
+expected_business_outcome: {create_response: accepted_by_fallback, later_processing: distribution_job_effect_observable}
+cleanup_policy: {mode: EXTERNAL_FIXTURE_OWNER, key: '${fixtures.empty_fallback.order_serial_no}'}

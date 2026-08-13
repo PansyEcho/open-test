@@ -1,0 +1,57 @@
+schema_version: opentest.coverage-matrix/v2alpha1
+matrix_id: coverage-matrix:train-booking-core:core-order-lifecycle-v2
+suite_id: suite:train-booking-core:core-order-lifecycle-v2
+system_id: train-booking-core
+source_scan_id: scan-20260811091050-dc8391e426-0a843ec3
+categories:
+- category_id: realtime-distribution-success
+  title: 境内普通实时分单成功
+  expected_count: 2
+  variant_ids: [variant:core-order-lifecycle:001-realtime-ebk-success, variant:core-order-lifecycle:002-realtime-api-success]
+- category_id: realtime-distribution-fallback
+  title: 实时分单失败降级收单
+  expected_count: 2
+  variant_ids: [variant:core-order-lifecycle:003-realtime-empty-fallback, variant:core-order-lifecycle:004-realtime-exception-fallback]
+- category_id: occupy-full-success
+  title: 普通占座完整成功
+  expected_count: 2
+  variant_ids: [variant:core-order-lifecycle:005-occupy-ebk-full-success, variant:core-order-lifecycle:006-occupy-api-full-success]
+- category_id: grab-immediate-failure
+  title: 抢票即时失败
+  expected_count: 3
+  variant_ids: [variant:core-order-lifecycle:007-grab-approach-departure, variant:core-order-lifecycle:008-grab-outside-sale-time, variant:core-order-lifecycle:009-grab-no-merchant]
+- category_id: occupy-failure-second-dispatch
+  title: 占座失败与二次分单
+  expected_count: 2
+  variant_ids: [variant:core-order-lifecycle:010-occupy-final-fail, variant:core-order-lifecycle:011-occupy-second-dispatch]
+- category_id: issue-rejection
+  title: 出票驳回
+  expected_count: 4
+  variant_ids: [variant:core-order-lifecycle:012-reject-final-fail, variant:core-order-lifecycle:013-reject-switch-ticket-machine, variant:core-order-lifecycle:014-reject-switch-merchant, variant:core-order-lifecycle:015-reject-lack-ticket-accept]
+- category_id: mtr-orders
+  title: 港铁订单
+  expected_count: 2
+  variant_ids: [variant:core-order-lifecycle:016-mtr-standard, variant:core-order-lifecycle:017-mtr-12306-eticket]
+- category_id: hkd-multi-passenger
+  title: 港币支付多乘客
+  expected_count: 3
+  variant_ids: [variant:core-order-lifecycle:018-hkd-all-priced, variant:core-order-lifecycle:019-hkd-partial-price-missing, variant:core-order-lifecycle:020-hkd-price-mismatch]
+- category_id: connected-orders
+  title: 联程订单
+  expected_count: 3
+  variant_ids: [variant:core-order-lifecycle:021-connect-two-leg, variant:core-order-lifecycle:022-connect-three-leg, variant:core-order-lifecycle:023-connect-batch-reject-compensation]
+- category_id: cancellation
+  title: 取消订单
+  expected_count: 4
+  variant_ids: [variant:core-order-lifecycle:024-cancel-ticketing, variant:core-order-lifecycle:025-cancel-occupy-success, variant:core-order-lifecycle:026-cancel-occupying-unlocked, variant:core-order-lifecycle:027-cancel-occupying-locked-delay]
+- category_id: revoke-timeout
+  title: 撤单与超时
+  expected_count: 2
+  variant_ids: [variant:core-order-lifecycle:028-timeout-job, variant:core-order-lifecycle:029-supplier-batch-revoke]
+- category_id: ht-idempotency
+  title: HT幂等与不可复用
+  expected_count: 2
+  variant_ids: [variant:core-order-lifecycle:030-ht-active-idempotent, variant:core-order-lifecycle:031-ht-terminal-repeat-book]
+totals:
+  category_count: 12
+  variant_count: 31

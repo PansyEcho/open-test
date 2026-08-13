@@ -1,0 +1,57 @@
+scenario_id: scenario:create-order:main-flow
+system_id: train-booking-core
+entry_node_id: facade:TradeFacade#createOrder
+title: 创建订单主流程覆盖
+coverage_target_ids:
+- coverage:create-order:adult-required
+- coverage:create-order:direct-accept
+- coverage:create-order:hk-verify
+- coverage:create-order:hk-quote-missing
+- coverage:create-order:order-state
+dimensions:
+  payment_type:
+  - CNY
+  - HK_PAYMENT
+  passenger_mix:
+  - adult_only
+  - adult_child
+  - child_only
+  quote_result:
+  - not_applicable
+  - valid
+  - missing
+  - higher_than_user
+  route_type:
+  - normal
+  - mtr
+  occupy_type:
+  - ticketing
+  - occupying
+constraints:
+- field: adult_count
+  operator: gte
+  value: 1
+  source_node_id: rule:create-order:adult-required
+- field: foreign_ticket_price
+  operator: contains
+  value: each_passenger
+  source_node_id: rule:create-order:hk-payment-verify
+steps:
+- step_id: create-order
+  name: 调用创建订单逻辑工具
+  action: execute
+  tool_id: facade.trade.create_order
+  params:
+    request: ${inputs.request}
+  assertions: {}
+  oracle: null
+cleanup_steps:
+- step_id: capture-cleanup-key
+  name: 记录订单号供环境清理器处理
+  action: cleanup
+  tool_id: ''
+  params:
+    order_serial_no: ${steps.create-order.output.response.result.orderSerialId}
+  assertions: {}
+  oracle: null
+source_scan_id: scan-20260811091050-dc8391e426-0a843ec3

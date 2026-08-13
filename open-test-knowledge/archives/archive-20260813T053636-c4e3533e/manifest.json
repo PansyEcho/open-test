@@ -1,0 +1,3703 @@
+{
+  "archive_id": "archive-20260813T053636-c4e3533e",
+  "system": {
+    "system_id": "train-booking-core",
+    "name": "火车票预订核心",
+    "source_path": "/Users/user/data/code/tc/ifightchainsaas.java.refund.core",
+    "language": "java",
+    "description": "由V2引导式控制台接入的DSF系统",
+    "baseline": null,
+    "created_at": "2026-08-11T08:18:20.412140Z"
+  },
+  "reason": "当前系统源码路径被错误更新为退款项目，但扫描、知识、资源与31个Case仍属于Booking.Core；按用户确认归档后重新开始",
+  "incorrect_source_path": "/Users/user/data/code/tc/ifightchainsaas.java.refund.core",
+  "files": [
+    {
+      "scope": "knowledge",
+      "relative_path": "systems/train-booking-core/SKILL.md",
+      "size": 2181,
+      "sha256": "e92baeb2e3355e7fca678bca889054b0685661de00d72ad9e2bf7ac93e4b3318"
+    },
+    {
+      "scope": "knowledge",
+      "relative_path": "systems/train-booking-core/agents/openai.yaml",
+      "size": 210,
+      "sha256": "c334b95df39ea2504612afb14ac03e91429a3f3a2b32bcb84c8cfeed9b770114"
+    },
+    {
+      "scope": "knowledge",
+      "relative_path": "systems/train-booking-core/cases/coverage-targets.yaml",
+      "size": 1325,
+      "sha256": "37317482e6b04753eccc4bef402a35d10af898885abcd09a9b076ae07525f496"
+    },
+    {
+      "scope": "knowledge",
+      "relative_path": "systems/train-booking-core/cases/custom/001-realtime-ebk-success.yaml",
+      "size": 6298,
+      "sha256": "521dd2d015d93ba391423bc8e1d2d39799f308a0f25ea470e0a310f8073f5af6"
+    },
+    {
+      "scope": "knowledge",
+      "relative_path": "systems/train-booking-core/cases/custom/002-realtime-api-success.yaml",
+      "size": 2645,
+      "sha256": "4de898af383bdba4c89d8ce854f8ab34ea207f01e2f5fc48c59934783f9bbf53"
+    },
+    {
+      "scope": "knowledge",
+      "relative_path": "systems/train-booking-core/cases/custom/003-realtime-empty-fallback.yaml",
+      "size": 3100,
+      "sha256": "039a64dfa40caa11135f647ef0d524c16c3b7a81c8adecdc8a98cef0b597a529"
+    },
+    {
+      "scope": "knowledge",
+      "relative_path": "systems/train-booking-core/cases/custom/004-realtime-exception-fallback.yaml",
+      "size": 3147,
+      "sha256": "12e914a18e9db3b78aab2682a0b30d9451f596d9690aec7f8f8c92288084820e"
+    },
+    {
+      "scope": "knowledge",
+      "relative_path": "systems/train-booking-core/cases/custom/005-occupy-ebk-full-success.yaml",
+      "size": 3197,
+      "sha256": "de301ca0210061a778a1f8dfcf524033bbfa7a22eaac33eb5a28a9e23cfde597"
+    },
+    {
+      "scope": "knowledge",
+      "relative_path": "systems/train-booking-core/cases/custom/006-occupy-api-full-success.yaml",
+      "size": 3233,
+      "sha256": "cc69749173d81632564521b5c64899f3e38d7a13bc5ef5c4f9f066b5c6f38408"
+    },
+    {
+      "scope": "knowledge",
+      "relative_path": "systems/train-booking-core/cases/custom/007-grab-approach-departure.yaml",
+      "size": 2022,
+      "sha256": "64aeed07a38aec433711e757181ad1eaaf96757ea2af2de6bf140f6a495d1865"
+    },
+    {
+      "scope": "knowledge",
+      "relative_path": "systems/train-booking-core/cases/custom/008-grab-outside-sale-time.yaml",
+      "size": 1622,
+      "sha256": "cf17a08d09041506aff04c84f76089d818d67bc436675e696e2e9b4a4bb5e97e"
+    },
+    {
+      "scope": "knowledge",
+      "relative_path": "systems/train-booking-core/cases/custom/009-grab-no-merchant.yaml",
+      "size": 1992,
+      "sha256": "7dcf38f5a41292527dd961a2e62094799b4cedb2d1f90f0c7c81ec3526ff25a3"
+    },
+    {
+      "scope": "knowledge",
+      "relative_path": "systems/train-booking-core/cases/custom/010-occupy-final-fail.yaml",
+      "size": 2514,
+      "sha256": "834e42553cef8ede75713da751cbf4541eba084c6d273c7462bf4e5b9e0c4fef"
+    },
+    {
+      "scope": "knowledge",
+      "relative_path": "systems/train-booking-core/cases/custom/011-occupy-second-dispatch.yaml",
+      "size": 3889,
+      "sha256": "54bfa2f476405c0df1598e12dcc3d2e071864edba90e8be360a1355e5165d9fb"
+    },
+    {
+      "scope": "knowledge",
+      "relative_path": "systems/train-booking-core/cases/custom/012-reject-final-fail.yaml",
+      "size": 2523,
+      "sha256": "eb9d197529f654a59c6bfb90efef7b413215a264232768c65130b360f13c6bd5"
+    },
+    {
+      "scope": "knowledge",
+      "relative_path": "systems/train-booking-core/cases/custom/013-reject-switch-ticket-machine.yaml",
+      "size": 2766,
+      "sha256": "115c85f6f972dac08ff05c16fe9535b1ecd9f8c1f844096c9ec6ea36292d9e1c"
+    },
+    {
+      "scope": "knowledge",
+      "relative_path": "systems/train-booking-core/cases/custom/014-reject-switch-merchant.yaml",
+      "size": 2699,
+      "sha256": "d5ae433652759da3310b2038fac01681099c473072e32689e2c5f4fe9d1a7eb3"
+    },
+    {
+      "scope": "knowledge",
+      "relative_path": "systems/train-booking-core/cases/custom/015-reject-lack-ticket-accept.yaml",
+      "size": 2581,
+      "sha256": "8958bfd3f91686e00ddfc2634d409d2071934794ccdf0583139e468c895b1fdf"
+    },
+    {
+      "scope": "knowledge",
+      "relative_path": "systems/train-booking-core/cases/custom/016-mtr-standard.yaml",
+      "size": 2439,
+      "sha256": "58cb630a1b1f267462f903933eece4d3e223bb633b3342497e437f84352a1d7f"
+    },
+    {
+      "scope": "knowledge",
+      "relative_path": "systems/train-booking-core/cases/custom/017-mtr-12306-eticket.yaml",
+      "size": 2419,
+      "sha256": "7e7a4873dc624be17990e67e4edd9a8033d24aa1f95432db71caefee0e551d75"
+    },
+    {
+      "scope": "knowledge",
+      "relative_path": "systems/train-booking-core/cases/custom/018-hkd-all-priced.yaml",
+      "size": 2540,
+      "sha256": "a5983f0a41c1a58e52835a1f591d8a7180b099e50da10b7cf06faabc8fea65ce"
+    },
+    {
+      "scope": "knowledge",
+      "relative_path": "systems/train-booking-core/cases/custom/019-hkd-partial-price-missing.yaml",
+      "size": 1882,
+      "sha256": "6b3fd5607cfc02e43dbb870eacc6abe26465cc26554cba8ae72131cc1837206a"
+    },
+    {
+      "scope": "knowledge",
+      "relative_path": "systems/train-booking-core/cases/custom/020-hkd-price-mismatch.yaml",
+      "size": 1692,
+      "sha256": "727cf94254b1e6b30f4b004cd10e359adc17455b217eac4e52d8c1a53c223fa7"
+    },
+    {
+      "scope": "knowledge",
+      "relative_path": "systems/train-booking-core/cases/custom/021-connect-two-leg.yaml",
+      "size": 3150,
+      "sha256": "66c5238c6763632ecb44a120718466125d67c8677c93ed270a482a003fedfb04"
+    },
+    {
+      "scope": "knowledge",
+      "relative_path": "systems/train-booking-core/cases/custom/022-connect-three-leg.yaml",
+      "size": 3105,
+      "sha256": "1ba19c0654eaa355aa747e34bbe9cd259cce475852c65aa973d33bde937e93bf"
+    },
+    {
+      "scope": "knowledge",
+      "relative_path": "systems/train-booking-core/cases/custom/023-connect-batch-reject-compensation.yaml",
+      "size": 3363,
+      "sha256": "fe4591617f409602eb45ae5fe67a05d9e23af4798304707b56e649bf14c49aa4"
+    },
+    {
+      "scope": "knowledge",
+      "relative_path": "systems/train-booking-core/cases/custom/024-cancel-ticketing.yaml",
+      "size": 2484,
+      "sha256": "7319b22c1ab4135a56d65161d7f21920c74e07a1a17356fbb1b27f5778e29290"
+    },
+    {
+      "scope": "knowledge",
+      "relative_path": "systems/train-booking-core/cases/custom/025-cancel-occupy-success.yaml",
+      "size": 2070,
+      "sha256": "ec4fb243531a750d9aa5ec54ba7fffafb2fd4e8168deee08fc01725a28b12810"
+    },
+    {
+      "scope": "knowledge",
+      "relative_path": "systems/train-booking-core/cases/custom/026-cancel-occupying-unlocked.yaml",
+      "size": 2249,
+      "sha256": "7d2b191c0219294c80f0aea54d6f7e7caa46a7c6e5562cb93906e02c3fe63cf6"
+    },
+    {
+      "scope": "knowledge",
+      "relative_path": "systems/train-booking-core/cases/custom/027-cancel-occupying-locked-delay.yaml",
+      "size": 2629,
+      "sha256": "726320c53d37813a3a810db99e940d9e418e972138eb6f172aa595d969ec3f11"
+    },
+    {
+      "scope": "knowledge",
+      "relative_path": "systems/train-booking-core/cases/custom/028-timeout-job.yaml",
+      "size": 2415,
+      "sha256": "b279709db10eb6cb3e7ccfef61f39f2199b944248214d4dd8abeadbd43966613"
+    },
+    {
+      "scope": "knowledge",
+      "relative_path": "systems/train-booking-core/cases/custom/029-supplier-batch-revoke.yaml",
+      "size": 3049,
+      "sha256": "0c9e275c401a1e7eb9335b40f21321f9e7fb5f169946b54d1ae8a1910ead03ae"
+    },
+    {
+      "scope": "knowledge",
+      "relative_path": "systems/train-booking-core/cases/custom/030-ht-active-idempotent.yaml",
+      "size": 2016,
+      "sha256": "99a2c12a05859d465e9ced3767073407450dbcd6b4e2d71738f4d414331d9f6c"
+    },
+    {
+      "scope": "knowledge",
+      "relative_path": "systems/train-booking-core/cases/custom/031-ht-terminal-repeat-book.yaml",
+      "size": 1996,
+      "sha256": "9cb4b057280fa373166bdd9dae5446928bf5ae2e5faa24b2c4cb4ded2fc3b137"
+    },
+    {
+      "scope": "knowledge",
+      "relative_path": "systems/train-booking-core/cases/scenarios/scenario-create-order-main-flow-352228ae3b64.yaml",
+      "size": 1376,
+      "sha256": "296937bdcd0c27f12a4e118b7ae85c9fd116bc48ee5ac0d01d4c84bf2972023c"
+    },
+    {
+      "scope": "knowledge",
+      "relative_path": "systems/train-booking-core/cases/suites/core-order-lifecycle-coverage.yaml",
+      "size": 3266,
+      "sha256": "356b8173a86675dcb24c92f34a6673174d0ce27a6c608fdbf6a48ccb09b145b7"
+    },
+    {
+      "scope": "knowledge",
+      "relative_path": "systems/train-booking-core/cases/suites/core-order-lifecycle.yaml",
+      "size": 6189,
+      "sha256": "b2d57324c1e52ae7b84109fdd428712152b961d738bbfe4dc88eeb441485fa2e"
+    },
+    {
+      "scope": "knowledge",
+      "relative_path": "systems/train-booking-core/cases/variants/variant-create-order-031d02d55cb92538bdfe-d9b2e292a375.yaml",
+      "size": 3202,
+      "sha256": "b9a0d9eb73b292bd70db014e1f60b9681d5ded8552d0cc77fc68e880a9d9268e"
+    },
+    {
+      "scope": "knowledge",
+      "relative_path": "systems/train-booking-core/cases/variants/variant-create-order-1b52141cb6b5cc9254c9-58974815ba41.yaml",
+      "size": 3120,
+      "sha256": "7f323b672729231599ed07a81eefe803502aa2d236a02223aa56d8dfced29035"
+    },
+    {
+      "scope": "knowledge",
+      "relative_path": "systems/train-booking-core/cases/variants/variant-create-order-25283822dfac3864cb45-78192f19baf5.yaml",
+      "size": 3363,
+      "sha256": "5e5716e3dea0066f8ce88557809c6a0add6dde7fcf739414e1cbb77d420af57a"
+    },
+    {
+      "scope": "knowledge",
+      "relative_path": "systems/train-booking-core/cases/variants/variant-create-order-3d37ffdd4e37e963388b-a8d4302d2644.yaml",
+      "size": 3424,
+      "sha256": "a01a1c9a8041f065c89692722278503978845a3a76fcdf1f2bd454b336765bfe"
+    },
+    {
+      "scope": "knowledge",
+      "relative_path": "systems/train-booking-core/cases/variants/variant-create-order-3dc642b0be146b808382-16b01ff204dc.yaml",
+      "size": 3004,
+      "sha256": "ecfeadc25e5c1ee0c454224b05eea65f63901be4fdc762f4e93fa70bffe0131a"
+    },
+    {
+      "scope": "knowledge",
+      "relative_path": "systems/train-booking-core/cases/variants/variant-create-order-43b9ed529ca00c5856e7-66b8148ea7cc.yaml",
+      "size": 3425,
+      "sha256": "75ab0288a1901bc2ac2515db608e432e4f0471076b48b33ed0d8b516fc450d08"
+    },
+    {
+      "scope": "knowledge",
+      "relative_path": "systems/train-booking-core/cases/variants/variant-create-order-4cba6175d79964aa7b20-2aa72f57c86a.yaml",
+      "size": 3301,
+      "sha256": "8427b886a424c76a2c472d66991b522b7ba70ad83678c96179e4232a53f20dfd"
+    },
+    {
+      "scope": "knowledge",
+      "relative_path": "systems/train-booking-core/cases/variants/variant-create-order-5b595e7d0be1aa89ab17-5a84edc24a0a.yaml",
+      "size": 2775,
+      "sha256": "19e8db856b066796c2e5be38c0f99dd57fdfa95d955d92f92766e8c551a26020"
+    },
+    {
+      "scope": "knowledge",
+      "relative_path": "systems/train-booking-core/cases/variants/variant-create-order-5b687b076eb8e01804ed-140365ec6751.yaml",
+      "size": 3211,
+      "sha256": "a86bb30b142ceb287d0b075d5cf23238ecdd39763aa6707236f5acd5aceb65ae"
+    },
+    {
+      "scope": "knowledge",
+      "relative_path": "systems/train-booking-core/cases/variants/variant-create-order-657338ceccf3ea188906-90f941e17b83.yaml",
+      "size": 3346,
+      "sha256": "29b9cea4ff6671e3d412c7532d614c343df3b788a4a56b656a2a107cd980c57d"
+    },
+    {
+      "scope": "knowledge",
+      "relative_path": "systems/train-booking-core/cases/variants/variant-create-order-7a7a324a0ad45a5efb03-c8f9b1beff74.yaml",
+      "size": 3205,
+      "sha256": "244eb4f67cf762a29e51d2a5bad186699e57dec18a63b2c4e94414f140bd630f"
+    },
+    {
+      "scope": "knowledge",
+      "relative_path": "systems/train-booking-core/cases/variants/variant-create-order-84019840d828a2e0092e-f4cf0952c75e.yaml",
+      "size": 3123,
+      "sha256": "c9da5ed10cf6051ca8c269c97a27f62f96fc950385f73c0f6d624d67e21516be"
+    },
+    {
+      "scope": "knowledge",
+      "relative_path": "systems/train-booking-core/cases/variants/variant-create-order-b2e97b718ab960ce8880-df64c33b1b8a.yaml",
+      "size": 3083,
+      "sha256": "98efec825ebdb65b7eb293c11f82a1f90ba12b28fe5f32293f94a03eeb9b88ba"
+    },
+    {
+      "scope": "knowledge",
+      "relative_path": "systems/train-booking-core/cases/variants/variant-create-order-b977a8c4c409acd27512-70b3567d3034.yaml",
+      "size": 3111,
+      "sha256": "efe1db8e780831a5c87d242150f186b1cd597b054fd7689fcd0a4f36572d4269"
+    },
+    {
+      "scope": "knowledge",
+      "relative_path": "systems/train-booking-core/cases/variants/variant-create-order-bdb3e4e788a55f8ecda7-545998e04181.yaml",
+      "size": 2709,
+      "sha256": "2308b6464a769a7f7d38836fbce51c3348ed02f0e0f4c4b2c1a809d0e9b85dff"
+    },
+    {
+      "scope": "knowledge",
+      "relative_path": "systems/train-booking-core/cases/variants/variant-create-order-be666cc76401caa0b5d2-db1b6a7cf388.yaml",
+      "size": 2760,
+      "sha256": "99a7c375f694a02ca8b28d1ea30733dea68706dbc4c9e56a1d0fcfdbf1ecad6c"
+    },
+    {
+      "scope": "knowledge",
+      "relative_path": "systems/train-booking-core/cases/variants/variant-create-order-ebe91d237462b4cab2cf-fea4527ccc4f.yaml",
+      "size": 3368,
+      "sha256": "eda14905b84bf51473c5e45ce9ddf160448a9f45b227b187e8bc9eed33b56ee8"
+    },
+    {
+      "scope": "knowledge",
+      "relative_path": "systems/train-booking-core/cases/variants/variant-create-order-f58d4d4da592e808dbd7-90932b312080.yaml",
+      "size": 2756,
+      "sha256": "bd39903a9d35e0b81fb9f20d97df8d4dac8f15526bd0ae470076032c0c30df61"
+    },
+    {
+      "scope": "knowledge",
+      "relative_path": "systems/train-booking-core/cases/variants/variant-create-order-f8022b541d393ea4ae1e-3c3400cdcf10.yaml",
+      "size": 3321,
+      "sha256": "4539ddbab1478773230948263f3aa64094195de18871fba58ecfe1dce759bfb7"
+    },
+    {
+      "scope": "knowledge",
+      "relative_path": "systems/train-booking-core/oracles/catalog.yaml",
+      "size": 5453,
+      "sha256": "85a719067b1b987be5a679b7248c87d0d69639e4b61484a965897905209595d5"
+    },
+    {
+      "scope": "knowledge",
+      "relative_path": "systems/train-booking-core/questions/lifecycle-questions.yaml",
+      "size": 5658,
+      "sha256": "4057c0b8cfc02b65dafe7efa82440e2979f3906102c488ff466a02c93152ca17"
+    },
+    {
+      "scope": "knowledge",
+      "relative_path": "systems/train-booking-core/questions/questions.yaml",
+      "size": 814,
+      "sha256": "3c1cd1e453d9f35819e862a043547e3e9e7f87efcb6c9ba4a8890dd59871307e"
+    },
+    {
+      "scope": "knowledge",
+      "relative_path": "systems/train-booking-core/references/core-lifecycle/core-scenario-matrix.md",
+      "size": 3028,
+      "sha256": "047f8975b6839f44a1248a23c5bcf9aad38badf46c4d3fb0f915c0020cee766e"
+    },
+    {
+      "scope": "knowledge",
+      "relative_path": "systems/train-booking-core/references/core-lifecycle/lifecycle-and-recovery-flows.md",
+      "size": 4004,
+      "sha256": "b9ca04dc78f7a90dc5d17fa898c4cfb2823d0f7a96b9fbd40a914108f0ba52d2"
+    },
+    {
+      "scope": "knowledge",
+      "relative_path": "systems/train-booking-core/references/core-lifecycle/oracle-and-execution-boundaries.md",
+      "size": 3032,
+      "sha256": "3f76c7650ff37d878160576f0b3306f84e681ccc839dcf75fc11fdc088101265"
+    },
+    {
+      "scope": "knowledge",
+      "relative_path": "systems/train-booking-core/references/data/sources/data-source-base-ticket-price-5917eb04b151.md",
+      "size": 1110,
+      "sha256": "3d8acc01ba2e2403f8b5aacf74c106a6fd26e59b99b03f52d747362786a7f4cf"
+    },
+    {
+      "scope": "knowledge",
+      "relative_path": "systems/train-booking-core/references/data/sources/data-source-mtr-ticket-price-6fcbba3e7fa5.md",
+      "size": 1066,
+      "sha256": "0f04af392b090b903cd41156cc15ba27cc54171965034a3335a7e322d0539c4b"
+    },
+    {
+      "scope": "knowledge",
+      "relative_path": "systems/train-booking-core/references/facades/facade-TradeFacade-createOrder-ea1999f3cd0b.md",
+      "size": 1155,
+      "sha256": "08e1c15a6432a461f2bde3b78285ce03b654495dc441a882d55c109a2fc6ce72"
+    },
+    {
+      "scope": "knowledge",
+      "relative_path": "systems/train-booking-core/references/shared/business-rules/rule-create-order-adult-required-796144fd0c88.md",
+      "size": 1180,
+      "sha256": "ea8c34abb2b06f34f28e2b7344543dfe0b66c6b0404f248c42df541769c0daf7"
+    },
+    {
+      "scope": "knowledge",
+      "relative_path": "systems/train-booking-core/references/shared/business-rules/rule-create-order-direct-accept-066f4faf23eb.md",
+      "size": 1224,
+      "sha256": "988d1c0355dc62e17c9477889ec7fbafc781ba5794e4598e26e0e3decb3caa9a"
+    },
+    {
+      "scope": "knowledge",
+      "relative_path": "systems/train-booking-core/references/shared/business-rules/rule-create-order-hk-payment-verify-f91749cf24b8.md",
+      "size": 1261,
+      "sha256": "ca9ad5bf47af50f6b74c5a06d722c4758ed2773aa818e6ae2ca9686af78402d3"
+    },
+    {
+      "scope": "knowledge",
+      "relative_path": "systems/train-booking-core/references/shared/business-rules/rule-create-order-hk-plan-price-63c753295709.md",
+      "size": 1278,
+      "sha256": "dd3d720bc0fb59c379a0dee34bcca4b18643cbe044b929601a3fa3f1593e7a06"
+    },
+    {
+      "scope": "knowledge",
+      "relative_path": "systems/train-booking-core/references/shared/common-logic/logic-CreateOrderServiceInvoker-invokeInner-abcd8a7a8d18.md",
+      "size": 1237,
+      "sha256": "6537bb855cdb37e1ed367ec020067c882d3e007c5dbeff2d563527cebdc91b4e"
+    },
+    {
+      "scope": "knowledge",
+      "relative_path": "systems/train-booking-core/references/shared/common-logic/logic-CreateOrderValidator-validate-6afe6197793b.md",
+      "size": 1218,
+      "sha256": "00e604a055d9d9a61aa73e73234c6e4a51d1d7b50cb34f3046e1e435e45c2da4"
+    },
+    {
+      "scope": "knowledge",
+      "relative_path": "systems/train-booking-core/references/state-machine/state-machine-OrderStateEnum-300267b00d3e.md",
+      "size": 7546,
+      "sha256": "84972ba8d0091e7e62b9f5a5fd294866028ba89ba620b631d67d3f05cc486833"
+    },
+    {
+      "scope": "knowledge",
+      "relative_path": "systems/train-booking-core/relations.yaml",
+      "size": 2235,
+      "sha256": "de2d892c8c358d7a7942a8d6c9f86b9f8730d27d1ae93511c92cb9d34cb5565d"
+    },
+    {
+      "scope": "knowledge",
+      "relative_path": "systems/train-booking-core/source.yaml",
+      "size": 256,
+      "sha256": "5ab02fc906dbc31caae1dbbe28e2612ec46846609a4c95f1faf633413ff863ce"
+    },
+    {
+      "scope": "local",
+      "relative_path": "agent-runs/agent-5a08668b589241e1/evidence.json",
+      "size": 434,
+      "sha256": "63009339d00f8c5b059609d2b86418ebbb00fe9342276121715a6e2762b4322a"
+    },
+    {
+      "scope": "local",
+      "relative_path": "agent-runs/agent-5a08668b589241e1/prompt.txt",
+      "size": 2020,
+      "sha256": "3fb932d4d8278e858baa9ebb8ae79c26eaecf7387038adf5b99b61a796a86af6"
+    },
+    {
+      "scope": "local",
+      "relative_path": "environments/train-booking-core/qa.yaml",
+      "size": 520,
+      "sha256": "680c5e6705dd406595d119593cde0d6c9da9340d60bf38efce32db3e55fd4f84"
+    },
+    {
+      "scope": "local",
+      "relative_path": "knowledge-drafts/train-booking-core/knowledge-workflow-8cfc4828b8d73397.yaml",
+      "size": 7649,
+      "sha256": "10175f00654ebcbd82d776575296b338bb28f13a17f2913de29a822f47f9df6e"
+    },
+    {
+      "scope": "local",
+      "relative_path": "locks/train-booking-core.lock",
+      "size": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "scope": "local",
+      "relative_path": "regression-reports/batch-run-51a457936b8442bb8d96.json",
+      "size": 13389,
+      "sha256": "53b00409300fcd48e54f7ef6122ecae70b4e55aa391018335263d4e01da52316"
+    },
+    {
+      "scope": "local",
+      "relative_path": "resource-status/train-booking-core/resources.json",
+      "size": 12492,
+      "sha256": "d4c34cc75035e908ec33750e4db41c353592157cfe5e407c6a6b590c6d13650c"
+    },
+    {
+      "scope": "local",
+      "relative_path": "scans/.train-booking-core.lock",
+      "size": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "scope": "local",
+      "relative_path": "scans/train-booking-core/latest.json",
+      "size": 58,
+      "sha256": "664ee0480c9e130205e8df30d135e58ee59d969a696ab50190f6cd7643f695e2"
+    },
+    {
+      "scope": "local",
+      "relative_path": "scans/train-booking-core/scan-20260811084122-dc8391e426-6f3f6525.json",
+      "size": 233660,
+      "sha256": "8cf8b724af9f9c9d48f151af91b68b90ac6cb995d98260b70f036cce7f6f0615"
+    },
+    {
+      "scope": "local",
+      "relative_path": "scans/train-booking-core/scan-20260811084157-dc8391e426-1e28b0f7.json",
+      "size": 302973,
+      "sha256": "e3e74dc9a9ae66cf503cf017ac9ca0d0536d4d11ba245f8a4fb85d4ccf42e34b"
+    },
+    {
+      "scope": "local",
+      "relative_path": "scans/train-booking-core/scan-20260811090346-dc8391e426-2b8aa9c2.json",
+      "size": 318899,
+      "sha256": "f995a4a5b63ea90fa40ae09e3126f6f102d8040ace97034ef6454a2fb773907a"
+    },
+    {
+      "scope": "local",
+      "relative_path": "scans/train-booking-core/scan-20260811091050-dc8391e426-0a843ec3.json",
+      "size": 318899,
+      "sha256": "79d1bd11920117633102a39b182af84293c589d1571b0cbcef8d6cee3705cea0"
+    },
+    {
+      "scope": "local",
+      "relative_path": "snapshots/snapshot-10fe8af375e906719066e040.json",
+      "size": 1032,
+      "sha256": "3a92ba3fad90753ad41e396424b5f9888ac97f0f0aa77d414f1cf12d83449930"
+    },
+    {
+      "scope": "local",
+      "relative_path": "snapshots/snapshot-139a6c152f731a8ef708bfb0.json",
+      "size": 1214,
+      "sha256": "764572618a84b1bcce80a95b9f0529a05d206362e24caba010fa16a8b542068b"
+    },
+    {
+      "scope": "local",
+      "relative_path": "snapshots/snapshot-3e9ff75ba486c9e60e05bc18.json",
+      "size": 1032,
+      "sha256": "a96321bffe940da92688639b594dc205b691bff778f88fb61d283d57294cd9bc"
+    },
+    {
+      "scope": "local",
+      "relative_path": "snapshots/snapshot-7c59d0f3e194df495986a1dd.json",
+      "size": 1032,
+      "sha256": "637d693f08361a09f627918295ab1ee66efb0b6c6f59b80a8664ee7cb65d8534"
+    },
+    {
+      "scope": "local",
+      "relative_path": "snapshots/snapshot-80e635d4232545bd4b360f5b.json",
+      "size": 1214,
+      "sha256": "738eb8062149c2e744860c0a1d9a5a2567e3bf536b81cdf679c74464cefc61e3"
+    },
+    {
+      "scope": "local",
+      "relative_path": "snapshots/snapshot-964d14746200dabd6479a7a2.json",
+      "size": 1032,
+      "sha256": "fd5f470fa6f3d36fe7b68c420a5dff3db266c2c23021902c46eb4cae29789891"
+    },
+    {
+      "scope": "local",
+      "relative_path": "snapshots/snapshot-be724e0d8b7143425e6a0244.json",
+      "size": 1214,
+      "sha256": "2e434b65305cdf971ac54569f5e61ecf7779f71f9f0a2e21e76486a5a368fe90"
+    },
+    {
+      "scope": "local",
+      "relative_path": "snapshots/snapshot-c2c9edb62d4bfc063303855d.json",
+      "size": 1214,
+      "sha256": "be5039081c7ef9e70fa24492a2f2d1d66c08c56cf2653175333dd811b696740e"
+    },
+    {
+      "scope": "local",
+      "relative_path": "snapshots/snapshot-c3a234935513e2d9452accbb.json",
+      "size": 1214,
+      "sha256": "1bd0b9e95a33893d85ced59055a563b50871504118c162977f4c73769d72f15e"
+    },
+    {
+      "scope": "local",
+      "relative_path": "snapshots/snapshot-e2d6a1e5d432eb38f0afd2cc.json",
+      "size": 1214,
+      "sha256": "3ace5b1018f482e32f253bf71a766a5b19003dca3ef5e017157bdf8e0d1aaa77"
+    },
+    {
+      "scope": "local",
+      "relative_path": "snapshots/snapshot-f90421b5402fb1bd8c3888b7.json",
+      "size": 1214,
+      "sha256": "f8628e20a1484d3a24d7860cf1f70881ed0c7888b1d3695606ed3151f87ea73f"
+    },
+    {
+      "scope": "local",
+      "relative_path": "tasks/task-06fb88788af146af.json",
+      "size": 562,
+      "sha256": "6d6ef833de8c0a77db812188a1af0738365e4e414f62233c120c3b07f1d3da53"
+    },
+    {
+      "scope": "local",
+      "relative_path": "tasks/task-07401f4ce1394fa0.json",
+      "size": 562,
+      "sha256": "4369efdb5d3eb565185ce57837ebd4875add96a1d6282dad3fbb71749da0b341"
+    },
+    {
+      "scope": "local",
+      "relative_path": "tasks/task-10f947beaa3a489e.json",
+      "size": 562,
+      "sha256": "8a4c11d6e0805e5ee0e0e227e5755a4344a91af724d53346d62300d43092406a"
+    },
+    {
+      "scope": "local",
+      "relative_path": "tasks/task-1538c1e7de4f49cf.json",
+      "size": 541,
+      "sha256": "0da02c2780d6fb8f152afea7c3a1e10c98ee64c1b71d6117e672d6f976b9848c"
+    },
+    {
+      "scope": "local",
+      "relative_path": "tasks/task-1ce45c383b3d4a3b.json",
+      "size": 562,
+      "sha256": "a72f99728ae884f6fdb7701d6c4a3bde761471ff8e9744c54ef6c2ec26e93f75"
+    },
+    {
+      "scope": "local",
+      "relative_path": "tasks/task-1dbf6c1674104f6c.json",
+      "size": 10177,
+      "sha256": "6505b9907a4fae4c6655d6a825370d326d3b57e3da2a88134091c07b0babc72f"
+    },
+    {
+      "scope": "local",
+      "relative_path": "tasks/task-1e45388234eb401b.json",
+      "size": 668,
+      "sha256": "e360edeb8a79bf2964629a8b2f91219863beaf150ef724e61986eb3caca3a16f"
+    },
+    {
+      "scope": "local",
+      "relative_path": "tasks/task-285b8a8d030542fe.json",
+      "size": 562,
+      "sha256": "3617d47e54573d3f37f7545b63e69a88cfd91620e9d1091e01e7ddcb882037f0"
+    },
+    {
+      "scope": "local",
+      "relative_path": "tasks/task-2e3ff512ff9b49d6.json",
+      "size": 10134,
+      "sha256": "7129d84377d3bb1f2c485fcb058ea903200c843bd0e79065dbaa914ec525c165"
+    },
+    {
+      "scope": "local",
+      "relative_path": "tasks/task-50a42988656040cc.json",
+      "size": 600,
+      "sha256": "92ef8723c60384a1bed8e3d61e00c1706bc9d4e605734a7e4fb2dd30969bfadb"
+    },
+    {
+      "scope": "local",
+      "relative_path": "tasks/task-79c540d7558b45a1.json",
+      "size": 13646,
+      "sha256": "8b9be6278c870c4b42229ac8afd938c681f5d90ff5bcd590bd636a2fc744f416"
+    },
+    {
+      "scope": "local",
+      "relative_path": "tasks/task-8349aa81cb6f41f7.json",
+      "size": 10134,
+      "sha256": "68eebebd9c6ee0091f154126457d8f89b4f7d6a33a9def36b52af6f3d82e14ba"
+    },
+    {
+      "scope": "local",
+      "relative_path": "tasks/task-9574640b90fc458d.json",
+      "size": 562,
+      "sha256": "ced84859a626c6371437aa4ec004d391ce65ed3924630f6ae6d9dd12d9819b10"
+    },
+    {
+      "scope": "local",
+      "relative_path": "tasks/task-9711749050004e75.json",
+      "size": 13646,
+      "sha256": "e2451280cdcca6f91523fd45be9430ef81713955d5ccbcc9a2789c878ac6844e"
+    },
+    {
+      "scope": "local",
+      "relative_path": "tasks/task-9c4d0d8ad319466d.json",
+      "size": 10134,
+      "sha256": "4e0cc8555d515ac4c772a3d48f6e0e78bc5053d7ef86ea9ecc2e94730457a2bf"
+    },
+    {
+      "scope": "local",
+      "relative_path": "tasks/task-aaea88ae978c47cb.json",
+      "size": 10164,
+      "sha256": "69f9700449457e1ba8e27b5665cd7aa27bd605ba3d2dcbcd7655d3a915250340"
+    },
+    {
+      "scope": "local",
+      "relative_path": "tasks/task-b5912d7e0db745fd.json",
+      "size": 586,
+      "sha256": "b0b19a4e4557788123dbc0f13c23330046d4b402aa513fe3fd87dee18f2c6cd0"
+    },
+    {
+      "scope": "local",
+      "relative_path": "tasks/task-d149186fbc6c4d21.json",
+      "size": 600,
+      "sha256": "3bfabed4772e320ceddee7c75dffbf3b4f0f45fa8f3f5ab3eef813aa29d57da6"
+    },
+    {
+      "scope": "local",
+      "relative_path": "tasks/task-da68d3deaec44231.json",
+      "size": 586,
+      "sha256": "3f6c8b43af87a0945cdece02a99fab83e03ebbe2e50933e3070a3cbef4712c01"
+    },
+    {
+      "scope": "local",
+      "relative_path": "tasks/task-e2b8b821c4fb469e.json",
+      "size": 620,
+      "sha256": "e50fa35bee5ba2402ed4ec2a39b90c5dbe8fa3be24db07addc00629d9bfe6285"
+    },
+    {
+      "scope": "local",
+      "relative_path": "tasks/task-e5c6ab313a404df9.json",
+      "size": 562,
+      "sha256": "75b52bb6e273d8abaf45f5483861ef92f24d5ca95758809d9bb00680e220a6fc"
+    },
+    {
+      "scope": "local",
+      "relative_path": "tasks/task-f4650c735feb47b0.json",
+      "size": 586,
+      "sha256": "e2615f9b18f0637d832f6bc1b96fe7aea6395635a06009de2c18e690bc0278e2"
+    },
+    {
+      "scope": "local",
+      "relative_path": "tasks/task-f8616f0dbe5f4ff5.json",
+      "size": 10134,
+      "sha256": "4ad040fca4dfd5508f8aa734fa3dadea59ec773ab1cc04f7dbdc5a30dba34715"
+    },
+    {
+      "scope": "local",
+      "relative_path": "tools/train-booking-core/scan-20260811084122-dc8391e426-6f3f6525/README.md",
+      "size": 18550,
+      "sha256": "39583cb454c7cb680a345ae00ed8af4e54cb203c5c90aa4170092f307092fd74"
+    },
+    {
+      "scope": "local",
+      "relative_path": "tools/train-booking-core/scan-20260811084122-dc8391e426-6f3f6525/_meta/scan-manifest.json",
+      "size": 107804,
+      "sha256": "f9c88781aff036683bdc7ea8a8673ea83fc2879be9ccf8c04fdc3027e3f15185"
+    },
+    {
+      "scope": "local",
+      "relative_path": "tools/train-booking-core/scan-20260811084122-dc8391e426-6f3f6525/_meta/tool-manifest.json",
+      "size": 55081,
+      "sha256": "b6344c7cc25540cb2c813c2f2c6a21b37f1a8ed6f851456e80a841c362e87fd6"
+    },
+    {
+      "scope": "local",
+      "relative_path": "tools/train-booking-core/scan-20260811084122-dc8391e426-6f3f6525/_meta/v2-scriptgen-command.json",
+      "size": 432,
+      "sha256": "d7ee462990c3530ecf6ca800fe68bcf6a2d7e939ad4f2a11dd2b307a41dadeb9"
+    },
+    {
+      "scope": "local",
+      "relative_path": "tools/train-booking-core/scan-20260811084122-dc8391e426-6f3f6525/_meta/v2-scriptgen.stderr.log",
+      "size": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "scope": "local",
+      "relative_path": "tools/train-booking-core/scan-20260811084122-dc8391e426-6f3f6525/_meta/v2-scriptgen.stdout.log",
+      "size": 741,
+      "sha256": "f1b29343af2291f4ae9b678dba32fb0aa84e735861560e09dc7b3fc5a6b3b26d"
+    },
+    {
+      "scope": "local",
+      "relative_path": "tools/train-booking-core/scan-20260811084122-dc8391e426-6f3f6525/facade/custom_info/detail-raw.sh",
+      "size": 4324,
+      "sha256": "85af1720ba20b8e715c9fc8d0bdcfd90db9eba0681457ccd52a1cff89c7ae436"
+    },
+    {
+      "scope": "local",
+      "relative_path": "tools/train-booking-core/scan-20260811084122-dc8391e426-6f3f6525/facade/custom_info/list-distinct-custom-type-raw.sh",
+      "size": 4339,
+      "sha256": "665d2fa47216451fd465d61099cc74ac372fa3ae190a7d8fd716e3dbd7bfe968"
+    },
+    {
+      "scope": "local",
+      "relative_path": "tools/train-booking-core/scan-20260811084122-dc8391e426-6f3f6525/facade/custom_info/page-query-custom-data-raw.sh",
+      "size": 4429,
+      "sha256": "9337f2e492d65f402de60da1dc1d2576f611ec46ec396e2f872e6dc3347171be"
+    },
+    {
+      "scope": "local",
+      "relative_path": "tools/train-booking-core/scan-20260811084122-dc8391e426-6f3f6525/facade/custom_info/query-custom-content-list-raw.sh",
+      "size": 4362,
+      "sha256": "5f0e5835b8b35197cc7847b911324d1d23a7f37a38425f9a8e58ddcb679732a5"
+    },
+    {
+      "scope": "local",
+      "relative_path": "tools/train-booking-core/scan-20260811084122-dc8391e426-6f3f6525/facade/custom_info/query-custom-type-list-raw.sh",
+      "size": 4330,
+      "sha256": "94204436139029f95e8d01987017939cde44a5b61962a658be950b35c8e9abb5"
+    },
+    {
+      "scope": "local",
+      "relative_path": "tools/train-booking-core/scan-20260811084122-dc8391e426-6f3f6525/facade/custom_info/save-or-update-custom-info-raw.sh",
+      "size": 4474,
+      "sha256": "2eb58bbf04e496f68f3c5db531e050e9666c2cd35bdc18b6b5f16f3a1aff4cd1"
+    },
+    {
+      "scope": "local",
+      "relative_path": "tools/train-booking-core/scan-20260811084122-dc8391e426-6f3f6525/facade/freeze/freeze-raw.sh",
+      "size": 4348,
+      "sha256": "1acf3b74f1c7ecd18ff4396517b1593c65b18e4e79687097aff22b8d72c2d868"
+    },
+    {
+      "scope": "local",
+      "relative_path": "tools/train-booking-core/scan-20260811084122-dc8391e426-6f3f6525/facade/freeze/query-freeze-raw.sh",
+      "size": 4453,
+      "sha256": "ab87bbd554f18ef6e5405fea36e7063220ca98eec7ba1b8c88622dc9ef4725a5"
+    },
+    {
+      "scope": "local",
+      "relative_path": "tools/train-booking-core/scan-20260811084122-dc8391e426-6f3f6525/facade/inquire/deal-candidate-info-raw.sh",
+      "size": 4733,
+      "sha256": "1cf2497d158ae2440873dde009a276b3fde477cf47558165f2c4befd3c138263"
+    },
+    {
+      "scope": "local",
+      "relative_path": "tools/train-booking-core/scan-20260811084122-dc8391e426-6f3f6525/facade/inquire/deal-inner-refund-change-ticket-raw.sh",
+      "size": 4750,
+      "sha256": "2723843fa57e99dda9382c1cea584ba5e6c379698710864b763fa39ef5f72fbb"
+    },
+    {
+      "scope": "local",
+      "relative_path": "tools/train-booking-core/scan-20260811084122-dc8391e426-6f3f6525/facade/inquire/deal-refund-change-raw.sh",
+      "size": 4715,
+      "sha256": "4cfbcd4b008945f8b84fe4b01793ea4f1196dd74bb6217f3337abb9b5ce05c89"
+    },
+    {
+      "scope": "local",
+      "relative_path": "tools/train-booking-core/scan-20260811084122-dc8391e426-6f3f6525/facade/inquire/deal-seat-count-raw.sh",
+      "size": 4489,
+      "sha256": "ab83303a29522426dc3e942cbc22eec4f5c412cccb754ccf883a669b045f8d84"
+    },
+    {
+      "scope": "local",
+      "relative_path": "tools/train-booking-core/scan-20260811084122-dc8391e426-6f3f6525/facade/inquire/deal-stop-info-raw.sh",
+      "size": 4390,
+      "sha256": "c356b189e2961d214957649c28a1d60d36e855323ff33ebec45eaed9613909c5"
+    },
+    {
+      "scope": "local",
+      "relative_path": "tools/train-booking-core/scan-20260811084122-dc8391e426-6f3f6525/facade/inquire/deal-ticket-info-raw.sh",
+      "size": 4396,
+      "sha256": "c55c12806707a09b31bd793b9f57055dc1e8274ba2d5d7d7a2d4c1f12357f51a"
+    },
+    {
+      "scope": "local",
+      "relative_path": "tools/train-booking-core/scan-20260811084122-dc8391e426-6f3f6525/facade/inquire/get-list-raw.sh",
+      "size": 4642,
+      "sha256": "cdd18c67c53544ce2b1e314e7262d853a40eb6c3cee6986c8d506ad6b7a597ba"
+    },
+    {
+      "scope": "local",
+      "relative_path": "tools/train-booking-core/scan-20260811084122-dc8391e426-6f3f6525/facade/inquire/query-collection-statistics-raw.sh",
+      "size": 4339,
+      "sha256": "820c7d03315438d1610cbd196ffb191179b38bc7618dfafb36921f5b4c26916b"
+    },
+    {
+      "scope": "local",
+      "relative_path": "tools/train-booking-core/scan-20260811084122-dc8391e426-6f3f6525/facade/inquire/query-inquire-count-raw.sh",
+      "size": 4433,
+      "sha256": "7fd888bf9a171db80c2f058474dda395a3a6db09d1dfb86558082281b10d35bc"
+    },
+    {
+      "scope": "local",
+      "relative_path": "tools/train-booking-core/scan-20260811084122-dc8391e426-6f3f6525/facade/inquire/query-merchant-ticketing-count-raw.sh",
+      "size": 4464,
+      "sha256": "b2988f14ce16b1da906501dfdb6b3cc5909cbb2e20e4459d4b3a3414f11acd85"
+    },
+    {
+      "scope": "local",
+      "relative_path": "tools/train-booking-core/scan-20260811084122-dc8391e426-6f3f6525/facade/interceptconfig/list-raw.sh",
+      "size": 4366,
+      "sha256": "d0955fcf12616e01676c5c36b8f67697b1743ac51db5f8aa0c60cbfa34ee89cc"
+    },
+    {
+      "scope": "local",
+      "relative_path": "tools/train-booking-core/scan-20260811084122-dc8391e426-6f3f6525/facade/interceptconfig/save-raw.sh",
+      "size": 4365,
+      "sha256": "03466a241c41089ad5aa1a6b8eed23e4058afe06d3ec73d5fdcb97aaf74df3d1"
+    },
+    {
+      "scope": "local",
+      "relative_path": "tools/train-booking-core/scan-20260811084122-dc8391e426-6f3f6525/facade/interceptorder/list-raw.sh",
+      "size": 4418,
+      "sha256": "96e62d1c2424ff0a0be651186bd9ccf7c42489b5869a8a3793bd3fb1e0b14d2c"
+    },
+    {
+      "scope": "local",
+      "relative_path": "tools/train-booking-core/scan-20260811084122-dc8391e426-6f3f6525/facade/modify_order/detail-raw.sh",
+      "size": 4479,
+      "sha256": "78710bb41c58fc3d61977663350d48bca67c2a8b459f0bdd8b4434a032f5085d"
+    },
+    {
+      "scope": "local",
+      "relative_path": "tools/train-booking-core/scan-20260811084122-dc8391e426-6f3f6525/facade/modify_order/summary-raw.sh",
+      "size": 4477,
+      "sha256": "b106f6356526953fd01e5189af886e22afeecfa10f7452426435b2d5150884d6"
+    },
+    {
+      "scope": "local",
+      "relative_path": "tools/train-booking-core/scan-20260811084122-dc8391e426-6f3f6525/facade/order/batch-query-order-info-raw.sh",
+      "size": 4372,
+      "sha256": "d3985415b9f984dbaf2251adb9a7ed6a906a8f2ced2431dfafcacc380ce2340c"
+    },
+    {
+      "scope": "local",
+      "relative_path": "tools/train-booking-core/scan-20260811084122-dc8391e426-6f3f6525/facade/order/batch-query-ticketing-count-raw.sh",
+      "size": 4377,
+      "sha256": "c52d1a657c953fee3a0153c949f646b9067577db3c01d139aec8ef19d4bee0b1"
+    },
+    {
+      "scope": "local",
+      "relative_path": "tools/train-booking-core/scan-20260811084122-dc8391e426-6f3f6525/facade/order/compare-ticketing-info-raw.sh",
+      "size": 4370,
+      "sha256": "930c711e1daede156bf8b3f8d9549a7696c9033cccba72e1499792cb1135c8de"
+    },
+    {
+      "scope": "local",
+      "relative_path": "tools/train-booking-core/scan-20260811084122-dc8391e426-6f3f6525/facade/order/get-order-machine-raw.sh",
+      "size": 4347,
+      "sha256": "f6d944ee6c2bd663d52754af9ea5cca34f9af1b2643881ecd715c367f7963f0e"
+    },
+    {
+      "scope": "local",
+      "relative_path": "tools/train-booking-core/scan-20260811084122-dc8391e426-6f3f6525/facade/order/get-passenger-info-raw.sh",
+      "size": 4391,
+      "sha256": "4cb0ca617f81b18ead517e8b64676e2807c511dc6e7570d47826d2112c825ec3"
+    },
+    {
+      "scope": "local",
+      "relative_path": "tools/train-booking-core/scan-20260811084122-dc8391e426-6f3f6525/facade/order/get-pay-serial-no-raw.sh",
+      "size": 4417,
+      "sha256": "8214f1680f5eb8b9abfdb8e125d045965282815e7280ba456a7691175349e181"
+    },
+    {
+      "scope": "local",
+      "relative_path": "tools/train-booking-core/scan-20260811084122-dc8391e426-6f3f6525/facade/order/lock-raw.sh",
+      "size": 4420,
+      "sha256": "013f80675696ec5740742ad0e6681da80ebcf7b1e78d023f73ed10f471dcf1c2"
+    },
+    {
+      "scope": "local",
+      "relative_path": "tools/train-booking-core/scan-20260811084122-dc8391e426-6f3f6525/facade/order/order-deal-done-raw.sh",
+      "size": 4411,
+      "sha256": "9f3845b9d1745e0c3b6738d25e60ab3b359fb647c96848ace7f32880c752821a"
+    },
+    {
+      "scope": "local",
+      "relative_path": "tools/train-booking-core/scan-20260811084122-dc8391e426-6f3f6525/facade/order/order-dealing-list-raw.sh",
+      "size": 4349,
+      "sha256": "8fb1bbaa78654b20287e60bc61aab2ca9cb29328f0003e959e8614dfde05b62c"
+    },
+    {
+      "scope": "local",
+      "relative_path": "tools/train-booking-core/scan-20260811084122-dc8391e426-6f3f6525/facade/order/order-detail-raw.sh",
+      "size": 4381,
+      "sha256": "a901a1c42dbcbea4e5c16d40cd7a0ab77a895214faa3d2c23bbe620fb9b17897"
+    },
+    {
+      "scope": "local",
+      "relative_path": "tools/train-booking-core/scan-20260811084122-dc8391e426-6f3f6525/facade/order/order-info-raw.sh",
+      "size": 4348,
+      "sha256": "c3bc59388679fa54cc1c6e7980e0f7dcf8c8df987d8b08d658a8f4a9b8c00c99"
+    },
+    {
+      "scope": "local",
+      "relative_path": "tools/train-booking-core/scan-20260811084122-dc8391e426-6f3f6525/facade/order/order-query-list-raw.sh",
+      "size": 5033,
+      "sha256": "9569d72ec231dd4b23c47aa780f4e1e9dc6eb15afa98a782027b122f8d0fb8ad"
+    },
+    {
+      "scope": "local",
+      "relative_path": "tools/train-booking-core/scan-20260811084122-dc8391e426-6f3f6525/facade/order/order-task-page-query-raw.sh",
+      "size": 4443,
+      "sha256": "1d58138e92803a1f8d181cea4322c20a313a63e7572a60803f45630e8d1e18a3"
+    },
+    {
+      "scope": "local",
+      "relative_path": "tools/train-booking-core/scan-20260811084122-dc8391e426-6f3f6525/facade/order/order-task-retry-raw.sh",
+      "size": 4388,
+      "sha256": "d403be9c14391b71e8d66e567dff115bfc263ce6559d8ac45039fc0b07d1775c"
+    },
+    {
+      "scope": "local",
+      "relative_path": "tools/train-booking-core/scan-20260811084122-dc8391e426-6f3f6525/facade/order/query-dashboard-data-raw.sh",
+      "size": 4364,
+      "sha256": "bfa1085c21f8a339049eebc2965c02d2ff726e1620ba80b594ea8044c8ca9d1c"
+    },
+    {
+      "scope": "local",
+      "relative_path": "tools/train-booking-core/scan-20260811084122-dc8391e426-6f3f6525/facade/order/query-distributing-count-raw.sh",
+      "size": 4326,
+      "sha256": "958f1134d2fb15621c7e72f2cc8ac29734e9b7c59334cad94240f9633e9a000c"
+    },
+    {
+      "scope": "local",
+      "relative_path": "tools/train-booking-core/scan-20260811084122-dc8391e426-6f3f6525/facade/order/query-group-by-collection-status-raw.sh",
+      "size": 4390,
+      "sha256": "9b686ad6db6eebf30b4e477fa8a2bbb6ebd41ca0ef34441b80f703628cd3a3ca"
+    },
+    {
+      "scope": "local",
+      "relative_path": "tools/train-booking-core/scan-20260811084122-dc8391e426-6f3f6525/facade/order/query-hk-pay-issue-success-order-raw.sh",
+      "size": 4344,
+      "sha256": "66e20b026fdd24a87e9f25b4bd43d85e92ac2a45400e0d05df849dc5c4bae368"
+    },
+    {
+      "scope": "local",
+      "relative_path": "tools/train-booking-core/scan-20260811084122-dc8391e426-6f3f6525/facade/order/query-lack-collection-page-list-raw.sh",
+      "size": 5074,
+      "sha256": "8a4c64590cd0e7cb61c321f46f7878b70fadd28540b8f691c055941c2345ec21"
+    },
+    {
+      "scope": "local",
+      "relative_path": "tools/train-booking-core/scan-20260811084122-dc8391e426-6f3f6525/facade/order/query-merchant-special-ability-raw.sh",
+      "size": 4386,
+      "sha256": "1e279485dffcfc67ed0589be841366ab7fd3f4129c94a02bbf406315ba4c0323"
+    },
+    {
+      "scope": "local",
+      "relative_path": "tools/train-booking-core/scan-20260811084122-dc8391e426-6f3f6525/facade/order/query-order-count-for-operator-raw.sh",
+      "size": 4436,
+      "sha256": "8bfc336b34d01f7f7e443fb2988af8a148f1b668f6ccc5fc4eb4a074d70d75b0"
+    },
+    {
+      "scope": "local",
+      "relative_path": "tools/train-booking-core/scan-20260811084122-dc8391e426-6f3f6525/facade/order/query-order-count-for-ticket-machine-raw.sh",
+      "size": 4429,
+      "sha256": "54c2e6b1879b83a45cb7abfa3a6b1db65de0f5bfbfba569c43fc7079c9ff722f"
+    },
+    {
+      "scope": "local",
+      "relative_path": "tools/train-booking-core/scan-20260811084122-dc8391e426-6f3f6525/facade/order/query-order-count-group-by-ability-raw.sh",
+      "size": 4367,
+      "sha256": "92581c2ecdf2064d493e73d1318fc3f128a0c2c75cc683aa34216aebd8c0e6ce"
+    },
+    {
+      "scope": "local",
+      "relative_path": "tools/train-booking-core/scan-20260811084122-dc8391e426-6f3f6525/facade/order/query-order-count-group-by-hour-raw.sh",
+      "size": 4373,
+      "sha256": "424fad225410164f5c3c1ac7e49f53d65303f73236ed1f549bedb830700919b2"
+    },
+    {
+      "scope": "local",
+      "relative_path": "tools/train-booking-core/scan-20260811084122-dc8391e426-6f3f6525/facade/order/query-order-count-raw.sh",
+      "size": 4354,
+      "sha256": "e130347fb03a88b98ad5edf9e5428222b1205447d0762728cace37b857d3dff1"
+    },
+    {
+      "scope": "local",
+      "relative_path": "tools/train-booking-core/scan-20260811084122-dc8391e426-6f3f6525/facade/order/query-order-info-raw.sh",
+      "size": 4359,
+      "sha256": "61ab875891e38b8bfd4addbd636c5d75e1104dd4eaafc52aac3bdb7dc26afa91"
+    },
+    {
+      "scope": "local",
+      "relative_path": "tools/train-booking-core/scan-20260811084122-dc8391e426-6f3f6525/facade/order/query-order-list-by-pay-serial-no-raw.sh",
+      "size": 4402,
+      "sha256": "a6eb034b723b3a7fde43a1216e8002d59626a0becf0680da6ee080502c7057a3"
+    },
+    {
+      "scope": "local",
+      "relative_path": "tools/train-booking-core/scan-20260811084122-dc8391e426-6f3f6525/facade/order/query-pending-handle-count-raw.sh",
+      "size": 4371,
+      "sha256": "a8dc4295c0ea6608d7fd77fe71cadd508b7435f7ee1129313bc56008d2e50659"
+    },
+    {
+      "scope": "local",
+      "relative_path": "tools/train-booking-core/scan-20260811084122-dc8391e426-6f3f6525/facade/order/reject-distribute-percent-page-info-raw.sh",
+      "size": 4451,
+      "sha256": "324fb2e9217cf3a5d91e027fe415420852dd277346c2a6f67823adbc59650206"
+    },
+    {
+      "scope": "local",
+      "relative_path": "tools/train-booking-core/scan-20260811084122-dc8391e426-6f3f6525/facade/order/update-pay-serial-no-raw.sh",
+      "size": 4453,
+      "sha256": "c5cc2c8745da6ba36dad4507d490843ccd5330092a84ed2304704de76e246005"
+    },
+    {
+      "scope": "local",
+      "relative_path": "tools/train-booking-core/scan-20260811084122-dc8391e426-6f3f6525/facade/payserialno/confirm-raw.sh",
+      "size": 4373,
+      "sha256": "a55789cbdec7689e0e1480d4888932a0bea6d0056195107b620c6ed28eb94d5e"
+    },
+    {
+      "scope": "local",
+      "relative_path": "tools/train-booking-core/scan-20260811084122-dc8391e426-6f3f6525/facade/payserialno/finish-raw.sh",
+      "size": 4366,
+      "sha256": "c2e087b2d903b06b0254b99fa05acd25b2fedce3d7bcad1fe6bf87d9e4ded8e2"
+    },
+    {
+      "scope": "local",
+      "relative_path": "tools/train-booking-core/scan-20260811084122-dc8391e426-6f3f6525/facade/payserialno/query-list-raw.sh",
+      "size": 4447,
+      "sha256": "f45a42e96ad4e75a9b5079fa5c28da2f9d800d438ec6debeb0eee614956081b0"
+    },
+    {
+      "scope": "local",
+      "relative_path": "tools/train-booking-core/scan-20260811084122-dc8391e426-6f3f6525/facade/remit/callback-raw.sh",
+      "size": 4503,
+      "sha256": "3fb06679989d6d6bc5a2b9d4e1e458aa499d8d2bbfbdeda106bbda1ee1238459"
+    },
+    {
+      "scope": "local",
+      "relative_path": "tools/train-booking-core/scan-20260811084122-dc8391e426-6f3f6525/facade/remit/query-remit-raw.sh",
+      "size": 4446,
+      "sha256": "e1d76c5fc1146ec775624622caec04cda2fc54b50804e34ff6803b557bb1d244"
+    },
+    {
+      "scope": "local",
+      "relative_path": "tools/train-booking-core/scan-20260811084122-dc8391e426-6f3f6525/facade/remit/remit-raw.sh",
+      "size": 4297,
+      "sha256": "37756e024574de5969b5ec85f22d9ee51f1ee623a689f96228c3d668a768ab83"
+    },
+    {
+      "scope": "local",
+      "relative_path": "tools/train-booking-core/scan-20260811084122-dc8391e426-6f3f6525/facade/remit/sync-customer-raw.sh",
+      "size": 4316,
+      "sha256": "da7afb7f727368386b1fa2c4a2544e253fe90fce46e55611be30a6b5d693224d"
+    },
+    {
+      "scope": "local",
+      "relative_path": "tools/train-booking-core/scan-20260811084122-dc8391e426-6f3f6525/facade/servicefee/appeal-raw.sh",
+      "size": 4328,
+      "sha256": "226bcb3d136659816afca6262450e16b777a2ff5d8f8de8f86dad108f1d06d65"
+    },
+    {
+      "scope": "local",
+      "relative_path": "tools/train-booking-core/scan-20260811084122-dc8391e426-6f3f6525/facade/servicefee/query-service-fee-raw.sh",
+      "size": 4493,
+      "sha256": "9c75290e5c5bbb77e9307d31582da93e0d322230d541f0c1ca03ae42a332d2ce"
+    },
+    {
+      "scope": "local",
+      "relative_path": "tools/train-booking-core/scan-20260811084122-dc8391e426-6f3f6525/facade/servicefee/service-fee-callback-raw.sh",
+      "size": 4545,
+      "sha256": "9185f8f4ef513951e15cbaa0f162a1c27ef39392d0b6207614b15e8864e67989"
+    },
+    {
+      "scope": "local",
+      "relative_path": "tools/train-booking-core/scan-20260811084122-dc8391e426-6f3f6525/facade/servicefee/sync-customer-raw.sh",
+      "size": 4347,
+      "sha256": "d90544eff65cfd72b6ac5190f146f7f183290709abf37563d30497fa3c1a8f5f"
+    },
+    {
+      "scope": "local",
+      "relative_path": "tools/train-booking-core/scan-20260811084122-dc8391e426-6f3f6525/facade/ticket/apply-occupy-issue-raw.sh",
+      "size": 4326,
+      "sha256": "8c4d257d5c02585aed0dfa0464ffd3d01d80e2536da58ff073eb214fdb252c2a"
+    },
+    {
+      "scope": "local",
+      "relative_path": "tools/train-booking-core/scan-20260811084122-dc8391e426-6f3f6525/facade/ticket/batch-issue-ticket-raw.sh",
+      "size": 4911,
+      "sha256": "5c16578aa7dcdd8b289b4f3bb4e7a11eb7be8eba61d138b62156eed9d875e8d6"
+    },
+    {
+      "scope": "local",
+      "relative_path": "tools/train-booking-core/scan-20260811084122-dc8391e426-6f3f6525/facade/ticket/batch-reject-issue-raw.sh",
+      "size": 4710,
+      "sha256": "25230144355f82d1b3c3434b288e6c6a72a79563597fee9d8fafdb496a173182"
+    },
+    {
+      "scope": "local",
+      "relative_path": "tools/train-booking-core/scan-20260811084122-dc8391e426-6f3f6525/facade/ticket/batch-revoke-order-raw.sh",
+      "size": 4437,
+      "sha256": "65e698ab6e878e9a79c9936931d30509fb80ee43beff76c8b95f87d059fc20fa"
+    },
+    {
+      "scope": "local",
+      "relative_path": "tools/train-booking-core/scan-20260811084122-dc8391e426-6f3f6525/facade/ticket/issue-ticket-raw.sh",
+      "size": 4839,
+      "sha256": "f082810848ccedf80c89cadcef8767741dbe3def75dcfac0ed1096cda24a56a5"
+    },
+    {
+      "scope": "local",
+      "relative_path": "tools/train-booking-core/scan-20260811084122-dc8391e426-6f3f6525/facade/ticket/modify-issue-ticket-raw.sh",
+      "size": 4686,
+      "sha256": "e123e136c24a1e9b385f96c5a518a32f9d852e773322150f7d0a16432b748a92"
+    },
+    {
+      "scope": "local",
+      "relative_path": "tools/train-booking-core/scan-20260811084122-dc8391e426-6f3f6525/facade/ticket/mtr-price-check-raw.sh",
+      "size": 4355,
+      "sha256": "14b0132465b71d3bf259efc11ad501cf490fb3790f8e65f96d90afb251820e11"
+    },
+    {
+      "scope": "local",
+      "relative_path": "tools/train-booking-core/scan-20260811084122-dc8391e426-6f3f6525/facade/ticket/occupy-issue-result-raw.sh",
+      "size": 4701,
+      "sha256": "25c0e004725c9a394ea165cd732494ea55b4176786cd462c665329c1635ae9d4"
+    },
+    {
+      "scope": "local",
+      "relative_path": "tools/train-booking-core/scan-20260811084122-dc8391e426-6f3f6525/facade/ticket/occupy-result-raw.sh",
+      "size": 4839,
+      "sha256": "50820e2f96726b3cf77abee386b4088fb51762bca2f0dec68b66fbc6c830c593"
+    },
+    {
+      "scope": "local",
+      "relative_path": "tools/train-booking-core/scan-20260811084122-dc8391e426-6f3f6525/facade/ticket/reject-issue-raw.sh",
+      "size": 4661,
+      "sha256": "c9e949a1df4c5a3fd53ba01bfddb10a52013074aacc2a7cb52a367ddbbe0355c"
+    },
+    {
+      "scope": "local",
+      "relative_path": "tools/train-booking-core/scan-20260811084122-dc8391e426-6f3f6525/facade/ticket/submit-ticket-image-raw.sh",
+      "size": 4420,
+      "sha256": "215471656407ba83d537a66412c6d3f1bda06aa69dc57d6ecf97e8b792a3db34"
+    },
+    {
+      "scope": "local",
+      "relative_path": "tools/train-booking-core/scan-20260811084122-dc8391e426-6f3f6525/facade/ticketmachine/mtr-ticket-machine-handle-raw.sh",
+      "size": 4390,
+      "sha256": "329649b80badd4b38d0c58e815e39539c548b8486ce221e3ef2955ede735aed0"
+    },
+    {
+      "scope": "local",
+      "relative_path": "tools/train-booking-core/scan-20260811084122-dc8391e426-6f3f6525/facade/ticketmachine/query-ticket-machine-handle-raw.sh",
+      "size": 4390,
+      "sha256": "fec2747334bc3593e724a7230aec8516f5aada22afbbe272188fa61b7e7419c5"
+    },
+    {
+      "scope": "local",
+      "relative_path": "tools/train-booking-core/scan-20260811084122-dc8391e426-6f3f6525/facade/trade/cancel-raw.sh",
+      "size": 4370,
+      "sha256": "bbc1791211fb9bc8c5f4c244fb7edb64db5bc4e421a8dce049dbd8b1efac77e0"
+    },
+    {
+      "scope": "local",
+      "relative_path": "tools/train-booking-core/scan-20260811084122-dc8391e426-6f3f6525/facade/trade/candidate-info-raw.sh",
+      "size": 4752,
+      "sha256": "66d2c983e0244a7bca0249e2e103c433c5bf96ad621671a86fb2fcdbe423d4e7"
+    },
+    {
+      "scope": "local",
+      "relative_path": "tools/train-booking-core/scan-20260811084122-dc8391e426-6f3f6525/facade/trade/create-order-raw.sh",
+      "size": 5305,
+      "sha256": "ba27f1ca50fd5eea127469a7652e1fce336ef38da5846930e1e07af902f567e3"
+    },
+    {
+      "scope": "local",
+      "relative_path": "tools/train-booking-core/scan-20260811084122-dc8391e426-6f3f6525/facade/trade/hk-dz-capacity-check-raw.sh",
+      "size": 4353,
+      "sha256": "772ba54273391e383d6fb4bec845c2af9ef52686414e655303906d3ec00b76b4"
+    },
+    {
+      "scope": "local",
+      "relative_path": "tools/train-booking-core/scan-20260811084122-dc8391e426-6f3f6525/facade/trade/inner-refund-change-raw.sh",
+      "size": 4921,
+      "sha256": "abc73328bb5f037c5b03ca81a8831175f1ffdd5cc7db29a8f3343d8213e5eb1a"
+    },
+    {
+      "scope": "local",
+      "relative_path": "tools/train-booking-core/scan-20260811084122-dc8391e426-6f3f6525/facade/trade/inquire-refund-change-raw.sh",
+      "size": 4912,
+      "sha256": "a38558b16563d2dc64cec8b9501d6aa65ebff32b6f2f59e0cd8fe7e609b6f9f4"
+    },
+    {
+      "scope": "local",
+      "relative_path": "tools/train-booking-core/scan-20260811084122-dc8391e426-6f3f6525/facade/trade/inquire-seat-count-raw.sh",
+      "size": 4482,
+      "sha256": "e30e235548c23ba24794ca5b835b71e5ba8406fcecbeefc42b62189fc150ac8b"
+    },
+    {
+      "scope": "local",
+      "relative_path": "tools/train-booking-core/scan-20260811084122-dc8391e426-6f3f6525/facade/trade/inquire-stop-info-raw.sh",
+      "size": 4442,
+      "sha256": "e0be326aa49486cb66d4dd2e74b9604d4ea2d190838f7949dc9639081dfe437c"
+    },
+    {
+      "scope": "local",
+      "relative_path": "tools/train-booking-core/scan-20260811084122-dc8391e426-6f3f6525/facade/trade/inquire-ticket-info-raw.sh",
+      "size": 4830,
+      "sha256": "70f9e0e38400f40ba0fd31c03c9966b01d05edb8d3b58369dc69fc2eaed99bad"
+    },
+    {
+      "scope": "local",
+      "relative_path": "tools/train-booking-core/scan-20260811084122-dc8391e426-6f3f6525/facade/trade/sale-date-query-raw.sh",
+      "size": 4299,
+      "sha256": "01cba455def3c65e8b38d8e53040b555af3608bd74caba73ee123e2fd875cbda"
+    },
+    {
+      "scope": "local",
+      "relative_path": "tools/train-booking-core/scan-20260811084122-dc8391e426-6f3f6525/facade/warning_order/detail-raw.sh",
+      "size": 4308,
+      "sha256": "875bbf3f2a8dda387663cef00c00f4d85d930acd1cda5bb0ddf4deb7f5188b9e"
+    },
+    {
+      "scope": "local",
+      "relative_path": "tools/train-booking-core/scan-20260811084122-dc8391e426-6f3f6525/facade/warning_order/page-info-raw.sh",
+      "size": 4567,
+      "sha256": "e92e1872da8e169435e50b295c267993f3e62884737c40d1ca77f1a777679f8d"
+    },
+    {
+      "scope": "local",
+      "relative_path": "tools/train-booking-core/scan-20260811084122-dc8391e426-6f3f6525/facade/warning_order/update-raw.sh",
+      "size": 4399,
+      "sha256": "2cead8866174b839cc71c9f4297208f59c3935b5dacc3ea70ff6607a10d949b2"
+    },
+    {
+      "scope": "local",
+      "relative_path": "tools/train-booking-core/scan-20260811084157-dc8391e426-1e28b0f7/README.md",
+      "size": 26273,
+      "sha256": "b412cec78982417762cdb272cb7529d7a72c96aae590603669b4cdce099c2d10"
+    },
+    {
+      "scope": "local",
+      "relative_path": "tools/train-booking-core/scan-20260811084157-dc8391e426-1e28b0f7/_meta/scan-manifest.json",
+      "size": 144602,
+      "sha256": "eef3d9c2203504a4e5945888ecbd5637a5c2a04dd7dab9f6942c61c058e7a655"
+    },
+    {
+      "scope": "local",
+      "relative_path": "tools/train-booking-core/scan-20260811084157-dc8391e426-1e28b0f7/_meta/tool-manifest.json",
+      "size": 77890,
+      "sha256": "5a8c99e520f7d03a295bc191087e9aecc5b108a530aa3f0d0c62df188fafa6ba"
+    },
+    {
+      "scope": "local",
+      "relative_path": "tools/train-booking-core/scan-20260811084157-dc8391e426-1e28b0f7/_meta/v2-scriptgen-command.json",
+      "size": 681,
+      "sha256": "7314e1450ec0a63a0dce325d43a7d385bfa50f26aa9c13dbd90a52b8a13e4759"
+    },
+    {
+      "scope": "local",
+      "relative_path": "tools/train-booking-core/scan-20260811084157-dc8391e426-1e28b0f7/_meta/v2-scriptgen.stderr.log",
+      "size": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "scope": "local",
+      "relative_path": "tools/train-booking-core/scan-20260811084157-dc8391e426-1e28b0f7/_meta/v2-scriptgen.stdout.log",
+      "size": 742,
+      "sha256": "6c80bb4a04d92ece0377283516f5074bfb30ce0fa0d25395d68aff13cf531025"
+    },
+    {
+      "scope": "local",
+      "relative_path": "tools/train-booking-core/scan-20260811084157-dc8391e426-1e28b0f7/facade/custom_info/detail-raw.sh",
+      "size": 4324,
+      "sha256": "85af1720ba20b8e715c9fc8d0bdcfd90db9eba0681457ccd52a1cff89c7ae436"
+    },
+    {
+      "scope": "local",
+      "relative_path": "tools/train-booking-core/scan-20260811084157-dc8391e426-1e28b0f7/facade/custom_info/list-distinct-custom-type-raw.sh",
+      "size": 4339,
+      "sha256": "665d2fa47216451fd465d61099cc74ac372fa3ae190a7d8fd716e3dbd7bfe968"
+    },
+    {
+      "scope": "local",
+      "relative_path": "tools/train-booking-core/scan-20260811084157-dc8391e426-1e28b0f7/facade/custom_info/page-query-custom-data-raw.sh",
+      "size": 4429,
+      "sha256": "9337f2e492d65f402de60da1dc1d2576f611ec46ec396e2f872e6dc3347171be"
+    },
+    {
+      "scope": "local",
+      "relative_path": "tools/train-booking-core/scan-20260811084157-dc8391e426-1e28b0f7/facade/custom_info/query-custom-content-list-raw.sh",
+      "size": 4362,
+      "sha256": "5f0e5835b8b35197cc7847b911324d1d23a7f37a38425f9a8e58ddcb679732a5"
+    },
+    {
+      "scope": "local",
+      "relative_path": "tools/train-booking-core/scan-20260811084157-dc8391e426-1e28b0f7/facade/custom_info/query-custom-type-list-raw.sh",
+      "size": 4330,
+      "sha256": "94204436139029f95e8d01987017939cde44a5b61962a658be950b35c8e9abb5"
+    },
+    {
+      "scope": "local",
+      "relative_path": "tools/train-booking-core/scan-20260811084157-dc8391e426-1e28b0f7/facade/custom_info/save-or-update-custom-info-raw.sh",
+      "size": 4474,
+      "sha256": "2eb58bbf04e496f68f3c5db531e050e9666c2cd35bdc18b6b5f16f3a1aff4cd1"
+    },
+    {
+      "scope": "local",
+      "relative_path": "tools/train-booking-core/scan-20260811084157-dc8391e426-1e28b0f7/facade/freeze/freeze-raw.sh",
+      "size": 4348,
+      "sha256": "1acf3b74f1c7ecd18ff4396517b1593c65b18e4e79687097aff22b8d72c2d868"
+    },
+    {
+      "scope": "local",
+      "relative_path": "tools/train-booking-core/scan-20260811084157-dc8391e426-1e28b0f7/facade/freeze/query-freeze-raw.sh",
+      "size": 4453,
+      "sha256": "ab87bbd554f18ef6e5405fea36e7063220ca98eec7ba1b8c88622dc9ef4725a5"
+    },
+    {
+      "scope": "local",
+      "relative_path": "tools/train-booking-core/scan-20260811084157-dc8391e426-1e28b0f7/facade/inquire/deal-candidate-info-raw.sh",
+      "size": 4733,
+      "sha256": "1cf2497d158ae2440873dde009a276b3fde477cf47558165f2c4befd3c138263"
+    },
+    {
+      "scope": "local",
+      "relative_path": "tools/train-booking-core/scan-20260811084157-dc8391e426-1e28b0f7/facade/inquire/deal-inner-refund-change-ticket-raw.sh",
+      "size": 4750,
+      "sha256": "2723843fa57e99dda9382c1cea584ba5e6c379698710864b763fa39ef5f72fbb"
+    },
+    {
+      "scope": "local",
+      "relative_path": "tools/train-booking-core/scan-20260811084157-dc8391e426-1e28b0f7/facade/inquire/deal-refund-change-raw.sh",
+      "size": 4715,
+      "sha256": "4cfbcd4b008945f8b84fe4b01793ea4f1196dd74bb6217f3337abb9b5ce05c89"
+    },
+    {
+      "scope": "local",
+      "relative_path": "tools/train-booking-core/scan-20260811084157-dc8391e426-1e28b0f7/facade/inquire/deal-seat-count-raw.sh",
+      "size": 4489,
+      "sha256": "ab83303a29522426dc3e942cbc22eec4f5c412cccb754ccf883a669b045f8d84"
+    },
+    {
+      "scope": "local",
+      "relative_path": "tools/train-booking-core/scan-20260811084157-dc8391e426-1e28b0f7/facade/inquire/deal-stop-info-raw.sh",
+      "size": 4390,
+      "sha256": "c356b189e2961d214957649c28a1d60d36e855323ff33ebec45eaed9613909c5"
+    },
+    {
+      "scope": "local",
+      "relative_path": "tools/train-booking-core/scan-20260811084157-dc8391e426-1e28b0f7/facade/inquire/deal-ticket-info-raw.sh",
+      "size": 4396,
+      "sha256": "c55c12806707a09b31bd793b9f57055dc1e8274ba2d5d7d7a2d4c1f12357f51a"
+    },
+    {
+      "scope": "local",
+      "relative_path": "tools/train-booking-core/scan-20260811084157-dc8391e426-1e28b0f7/facade/inquire/get-list-raw.sh",
+      "size": 4642,
+      "sha256": "cdd18c67c53544ce2b1e314e7262d853a40eb6c3cee6986c8d506ad6b7a597ba"
+    },
+    {
+      "scope": "local",
+      "relative_path": "tools/train-booking-core/scan-20260811084157-dc8391e426-1e28b0f7/facade/inquire/query-collection-statistics-raw.sh",
+      "size": 4339,
+      "sha256": "820c7d03315438d1610cbd196ffb191179b38bc7618dfafb36921f5b4c26916b"
+    },
+    {
+      "scope": "local",
+      "relative_path": "tools/train-booking-core/scan-20260811084157-dc8391e426-1e28b0f7/facade/inquire/query-inquire-count-raw.sh",
+      "size": 4433,
+      "sha256": "7fd888bf9a171db80c2f058474dda395a3a6db09d1dfb86558082281b10d35bc"
+    },
+    {
+      "scope": "local",
+      "relative_path": "tools/train-booking-core/scan-20260811084157-dc8391e426-1e28b0f7/facade/inquire/query-merchant-ticketing-count-raw.sh",
+      "size": 4464,
+      "sha256": "b2988f14ce16b1da906501dfdb6b3cc5909cbb2e20e4459d4b3a3414f11acd85"
+    },
+    {
+      "scope": "local",
+      "relative_path": "tools/train-booking-core/scan-20260811084157-dc8391e426-1e28b0f7/facade/interceptconfig/list-raw.sh",
+      "size": 4366,
+      "sha256": "d0955fcf12616e01676c5c36b8f67697b1743ac51db5f8aa0c60cbfa34ee89cc"
+    },
+    {
+      "scope": "local",
+      "relative_path": "tools/train-booking-core/scan-20260811084157-dc8391e426-1e28b0f7/facade/interceptconfig/save-raw.sh",
+      "size": 4365,
+      "sha256": "03466a241c41089ad5aa1a6b8eed23e4058afe06d3ec73d5fdcb97aaf74df3d1"
+    },
+    {
+      "scope": "local",
+      "relative_path": "tools/train-booking-core/scan-20260811084157-dc8391e426-1e28b0f7/facade/interceptorder/list-raw.sh",
+      "size": 4418,
+      "sha256": "96e62d1c2424ff0a0be651186bd9ccf7c42489b5869a8a3793bd3fb1e0b14d2c"
+    },
+    {
+      "scope": "local",
+      "relative_path": "tools/train-booking-core/scan-20260811084157-dc8391e426-1e28b0f7/facade/modify_order/detail-raw.sh",
+      "size": 4479,
+      "sha256": "78710bb41c58fc3d61977663350d48bca67c2a8b459f0bdd8b4434a032f5085d"
+    },
+    {
+      "scope": "local",
+      "relative_path": "tools/train-booking-core/scan-20260811084157-dc8391e426-1e28b0f7/facade/modify_order/summary-raw.sh",
+      "size": 4477,
+      "sha256": "b106f6356526953fd01e5189af886e22afeecfa10f7452426435b2d5150884d6"
+    },
+    {
+      "scope": "local",
+      "relative_path": "tools/train-booking-core/scan-20260811084157-dc8391e426-1e28b0f7/facade/order/batch-query-order-info-raw.sh",
+      "size": 4372,
+      "sha256": "d3985415b9f984dbaf2251adb9a7ed6a906a8f2ced2431dfafcacc380ce2340c"
+    },
+    {
+      "scope": "local",
+      "relative_path": "tools/train-booking-core/scan-20260811084157-dc8391e426-1e28b0f7/facade/order/batch-query-ticketing-count-raw.sh",
+      "size": 4377,
+      "sha256": "c52d1a657c953fee3a0153c949f646b9067577db3c01d139aec8ef19d4bee0b1"
+    },
+    {
+      "scope": "local",
+      "relative_path": "tools/train-booking-core/scan-20260811084157-dc8391e426-1e28b0f7/facade/order/compare-ticketing-info-raw.sh",
+      "size": 4370,
+      "sha256": "930c711e1daede156bf8b3f8d9549a7696c9033cccba72e1499792cb1135c8de"
+    },
+    {
+      "scope": "local",
+      "relative_path": "tools/train-booking-core/scan-20260811084157-dc8391e426-1e28b0f7/facade/order/get-order-machine-raw.sh",
+      "size": 4347,
+      "sha256": "f6d944ee6c2bd663d52754af9ea5cca34f9af1b2643881ecd715c367f7963f0e"
+    },
+    {
+      "scope": "local",
+      "relative_path": "tools/train-booking-core/scan-20260811084157-dc8391e426-1e28b0f7/facade/order/get-passenger-info-raw.sh",
+      "size": 4391,
+      "sha256": "4cb0ca617f81b18ead517e8b64676e2807c511dc6e7570d47826d2112c825ec3"
+    },
+    {
+      "scope": "local",
+      "relative_path": "tools/train-booking-core/scan-20260811084157-dc8391e426-1e28b0f7/facade/order/get-pay-serial-no-raw.sh",
+      "size": 4417,
+      "sha256": "8214f1680f5eb8b9abfdb8e125d045965282815e7280ba456a7691175349e181"
+    },
+    {
+      "scope": "local",
+      "relative_path": "tools/train-booking-core/scan-20260811084157-dc8391e426-1e28b0f7/facade/order/lock-raw.sh",
+      "size": 4420,
+      "sha256": "013f80675696ec5740742ad0e6681da80ebcf7b1e78d023f73ed10f471dcf1c2"
+    },
+    {
+      "scope": "local",
+      "relative_path": "tools/train-booking-core/scan-20260811084157-dc8391e426-1e28b0f7/facade/order/order-deal-done-raw.sh",
+      "size": 4411,
+      "sha256": "9f3845b9d1745e0c3b6738d25e60ab3b359fb647c96848ace7f32880c752821a"
+    },
+    {
+      "scope": "local",
+      "relative_path": "tools/train-booking-core/scan-20260811084157-dc8391e426-1e28b0f7/facade/order/order-dealing-list-raw.sh",
+      "size": 4349,
+      "sha256": "8fb1bbaa78654b20287e60bc61aab2ca9cb29328f0003e959e8614dfde05b62c"
+    },
+    {
+      "scope": "local",
+      "relative_path": "tools/train-booking-core/scan-20260811084157-dc8391e426-1e28b0f7/facade/order/order-detail-raw.sh",
+      "size": 4381,
+      "sha256": "a901a1c42dbcbea4e5c16d40cd7a0ab77a895214faa3d2c23bbe620fb9b17897"
+    },
+    {
+      "scope": "local",
+      "relative_path": "tools/train-booking-core/scan-20260811084157-dc8391e426-1e28b0f7/facade/order/order-info-raw.sh",
+      "size": 4348,
+      "sha256": "c3bc59388679fa54cc1c6e7980e0f7dcf8c8df987d8b08d658a8f4a9b8c00c99"
+    },
+    {
+      "scope": "local",
+      "relative_path": "tools/train-booking-core/scan-20260811084157-dc8391e426-1e28b0f7/facade/order/order-query-list-raw.sh",
+      "size": 5033,
+      "sha256": "9569d72ec231dd4b23c47aa780f4e1e9dc6eb15afa98a782027b122f8d0fb8ad"
+    },
+    {
+      "scope": "local",
+      "relative_path": "tools/train-booking-core/scan-20260811084157-dc8391e426-1e28b0f7/facade/order/order-task-page-query-raw.sh",
+      "size": 4443,
+      "sha256": "1d58138e92803a1f8d181cea4322c20a313a63e7572a60803f45630e8d1e18a3"
+    },
+    {
+      "scope": "local",
+      "relative_path": "tools/train-booking-core/scan-20260811084157-dc8391e426-1e28b0f7/facade/order/order-task-retry-raw.sh",
+      "size": 4388,
+      "sha256": "d403be9c14391b71e8d66e567dff115bfc263ce6559d8ac45039fc0b07d1775c"
+    },
+    {
+      "scope": "local",
+      "relative_path": "tools/train-booking-core/scan-20260811084157-dc8391e426-1e28b0f7/facade/order/query-dashboard-data-raw.sh",
+      "size": 4364,
+      "sha256": "bfa1085c21f8a339049eebc2965c02d2ff726e1620ba80b594ea8044c8ca9d1c"
+    },
+    {
+      "scope": "local",
+      "relative_path": "tools/train-booking-core/scan-20260811084157-dc8391e426-1e28b0f7/facade/order/query-distributing-count-raw.sh",
+      "size": 4326,
+      "sha256": "958f1134d2fb15621c7e72f2cc8ac29734e9b7c59334cad94240f9633e9a000c"
+    },
+    {
+      "scope": "local",
+      "relative_path": "tools/train-booking-core/scan-20260811084157-dc8391e426-1e28b0f7/facade/order/query-group-by-collection-status-raw.sh",
+      "size": 4390,
+      "sha256": "9b686ad6db6eebf30b4e477fa8a2bbb6ebd41ca0ef34441b80f703628cd3a3ca"
+    },
+    {
+      "scope": "local",
+      "relative_path": "tools/train-booking-core/scan-20260811084157-dc8391e426-1e28b0f7/facade/order/query-hk-pay-issue-success-order-raw.sh",
+      "size": 4344,
+      "sha256": "66e20b026fdd24a87e9f25b4bd43d85e92ac2a45400e0d05df849dc5c4bae368"
+    },
+    {
+      "scope": "local",
+      "relative_path": "tools/train-booking-core/scan-20260811084157-dc8391e426-1e28b0f7/facade/order/query-lack-collection-page-list-raw.sh",
+      "size": 5074,
+      "sha256": "8a4c64590cd0e7cb61c321f46f7878b70fadd28540b8f691c055941c2345ec21"
+    },
+    {
+      "scope": "local",
+      "relative_path": "tools/train-booking-core/scan-20260811084157-dc8391e426-1e28b0f7/facade/order/query-merchant-special-ability-raw.sh",
+      "size": 4386,
+      "sha256": "1e279485dffcfc67ed0589be841366ab7fd3f4129c94a02bbf406315ba4c0323"
+    },
+    {
+      "scope": "local",
+      "relative_path": "tools/train-booking-core/scan-20260811084157-dc8391e426-1e28b0f7/facade/order/query-order-count-for-operator-raw.sh",
+      "size": 4436,
+      "sha256": "8bfc336b34d01f7f7e443fb2988af8a148f1b668f6ccc5fc4eb4a074d70d75b0"
+    },
+    {
+      "scope": "local",
+      "relative_path": "tools/train-booking-core/scan-20260811084157-dc8391e426-1e28b0f7/facade/order/query-order-count-for-ticket-machine-raw.sh",
+      "size": 4429,
+      "sha256": "54c2e6b1879b83a45cb7abfa3a6b1db65de0f5bfbfba569c43fc7079c9ff722f"
+    },
+    {
+      "scope": "local",
+      "relative_path": "tools/train-booking-core/scan-20260811084157-dc8391e426-1e28b0f7/facade/order/query-order-count-group-by-ability-raw.sh",
+      "size": 4367,
+      "sha256": "92581c2ecdf2064d493e73d1318fc3f128a0c2c75cc683aa34216aebd8c0e6ce"
+    },
+    {
+      "scope": "local",
+      "relative_path": "tools/train-booking-core/scan-20260811084157-dc8391e426-1e28b0f7/facade/order/query-order-count-group-by-hour-raw.sh",
+      "size": 4373,
+      "sha256": "424fad225410164f5c3c1ac7e49f53d65303f73236ed1f549bedb830700919b2"
+    },
+    {
+      "scope": "local",
+      "relative_path": "tools/train-booking-core/scan-20260811084157-dc8391e426-1e28b0f7/facade/order/query-order-count-raw.sh",
+      "size": 4354,
+      "sha256": "e130347fb03a88b98ad5edf9e5428222b1205447d0762728cace37b857d3dff1"
+    },
+    {
+      "scope": "local",
+      "relative_path": "tools/train-booking-core/scan-20260811084157-dc8391e426-1e28b0f7/facade/order/query-order-info-raw.sh",
+      "size": 4359,
+      "sha256": "61ab875891e38b8bfd4addbd636c5d75e1104dd4eaafc52aac3bdb7dc26afa91"
+    },
+    {
+      "scope": "local",
+      "relative_path": "tools/train-booking-core/scan-20260811084157-dc8391e426-1e28b0f7/facade/order/query-order-list-by-pay-serial-no-raw.sh",
+      "size": 4402,
+      "sha256": "a6eb034b723b3a7fde43a1216e8002d59626a0becf0680da6ee080502c7057a3"
+    },
+    {
+      "scope": "local",
+      "relative_path": "tools/train-booking-core/scan-20260811084157-dc8391e426-1e28b0f7/facade/order/query-pending-handle-count-raw.sh",
+      "size": 4371,
+      "sha256": "a8dc4295c0ea6608d7fd77fe71cadd508b7435f7ee1129313bc56008d2e50659"
+    },
+    {
+      "scope": "local",
+      "relative_path": "tools/train-booking-core/scan-20260811084157-dc8391e426-1e28b0f7/facade/order/reject-distribute-percent-page-info-raw.sh",
+      "size": 4451,
+      "sha256": "324fb2e9217cf3a5d91e027fe415420852dd277346c2a6f67823adbc59650206"
+    },
+    {
+      "scope": "local",
+      "relative_path": "tools/train-booking-core/scan-20260811084157-dc8391e426-1e28b0f7/facade/order/update-pay-serial-no-raw.sh",
+      "size": 4453,
+      "sha256": "c5cc2c8745da6ba36dad4507d490843ccd5330092a84ed2304704de76e246005"
+    },
+    {
+      "scope": "local",
+      "relative_path": "tools/train-booking-core/scan-20260811084157-dc8391e426-1e28b0f7/facade/payserialno/confirm-raw.sh",
+      "size": 4373,
+      "sha256": "a55789cbdec7689e0e1480d4888932a0bea6d0056195107b620c6ed28eb94d5e"
+    },
+    {
+      "scope": "local",
+      "relative_path": "tools/train-booking-core/scan-20260811084157-dc8391e426-1e28b0f7/facade/payserialno/finish-raw.sh",
+      "size": 4366,
+      "sha256": "c2e087b2d903b06b0254b99fa05acd25b2fedce3d7bcad1fe6bf87d9e4ded8e2"
+    },
+    {
+      "scope": "local",
+      "relative_path": "tools/train-booking-core/scan-20260811084157-dc8391e426-1e28b0f7/facade/payserialno/query-list-raw.sh",
+      "size": 4447,
+      "sha256": "f45a42e96ad4e75a9b5079fa5c28da2f9d800d438ec6debeb0eee614956081b0"
+    },
+    {
+      "scope": "local",
+      "relative_path": "tools/train-booking-core/scan-20260811084157-dc8391e426-1e28b0f7/facade/remit/callback-raw.sh",
+      "size": 4503,
+      "sha256": "3fb06679989d6d6bc5a2b9d4e1e458aa499d8d2bbfbdeda106bbda1ee1238459"
+    },
+    {
+      "scope": "local",
+      "relative_path": "tools/train-booking-core/scan-20260811084157-dc8391e426-1e28b0f7/facade/remit/query-remit-raw.sh",
+      "size": 4446,
+      "sha256": "e1d76c5fc1146ec775624622caec04cda2fc54b50804e34ff6803b557bb1d244"
+    },
+    {
+      "scope": "local",
+      "relative_path": "tools/train-booking-core/scan-20260811084157-dc8391e426-1e28b0f7/facade/remit/remit-raw.sh",
+      "size": 4297,
+      "sha256": "37756e024574de5969b5ec85f22d9ee51f1ee623a689f96228c3d668a768ab83"
+    },
+    {
+      "scope": "local",
+      "relative_path": "tools/train-booking-core/scan-20260811084157-dc8391e426-1e28b0f7/facade/remit/sync-customer-raw.sh",
+      "size": 4316,
+      "sha256": "da7afb7f727368386b1fa2c4a2544e253fe90fce46e55611be30a6b5d693224d"
+    },
+    {
+      "scope": "local",
+      "relative_path": "tools/train-booking-core/scan-20260811084157-dc8391e426-1e28b0f7/facade/servicefee/appeal-raw.sh",
+      "size": 4328,
+      "sha256": "226bcb3d136659816afca6262450e16b777a2ff5d8f8de8f86dad108f1d06d65"
+    },
+    {
+      "scope": "local",
+      "relative_path": "tools/train-booking-core/scan-20260811084157-dc8391e426-1e28b0f7/facade/servicefee/query-service-fee-raw.sh",
+      "size": 4493,
+      "sha256": "9c75290e5c5bbb77e9307d31582da93e0d322230d541f0c1ca03ae42a332d2ce"
+    },
+    {
+      "scope": "local",
+      "relative_path": "tools/train-booking-core/scan-20260811084157-dc8391e426-1e28b0f7/facade/servicefee/service-fee-callback-raw.sh",
+      "size": 4545,
+      "sha256": "9185f8f4ef513951e15cbaa0f162a1c27ef39392d0b6207614b15e8864e67989"
+    },
+    {
+      "scope": "local",
+      "relative_path": "tools/train-booking-core/scan-20260811084157-dc8391e426-1e28b0f7/facade/servicefee/sync-customer-raw.sh",
+      "size": 4347,
+      "sha256": "d90544eff65cfd72b6ac5190f146f7f183290709abf37563d30497fa3c1a8f5f"
+    },
+    {
+      "scope": "local",
+      "relative_path": "tools/train-booking-core/scan-20260811084157-dc8391e426-1e28b0f7/facade/ticket/apply-occupy-issue-raw.sh",
+      "size": 4326,
+      "sha256": "8c4d257d5c02585aed0dfa0464ffd3d01d80e2536da58ff073eb214fdb252c2a"
+    },
+    {
+      "scope": "local",
+      "relative_path": "tools/train-booking-core/scan-20260811084157-dc8391e426-1e28b0f7/facade/ticket/batch-issue-ticket-raw.sh",
+      "size": 4911,
+      "sha256": "5c16578aa7dcdd8b289b4f3bb4e7a11eb7be8eba61d138b62156eed9d875e8d6"
+    },
+    {
+      "scope": "local",
+      "relative_path": "tools/train-booking-core/scan-20260811084157-dc8391e426-1e28b0f7/facade/ticket/batch-reject-issue-raw.sh",
+      "size": 4710,
+      "sha256": "25230144355f82d1b3c3434b288e6c6a72a79563597fee9d8fafdb496a173182"
+    },
+    {
+      "scope": "local",
+      "relative_path": "tools/train-booking-core/scan-20260811084157-dc8391e426-1e28b0f7/facade/ticket/batch-revoke-order-raw.sh",
+      "size": 4437,
+      "sha256": "65e698ab6e878e9a79c9936931d30509fb80ee43beff76c8b95f87d059fc20fa"
+    },
+    {
+      "scope": "local",
+      "relative_path": "tools/train-booking-core/scan-20260811084157-dc8391e426-1e28b0f7/facade/ticket/issue-ticket-raw.sh",
+      "size": 4839,
+      "sha256": "f082810848ccedf80c89cadcef8767741dbe3def75dcfac0ed1096cda24a56a5"
+    },
+    {
+      "scope": "local",
+      "relative_path": "tools/train-booking-core/scan-20260811084157-dc8391e426-1e28b0f7/facade/ticket/modify-issue-ticket-raw.sh",
+      "size": 4686,
+      "sha256": "e123e136c24a1e9b385f96c5a518a32f9d852e773322150f7d0a16432b748a92"
+    },
+    {
+      "scope": "local",
+      "relative_path": "tools/train-booking-core/scan-20260811084157-dc8391e426-1e28b0f7/facade/ticket/mtr-price-check-raw.sh",
+      "size": 4355,
+      "sha256": "14b0132465b71d3bf259efc11ad501cf490fb3790f8e65f96d90afb251820e11"
+    },
+    {
+      "scope": "local",
+      "relative_path": "tools/train-booking-core/scan-20260811084157-dc8391e426-1e28b0f7/facade/ticket/occupy-issue-result-raw.sh",
+      "size": 4701,
+      "sha256": "25c0e004725c9a394ea165cd732494ea55b4176786cd462c665329c1635ae9d4"
+    },
+    {
+      "scope": "local",
+      "relative_path": "tools/train-booking-core/scan-20260811084157-dc8391e426-1e28b0f7/facade/ticket/occupy-result-raw.sh",
+      "size": 4839,
+      "sha256": "50820e2f96726b3cf77abee386b4088fb51762bca2f0dec68b66fbc6c830c593"
+    },
+    {
+      "scope": "local",
+      "relative_path": "tools/train-booking-core/scan-20260811084157-dc8391e426-1e28b0f7/facade/ticket/reject-issue-raw.sh",
+      "size": 4661,
+      "sha256": "c9e949a1df4c5a3fd53ba01bfddb10a52013074aacc2a7cb52a367ddbbe0355c"
+    },
+    {
+      "scope": "local",
+      "relative_path": "tools/train-booking-core/scan-20260811084157-dc8391e426-1e28b0f7/facade/ticket/submit-ticket-image-raw.sh",
+      "size": 4420,
+      "sha256": "215471656407ba83d537a66412c6d3f1bda06aa69dc57d6ecf97e8b792a3db34"
+    },
+    {
+      "scope": "local",
+      "relative_path": "tools/train-booking-core/scan-20260811084157-dc8391e426-1e28b0f7/facade/ticketmachine/mtr-ticket-machine-handle-raw.sh",
+      "size": 4390,
+      "sha256": "329649b80badd4b38d0c58e815e39539c548b8486ce221e3ef2955ede735aed0"
+    },
+    {
+      "scope": "local",
+      "relative_path": "tools/train-booking-core/scan-20260811084157-dc8391e426-1e28b0f7/facade/ticketmachine/query-ticket-machine-handle-raw.sh",
+      "size": 4390,
+      "sha256": "fec2747334bc3593e724a7230aec8516f5aada22afbbe272188fa61b7e7419c5"
+    },
+    {
+      "scope": "local",
+      "relative_path": "tools/train-booking-core/scan-20260811084157-dc8391e426-1e28b0f7/facade/trade/cancel-raw.sh",
+      "size": 4370,
+      "sha256": "bbc1791211fb9bc8c5f4c244fb7edb64db5bc4e421a8dce049dbd8b1efac77e0"
+    },
+    {
+      "scope": "local",
+      "relative_path": "tools/train-booking-core/scan-20260811084157-dc8391e426-1e28b0f7/facade/trade/candidate-info-raw.sh",
+      "size": 4752,
+      "sha256": "66d2c983e0244a7bca0249e2e103c433c5bf96ad621671a86fb2fcdbe423d4e7"
+    },
+    {
+      "scope": "local",
+      "relative_path": "tools/train-booking-core/scan-20260811084157-dc8391e426-1e28b0f7/facade/trade/create-order-raw.sh",
+      "size": 5305,
+      "sha256": "ba27f1ca50fd5eea127469a7652e1fce336ef38da5846930e1e07af902f567e3"
+    },
+    {
+      "scope": "local",
+      "relative_path": "tools/train-booking-core/scan-20260811084157-dc8391e426-1e28b0f7/facade/trade/hk-dz-capacity-check-raw.sh",
+      "size": 4353,
+      "sha256": "772ba54273391e383d6fb4bec845c2af9ef52686414e655303906d3ec00b76b4"
+    },
+    {
+      "scope": "local",
+      "relative_path": "tools/train-booking-core/scan-20260811084157-dc8391e426-1e28b0f7/facade/trade/inner-refund-change-raw.sh",
+      "size": 4921,
+      "sha256": "abc73328bb5f037c5b03ca81a8831175f1ffdd5cc7db29a8f3343d8213e5eb1a"
+    },
+    {
+      "scope": "local",
+      "relative_path": "tools/train-booking-core/scan-20260811084157-dc8391e426-1e28b0f7/facade/trade/inquire-refund-change-raw.sh",
+      "size": 4912,
+      "sha256": "a38558b16563d2dc64cec8b9501d6aa65ebff32b6f2f59e0cd8fe7e609b6f9f4"
+    },
+    {
+      "scope": "local",
+      "relative_path": "tools/train-booking-core/scan-20260811084157-dc8391e426-1e28b0f7/facade/trade/inquire-seat-count-raw.sh",
+      "size": 4482,
+      "sha256": "e30e235548c23ba24794ca5b835b71e5ba8406fcecbeefc42b62189fc150ac8b"
+    },
+    {
+      "scope": "local",
+      "relative_path": "tools/train-booking-core/scan-20260811084157-dc8391e426-1e28b0f7/facade/trade/inquire-stop-info-raw.sh",
+      "size": 4442,
+      "sha256": "e0be326aa49486cb66d4dd2e74b9604d4ea2d190838f7949dc9639081dfe437c"
+    },
+    {
+      "scope": "local",
+      "relative_path": "tools/train-booking-core/scan-20260811084157-dc8391e426-1e28b0f7/facade/trade/inquire-ticket-info-raw.sh",
+      "size": 4830,
+      "sha256": "70f9e0e38400f40ba0fd31c03c9966b01d05edb8d3b58369dc69fc2eaed99bad"
+    },
+    {
+      "scope": "local",
+      "relative_path": "tools/train-booking-core/scan-20260811084157-dc8391e426-1e28b0f7/facade/trade/sale-date-query-raw.sh",
+      "size": 4299,
+      "sha256": "01cba455def3c65e8b38d8e53040b555af3608bd74caba73ee123e2fd875cbda"
+    },
+    {
+      "scope": "local",
+      "relative_path": "tools/train-booking-core/scan-20260811084157-dc8391e426-1e28b0f7/facade/warning_order/detail-raw.sh",
+      "size": 4308,
+      "sha256": "875bbf3f2a8dda387663cef00c00f4d85d930acd1cda5bb0ddf4deb7f5188b9e"
+    },
+    {
+      "scope": "local",
+      "relative_path": "tools/train-booking-core/scan-20260811084157-dc8391e426-1e28b0f7/facade/warning_order/page-info-raw.sh",
+      "size": 4567,
+      "sha256": "e92e1872da8e169435e50b295c267993f3e62884737c40d1ca77f1a777679f8d"
+    },
+    {
+      "scope": "local",
+      "relative_path": "tools/train-booking-core/scan-20260811084157-dc8391e426-1e28b0f7/facade/warning_order/update-raw.sh",
+      "size": 4399,
+      "sha256": "2cead8866174b839cc71c9f4297208f59c3935b5dacc3ea70ff6607a10d949b2"
+    },
+    {
+      "scope": "local",
+      "relative_path": "tools/train-booking-core/scan-20260811084157-dc8391e426-1e28b0f7/jobs/http/job/ability-time-out-cancel-job.sh",
+      "size": 4279,
+      "sha256": "cb30f8a7d232c998d58f2d53990768bee37bd85a2027b3c81ea32662b6f7388d"
+    },
+    {
+      "scope": "local",
+      "relative_path": "tools/train-booking-core/scan-20260811084157-dc8391e426-1e28b0f7/jobs/http/job/clean-ticket-machine-order-job.sh",
+      "size": 4288,
+      "sha256": "f700ff5cfa4fc12494fb89c2e328e8a6dae189de74d1147213d8d820dc9d55ea"
+    },
+    {
+      "scope": "local",
+      "relative_path": "tools/train-booking-core/scan-20260811084157-dc8391e426-1e28b0f7/jobs/http/job/distribution-single-order.sh",
+      "size": 4273,
+      "sha256": "4d58d173642eefee550f44083c0fd2e6cc33daa989326254c60092f4faa77978"
+    },
+    {
+      "scope": "local",
+      "relative_path": "tools/train-booking-core/scan-20260811084157-dc8391e426-1e28b0f7/jobs/http/job/expire-occupy-apply.sh",
+      "size": 4255,
+      "sha256": "334d7fd6a43ae1ec7ae24f793e10c8f4074f948b3885e3df276af747890cb3e0"
+    },
+    {
+      "scope": "local",
+      "relative_path": "tools/train-booking-core/scan-20260811084157-dc8391e426-1e28b0f7/jobs/http/job/inner-revoke-switch.sh",
+      "size": 4255,
+      "sha256": "777b0d2b08b660c819fca8f6119ef8d538b39f7f9a41bea270453dd5b0c5cf75"
+    },
+    {
+      "scope": "local",
+      "relative_path": "tools/train-booking-core/scan-20260811084157-dc8391e426-1e28b0f7/jobs/http/job/inquire-callback.sh",
+      "size": 4246,
+      "sha256": "ad55e836a42f4367eba4cdc3bb4367c8f70a4eeeb6c699847ddb48e6e9119813"
+    },
+    {
+      "scope": "local",
+      "relative_path": "tools/train-booking-core/scan-20260811084157-dc8391e426-1e28b0f7/jobs/http/job/inquire-capacity-reset-job.sh",
+      "size": 4276,
+      "sha256": "854302247a4455506e88639ff1d44fdd70997d0b5f6443ad6ba454e709fef33f"
+    },
+    {
+      "scope": "local",
+      "relative_path": "tools/train-booking-core/scan-20260811084157-dc8391e426-1e28b0f7/jobs/http/job/inquire-collection-reset-job.sh",
+      "size": 4282,
+      "sha256": "79f993574c2455c22629f3c7a03eee822085afe33225bdba5f64bc17d4372194"
+    },
+    {
+      "scope": "local",
+      "relative_path": "tools/train-booking-core/scan-20260811084157-dc8391e426-1e28b0f7/jobs/http/job/inquire-merchant-api.sh",
+      "size": 4258,
+      "sha256": "1c9b41144a768f98871ba588989a19acadaf31d45566493cdafebcf092b5037d"
+    },
+    {
+      "scope": "local",
+      "relative_path": "tools/train-booking-core/scan-20260811084157-dc8391e426-1e28b0f7/jobs/http/job/inquire-refund-change-distribute-merchant-job.sh",
+      "size": 4333,
+      "sha256": "761b161af4f306d50e667fe1ba83846ab6456413a4fc63547e8389235d8098fd"
+    },
+    {
+      "scope": "local",
+      "relative_path": "tools/train-booking-core/scan-20260811084157-dc8391e426-1e28b0f7/jobs/http/job/inquire-reset-merchant-ticketing-count.sh",
+      "size": 4312,
+      "sha256": "b8a1e26e6f11c22dae711a593c118b4342c5db631dae8b9c0a58cd7fb076c6f8"
+    },
+    {
+      "scope": "local",
+      "relative_path": "tools/train-booking-core/scan-20260811084157-dc8391e426-1e28b0f7/jobs/http/job/inquire-timeout.sh",
+      "size": 4243,
+      "sha256": "2df80ae4a9517cb57ec2b14ea300ef0f26399abb2817e3b286f362d26ae98dcc"
+    },
+    {
+      "scope": "local",
+      "relative_path": "tools/train-booking-core/scan-20260811084157-dc8391e426-1e28b0f7/jobs/http/job/issue-rule-policy-check.sh",
+      "size": 4267,
+      "sha256": "e32280ba03cea887adce644e4d9c82e5b6b6a3f75fb3c745e1a06b26e1dc354c"
+    },
+    {
+      "scope": "local",
+      "relative_path": "tools/train-booking-core/scan-20260811084157-dc8391e426-1e28b0f7/jobs/http/job/lack-ticket-retry-job.sh",
+      "size": 4261,
+      "sha256": "6168437f029967d97c88d270cf92d98c5e945f7f3f4ca5fa9f48929b5bd20b90"
+    },
+    {
+      "scope": "local",
+      "relative_path": "tools/train-booking-core/scan-20260811084157-dc8391e426-1e28b0f7/jobs/http/job/mtr-stop-exception-order-job.sh",
+      "size": 4282,
+      "sha256": "668c91c371d0b02344f5cfcb824f068b116fe0f6e5061ac8271c735bd202e558"
+    },
+    {
+      "scope": "local",
+      "relative_path": "tools/train-booking-core/scan-20260811084157-dc8391e426-1e28b0f7/jobs/http/job/new-distribution-multiple-connect-order.sh",
+      "size": 4315,
+      "sha256": "12c06722a4ffcf043a22b4bb66b0fda785a691441a7d0230378c30f33f5aa1f8"
+    },
+    {
+      "scope": "local",
+      "relative_path": "tools/train-booking-core/scan-20260811084157-dc8391e426-1e28b0f7/jobs/http/job/order-board-job.sh",
+      "size": 4243,
+      "sha256": "833dcf13892c2eeee0ef7338f063c48803591a8df47dba0bd95df06f9dd46521"
+    },
+    {
+      "scope": "local",
+      "relative_path": "tools/train-booking-core/scan-20260811084157-dc8391e426-1e28b0f7/jobs/http/job/order-task-clean-job.sh",
+      "size": 4258,
+      "sha256": "f0b205152faffd79db9fc72a8c74858fd398842cb0564a7841abb36604363801"
+    },
+    {
+      "scope": "local",
+      "relative_path": "tools/train-booking-core/scan-20260811084157-dc8391e426-1e28b0f7/jobs/http/job/order-task.sh",
+      "size": 4228,
+      "sha256": "a46c4e276ab0c5a8848baebf1a6023d6806b3e537606a2aff9cca99a8dfc4caa"
+    },
+    {
+      "scope": "local",
+      "relative_path": "tools/train-booking-core/scan-20260811084157-dc8391e426-1e28b0f7/jobs/http/job/reject-order-distribute-incr-job.sh",
+      "size": 4294,
+      "sha256": "4561672ffe33d2266dd4dcdc3757b9bf2eb757e9debc5f6d46c8eb7ff91d29fb"
+    },
+    {
+      "scope": "local",
+      "relative_path": "tools/train-booking-core/scan-20260811084157-dc8391e426-1e28b0f7/jobs/http/job/reset-collection-count-job.sh",
+      "size": 4276,
+      "sha256": "6273f1f8df7d01fdc63cf15323c922b520867a6b7c22f46bdd5d351ab5333a3c"
+    },
+    {
+      "scope": "local",
+      "relative_path": "tools/train-booking-core/scan-20260811084157-dc8391e426-1e28b0f7/jobs/http/job/reset-merchant-all-ticketing-info-job.sh",
+      "size": 4309,
+      "sha256": "8f0483a36e79b240ed86e650c3c9c7fd18d624746be6c1d20986f947ca9bd328"
+    },
+    {
+      "scope": "local",
+      "relative_path": "tools/train-booking-core/scan-20260811084157-dc8391e426-1e28b0f7/jobs/http/job/retry-callback-job.sh",
+      "size": 4252,
+      "sha256": "144f80ac9b80c5c7b085d7dfe9e3d2f6f074f9ec7def1f4610ae8ad85a88d4f9"
+    },
+    {
+      "scope": "local",
+      "relative_path": "tools/train-booking-core/scan-20260811084157-dc8391e426-1e28b0f7/jobs/http/job/retry-create-order.sh",
+      "size": 4252,
+      "sha256": "92f510e2a431543b2b96f0da0afe8ed62dce7a6bb0ee1442687fa38a854349af"
+    },
+    {
+      "scope": "local",
+      "relative_path": "tools/train-booking-core/scan-20260811084157-dc8391e426-1e28b0f7/jobs/http/job/retry-distribution-hk-order-job.sh",
+      "size": 4291,
+      "sha256": "05fc92c8136e6d3027ddc3e85bc1f0bb54cbe093b5fddcf42a9d27caefee7a3d"
+    },
+    {
+      "scope": "local",
+      "relative_path": "tools/train-booking-core/scan-20260811084157-dc8391e426-1e28b0f7/jobs/http/job/retry-freeze.sh",
+      "size": 4234,
+      "sha256": "0f67d899cc77eb124f6bb5d97fb420e22ae1b6ed7b6f2ca37c713e6c85eac275"
+    },
+    {
+      "scope": "local",
+      "relative_path": "tools/train-booking-core/scan-20260811084157-dc8391e426-1e28b0f7/jobs/http/job/retry-occupy-callback.sh",
+      "size": 4261,
+      "sha256": "540fed96cead4330587ca279f7160b6195c6b2ff8aa5bbcc5bb7b2047b26c035"
+    },
+    {
+      "scope": "local",
+      "relative_path": "tools/train-booking-core/scan-20260811084157-dc8391e426-1e28b0f7/jobs/http/job/retry-remit-sync-customer.sh",
+      "size": 4273,
+      "sha256": "8d9608b30dbd8f955f079ecc4c12f528901f15c745f77d283817c5a9f80e9a99"
+    },
+    {
+      "scope": "local",
+      "relative_path": "tools/train-booking-core/scan-20260811084157-dc8391e426-1e28b0f7/jobs/http/job/retry-remit.sh",
+      "size": 4231,
+      "sha256": "f7ce07474be8dbc09ac69886f4b0fc4daf58ee94141dd9d2caa45c1b42af72a0"
+    },
+    {
+      "scope": "local",
+      "relative_path": "tools/train-booking-core/scan-20260811084157-dc8391e426-1e28b0f7/jobs/http/job/retry-service-fee-remit-sync-customer.sh",
+      "size": 4309,
+      "sha256": "97bead357c071ed5caeb1398b4137a83cd6109ceccb2134899c1e04bc7684538"
+    },
+    {
+      "scope": "local",
+      "relative_path": "tools/train-booking-core/scan-20260811084157-dc8391e426-1e28b0f7/jobs/http/job/retry-service-fee-remit.sh",
+      "size": 4267,
+      "sha256": "9a4a3335649a8d4441f41502f55dc86ba533614a7a781fb84c49c057b995d73c"
+    },
+    {
+      "scope": "local",
+      "relative_path": "tools/train-booking-core/scan-20260811084157-dc8391e426-1e28b0f7/jobs/http/job/revoke-new.sh",
+      "size": 4228,
+      "sha256": "d0d868d23981542b821fd6c4fe9691ffc15c8072cbb5d3890a635a6b75a994bb"
+    },
+    {
+      "scope": "local",
+      "relative_path": "tools/train-booking-core/scan-20260811084157-dc8391e426-1e28b0f7/jobs/http/job/stat-train-order-transfer-hk.sh",
+      "size": 4282,
+      "sha256": "c20128602b539c92baf2c1a740000a8c5947f5fc07e59ff9fe9ab933759b1cdc"
+    },
+    {
+      "scope": "local",
+      "relative_path": "tools/train-booking-core/scan-20260811084157-dc8391e426-1e28b0f7/jobs/http/job/stat-train-order-transfer-inner.sh",
+      "size": 4291,
+      "sha256": "9974b3266a73a3499c24599008a222ca50982ddd944158733805b3dbb2ef8979"
+    },
+    {
+      "scope": "local",
+      "relative_path": "tools/train-booking-core/scan-20260811084157-dc8391e426-1e28b0f7/jobs/http/job/time-out-cancel-job.sh",
+      "size": 4255,
+      "sha256": "88d6aa206294e74b2bc87f87298b38ea26a14c272e22018e99a5e3e288f9384e"
+    },
+    {
+      "scope": "local",
+      "relative_path": "tools/train-booking-core/scan-20260811084157-dc8391e426-1e28b0f7/jobs/http/job/train-order-info-simple-del.sh",
+      "size": 4279,
+      "sha256": "a671a51edd4b71858893a250d10326a6648050e0195785d443b971efc52a32e3"
+    },
+    {
+      "scope": "local",
+      "relative_path": "tools/train-booking-core/scan-20260811090346-dc8391e426-2b8aa9c2/README.md",
+      "size": 26273,
+      "sha256": "b412cec78982417762cdb272cb7529d7a72c96aae590603669b4cdce099c2d10"
+    },
+    {
+      "scope": "local",
+      "relative_path": "tools/train-booking-core/scan-20260811090346-dc8391e426-2b8aa9c2/_meta/scan-manifest.json",
+      "size": 144602,
+      "sha256": "eef3d9c2203504a4e5945888ecbd5637a5c2a04dd7dab9f6942c61c058e7a655"
+    },
+    {
+      "scope": "local",
+      "relative_path": "tools/train-booking-core/scan-20260811090346-dc8391e426-2b8aa9c2/_meta/tool-manifest.json",
+      "size": 77890,
+      "sha256": "ec2c9982506cdf9bdd059d11032acb747a8e75cd0ff91c139243704856606da5"
+    },
+    {
+      "scope": "local",
+      "relative_path": "tools/train-booking-core/scan-20260811090346-dc8391e426-2b8aa9c2/_meta/v2-scriptgen-command.json",
+      "size": 681,
+      "sha256": "418ff494d1e2de5ff0547c2feb14838148e98fbae59e5154e22884fe34a10d27"
+    },
+    {
+      "scope": "local",
+      "relative_path": "tools/train-booking-core/scan-20260811090346-dc8391e426-2b8aa9c2/_meta/v2-scriptgen.stderr.log",
+      "size": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "scope": "local",
+      "relative_path": "tools/train-booking-core/scan-20260811090346-dc8391e426-2b8aa9c2/_meta/v2-scriptgen.stdout.log",
+      "size": 742,
+      "sha256": "1a206f5943ae5e6581698d07c3456355de7d692bfaef5537f4a0c592c344d55d"
+    },
+    {
+      "scope": "local",
+      "relative_path": "tools/train-booking-core/scan-20260811090346-dc8391e426-2b8aa9c2/facade/custom_info/detail-raw.sh",
+      "size": 4324,
+      "sha256": "85af1720ba20b8e715c9fc8d0bdcfd90db9eba0681457ccd52a1cff89c7ae436"
+    },
+    {
+      "scope": "local",
+      "relative_path": "tools/train-booking-core/scan-20260811090346-dc8391e426-2b8aa9c2/facade/custom_info/list-distinct-custom-type-raw.sh",
+      "size": 4339,
+      "sha256": "665d2fa47216451fd465d61099cc74ac372fa3ae190a7d8fd716e3dbd7bfe968"
+    },
+    {
+      "scope": "local",
+      "relative_path": "tools/train-booking-core/scan-20260811090346-dc8391e426-2b8aa9c2/facade/custom_info/page-query-custom-data-raw.sh",
+      "size": 4429,
+      "sha256": "9337f2e492d65f402de60da1dc1d2576f611ec46ec396e2f872e6dc3347171be"
+    },
+    {
+      "scope": "local",
+      "relative_path": "tools/train-booking-core/scan-20260811090346-dc8391e426-2b8aa9c2/facade/custom_info/query-custom-content-list-raw.sh",
+      "size": 4362,
+      "sha256": "5f0e5835b8b35197cc7847b911324d1d23a7f37a38425f9a8e58ddcb679732a5"
+    },
+    {
+      "scope": "local",
+      "relative_path": "tools/train-booking-core/scan-20260811090346-dc8391e426-2b8aa9c2/facade/custom_info/query-custom-type-list-raw.sh",
+      "size": 4330,
+      "sha256": "94204436139029f95e8d01987017939cde44a5b61962a658be950b35c8e9abb5"
+    },
+    {
+      "scope": "local",
+      "relative_path": "tools/train-booking-core/scan-20260811090346-dc8391e426-2b8aa9c2/facade/custom_info/save-or-update-custom-info-raw.sh",
+      "size": 4474,
+      "sha256": "2eb58bbf04e496f68f3c5db531e050e9666c2cd35bdc18b6b5f16f3a1aff4cd1"
+    },
+    {
+      "scope": "local",
+      "relative_path": "tools/train-booking-core/scan-20260811090346-dc8391e426-2b8aa9c2/facade/freeze/freeze-raw.sh",
+      "size": 4348,
+      "sha256": "1acf3b74f1c7ecd18ff4396517b1593c65b18e4e79687097aff22b8d72c2d868"
+    },
+    {
+      "scope": "local",
+      "relative_path": "tools/train-booking-core/scan-20260811090346-dc8391e426-2b8aa9c2/facade/freeze/query-freeze-raw.sh",
+      "size": 4453,
+      "sha256": "ab87bbd554f18ef6e5405fea36e7063220ca98eec7ba1b8c88622dc9ef4725a5"
+    },
+    {
+      "scope": "local",
+      "relative_path": "tools/train-booking-core/scan-20260811090346-dc8391e426-2b8aa9c2/facade/inquire/deal-candidate-info-raw.sh",
+      "size": 4733,
+      "sha256": "1cf2497d158ae2440873dde009a276b3fde477cf47558165f2c4befd3c138263"
+    },
+    {
+      "scope": "local",
+      "relative_path": "tools/train-booking-core/scan-20260811090346-dc8391e426-2b8aa9c2/facade/inquire/deal-inner-refund-change-ticket-raw.sh",
+      "size": 4750,
+      "sha256": "2723843fa57e99dda9382c1cea584ba5e6c379698710864b763fa39ef5f72fbb"
+    },
+    {
+      "scope": "local",
+      "relative_path": "tools/train-booking-core/scan-20260811090346-dc8391e426-2b8aa9c2/facade/inquire/deal-refund-change-raw.sh",
+      "size": 4715,
+      "sha256": "4cfbcd4b008945f8b84fe4b01793ea4f1196dd74bb6217f3337abb9b5ce05c89"
+    },
+    {
+      "scope": "local",
+      "relative_path": "tools/train-booking-core/scan-20260811090346-dc8391e426-2b8aa9c2/facade/inquire/deal-seat-count-raw.sh",
+      "size": 4489,
+      "sha256": "ab83303a29522426dc3e942cbc22eec4f5c412cccb754ccf883a669b045f8d84"
+    },
+    {
+      "scope": "local",
+      "relative_path": "tools/train-booking-core/scan-20260811090346-dc8391e426-2b8aa9c2/facade/inquire/deal-stop-info-raw.sh",
+      "size": 4390,
+      "sha256": "c356b189e2961d214957649c28a1d60d36e855323ff33ebec45eaed9613909c5"
+    },
+    {
+      "scope": "local",
+      "relative_path": "tools/train-booking-core/scan-20260811090346-dc8391e426-2b8aa9c2/facade/inquire/deal-ticket-info-raw.sh",
+      "size": 4396,
+      "sha256": "c55c12806707a09b31bd793b9f57055dc1e8274ba2d5d7d7a2d4c1f12357f51a"
+    },
+    {
+      "scope": "local",
+      "relative_path": "tools/train-booking-core/scan-20260811090346-dc8391e426-2b8aa9c2/facade/inquire/get-list-raw.sh",
+      "size": 4642,
+      "sha256": "cdd18c67c53544ce2b1e314e7262d853a40eb6c3cee6986c8d506ad6b7a597ba"
+    },
+    {
+      "scope": "local",
+      "relative_path": "tools/train-booking-core/scan-20260811090346-dc8391e426-2b8aa9c2/facade/inquire/query-collection-statistics-raw.sh",
+      "size": 4339,
+      "sha256": "820c7d03315438d1610cbd196ffb191179b38bc7618dfafb36921f5b4c26916b"
+    },
+    {
+      "scope": "local",
+      "relative_path": "tools/train-booking-core/scan-20260811090346-dc8391e426-2b8aa9c2/facade/inquire/query-inquire-count-raw.sh",
+      "size": 4433,
+      "sha256": "7fd888bf9a171db80c2f058474dda395a3a6db09d1dfb86558082281b10d35bc"
+    },
+    {
+      "scope": "local",
+      "relative_path": "tools/train-booking-core/scan-20260811090346-dc8391e426-2b8aa9c2/facade/inquire/query-merchant-ticketing-count-raw.sh",
+      "size": 4464,
+      "sha256": "b2988f14ce16b1da906501dfdb6b3cc5909cbb2e20e4459d4b3a3414f11acd85"
+    },
+    {
+      "scope": "local",
+      "relative_path": "tools/train-booking-core/scan-20260811090346-dc8391e426-2b8aa9c2/facade/interceptconfig/list-raw.sh",
+      "size": 4366,
+      "sha256": "d0955fcf12616e01676c5c36b8f67697b1743ac51db5f8aa0c60cbfa34ee89cc"
+    },
+    {
+      "scope": "local",
+      "relative_path": "tools/train-booking-core/scan-20260811090346-dc8391e426-2b8aa9c2/facade/interceptconfig/save-raw.sh",
+      "size": 4365,
+      "sha256": "03466a241c41089ad5aa1a6b8eed23e4058afe06d3ec73d5fdcb97aaf74df3d1"
+    },
+    {
+      "scope": "local",
+      "relative_path": "tools/train-booking-core/scan-20260811090346-dc8391e426-2b8aa9c2/facade/interceptorder/list-raw.sh",
+      "size": 4418,
+      "sha256": "96e62d1c2424ff0a0be651186bd9ccf7c42489b5869a8a3793bd3fb1e0b14d2c"
+    },
+    {
+      "scope": "local",
+      "relative_path": "tools/train-booking-core/scan-20260811090346-dc8391e426-2b8aa9c2/facade/modify_order/detail-raw.sh",
+      "size": 4479,
+      "sha256": "78710bb41c58fc3d61977663350d48bca67c2a8b459f0bdd8b4434a032f5085d"
+    },
+    {
+      "scope": "local",
+      "relative_path": "tools/train-booking-core/scan-20260811090346-dc8391e426-2b8aa9c2/facade/modify_order/summary-raw.sh",
+      "size": 4477,
+      "sha256": "b106f6356526953fd01e5189af886e22afeecfa10f7452426435b2d5150884d6"
+    },
+    {
+      "scope": "local",
+      "relative_path": "tools/train-booking-core/scan-20260811090346-dc8391e426-2b8aa9c2/facade/order/batch-query-order-info-raw.sh",
+      "size": 4372,
+      "sha256": "d3985415b9f984dbaf2251adb9a7ed6a906a8f2ced2431dfafcacc380ce2340c"
+    },
+    {
+      "scope": "local",
+      "relative_path": "tools/train-booking-core/scan-20260811090346-dc8391e426-2b8aa9c2/facade/order/batch-query-ticketing-count-raw.sh",
+      "size": 4377,
+      "sha256": "c52d1a657c953fee3a0153c949f646b9067577db3c01d139aec8ef19d4bee0b1"
+    },
+    {
+      "scope": "local",
+      "relative_path": "tools/train-booking-core/scan-20260811090346-dc8391e426-2b8aa9c2/facade/order/compare-ticketing-info-raw.sh",
+      "size": 4370,
+      "sha256": "930c711e1daede156bf8b3f8d9549a7696c9033cccba72e1499792cb1135c8de"
+    },
+    {
+      "scope": "local",
+      "relative_path": "tools/train-booking-core/scan-20260811090346-dc8391e426-2b8aa9c2/facade/order/get-order-machine-raw.sh",
+      "size": 4347,
+      "sha256": "f6d944ee6c2bd663d52754af9ea5cca34f9af1b2643881ecd715c367f7963f0e"
+    },
+    {
+      "scope": "local",
+      "relative_path": "tools/train-booking-core/scan-20260811090346-dc8391e426-2b8aa9c2/facade/order/get-passenger-info-raw.sh",
+      "size": 4391,
+      "sha256": "4cb0ca617f81b18ead517e8b64676e2807c511dc6e7570d47826d2112c825ec3"
+    },
+    {
+      "scope": "local",
+      "relative_path": "tools/train-booking-core/scan-20260811090346-dc8391e426-2b8aa9c2/facade/order/get-pay-serial-no-raw.sh",
+      "size": 4417,
+      "sha256": "8214f1680f5eb8b9abfdb8e125d045965282815e7280ba456a7691175349e181"
+    },
+    {
+      "scope": "local",
+      "relative_path": "tools/train-booking-core/scan-20260811090346-dc8391e426-2b8aa9c2/facade/order/lock-raw.sh",
+      "size": 4420,
+      "sha256": "013f80675696ec5740742ad0e6681da80ebcf7b1e78d023f73ed10f471dcf1c2"
+    },
+    {
+      "scope": "local",
+      "relative_path": "tools/train-booking-core/scan-20260811090346-dc8391e426-2b8aa9c2/facade/order/order-deal-done-raw.sh",
+      "size": 4411,
+      "sha256": "9f3845b9d1745e0c3b6738d25e60ab3b359fb647c96848ace7f32880c752821a"
+    },
+    {
+      "scope": "local",
+      "relative_path": "tools/train-booking-core/scan-20260811090346-dc8391e426-2b8aa9c2/facade/order/order-dealing-list-raw.sh",
+      "size": 4349,
+      "sha256": "8fb1bbaa78654b20287e60bc61aab2ca9cb29328f0003e959e8614dfde05b62c"
+    },
+    {
+      "scope": "local",
+      "relative_path": "tools/train-booking-core/scan-20260811090346-dc8391e426-2b8aa9c2/facade/order/order-detail-raw.sh",
+      "size": 4381,
+      "sha256": "a901a1c42dbcbea4e5c16d40cd7a0ab77a895214faa3d2c23bbe620fb9b17897"
+    },
+    {
+      "scope": "local",
+      "relative_path": "tools/train-booking-core/scan-20260811090346-dc8391e426-2b8aa9c2/facade/order/order-info-raw.sh",
+      "size": 4348,
+      "sha256": "c3bc59388679fa54cc1c6e7980e0f7dcf8c8df987d8b08d658a8f4a9b8c00c99"
+    },
+    {
+      "scope": "local",
+      "relative_path": "tools/train-booking-core/scan-20260811090346-dc8391e426-2b8aa9c2/facade/order/order-query-list-raw.sh",
+      "size": 5033,
+      "sha256": "9569d72ec231dd4b23c47aa780f4e1e9dc6eb15afa98a782027b122f8d0fb8ad"
+    },
+    {
+      "scope": "local",
+      "relative_path": "tools/train-booking-core/scan-20260811090346-dc8391e426-2b8aa9c2/facade/order/order-task-page-query-raw.sh",
+      "size": 4443,
+      "sha256": "1d58138e92803a1f8d181cea4322c20a313a63e7572a60803f45630e8d1e18a3"
+    },
+    {
+      "scope": "local",
+      "relative_path": "tools/train-booking-core/scan-20260811090346-dc8391e426-2b8aa9c2/facade/order/order-task-retry-raw.sh",
+      "size": 4388,
+      "sha256": "d403be9c14391b71e8d66e567dff115bfc263ce6559d8ac45039fc0b07d1775c"
+    },
+    {
+      "scope": "local",
+      "relative_path": "tools/train-booking-core/scan-20260811090346-dc8391e426-2b8aa9c2/facade/order/query-dashboard-data-raw.sh",
+      "size": 4364,
+      "sha256": "bfa1085c21f8a339049eebc2965c02d2ff726e1620ba80b594ea8044c8ca9d1c"
+    },
+    {
+      "scope": "local",
+      "relative_path": "tools/train-booking-core/scan-20260811090346-dc8391e426-2b8aa9c2/facade/order/query-distributing-count-raw.sh",
+      "size": 4326,
+      "sha256": "958f1134d2fb15621c7e72f2cc8ac29734e9b7c59334cad94240f9633e9a000c"
+    },
+    {
+      "scope": "local",
+      "relative_path": "tools/train-booking-core/scan-20260811090346-dc8391e426-2b8aa9c2/facade/order/query-group-by-collection-status-raw.sh",
+      "size": 4390,
+      "sha256": "9b686ad6db6eebf30b4e477fa8a2bbb6ebd41ca0ef34441b80f703628cd3a3ca"
+    },
+    {
+      "scope": "local",
+      "relative_path": "tools/train-booking-core/scan-20260811090346-dc8391e426-2b8aa9c2/facade/order/query-hk-pay-issue-success-order-raw.sh",
+      "size": 4344,
+      "sha256": "66e20b026fdd24a87e9f25b4bd43d85e92ac2a45400e0d05df849dc5c4bae368"
+    },
+    {
+      "scope": "local",
+      "relative_path": "tools/train-booking-core/scan-20260811090346-dc8391e426-2b8aa9c2/facade/order/query-lack-collection-page-list-raw.sh",
+      "size": 5074,
+      "sha256": "8a4c64590cd0e7cb61c321f46f7878b70fadd28540b8f691c055941c2345ec21"
+    },
+    {
+      "scope": "local",
+      "relative_path": "tools/train-booking-core/scan-20260811090346-dc8391e426-2b8aa9c2/facade/order/query-merchant-special-ability-raw.sh",
+      "size": 4386,
+      "sha256": "1e279485dffcfc67ed0589be841366ab7fd3f4129c94a02bbf406315ba4c0323"
+    },
+    {
+      "scope": "local",
+      "relative_path": "tools/train-booking-core/scan-20260811090346-dc8391e426-2b8aa9c2/facade/order/query-order-count-for-operator-raw.sh",
+      "size": 4436,
+      "sha256": "8bfc336b34d01f7f7e443fb2988af8a148f1b668f6ccc5fc4eb4a074d70d75b0"
+    },
+    {
+      "scope": "local",
+      "relative_path": "tools/train-booking-core/scan-20260811090346-dc8391e426-2b8aa9c2/facade/order/query-order-count-for-ticket-machine-raw.sh",
+      "size": 4429,
+      "sha256": "54c2e6b1879b83a45cb7abfa3a6b1db65de0f5bfbfba569c43fc7079c9ff722f"
+    },
+    {
+      "scope": "local",
+      "relative_path": "tools/train-booking-core/scan-20260811090346-dc8391e426-2b8aa9c2/facade/order/query-order-count-group-by-ability-raw.sh",
+      "size": 4367,
+      "sha256": "92581c2ecdf2064d493e73d1318fc3f128a0c2c75cc683aa34216aebd8c0e6ce"
+    },
+    {
+      "scope": "local",
+      "relative_path": "tools/train-booking-core/scan-20260811090346-dc8391e426-2b8aa9c2/facade/order/query-order-count-group-by-hour-raw.sh",
+      "size": 4373,
+      "sha256": "424fad225410164f5c3c1ac7e49f53d65303f73236ed1f549bedb830700919b2"
+    },
+    {
+      "scope": "local",
+      "relative_path": "tools/train-booking-core/scan-20260811090346-dc8391e426-2b8aa9c2/facade/order/query-order-count-raw.sh",
+      "size": 4354,
+      "sha256": "e130347fb03a88b98ad5edf9e5428222b1205447d0762728cace37b857d3dff1"
+    },
+    {
+      "scope": "local",
+      "relative_path": "tools/train-booking-core/scan-20260811090346-dc8391e426-2b8aa9c2/facade/order/query-order-info-raw.sh",
+      "size": 4359,
+      "sha256": "61ab875891e38b8bfd4addbd636c5d75e1104dd4eaafc52aac3bdb7dc26afa91"
+    },
+    {
+      "scope": "local",
+      "relative_path": "tools/train-booking-core/scan-20260811090346-dc8391e426-2b8aa9c2/facade/order/query-order-list-by-pay-serial-no-raw.sh",
+      "size": 4402,
+      "sha256": "a6eb034b723b3a7fde43a1216e8002d59626a0becf0680da6ee080502c7057a3"
+    },
+    {
+      "scope": "local",
+      "relative_path": "tools/train-booking-core/scan-20260811090346-dc8391e426-2b8aa9c2/facade/order/query-pending-handle-count-raw.sh",
+      "size": 4371,
+      "sha256": "a8dc4295c0ea6608d7fd77fe71cadd508b7435f7ee1129313bc56008d2e50659"
+    },
+    {
+      "scope": "local",
+      "relative_path": "tools/train-booking-core/scan-20260811090346-dc8391e426-2b8aa9c2/facade/order/reject-distribute-percent-page-info-raw.sh",
+      "size": 4451,
+      "sha256": "324fb2e9217cf3a5d91e027fe415420852dd277346c2a6f67823adbc59650206"
+    },
+    {
+      "scope": "local",
+      "relative_path": "tools/train-booking-core/scan-20260811090346-dc8391e426-2b8aa9c2/facade/order/update-pay-serial-no-raw.sh",
+      "size": 4453,
+      "sha256": "c5cc2c8745da6ba36dad4507d490843ccd5330092a84ed2304704de76e246005"
+    },
+    {
+      "scope": "local",
+      "relative_path": "tools/train-booking-core/scan-20260811090346-dc8391e426-2b8aa9c2/facade/payserialno/confirm-raw.sh",
+      "size": 4373,
+      "sha256": "a55789cbdec7689e0e1480d4888932a0bea6d0056195107b620c6ed28eb94d5e"
+    },
+    {
+      "scope": "local",
+      "relative_path": "tools/train-booking-core/scan-20260811090346-dc8391e426-2b8aa9c2/facade/payserialno/finish-raw.sh",
+      "size": 4366,
+      "sha256": "c2e087b2d903b06b0254b99fa05acd25b2fedce3d7bcad1fe6bf87d9e4ded8e2"
+    },
+    {
+      "scope": "local",
+      "relative_path": "tools/train-booking-core/scan-20260811090346-dc8391e426-2b8aa9c2/facade/payserialno/query-list-raw.sh",
+      "size": 4447,
+      "sha256": "f45a42e96ad4e75a9b5079fa5c28da2f9d800d438ec6debeb0eee614956081b0"
+    },
+    {
+      "scope": "local",
+      "relative_path": "tools/train-booking-core/scan-20260811090346-dc8391e426-2b8aa9c2/facade/remit/callback-raw.sh",
+      "size": 4503,
+      "sha256": "3fb06679989d6d6bc5a2b9d4e1e458aa499d8d2bbfbdeda106bbda1ee1238459"
+    },
+    {
+      "scope": "local",
+      "relative_path": "tools/train-booking-core/scan-20260811090346-dc8391e426-2b8aa9c2/facade/remit/query-remit-raw.sh",
+      "size": 4446,
+      "sha256": "e1d76c5fc1146ec775624622caec04cda2fc54b50804e34ff6803b557bb1d244"
+    },
+    {
+      "scope": "local",
+      "relative_path": "tools/train-booking-core/scan-20260811090346-dc8391e426-2b8aa9c2/facade/remit/remit-raw.sh",
+      "size": 4297,
+      "sha256": "37756e024574de5969b5ec85f22d9ee51f1ee623a689f96228c3d668a768ab83"
+    },
+    {
+      "scope": "local",
+      "relative_path": "tools/train-booking-core/scan-20260811090346-dc8391e426-2b8aa9c2/facade/remit/sync-customer-raw.sh",
+      "size": 4316,
+      "sha256": "da7afb7f727368386b1fa2c4a2544e253fe90fce46e55611be30a6b5d693224d"
+    },
+    {
+      "scope": "local",
+      "relative_path": "tools/train-booking-core/scan-20260811090346-dc8391e426-2b8aa9c2/facade/servicefee/appeal-raw.sh",
+      "size": 4328,
+      "sha256": "226bcb3d136659816afca6262450e16b777a2ff5d8f8de8f86dad108f1d06d65"
+    },
+    {
+      "scope": "local",
+      "relative_path": "tools/train-booking-core/scan-20260811090346-dc8391e426-2b8aa9c2/facade/servicefee/query-service-fee-raw.sh",
+      "size": 4493,
+      "sha256": "9c75290e5c5bbb77e9307d31582da93e0d322230d541f0c1ca03ae42a332d2ce"
+    },
+    {
+      "scope": "local",
+      "relative_path": "tools/train-booking-core/scan-20260811090346-dc8391e426-2b8aa9c2/facade/servicefee/service-fee-callback-raw.sh",
+      "size": 4545,
+      "sha256": "9185f8f4ef513951e15cbaa0f162a1c27ef39392d0b6207614b15e8864e67989"
+    },
+    {
+      "scope": "local",
+      "relative_path": "tools/train-booking-core/scan-20260811090346-dc8391e426-2b8aa9c2/facade/servicefee/sync-customer-raw.sh",
+      "size": 4347,
+      "sha256": "d90544eff65cfd72b6ac5190f146f7f183290709abf37563d30497fa3c1a8f5f"
+    },
+    {
+      "scope": "local",
+      "relative_path": "tools/train-booking-core/scan-20260811090346-dc8391e426-2b8aa9c2/facade/ticket/apply-occupy-issue-raw.sh",
+      "size": 4326,
+      "sha256": "8c4d257d5c02585aed0dfa0464ffd3d01d80e2536da58ff073eb214fdb252c2a"
+    },
+    {
+      "scope": "local",
+      "relative_path": "tools/train-booking-core/scan-20260811090346-dc8391e426-2b8aa9c2/facade/ticket/batch-issue-ticket-raw.sh",
+      "size": 4911,
+      "sha256": "5c16578aa7dcdd8b289b4f3bb4e7a11eb7be8eba61d138b62156eed9d875e8d6"
+    },
+    {
+      "scope": "local",
+      "relative_path": "tools/train-booking-core/scan-20260811090346-dc8391e426-2b8aa9c2/facade/ticket/batch-reject-issue-raw.sh",
+      "size": 4710,
+      "sha256": "25230144355f82d1b3c3434b288e6c6a72a79563597fee9d8fafdb496a173182"
+    },
+    {
+      "scope": "local",
+      "relative_path": "tools/train-booking-core/scan-20260811090346-dc8391e426-2b8aa9c2/facade/ticket/batch-revoke-order-raw.sh",
+      "size": 4437,
+      "sha256": "65e698ab6e878e9a79c9936931d30509fb80ee43beff76c8b95f87d059fc20fa"
+    },
+    {
+      "scope": "local",
+      "relative_path": "tools/train-booking-core/scan-20260811090346-dc8391e426-2b8aa9c2/facade/ticket/issue-ticket-raw.sh",
+      "size": 4839,
+      "sha256": "f082810848ccedf80c89cadcef8767741dbe3def75dcfac0ed1096cda24a56a5"
+    },
+    {
+      "scope": "local",
+      "relative_path": "tools/train-booking-core/scan-20260811090346-dc8391e426-2b8aa9c2/facade/ticket/modify-issue-ticket-raw.sh",
+      "size": 4686,
+      "sha256": "e123e136c24a1e9b385f96c5a518a32f9d852e773322150f7d0a16432b748a92"
+    },
+    {
+      "scope": "local",
+      "relative_path": "tools/train-booking-core/scan-20260811090346-dc8391e426-2b8aa9c2/facade/ticket/mtr-price-check-raw.sh",
+      "size": 4355,
+      "sha256": "14b0132465b71d3bf259efc11ad501cf490fb3790f8e65f96d90afb251820e11"
+    },
+    {
+      "scope": "local",
+      "relative_path": "tools/train-booking-core/scan-20260811090346-dc8391e426-2b8aa9c2/facade/ticket/occupy-issue-result-raw.sh",
+      "size": 4701,
+      "sha256": "25c0e004725c9a394ea165cd732494ea55b4176786cd462c665329c1635ae9d4"
+    },
+    {
+      "scope": "local",
+      "relative_path": "tools/train-booking-core/scan-20260811090346-dc8391e426-2b8aa9c2/facade/ticket/occupy-result-raw.sh",
+      "size": 4839,
+      "sha256": "50820e2f96726b3cf77abee386b4088fb51762bca2f0dec68b66fbc6c830c593"
+    },
+    {
+      "scope": "local",
+      "relative_path": "tools/train-booking-core/scan-20260811090346-dc8391e426-2b8aa9c2/facade/ticket/reject-issue-raw.sh",
+      "size": 4661,
+      "sha256": "c9e949a1df4c5a3fd53ba01bfddb10a52013074aacc2a7cb52a367ddbbe0355c"
+    },
+    {
+      "scope": "local",
+      "relative_path": "tools/train-booking-core/scan-20260811090346-dc8391e426-2b8aa9c2/facade/ticket/submit-ticket-image-raw.sh",
+      "size": 4420,
+      "sha256": "215471656407ba83d537a66412c6d3f1bda06aa69dc57d6ecf97e8b792a3db34"
+    },
+    {
+      "scope": "local",
+      "relative_path": "tools/train-booking-core/scan-20260811090346-dc8391e426-2b8aa9c2/facade/ticketmachine/mtr-ticket-machine-handle-raw.sh",
+      "size": 4390,
+      "sha256": "329649b80badd4b38d0c58e815e39539c548b8486ce221e3ef2955ede735aed0"
+    },
+    {
+      "scope": "local",
+      "relative_path": "tools/train-booking-core/scan-20260811090346-dc8391e426-2b8aa9c2/facade/ticketmachine/query-ticket-machine-handle-raw.sh",
+      "size": 4390,
+      "sha256": "fec2747334bc3593e724a7230aec8516f5aada22afbbe272188fa61b7e7419c5"
+    },
+    {
+      "scope": "local",
+      "relative_path": "tools/train-booking-core/scan-20260811090346-dc8391e426-2b8aa9c2/facade/trade/cancel-raw.sh",
+      "size": 4370,
+      "sha256": "bbc1791211fb9bc8c5f4c244fb7edb64db5bc4e421a8dce049dbd8b1efac77e0"
+    },
+    {
+      "scope": "local",
+      "relative_path": "tools/train-booking-core/scan-20260811090346-dc8391e426-2b8aa9c2/facade/trade/candidate-info-raw.sh",
+      "size": 4752,
+      "sha256": "66d2c983e0244a7bca0249e2e103c433c5bf96ad621671a86fb2fcdbe423d4e7"
+    },
+    {
+      "scope": "local",
+      "relative_path": "tools/train-booking-core/scan-20260811090346-dc8391e426-2b8aa9c2/facade/trade/create-order-raw.sh",
+      "size": 5305,
+      "sha256": "ba27f1ca50fd5eea127469a7652e1fce336ef38da5846930e1e07af902f567e3"
+    },
+    {
+      "scope": "local",
+      "relative_path": "tools/train-booking-core/scan-20260811090346-dc8391e426-2b8aa9c2/facade/trade/hk-dz-capacity-check-raw.sh",
+      "size": 4353,
+      "sha256": "772ba54273391e383d6fb4bec845c2af9ef52686414e655303906d3ec00b76b4"
+    },
+    {
+      "scope": "local",
+      "relative_path": "tools/train-booking-core/scan-20260811090346-dc8391e426-2b8aa9c2/facade/trade/inner-refund-change-raw.sh",
+      "size": 4921,
+      "sha256": "abc73328bb5f037c5b03ca81a8831175f1ffdd5cc7db29a8f3343d8213e5eb1a"
+    },
+    {
+      "scope": "local",
+      "relative_path": "tools/train-booking-core/scan-20260811090346-dc8391e426-2b8aa9c2/facade/trade/inquire-refund-change-raw.sh",
+      "size": 4912,
+      "sha256": "a38558b16563d2dc64cec8b9501d6aa65ebff32b6f2f59e0cd8fe7e609b6f9f4"
+    },
+    {
+      "scope": "local",
+      "relative_path": "tools/train-booking-core/scan-20260811090346-dc8391e426-2b8aa9c2/facade/trade/inquire-seat-count-raw.sh",
+      "size": 4482,
+      "sha256": "e30e235548c23ba24794ca5b835b71e5ba8406fcecbeefc42b62189fc150ac8b"
+    },
+    {
+      "scope": "local",
+      "relative_path": "tools/train-booking-core/scan-20260811090346-dc8391e426-2b8aa9c2/facade/trade/inquire-stop-info-raw.sh",
+      "size": 4442,
+      "sha256": "e0be326aa49486cb66d4dd2e74b9604d4ea2d190838f7949dc9639081dfe437c"
+    },
+    {
+      "scope": "local",
+      "relative_path": "tools/train-booking-core/scan-20260811090346-dc8391e426-2b8aa9c2/facade/trade/inquire-ticket-info-raw.sh",
+      "size": 4830,
+      "sha256": "70f9e0e38400f40ba0fd31c03c9966b01d05edb8d3b58369dc69fc2eaed99bad"
+    },
+    {
+      "scope": "local",
+      "relative_path": "tools/train-booking-core/scan-20260811090346-dc8391e426-2b8aa9c2/facade/trade/sale-date-query-raw.sh",
+      "size": 4299,
+      "sha256": "01cba455def3c65e8b38d8e53040b555af3608bd74caba73ee123e2fd875cbda"
+    },
+    {
+      "scope": "local",
+      "relative_path": "tools/train-booking-core/scan-20260811090346-dc8391e426-2b8aa9c2/facade/warning_order/detail-raw.sh",
+      "size": 4308,
+      "sha256": "875bbf3f2a8dda387663cef00c00f4d85d930acd1cda5bb0ddf4deb7f5188b9e"
+    },
+    {
+      "scope": "local",
+      "relative_path": "tools/train-booking-core/scan-20260811090346-dc8391e426-2b8aa9c2/facade/warning_order/page-info-raw.sh",
+      "size": 4567,
+      "sha256": "e92e1872da8e169435e50b295c267993f3e62884737c40d1ca77f1a777679f8d"
+    },
+    {
+      "scope": "local",
+      "relative_path": "tools/train-booking-core/scan-20260811090346-dc8391e426-2b8aa9c2/facade/warning_order/update-raw.sh",
+      "size": 4399,
+      "sha256": "2cead8866174b839cc71c9f4297208f59c3935b5dacc3ea70ff6607a10d949b2"
+    },
+    {
+      "scope": "local",
+      "relative_path": "tools/train-booking-core/scan-20260811090346-dc8391e426-2b8aa9c2/jobs/http/job/ability-time-out-cancel-job.sh",
+      "size": 4279,
+      "sha256": "cb30f8a7d232c998d58f2d53990768bee37bd85a2027b3c81ea32662b6f7388d"
+    },
+    {
+      "scope": "local",
+      "relative_path": "tools/train-booking-core/scan-20260811090346-dc8391e426-2b8aa9c2/jobs/http/job/clean-ticket-machine-order-job.sh",
+      "size": 4288,
+      "sha256": "f700ff5cfa4fc12494fb89c2e328e8a6dae189de74d1147213d8d820dc9d55ea"
+    },
+    {
+      "scope": "local",
+      "relative_path": "tools/train-booking-core/scan-20260811090346-dc8391e426-2b8aa9c2/jobs/http/job/distribution-single-order.sh",
+      "size": 4273,
+      "sha256": "4d58d173642eefee550f44083c0fd2e6cc33daa989326254c60092f4faa77978"
+    },
+    {
+      "scope": "local",
+      "relative_path": "tools/train-booking-core/scan-20260811090346-dc8391e426-2b8aa9c2/jobs/http/job/expire-occupy-apply.sh",
+      "size": 4255,
+      "sha256": "334d7fd6a43ae1ec7ae24f793e10c8f4074f948b3885e3df276af747890cb3e0"
+    },
+    {
+      "scope": "local",
+      "relative_path": "tools/train-booking-core/scan-20260811090346-dc8391e426-2b8aa9c2/jobs/http/job/inner-revoke-switch.sh",
+      "size": 4255,
+      "sha256": "777b0d2b08b660c819fca8f6119ef8d538b39f7f9a41bea270453dd5b0c5cf75"
+    },
+    {
+      "scope": "local",
+      "relative_path": "tools/train-booking-core/scan-20260811090346-dc8391e426-2b8aa9c2/jobs/http/job/inquire-callback.sh",
+      "size": 4246,
+      "sha256": "ad55e836a42f4367eba4cdc3bb4367c8f70a4eeeb6c699847ddb48e6e9119813"
+    },
+    {
+      "scope": "local",
+      "relative_path": "tools/train-booking-core/scan-20260811090346-dc8391e426-2b8aa9c2/jobs/http/job/inquire-capacity-reset-job.sh",
+      "size": 4276,
+      "sha256": "854302247a4455506e88639ff1d44fdd70997d0b5f6443ad6ba454e709fef33f"
+    },
+    {
+      "scope": "local",
+      "relative_path": "tools/train-booking-core/scan-20260811090346-dc8391e426-2b8aa9c2/jobs/http/job/inquire-collection-reset-job.sh",
+      "size": 4282,
+      "sha256": "79f993574c2455c22629f3c7a03eee822085afe33225bdba5f64bc17d4372194"
+    },
+    {
+      "scope": "local",
+      "relative_path": "tools/train-booking-core/scan-20260811090346-dc8391e426-2b8aa9c2/jobs/http/job/inquire-merchant-api.sh",
+      "size": 4258,
+      "sha256": "1c9b41144a768f98871ba588989a19acadaf31d45566493cdafebcf092b5037d"
+    },
+    {
+      "scope": "local",
+      "relative_path": "tools/train-booking-core/scan-20260811090346-dc8391e426-2b8aa9c2/jobs/http/job/inquire-refund-change-distribute-merchant-job.sh",
+      "size": 4333,
+      "sha256": "761b161af4f306d50e667fe1ba83846ab6456413a4fc63547e8389235d8098fd"
+    },
+    {
+      "scope": "local",
+      "relative_path": "tools/train-booking-core/scan-20260811090346-dc8391e426-2b8aa9c2/jobs/http/job/inquire-reset-merchant-ticketing-count.sh",
+      "size": 4312,
+      "sha256": "b8a1e26e6f11c22dae711a593c118b4342c5db631dae8b9c0a58cd7fb076c6f8"
+    },
+    {
+      "scope": "local",
+      "relative_path": "tools/train-booking-core/scan-20260811090346-dc8391e426-2b8aa9c2/jobs/http/job/inquire-timeout.sh",
+      "size": 4243,
+      "sha256": "2df80ae4a9517cb57ec2b14ea300ef0f26399abb2817e3b286f362d26ae98dcc"
+    },
+    {
+      "scope": "local",
+      "relative_path": "tools/train-booking-core/scan-20260811090346-dc8391e426-2b8aa9c2/jobs/http/job/issue-rule-policy-check.sh",
+      "size": 4267,
+      "sha256": "e32280ba03cea887adce644e4d9c82e5b6b6a3f75fb3c745e1a06b26e1dc354c"
+    },
+    {
+      "scope": "local",
+      "relative_path": "tools/train-booking-core/scan-20260811090346-dc8391e426-2b8aa9c2/jobs/http/job/lack-ticket-retry-job.sh",
+      "size": 4261,
+      "sha256": "6168437f029967d97c88d270cf92d98c5e945f7f3f4ca5fa9f48929b5bd20b90"
+    },
+    {
+      "scope": "local",
+      "relative_path": "tools/train-booking-core/scan-20260811090346-dc8391e426-2b8aa9c2/jobs/http/job/mtr-stop-exception-order-job.sh",
+      "size": 4282,
+      "sha256": "668c91c371d0b02344f5cfcb824f068b116fe0f6e5061ac8271c735bd202e558"
+    },
+    {
+      "scope": "local",
+      "relative_path": "tools/train-booking-core/scan-20260811090346-dc8391e426-2b8aa9c2/jobs/http/job/new-distribution-multiple-connect-order.sh",
+      "size": 4315,
+      "sha256": "12c06722a4ffcf043a22b4bb66b0fda785a691441a7d0230378c30f33f5aa1f8"
+    },
+    {
+      "scope": "local",
+      "relative_path": "tools/train-booking-core/scan-20260811090346-dc8391e426-2b8aa9c2/jobs/http/job/order-board-job.sh",
+      "size": 4243,
+      "sha256": "833dcf13892c2eeee0ef7338f063c48803591a8df47dba0bd95df06f9dd46521"
+    },
+    {
+      "scope": "local",
+      "relative_path": "tools/train-booking-core/scan-20260811090346-dc8391e426-2b8aa9c2/jobs/http/job/order-task-clean-job.sh",
+      "size": 4258,
+      "sha256": "f0b205152faffd79db9fc72a8c74858fd398842cb0564a7841abb36604363801"
+    },
+    {
+      "scope": "local",
+      "relative_path": "tools/train-booking-core/scan-20260811090346-dc8391e426-2b8aa9c2/jobs/http/job/order-task.sh",
+      "size": 4228,
+      "sha256": "a46c4e276ab0c5a8848baebf1a6023d6806b3e537606a2aff9cca99a8dfc4caa"
+    },
+    {
+      "scope": "local",
+      "relative_path": "tools/train-booking-core/scan-20260811090346-dc8391e426-2b8aa9c2/jobs/http/job/reject-order-distribute-incr-job.sh",
+      "size": 4294,
+      "sha256": "4561672ffe33d2266dd4dcdc3757b9bf2eb757e9debc5f6d46c8eb7ff91d29fb"
+    },
+    {
+      "scope": "local",
+      "relative_path": "tools/train-booking-core/scan-20260811090346-dc8391e426-2b8aa9c2/jobs/http/job/reset-collection-count-job.sh",
+      "size": 4276,
+      "sha256": "6273f1f8df7d01fdc63cf15323c922b520867a6b7c22f46bdd5d351ab5333a3c"
+    },
+    {
+      "scope": "local",
+      "relative_path": "tools/train-booking-core/scan-20260811090346-dc8391e426-2b8aa9c2/jobs/http/job/reset-merchant-all-ticketing-info-job.sh",
+      "size": 4309,
+      "sha256": "8f0483a36e79b240ed86e650c3c9c7fd18d624746be6c1d20986f947ca9bd328"
+    },
+    {
+      "scope": "local",
+      "relative_path": "tools/train-booking-core/scan-20260811090346-dc8391e426-2b8aa9c2/jobs/http/job/retry-callback-job.sh",
+      "size": 4252,
+      "sha256": "144f80ac9b80c5c7b085d7dfe9e3d2f6f074f9ec7def1f4610ae8ad85a88d4f9"
+    },
+    {
+      "scope": "local",
+      "relative_path": "tools/train-booking-core/scan-20260811090346-dc8391e426-2b8aa9c2/jobs/http/job/retry-create-order.sh",
+      "size": 4252,
+      "sha256": "92f510e2a431543b2b96f0da0afe8ed62dce7a6bb0ee1442687fa38a854349af"
+    },
+    {
+      "scope": "local",
+      "relative_path": "tools/train-booking-core/scan-20260811090346-dc8391e426-2b8aa9c2/jobs/http/job/retry-distribution-hk-order-job.sh",
+      "size": 4291,
+      "sha256": "05fc92c8136e6d3027ddc3e85bc1f0bb54cbe093b5fddcf42a9d27caefee7a3d"
+    },
+    {
+      "scope": "local",
+      "relative_path": "tools/train-booking-core/scan-20260811090346-dc8391e426-2b8aa9c2/jobs/http/job/retry-freeze.sh",
+      "size": 4234,
+      "sha256": "0f67d899cc77eb124f6bb5d97fb420e22ae1b6ed7b6f2ca37c713e6c85eac275"
+    },
+    {
+      "scope": "local",
+      "relative_path": "tools/train-booking-core/scan-20260811090346-dc8391e426-2b8aa9c2/jobs/http/job/retry-occupy-callback.sh",
+      "size": 4261,
+      "sha256": "540fed96cead4330587ca279f7160b6195c6b2ff8aa5bbcc5bb7b2047b26c035"
+    },
+    {
+      "scope": "local",
+      "relative_path": "tools/train-booking-core/scan-20260811090346-dc8391e426-2b8aa9c2/jobs/http/job/retry-remit-sync-customer.sh",
+      "size": 4273,
+      "sha256": "8d9608b30dbd8f955f079ecc4c12f528901f15c745f77d283817c5a9f80e9a99"
+    },
+    {
+      "scope": "local",
+      "relative_path": "tools/train-booking-core/scan-20260811090346-dc8391e426-2b8aa9c2/jobs/http/job/retry-remit.sh",
+      "size": 4231,
+      "sha256": "f7ce07474be8dbc09ac69886f4b0fc4daf58ee94141dd9d2caa45c1b42af72a0"
+    },
+    {
+      "scope": "local",
+      "relative_path": "tools/train-booking-core/scan-20260811090346-dc8391e426-2b8aa9c2/jobs/http/job/retry-service-fee-remit-sync-customer.sh",
+      "size": 4309,
+      "sha256": "97bead357c071ed5caeb1398b4137a83cd6109ceccb2134899c1e04bc7684538"
+    },
+    {
+      "scope": "local",
+      "relative_path": "tools/train-booking-core/scan-20260811090346-dc8391e426-2b8aa9c2/jobs/http/job/retry-service-fee-remit.sh",
+      "size": 4267,
+      "sha256": "9a4a3335649a8d4441f41502f55dc86ba533614a7a781fb84c49c057b995d73c"
+    },
+    {
+      "scope": "local",
+      "relative_path": "tools/train-booking-core/scan-20260811090346-dc8391e426-2b8aa9c2/jobs/http/job/revoke-new.sh",
+      "size": 4228,
+      "sha256": "d0d868d23981542b821fd6c4fe9691ffc15c8072cbb5d3890a635a6b75a994bb"
+    },
+    {
+      "scope": "local",
+      "relative_path": "tools/train-booking-core/scan-20260811090346-dc8391e426-2b8aa9c2/jobs/http/job/stat-train-order-transfer-hk.sh",
+      "size": 4282,
+      "sha256": "c20128602b539c92baf2c1a740000a8c5947f5fc07e59ff9fe9ab933759b1cdc"
+    },
+    {
+      "scope": "local",
+      "relative_path": "tools/train-booking-core/scan-20260811090346-dc8391e426-2b8aa9c2/jobs/http/job/stat-train-order-transfer-inner.sh",
+      "size": 4291,
+      "sha256": "9974b3266a73a3499c24599008a222ca50982ddd944158733805b3dbb2ef8979"
+    },
+    {
+      "scope": "local",
+      "relative_path": "tools/train-booking-core/scan-20260811090346-dc8391e426-2b8aa9c2/jobs/http/job/time-out-cancel-job.sh",
+      "size": 4255,
+      "sha256": "88d6aa206294e74b2bc87f87298b38ea26a14c272e22018e99a5e3e288f9384e"
+    },
+    {
+      "scope": "local",
+      "relative_path": "tools/train-booking-core/scan-20260811090346-dc8391e426-2b8aa9c2/jobs/http/job/train-order-info-simple-del.sh",
+      "size": 4279,
+      "sha256": "a671a51edd4b71858893a250d10326a6648050e0195785d443b971efc52a32e3"
+    },
+    {
+      "scope": "local",
+      "relative_path": "tools/train-booking-core/scan-20260811091050-dc8391e426-0a843ec3/README.md",
+      "size": 26273,
+      "sha256": "b412cec78982417762cdb272cb7529d7a72c96aae590603669b4cdce099c2d10"
+    },
+    {
+      "scope": "local",
+      "relative_path": "tools/train-booking-core/scan-20260811091050-dc8391e426-0a843ec3/_meta/scan-manifest.json",
+      "size": 144602,
+      "sha256": "eef3d9c2203504a4e5945888ecbd5637a5c2a04dd7dab9f6942c61c058e7a655"
+    },
+    {
+      "scope": "local",
+      "relative_path": "tools/train-booking-core/scan-20260811091050-dc8391e426-0a843ec3/_meta/tool-manifest.json",
+      "size": 77890,
+      "sha256": "4cbb16605ded1b18a4f982312540aec1af4ee0df38202f9071dbd355ebfecbcc"
+    },
+    {
+      "scope": "local",
+      "relative_path": "tools/train-booking-core/scan-20260811091050-dc8391e426-0a843ec3/_meta/v2-scriptgen-command.json",
+      "size": 681,
+      "sha256": "7e49c3f2d8cbaa8dbd614c25adaa9af4763cb6a7a0caf3349b89f0609687768c"
+    },
+    {
+      "scope": "local",
+      "relative_path": "tools/train-booking-core/scan-20260811091050-dc8391e426-0a843ec3/_meta/v2-scriptgen.stderr.log",
+      "size": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "scope": "local",
+      "relative_path": "tools/train-booking-core/scan-20260811091050-dc8391e426-0a843ec3/_meta/v2-scriptgen.stdout.log",
+      "size": 742,
+      "sha256": "ae370e160badb6c36ee222a953ddeeede2539bbda26f1a40cfb731568952203a"
+    },
+    {
+      "scope": "local",
+      "relative_path": "tools/train-booking-core/scan-20260811091050-dc8391e426-0a843ec3/facade/custom_info/detail-raw.sh",
+      "size": 4324,
+      "sha256": "85af1720ba20b8e715c9fc8d0bdcfd90db9eba0681457ccd52a1cff89c7ae436"
+    },
+    {
+      "scope": "local",
+      "relative_path": "tools/train-booking-core/scan-20260811091050-dc8391e426-0a843ec3/facade/custom_info/list-distinct-custom-type-raw.sh",
+      "size": 4339,
+      "sha256": "665d2fa47216451fd465d61099cc74ac372fa3ae190a7d8fd716e3dbd7bfe968"
+    },
+    {
+      "scope": "local",
+      "relative_path": "tools/train-booking-core/scan-20260811091050-dc8391e426-0a843ec3/facade/custom_info/page-query-custom-data-raw.sh",
+      "size": 4429,
+      "sha256": "9337f2e492d65f402de60da1dc1d2576f611ec46ec396e2f872e6dc3347171be"
+    },
+    {
+      "scope": "local",
+      "relative_path": "tools/train-booking-core/scan-20260811091050-dc8391e426-0a843ec3/facade/custom_info/query-custom-content-list-raw.sh",
+      "size": 4362,
+      "sha256": "5f0e5835b8b35197cc7847b911324d1d23a7f37a38425f9a8e58ddcb679732a5"
+    },
+    {
+      "scope": "local",
+      "relative_path": "tools/train-booking-core/scan-20260811091050-dc8391e426-0a843ec3/facade/custom_info/query-custom-type-list-raw.sh",
+      "size": 4330,
+      "sha256": "94204436139029f95e8d01987017939cde44a5b61962a658be950b35c8e9abb5"
+    },
+    {
+      "scope": "local",
+      "relative_path": "tools/train-booking-core/scan-20260811091050-dc8391e426-0a843ec3/facade/custom_info/save-or-update-custom-info-raw.sh",
+      "size": 4474,
+      "sha256": "2eb58bbf04e496f68f3c5db531e050e9666c2cd35bdc18b6b5f16f3a1aff4cd1"
+    },
+    {
+      "scope": "local",
+      "relative_path": "tools/train-booking-core/scan-20260811091050-dc8391e426-0a843ec3/facade/freeze/freeze-raw.sh",
+      "size": 4348,
+      "sha256": "1acf3b74f1c7ecd18ff4396517b1593c65b18e4e79687097aff22b8d72c2d868"
+    },
+    {
+      "scope": "local",
+      "relative_path": "tools/train-booking-core/scan-20260811091050-dc8391e426-0a843ec3/facade/freeze/query-freeze-raw.sh",
+      "size": 4453,
+      "sha256": "ab87bbd554f18ef6e5405fea36e7063220ca98eec7ba1b8c88622dc9ef4725a5"
+    },
+    {
+      "scope": "local",
+      "relative_path": "tools/train-booking-core/scan-20260811091050-dc8391e426-0a843ec3/facade/inquire/deal-candidate-info-raw.sh",
+      "size": 4733,
+      "sha256": "1cf2497d158ae2440873dde009a276b3fde477cf47558165f2c4befd3c138263"
+    },
+    {
+      "scope": "local",
+      "relative_path": "tools/train-booking-core/scan-20260811091050-dc8391e426-0a843ec3/facade/inquire/deal-inner-refund-change-ticket-raw.sh",
+      "size": 4750,
+      "sha256": "2723843fa57e99dda9382c1cea584ba5e6c379698710864b763fa39ef5f72fbb"
+    },
+    {
+      "scope": "local",
+      "relative_path": "tools/train-booking-core/scan-20260811091050-dc8391e426-0a843ec3/facade/inquire/deal-refund-change-raw.sh",
+      "size": 4715,
+      "sha256": "4cfbcd4b008945f8b84fe4b01793ea4f1196dd74bb6217f3337abb9b5ce05c89"
+    },
+    {
+      "scope": "local",
+      "relative_path": "tools/train-booking-core/scan-20260811091050-dc8391e426-0a843ec3/facade/inquire/deal-seat-count-raw.sh",
+      "size": 4489,
+      "sha256": "ab83303a29522426dc3e942cbc22eec4f5c412cccb754ccf883a669b045f8d84"
+    },
+    {
+      "scope": "local",
+      "relative_path": "tools/train-booking-core/scan-20260811091050-dc8391e426-0a843ec3/facade/inquire/deal-stop-info-raw.sh",
+      "size": 4390,
+      "sha256": "c356b189e2961d214957649c28a1d60d36e855323ff33ebec45eaed9613909c5"
+    },
+    {
+      "scope": "local",
+      "relative_path": "tools/train-booking-core/scan-20260811091050-dc8391e426-0a843ec3/facade/inquire/deal-ticket-info-raw.sh",
+      "size": 4396,
+      "sha256": "c55c12806707a09b31bd793b9f57055dc1e8274ba2d5d7d7a2d4c1f12357f51a"
+    },
+    {
+      "scope": "local",
+      "relative_path": "tools/train-booking-core/scan-20260811091050-dc8391e426-0a843ec3/facade/inquire/get-list-raw.sh",
+      "size": 4642,
+      "sha256": "cdd18c67c53544ce2b1e314e7262d853a40eb6c3cee6986c8d506ad6b7a597ba"
+    },
+    {
+      "scope": "local",
+      "relative_path": "tools/train-booking-core/scan-20260811091050-dc8391e426-0a843ec3/facade/inquire/query-collection-statistics-raw.sh",
+      "size": 4339,
+      "sha256": "820c7d03315438d1610cbd196ffb191179b38bc7618dfafb36921f5b4c26916b"
+    },
+    {
+      "scope": "local",
+      "relative_path": "tools/train-booking-core/scan-20260811091050-dc8391e426-0a843ec3/facade/inquire/query-inquire-count-raw.sh",
+      "size": 4433,
+      "sha256": "7fd888bf9a171db80c2f058474dda395a3a6db09d1dfb86558082281b10d35bc"
+    },
+    {
+      "scope": "local",
+      "relative_path": "tools/train-booking-core/scan-20260811091050-dc8391e426-0a843ec3/facade/inquire/query-merchant-ticketing-count-raw.sh",
+      "size": 4464,
+      "sha256": "b2988f14ce16b1da906501dfdb6b3cc5909cbb2e20e4459d4b3a3414f11acd85"
+    },
+    {
+      "scope": "local",
+      "relative_path": "tools/train-booking-core/scan-20260811091050-dc8391e426-0a843ec3/facade/interceptconfig/list-raw.sh",
+      "size": 4366,
+      "sha256": "d0955fcf12616e01676c5c36b8f67697b1743ac51db5f8aa0c60cbfa34ee89cc"
+    },
+    {
+      "scope": "local",
+      "relative_path": "tools/train-booking-core/scan-20260811091050-dc8391e426-0a843ec3/facade/interceptconfig/save-raw.sh",
+      "size": 4365,
+      "sha256": "03466a241c41089ad5aa1a6b8eed23e4058afe06d3ec73d5fdcb97aaf74df3d1"
+    },
+    {
+      "scope": "local",
+      "relative_path": "tools/train-booking-core/scan-20260811091050-dc8391e426-0a843ec3/facade/interceptorder/list-raw.sh",
+      "size": 4418,
+      "sha256": "96e62d1c2424ff0a0be651186bd9ccf7c42489b5869a8a3793bd3fb1e0b14d2c"
+    },
+    {
+      "scope": "local",
+      "relative_path": "tools/train-booking-core/scan-20260811091050-dc8391e426-0a843ec3/facade/modify_order/detail-raw.sh",
+      "size": 4479,
+      "sha256": "78710bb41c58fc3d61977663350d48bca67c2a8b459f0bdd8b4434a032f5085d"
+    },
+    {
+      "scope": "local",
+      "relative_path": "tools/train-booking-core/scan-20260811091050-dc8391e426-0a843ec3/facade/modify_order/summary-raw.sh",
+      "size": 4477,
+      "sha256": "b106f6356526953fd01e5189af886e22afeecfa10f7452426435b2d5150884d6"
+    },
+    {
+      "scope": "local",
+      "relative_path": "tools/train-booking-core/scan-20260811091050-dc8391e426-0a843ec3/facade/order/batch-query-order-info-raw.sh",
+      "size": 4372,
+      "sha256": "d3985415b9f984dbaf2251adb9a7ed6a906a8f2ced2431dfafcacc380ce2340c"
+    },
+    {
+      "scope": "local",
+      "relative_path": "tools/train-booking-core/scan-20260811091050-dc8391e426-0a843ec3/facade/order/batch-query-ticketing-count-raw.sh",
+      "size": 4377,
+      "sha256": "c52d1a657c953fee3a0153c949f646b9067577db3c01d139aec8ef19d4bee0b1"
+    },
+    {
+      "scope": "local",
+      "relative_path": "tools/train-booking-core/scan-20260811091050-dc8391e426-0a843ec3/facade/order/compare-ticketing-info-raw.sh",
+      "size": 4370,
+      "sha256": "930c711e1daede156bf8b3f8d9549a7696c9033cccba72e1499792cb1135c8de"
+    },
+    {
+      "scope": "local",
+      "relative_path": "tools/train-booking-core/scan-20260811091050-dc8391e426-0a843ec3/facade/order/get-order-machine-raw.sh",
+      "size": 4347,
+      "sha256": "f6d944ee6c2bd663d52754af9ea5cca34f9af1b2643881ecd715c367f7963f0e"
+    },
+    {
+      "scope": "local",
+      "relative_path": "tools/train-booking-core/scan-20260811091050-dc8391e426-0a843ec3/facade/order/get-passenger-info-raw.sh",
+      "size": 4391,
+      "sha256": "4cb0ca617f81b18ead517e8b64676e2807c511dc6e7570d47826d2112c825ec3"
+    },
+    {
+      "scope": "local",
+      "relative_path": "tools/train-booking-core/scan-20260811091050-dc8391e426-0a843ec3/facade/order/get-pay-serial-no-raw.sh",
+      "size": 4417,
+      "sha256": "8214f1680f5eb8b9abfdb8e125d045965282815e7280ba456a7691175349e181"
+    },
+    {
+      "scope": "local",
+      "relative_path": "tools/train-booking-core/scan-20260811091050-dc8391e426-0a843ec3/facade/order/lock-raw.sh",
+      "size": 4420,
+      "sha256": "013f80675696ec5740742ad0e6681da80ebcf7b1e78d023f73ed10f471dcf1c2"
+    },
+    {
+      "scope": "local",
+      "relative_path": "tools/train-booking-core/scan-20260811091050-dc8391e426-0a843ec3/facade/order/order-deal-done-raw.sh",
+      "size": 4411,
+      "sha256": "9f3845b9d1745e0c3b6738d25e60ab3b359fb647c96848ace7f32880c752821a"
+    },
+    {
+      "scope": "local",
+      "relative_path": "tools/train-booking-core/scan-20260811091050-dc8391e426-0a843ec3/facade/order/order-dealing-list-raw.sh",
+      "size": 4349,
+      "sha256": "8fb1bbaa78654b20287e60bc61aab2ca9cb29328f0003e959e8614dfde05b62c"
+    },
+    {
+      "scope": "local",
+      "relative_path": "tools/train-booking-core/scan-20260811091050-dc8391e426-0a843ec3/facade/order/order-detail-raw.sh",
+      "size": 4381,
+      "sha256": "a901a1c42dbcbea4e5c16d40cd7a0ab77a895214faa3d2c23bbe620fb9b17897"
+    },
+    {
+      "scope": "local",
+      "relative_path": "tools/train-booking-core/scan-20260811091050-dc8391e426-0a843ec3/facade/order/order-info-raw.sh",
+      "size": 4348,
+      "sha256": "c3bc59388679fa54cc1c6e7980e0f7dcf8c8df987d8b08d658a8f4a9b8c00c99"
+    },
+    {
+      "scope": "local",
+      "relative_path": "tools/train-booking-core/scan-20260811091050-dc8391e426-0a843ec3/facade/order/order-query-list-raw.sh",
+      "size": 5033,
+      "sha256": "9569d72ec231dd4b23c47aa780f4e1e9dc6eb15afa98a782027b122f8d0fb8ad"
+    },
+    {
+      "scope": "local",
+      "relative_path": "tools/train-booking-core/scan-20260811091050-dc8391e426-0a843ec3/facade/order/order-task-page-query-raw.sh",
+      "size": 4443,
+      "sha256": "1d58138e92803a1f8d181cea4322c20a313a63e7572a60803f45630e8d1e18a3"
+    },
+    {
+      "scope": "local",
+      "relative_path": "tools/train-booking-core/scan-20260811091050-dc8391e426-0a843ec3/facade/order/order-task-retry-raw.sh",
+      "size": 4388,
+      "sha256": "d403be9c14391b71e8d66e567dff115bfc263ce6559d8ac45039fc0b07d1775c"
+    },
+    {
+      "scope": "local",
+      "relative_path": "tools/train-booking-core/scan-20260811091050-dc8391e426-0a843ec3/facade/order/query-dashboard-data-raw.sh",
+      "size": 4364,
+      "sha256": "bfa1085c21f8a339049eebc2965c02d2ff726e1620ba80b594ea8044c8ca9d1c"
+    },
+    {
+      "scope": "local",
+      "relative_path": "tools/train-booking-core/scan-20260811091050-dc8391e426-0a843ec3/facade/order/query-distributing-count-raw.sh",
+      "size": 4326,
+      "sha256": "958f1134d2fb15621c7e72f2cc8ac29734e9b7c59334cad94240f9633e9a000c"
+    },
+    {
+      "scope": "local",
+      "relative_path": "tools/train-booking-core/scan-20260811091050-dc8391e426-0a843ec3/facade/order/query-group-by-collection-status-raw.sh",
+      "size": 4390,
+      "sha256": "9b686ad6db6eebf30b4e477fa8a2bbb6ebd41ca0ef34441b80f703628cd3a3ca"
+    },
+    {
+      "scope": "local",
+      "relative_path": "tools/train-booking-core/scan-20260811091050-dc8391e426-0a843ec3/facade/order/query-hk-pay-issue-success-order-raw.sh",
+      "size": 4344,
+      "sha256": "66e20b026fdd24a87e9f25b4bd43d85e92ac2a45400e0d05df849dc5c4bae368"
+    },
+    {
+      "scope": "local",
+      "relative_path": "tools/train-booking-core/scan-20260811091050-dc8391e426-0a843ec3/facade/order/query-lack-collection-page-list-raw.sh",
+      "size": 5074,
+      "sha256": "8a4c64590cd0e7cb61c321f46f7878b70fadd28540b8f691c055941c2345ec21"
+    },
+    {
+      "scope": "local",
+      "relative_path": "tools/train-booking-core/scan-20260811091050-dc8391e426-0a843ec3/facade/order/query-merchant-special-ability-raw.sh",
+      "size": 4386,
+      "sha256": "1e279485dffcfc67ed0589be841366ab7fd3f4129c94a02bbf406315ba4c0323"
+    },
+    {
+      "scope": "local",
+      "relative_path": "tools/train-booking-core/scan-20260811091050-dc8391e426-0a843ec3/facade/order/query-order-count-for-operator-raw.sh",
+      "size": 4436,
+      "sha256": "8bfc336b34d01f7f7e443fb2988af8a148f1b668f6ccc5fc4eb4a074d70d75b0"
+    },
+    {
+      "scope": "local",
+      "relative_path": "tools/train-booking-core/scan-20260811091050-dc8391e426-0a843ec3/facade/order/query-order-count-for-ticket-machine-raw.sh",
+      "size": 4429,
+      "sha256": "54c2e6b1879b83a45cb7abfa3a6b1db65de0f5bfbfba569c43fc7079c9ff722f"
+    },
+    {
+      "scope": "local",
+      "relative_path": "tools/train-booking-core/scan-20260811091050-dc8391e426-0a843ec3/facade/order/query-order-count-group-by-ability-raw.sh",
+      "size": 4367,
+      "sha256": "92581c2ecdf2064d493e73d1318fc3f128a0c2c75cc683aa34216aebd8c0e6ce"
+    },
+    {
+      "scope": "local",
+      "relative_path": "tools/train-booking-core/scan-20260811091050-dc8391e426-0a843ec3/facade/order/query-order-count-group-by-hour-raw.sh",
+      "size": 4373,
+      "sha256": "424fad225410164f5c3c1ac7e49f53d65303f73236ed1f549bedb830700919b2"
+    },
+    {
+      "scope": "local",
+      "relative_path": "tools/train-booking-core/scan-20260811091050-dc8391e426-0a843ec3/facade/order/query-order-count-raw.sh",
+      "size": 4354,
+      "sha256": "e130347fb03a88b98ad5edf9e5428222b1205447d0762728cace37b857d3dff1"
+    },
+    {
+      "scope": "local",
+      "relative_path": "tools/train-booking-core/scan-20260811091050-dc8391e426-0a843ec3/facade/order/query-order-info-raw.sh",
+      "size": 4359,
+      "sha256": "61ab875891e38b8bfd4addbd636c5d75e1104dd4eaafc52aac3bdb7dc26afa91"
+    },
+    {
+      "scope": "local",
+      "relative_path": "tools/train-booking-core/scan-20260811091050-dc8391e426-0a843ec3/facade/order/query-order-list-by-pay-serial-no-raw.sh",
+      "size": 4402,
+      "sha256": "a6eb034b723b3a7fde43a1216e8002d59626a0becf0680da6ee080502c7057a3"
+    },
+    {
+      "scope": "local",
+      "relative_path": "tools/train-booking-core/scan-20260811091050-dc8391e426-0a843ec3/facade/order/query-pending-handle-count-raw.sh",
+      "size": 4371,
+      "sha256": "a8dc4295c0ea6608d7fd77fe71cadd508b7435f7ee1129313bc56008d2e50659"
+    },
+    {
+      "scope": "local",
+      "relative_path": "tools/train-booking-core/scan-20260811091050-dc8391e426-0a843ec3/facade/order/reject-distribute-percent-page-info-raw.sh",
+      "size": 4451,
+      "sha256": "324fb2e9217cf3a5d91e027fe415420852dd277346c2a6f67823adbc59650206"
+    },
+    {
+      "scope": "local",
+      "relative_path": "tools/train-booking-core/scan-20260811091050-dc8391e426-0a843ec3/facade/order/update-pay-serial-no-raw.sh",
+      "size": 4453,
+      "sha256": "c5cc2c8745da6ba36dad4507d490843ccd5330092a84ed2304704de76e246005"
+    },
+    {
+      "scope": "local",
+      "relative_path": "tools/train-booking-core/scan-20260811091050-dc8391e426-0a843ec3/facade/payserialno/confirm-raw.sh",
+      "size": 4373,
+      "sha256": "a55789cbdec7689e0e1480d4888932a0bea6d0056195107b620c6ed28eb94d5e"
+    },
+    {
+      "scope": "local",
+      "relative_path": "tools/train-booking-core/scan-20260811091050-dc8391e426-0a843ec3/facade/payserialno/finish-raw.sh",
+      "size": 4366,
+      "sha256": "c2e087b2d903b06b0254b99fa05acd25b2fedce3d7bcad1fe6bf87d9e4ded8e2"
+    },
+    {
+      "scope": "local",
+      "relative_path": "tools/train-booking-core/scan-20260811091050-dc8391e426-0a843ec3/facade/payserialno/query-list-raw.sh",
+      "size": 4447,
+      "sha256": "f45a42e96ad4e75a9b5079fa5c28da2f9d800d438ec6debeb0eee614956081b0"
+    },
+    {
+      "scope": "local",
+      "relative_path": "tools/train-booking-core/scan-20260811091050-dc8391e426-0a843ec3/facade/remit/callback-raw.sh",
+      "size": 4503,
+      "sha256": "3fb06679989d6d6bc5a2b9d4e1e458aa499d8d2bbfbdeda106bbda1ee1238459"
+    },
+    {
+      "scope": "local",
+      "relative_path": "tools/train-booking-core/scan-20260811091050-dc8391e426-0a843ec3/facade/remit/query-remit-raw.sh",
+      "size": 4446,
+      "sha256": "e1d76c5fc1146ec775624622caec04cda2fc54b50804e34ff6803b557bb1d244"
+    },
+    {
+      "scope": "local",
+      "relative_path": "tools/train-booking-core/scan-20260811091050-dc8391e426-0a843ec3/facade/remit/remit-raw.sh",
+      "size": 4297,
+      "sha256": "37756e024574de5969b5ec85f22d9ee51f1ee623a689f96228c3d668a768ab83"
+    },
+    {
+      "scope": "local",
+      "relative_path": "tools/train-booking-core/scan-20260811091050-dc8391e426-0a843ec3/facade/remit/sync-customer-raw.sh",
+      "size": 4316,
+      "sha256": "da7afb7f727368386b1fa2c4a2544e253fe90fce46e55611be30a6b5d693224d"
+    },
+    {
+      "scope": "local",
+      "relative_path": "tools/train-booking-core/scan-20260811091050-dc8391e426-0a843ec3/facade/servicefee/appeal-raw.sh",
+      "size": 4328,
+      "sha256": "226bcb3d136659816afca6262450e16b777a2ff5d8f8de8f86dad108f1d06d65"
+    },
+    {
+      "scope": "local",
+      "relative_path": "tools/train-booking-core/scan-20260811091050-dc8391e426-0a843ec3/facade/servicefee/query-service-fee-raw.sh",
+      "size": 4493,
+      "sha256": "9c75290e5c5bbb77e9307d31582da93e0d322230d541f0c1ca03ae42a332d2ce"
+    },
+    {
+      "scope": "local",
+      "relative_path": "tools/train-booking-core/scan-20260811091050-dc8391e426-0a843ec3/facade/servicefee/service-fee-callback-raw.sh",
+      "size": 4545,
+      "sha256": "9185f8f4ef513951e15cbaa0f162a1c27ef39392d0b6207614b15e8864e67989"
+    },
+    {
+      "scope": "local",
+      "relative_path": "tools/train-booking-core/scan-20260811091050-dc8391e426-0a843ec3/facade/servicefee/sync-customer-raw.sh",
+      "size": 4347,
+      "sha256": "d90544eff65cfd72b6ac5190f146f7f183290709abf37563d30497fa3c1a8f5f"
+    },
+    {
+      "scope": "local",
+      "relative_path": "tools/train-booking-core/scan-20260811091050-dc8391e426-0a843ec3/facade/ticket/apply-occupy-issue-raw.sh",
+      "size": 4326,
+      "sha256": "8c4d257d5c02585aed0dfa0464ffd3d01d80e2536da58ff073eb214fdb252c2a"
+    },
+    {
+      "scope": "local",
+      "relative_path": "tools/train-booking-core/scan-20260811091050-dc8391e426-0a843ec3/facade/ticket/batch-issue-ticket-raw.sh",
+      "size": 4911,
+      "sha256": "5c16578aa7dcdd8b289b4f3bb4e7a11eb7be8eba61d138b62156eed9d875e8d6"
+    },
+    {
+      "scope": "local",
+      "relative_path": "tools/train-booking-core/scan-20260811091050-dc8391e426-0a843ec3/facade/ticket/batch-reject-issue-raw.sh",
+      "size": 4710,
+      "sha256": "25230144355f82d1b3c3434b288e6c6a72a79563597fee9d8fafdb496a173182"
+    },
+    {
+      "scope": "local",
+      "relative_path": "tools/train-booking-core/scan-20260811091050-dc8391e426-0a843ec3/facade/ticket/batch-revoke-order-raw.sh",
+      "size": 4437,
+      "sha256": "65e698ab6e878e9a79c9936931d30509fb80ee43beff76c8b95f87d059fc20fa"
+    },
+    {
+      "scope": "local",
+      "relative_path": "tools/train-booking-core/scan-20260811091050-dc8391e426-0a843ec3/facade/ticket/issue-ticket-raw.sh",
+      "size": 4839,
+      "sha256": "f082810848ccedf80c89cadcef8767741dbe3def75dcfac0ed1096cda24a56a5"
+    },
+    {
+      "scope": "local",
+      "relative_path": "tools/train-booking-core/scan-20260811091050-dc8391e426-0a843ec3/facade/ticket/modify-issue-ticket-raw.sh",
+      "size": 4686,
+      "sha256": "e123e136c24a1e9b385f96c5a518a32f9d852e773322150f7d0a16432b748a92"
+    },
+    {
+      "scope": "local",
+      "relative_path": "tools/train-booking-core/scan-20260811091050-dc8391e426-0a843ec3/facade/ticket/mtr-price-check-raw.sh",
+      "size": 4355,
+      "sha256": "14b0132465b71d3bf259efc11ad501cf490fb3790f8e65f96d90afb251820e11"
+    },
+    {
+      "scope": "local",
+      "relative_path": "tools/train-booking-core/scan-20260811091050-dc8391e426-0a843ec3/facade/ticket/occupy-issue-result-raw.sh",
+      "size": 4701,
+      "sha256": "25c0e004725c9a394ea165cd732494ea55b4176786cd462c665329c1635ae9d4"
+    },
+    {
+      "scope": "local",
+      "relative_path": "tools/train-booking-core/scan-20260811091050-dc8391e426-0a843ec3/facade/ticket/occupy-result-raw.sh",
+      "size": 4839,
+      "sha256": "50820e2f96726b3cf77abee386b4088fb51762bca2f0dec68b66fbc6c830c593"
+    },
+    {
+      "scope": "local",
+      "relative_path": "tools/train-booking-core/scan-20260811091050-dc8391e426-0a843ec3/facade/ticket/reject-issue-raw.sh",
+      "size": 4661,
+      "sha256": "c9e949a1df4c5a3fd53ba01bfddb10a52013074aacc2a7cb52a367ddbbe0355c"
+    },
+    {
+      "scope": "local",
+      "relative_path": "tools/train-booking-core/scan-20260811091050-dc8391e426-0a843ec3/facade/ticket/submit-ticket-image-raw.sh",
+      "size": 4420,
+      "sha256": "215471656407ba83d537a66412c6d3f1bda06aa69dc57d6ecf97e8b792a3db34"
+    },
+    {
+      "scope": "local",
+      "relative_path": "tools/train-booking-core/scan-20260811091050-dc8391e426-0a843ec3/facade/ticketmachine/mtr-ticket-machine-handle-raw.sh",
+      "size": 4390,
+      "sha256": "329649b80badd4b38d0c58e815e39539c548b8486ce221e3ef2955ede735aed0"
+    },
+    {
+      "scope": "local",
+      "relative_path": "tools/train-booking-core/scan-20260811091050-dc8391e426-0a843ec3/facade/ticketmachine/query-ticket-machine-handle-raw.sh",
+      "size": 4390,
+      "sha256": "fec2747334bc3593e724a7230aec8516f5aada22afbbe272188fa61b7e7419c5"
+    },
+    {
+      "scope": "local",
+      "relative_path": "tools/train-booking-core/scan-20260811091050-dc8391e426-0a843ec3/facade/trade/cancel-raw.sh",
+      "size": 4370,
+      "sha256": "bbc1791211fb9bc8c5f4c244fb7edb64db5bc4e421a8dce049dbd8b1efac77e0"
+    },
+    {
+      "scope": "local",
+      "relative_path": "tools/train-booking-core/scan-20260811091050-dc8391e426-0a843ec3/facade/trade/candidate-info-raw.sh",
+      "size": 4752,
+      "sha256": "66d2c983e0244a7bca0249e2e103c433c5bf96ad621671a86fb2fcdbe423d4e7"
+    },
+    {
+      "scope": "local",
+      "relative_path": "tools/train-booking-core/scan-20260811091050-dc8391e426-0a843ec3/facade/trade/create-order-raw.sh",
+      "size": 5305,
+      "sha256": "ba27f1ca50fd5eea127469a7652e1fce336ef38da5846930e1e07af902f567e3"
+    },
+    {
+      "scope": "local",
+      "relative_path": "tools/train-booking-core/scan-20260811091050-dc8391e426-0a843ec3/facade/trade/hk-dz-capacity-check-raw.sh",
+      "size": 4353,
+      "sha256": "772ba54273391e383d6fb4bec845c2af9ef52686414e655303906d3ec00b76b4"
+    },
+    {
+      "scope": "local",
+      "relative_path": "tools/train-booking-core/scan-20260811091050-dc8391e426-0a843ec3/facade/trade/inner-refund-change-raw.sh",
+      "size": 4921,
+      "sha256": "abc73328bb5f037c5b03ca81a8831175f1ffdd5cc7db29a8f3343d8213e5eb1a"
+    },
+    {
+      "scope": "local",
+      "relative_path": "tools/train-booking-core/scan-20260811091050-dc8391e426-0a843ec3/facade/trade/inquire-refund-change-raw.sh",
+      "size": 4912,
+      "sha256": "a38558b16563d2dc64cec8b9501d6aa65ebff32b6f2f59e0cd8fe7e609b6f9f4"
+    },
+    {
+      "scope": "local",
+      "relative_path": "tools/train-booking-core/scan-20260811091050-dc8391e426-0a843ec3/facade/trade/inquire-seat-count-raw.sh",
+      "size": 4482,
+      "sha256": "e30e235548c23ba24794ca5b835b71e5ba8406fcecbeefc42b62189fc150ac8b"
+    },
+    {
+      "scope": "local",
+      "relative_path": "tools/train-booking-core/scan-20260811091050-dc8391e426-0a843ec3/facade/trade/inquire-stop-info-raw.sh",
+      "size": 4442,
+      "sha256": "e0be326aa49486cb66d4dd2e74b9604d4ea2d190838f7949dc9639081dfe437c"
+    },
+    {
+      "scope": "local",
+      "relative_path": "tools/train-booking-core/scan-20260811091050-dc8391e426-0a843ec3/facade/trade/inquire-ticket-info-raw.sh",
+      "size": 4830,
+      "sha256": "70f9e0e38400f40ba0fd31c03c9966b01d05edb8d3b58369dc69fc2eaed99bad"
+    },
+    {
+      "scope": "local",
+      "relative_path": "tools/train-booking-core/scan-20260811091050-dc8391e426-0a843ec3/facade/trade/sale-date-query-raw.sh",
+      "size": 4299,
+      "sha256": "01cba455def3c65e8b38d8e53040b555af3608bd74caba73ee123e2fd875cbda"
+    },
+    {
+      "scope": "local",
+      "relative_path": "tools/train-booking-core/scan-20260811091050-dc8391e426-0a843ec3/facade/warning_order/detail-raw.sh",
+      "size": 4308,
+      "sha256": "875bbf3f2a8dda387663cef00c00f4d85d930acd1cda5bb0ddf4deb7f5188b9e"
+    },
+    {
+      "scope": "local",
+      "relative_path": "tools/train-booking-core/scan-20260811091050-dc8391e426-0a843ec3/facade/warning_order/page-info-raw.sh",
+      "size": 4567,
+      "sha256": "e92e1872da8e169435e50b295c267993f3e62884737c40d1ca77f1a777679f8d"
+    },
+    {
+      "scope": "local",
+      "relative_path": "tools/train-booking-core/scan-20260811091050-dc8391e426-0a843ec3/facade/warning_order/update-raw.sh",
+      "size": 4399,
+      "sha256": "2cead8866174b839cc71c9f4297208f59c3935b5dacc3ea70ff6607a10d949b2"
+    },
+    {
+      "scope": "local",
+      "relative_path": "tools/train-booking-core/scan-20260811091050-dc8391e426-0a843ec3/jobs/http/job/ability-time-out-cancel-job.sh",
+      "size": 4279,
+      "sha256": "cb30f8a7d232c998d58f2d53990768bee37bd85a2027b3c81ea32662b6f7388d"
+    },
+    {
+      "scope": "local",
+      "relative_path": "tools/train-booking-core/scan-20260811091050-dc8391e426-0a843ec3/jobs/http/job/clean-ticket-machine-order-job.sh",
+      "size": 4288,
+      "sha256": "f700ff5cfa4fc12494fb89c2e328e8a6dae189de74d1147213d8d820dc9d55ea"
+    },
+    {
+      "scope": "local",
+      "relative_path": "tools/train-booking-core/scan-20260811091050-dc8391e426-0a843ec3/jobs/http/job/distribution-single-order.sh",
+      "size": 4273,
+      "sha256": "4d58d173642eefee550f44083c0fd2e6cc33daa989326254c60092f4faa77978"
+    },
+    {
+      "scope": "local",
+      "relative_path": "tools/train-booking-core/scan-20260811091050-dc8391e426-0a843ec3/jobs/http/job/expire-occupy-apply.sh",
+      "size": 4255,
+      "sha256": "334d7fd6a43ae1ec7ae24f793e10c8f4074f948b3885e3df276af747890cb3e0"
+    },
+    {
+      "scope": "local",
+      "relative_path": "tools/train-booking-core/scan-20260811091050-dc8391e426-0a843ec3/jobs/http/job/inner-revoke-switch.sh",
+      "size": 4255,
+      "sha256": "777b0d2b08b660c819fca8f6119ef8d538b39f7f9a41bea270453dd5b0c5cf75"
+    },
+    {
+      "scope": "local",
+      "relative_path": "tools/train-booking-core/scan-20260811091050-dc8391e426-0a843ec3/jobs/http/job/inquire-callback.sh",
+      "size": 4246,
+      "sha256": "ad55e836a42f4367eba4cdc3bb4367c8f70a4eeeb6c699847ddb48e6e9119813"
+    },
+    {
+      "scope": "local",
+      "relative_path": "tools/train-booking-core/scan-20260811091050-dc8391e426-0a843ec3/jobs/http/job/inquire-capacity-reset-job.sh",
+      "size": 4276,
+      "sha256": "854302247a4455506e88639ff1d44fdd70997d0b5f6443ad6ba454e709fef33f"
+    },
+    {
+      "scope": "local",
+      "relative_path": "tools/train-booking-core/scan-20260811091050-dc8391e426-0a843ec3/jobs/http/job/inquire-collection-reset-job.sh",
+      "size": 4282,
+      "sha256": "79f993574c2455c22629f3c7a03eee822085afe33225bdba5f64bc17d4372194"
+    },
+    {
+      "scope": "local",
+      "relative_path": "tools/train-booking-core/scan-20260811091050-dc8391e426-0a843ec3/jobs/http/job/inquire-merchant-api.sh",
+      "size": 4258,
+      "sha256": "1c9b41144a768f98871ba588989a19acadaf31d45566493cdafebcf092b5037d"
+    },
+    {
+      "scope": "local",
+      "relative_path": "tools/train-booking-core/scan-20260811091050-dc8391e426-0a843ec3/jobs/http/job/inquire-refund-change-distribute-merchant-job.sh",
+      "size": 4333,
+      "sha256": "761b161af4f306d50e667fe1ba83846ab6456413a4fc63547e8389235d8098fd"
+    },
+    {
+      "scope": "local",
+      "relative_path": "tools/train-booking-core/scan-20260811091050-dc8391e426-0a843ec3/jobs/http/job/inquire-reset-merchant-ticketing-count.sh",
+      "size": 4312,
+      "sha256": "b8a1e26e6f11c22dae711a593c118b4342c5db631dae8b9c0a58cd7fb076c6f8"
+    },
+    {
+      "scope": "local",
+      "relative_path": "tools/train-booking-core/scan-20260811091050-dc8391e426-0a843ec3/jobs/http/job/inquire-timeout.sh",
+      "size": 4243,
+      "sha256": "2df80ae4a9517cb57ec2b14ea300ef0f26399abb2817e3b286f362d26ae98dcc"
+    },
+    {
+      "scope": "local",
+      "relative_path": "tools/train-booking-core/scan-20260811091050-dc8391e426-0a843ec3/jobs/http/job/issue-rule-policy-check.sh",
+      "size": 4267,
+      "sha256": "e32280ba03cea887adce644e4d9c82e5b6b6a3f75fb3c745e1a06b26e1dc354c"
+    },
+    {
+      "scope": "local",
+      "relative_path": "tools/train-booking-core/scan-20260811091050-dc8391e426-0a843ec3/jobs/http/job/lack-ticket-retry-job.sh",
+      "size": 4261,
+      "sha256": "6168437f029967d97c88d270cf92d98c5e945f7f3f4ca5fa9f48929b5bd20b90"
+    },
+    {
+      "scope": "local",
+      "relative_path": "tools/train-booking-core/scan-20260811091050-dc8391e426-0a843ec3/jobs/http/job/mtr-stop-exception-order-job.sh",
+      "size": 4282,
+      "sha256": "668c91c371d0b02344f5cfcb824f068b116fe0f6e5061ac8271c735bd202e558"
+    },
+    {
+      "scope": "local",
+      "relative_path": "tools/train-booking-core/scan-20260811091050-dc8391e426-0a843ec3/jobs/http/job/new-distribution-multiple-connect-order.sh",
+      "size": 4315,
+      "sha256": "12c06722a4ffcf043a22b4bb66b0fda785a691441a7d0230378c30f33f5aa1f8"
+    },
+    {
+      "scope": "local",
+      "relative_path": "tools/train-booking-core/scan-20260811091050-dc8391e426-0a843ec3/jobs/http/job/order-board-job.sh",
+      "size": 4243,
+      "sha256": "833dcf13892c2eeee0ef7338f063c48803591a8df47dba0bd95df06f9dd46521"
+    },
+    {
+      "scope": "local",
+      "relative_path": "tools/train-booking-core/scan-20260811091050-dc8391e426-0a843ec3/jobs/http/job/order-task-clean-job.sh",
+      "size": 4258,
+      "sha256": "f0b205152faffd79db9fc72a8c74858fd398842cb0564a7841abb36604363801"
+    },
+    {
+      "scope": "local",
+      "relative_path": "tools/train-booking-core/scan-20260811091050-dc8391e426-0a843ec3/jobs/http/job/order-task.sh",
+      "size": 4228,
+      "sha256": "a46c4e276ab0c5a8848baebf1a6023d6806b3e537606a2aff9cca99a8dfc4caa"
+    },
+    {
+      "scope": "local",
+      "relative_path": "tools/train-booking-core/scan-20260811091050-dc8391e426-0a843ec3/jobs/http/job/reject-order-distribute-incr-job.sh",
+      "size": 4294,
+      "sha256": "4561672ffe33d2266dd4dcdc3757b9bf2eb757e9debc5f6d46c8eb7ff91d29fb"
+    },
+    {
+      "scope": "local",
+      "relative_path": "tools/train-booking-core/scan-20260811091050-dc8391e426-0a843ec3/jobs/http/job/reset-collection-count-job.sh",
+      "size": 4276,
+      "sha256": "6273f1f8df7d01fdc63cf15323c922b520867a6b7c22f46bdd5d351ab5333a3c"
+    },
+    {
+      "scope": "local",
+      "relative_path": "tools/train-booking-core/scan-20260811091050-dc8391e426-0a843ec3/jobs/http/job/reset-merchant-all-ticketing-info-job.sh",
+      "size": 4309,
+      "sha256": "8f0483a36e79b240ed86e650c3c9c7fd18d624746be6c1d20986f947ca9bd328"
+    },
+    {
+      "scope": "local",
+      "relative_path": "tools/train-booking-core/scan-20260811091050-dc8391e426-0a843ec3/jobs/http/job/retry-callback-job.sh",
+      "size": 4252,
+      "sha256": "144f80ac9b80c5c7b085d7dfe9e3d2f6f074f9ec7def1f4610ae8ad85a88d4f9"
+    },
+    {
+      "scope": "local",
+      "relative_path": "tools/train-booking-core/scan-20260811091050-dc8391e426-0a843ec3/jobs/http/job/retry-create-order.sh",
+      "size": 4252,
+      "sha256": "92f510e2a431543b2b96f0da0afe8ed62dce7a6bb0ee1442687fa38a854349af"
+    },
+    {
+      "scope": "local",
+      "relative_path": "tools/train-booking-core/scan-20260811091050-dc8391e426-0a843ec3/jobs/http/job/retry-distribution-hk-order-job.sh",
+      "size": 4291,
+      "sha256": "05fc92c8136e6d3027ddc3e85bc1f0bb54cbe093b5fddcf42a9d27caefee7a3d"
+    },
+    {
+      "scope": "local",
+      "relative_path": "tools/train-booking-core/scan-20260811091050-dc8391e426-0a843ec3/jobs/http/job/retry-freeze.sh",
+      "size": 4234,
+      "sha256": "0f67d899cc77eb124f6bb5d97fb420e22ae1b6ed7b6f2ca37c713e6c85eac275"
+    },
+    {
+      "scope": "local",
+      "relative_path": "tools/train-booking-core/scan-20260811091050-dc8391e426-0a843ec3/jobs/http/job/retry-occupy-callback.sh",
+      "size": 4261,
+      "sha256": "540fed96cead4330587ca279f7160b6195c6b2ff8aa5bbcc5bb7b2047b26c035"
+    },
+    {
+      "scope": "local",
+      "relative_path": "tools/train-booking-core/scan-20260811091050-dc8391e426-0a843ec3/jobs/http/job/retry-remit-sync-customer.sh",
+      "size": 4273,
+      "sha256": "8d9608b30dbd8f955f079ecc4c12f528901f15c745f77d283817c5a9f80e9a99"
+    },
+    {
+      "scope": "local",
+      "relative_path": "tools/train-booking-core/scan-20260811091050-dc8391e426-0a843ec3/jobs/http/job/retry-remit.sh",
+      "size": 4231,
+      "sha256": "f7ce07474be8dbc09ac69886f4b0fc4daf58ee94141dd9d2caa45c1b42af72a0"
+    },
+    {
+      "scope": "local",
+      "relative_path": "tools/train-booking-core/scan-20260811091050-dc8391e426-0a843ec3/jobs/http/job/retry-service-fee-remit-sync-customer.sh",
+      "size": 4309,
+      "sha256": "97bead357c071ed5caeb1398b4137a83cd6109ceccb2134899c1e04bc7684538"
+    },
+    {
+      "scope": "local",
+      "relative_path": "tools/train-booking-core/scan-20260811091050-dc8391e426-0a843ec3/jobs/http/job/retry-service-fee-remit.sh",
+      "size": 4267,
+      "sha256": "9a4a3335649a8d4441f41502f55dc86ba533614a7a781fb84c49c057b995d73c"
+    },
+    {
+      "scope": "local",
+      "relative_path": "tools/train-booking-core/scan-20260811091050-dc8391e426-0a843ec3/jobs/http/job/revoke-new.sh",
+      "size": 4228,
+      "sha256": "d0d868d23981542b821fd6c4fe9691ffc15c8072cbb5d3890a635a6b75a994bb"
+    },
+    {
+      "scope": "local",
+      "relative_path": "tools/train-booking-core/scan-20260811091050-dc8391e426-0a843ec3/jobs/http/job/stat-train-order-transfer-hk.sh",
+      "size": 4282,
+      "sha256": "c20128602b539c92baf2c1a740000a8c5947f5fc07e59ff9fe9ab933759b1cdc"
+    },
+    {
+      "scope": "local",
+      "relative_path": "tools/train-booking-core/scan-20260811091050-dc8391e426-0a843ec3/jobs/http/job/stat-train-order-transfer-inner.sh",
+      "size": 4291,
+      "sha256": "9974b3266a73a3499c24599008a222ca50982ddd944158733805b3dbb2ef8979"
+    },
+    {
+      "scope": "local",
+      "relative_path": "tools/train-booking-core/scan-20260811091050-dc8391e426-0a843ec3/jobs/http/job/time-out-cancel-job.sh",
+      "size": 4255,
+      "sha256": "88d6aa206294e74b2bc87f87298b38ea26a14c272e22018e99a5e3e288f9384e"
+    },
+    {
+      "scope": "local",
+      "relative_path": "tools/train-booking-core/scan-20260811091050-dc8391e426-0a843ec3/jobs/http/job/train-order-info-simple-del.sh",
+      "size": 4279,
+      "sha256": "a671a51edd4b71858893a250d10326a6648050e0195785d443b971efc52a32e3"
+    }
+  ],
+  "derived_files": [
+    {
+      "scope": "knowledge",
+      "relative_path": "registry/systems.yaml",
+      "size": 279,
+      "sha256": "2bf276917464944dd9af2aa41c5de513a36dd31c918b80d158ce5c96a43dc3d8"
+    }
+  ],
+  "created_at": "2026-08-13T05:36:36.961679Z"
+}

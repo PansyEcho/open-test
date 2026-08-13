@@ -1,0 +1,97 @@
+questions:
+- question_id: question:core-lifecycle:realtime-fallback-policy
+  system_id: train-booking-core
+  title: 实时分单空结果和异常的降级收单口径
+  detail: 请分别确认哪些响应为空、哪些异常可降级，收单后的初始状态、任务类型及distribution_single_order最大处理时限。
+  affected_variant_ids: [variant:core-order-lifecycle:003-realtime-empty-fallback, variant:core-order-lifecycle:004-realtime-exception-fallback]
+  impact: high
+  status: open
+  answer: ''
+- question_id: question:core-lifecycle:occupy-payment-contract
+  system_id: train-booking-core
+  title: 占座成功后支付与申请出票的Fixture契约
+  detail: 请提供EBK/API占座支付流水、允许申请出票的时间窗口和成功回填必填字段，避免跳过支付前置直接调用applyOccupyIssue。
+  affected_variant_ids: [variant:core-order-lifecycle:005-occupy-ebk-full-success, variant:core-order-lifecycle:006-occupy-api-full-success]
+  impact: high
+  status: open
+  answer: ''
+- question_id: question:core-lifecycle:grab-sale-time
+  system_id: train-booking-core
+  title: 抢票非可售时间边界和稳定错误码
+  detail: 请明确非可售时间与临近发车的边界差异、时区和稳定错误码，确保两个变体不会命中同一分支。
+  affected_variant_ids: [variant:core-order-lifecycle:007-grab-approach-departure, variant:core-order-lifecycle:008-grab-outside-sale-time]
+  impact: high
+  status: open
+  answer: ''
+- question_id: question:core-lifecycle:occupy-second-dispatch
+  system_id: train-booking-core
+  title: 占座失败后二次分单规则
+  detail: 请提供最终失败与可换供应商/票机的原因枚举、优先级、最大重试次数及如何证明新供应商或票机确已变化。
+  affected_variant_ids: [variant:core-order-lifecycle:010-occupy-final-fail, variant:core-order-lifecycle:011-occupy-second-dispatch]
+  impact: high
+  status: open
+  answer: ''
+- question_id: question:core-lifecycle:issue-reject-routing
+  system_id: train-booking-core
+  title: 出票驳回四类路由的原因目录
+  detail: 请提供最终失败、换票机、换供应商、无票收单分别对应的原因与开关，并确认各类原交易状态和新交易/收单记录预期。
+  affected_variant_ids: [variant:core-order-lifecycle:012-reject-final-fail, variant:core-order-lifecycle:013-reject-switch-ticket-machine, variant:core-order-lifecycle:014-reject-switch-merchant, variant:core-order-lifecycle:015-reject-lack-ticket-accept]
+  impact: high
+  status: open
+  answer: ''
+- question_id: question:core-lifecycle:mtr-fixtures
+  system_id: train-booking-core
+  title: 普通港铁与12306电子票的可执行Fixture
+  detail: 请提供可用OD、供应商类型、电子票orderType、非联程非抢票约束和有效路线报价证据。
+  affected_variant_ids: [variant:core-order-lifecycle:016-mtr-standard, variant:core-order-lifecycle:017-mtr-12306-eticket]
+  impact: high
+  status: open
+  answer: ''
+- question_id: question:core-lifecycle:hkd-partial-missing
+  system_id: train-booking-core
+  title: 港币多乘客部分缺价的业务结果
+  detail: 代码存在缺价与报价fallback分支，请确认成人或儿童仅一人缺价时应失败、告警还是允许继续，以及异常fail-open是否为稳定口径。
+  affected_variant_ids: [variant:core-order-lifecycle:019-hkd-partial-price-missing]
+  impact: high
+  status: open
+  answer: ''
+- question_id: question:core-lifecycle:connect-compensation
+  system_id: train-booking-core
+  title: 联程批量驳回和部分失败补偿口径
+  detail: 请确认二程/三程的共同业务键、批量操作原子性、部分失败后补偿哪些程及new_distribution_multiple_connect_order的隔离参数。
+  affected_variant_ids: [variant:core-order-lifecycle:021-connect-two-leg, variant:core-order-lifecycle:022-connect-three-leg, variant:core-order-lifecycle:023-connect-batch-reject-compensation]
+  impact: high
+  status: open
+  answer: ''
+- question_id: question:core-lifecycle:locked-cancel-deadline
+  system_id: train-booking-core
+  title: 已锁占座单延迟取消的最终回填与截止时间
+  detail: 请确认供应商成功、失败或撤单回填后的最终状态、客户端是否再次通知及超时补偿deadline。
+  affected_variant_ids: [variant:core-order-lifecycle:027-cancel-occupying-locked-delay]
+  impact: high
+  status: open
+  answer: ''
+- question_id: question:core-lifecycle:timeout-job-scope
+  system_id: train-booking-core
+  title: 真实超时Job的隔离范围和稳定结果
+  detail: 请确认QA能否只命中唯一测试订单、影响预估过滤条件、各前态超时后的目标状态及无关订单零影响证据。
+  affected_variant_ids: [variant:core-order-lifecycle:028-timeout-job]
+  impact: high
+  status: open
+  answer: ''
+- question_id: question:core-lifecycle:fixture-cleanup-owner
+  system_id: train-booking-core
+  title: 31场景Fixture和安全清理责任
+  detail: 请确认订单、乘客、供应商、票机、港铁报价和联程数据的创建者、有效期、唯一业务号规则及失败后可恢复清理接口；Case禁止直删数据库或Redis。
+  affected_variant_ids: [all]
+  impact: high
+  status: open
+  answer: ''
+- question_id: question:core-lifecycle:oracle-catalog-snapshot
+  system_id: train-booking-core
+  title: 首批Oracle目录文件与READ池何时可绑定Snapshot
+  detail: Case已引用确认的资源和operation_id，但仍需生成完整catalog.yaml摘要并配置MySQL/TiDB READ池和Redis只读适配器后才能执行。
+  affected_variant_ids: [all]
+  impact: high
+  status: open
+  answer: ''

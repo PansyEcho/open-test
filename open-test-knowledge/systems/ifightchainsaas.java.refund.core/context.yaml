@@ -1,0 +1,7 @@
+system_id: ifightchainsaas.java.refund.core
+system_purpose: SaaS退票系统
+upstream_entry_narrative: SaaS交易booking.mng和SaaS退票的refund.mng
+last_scan_id: scan-20260813091939-9d02e3d62a-2d178fe9
+discovery_status: COMPLETED
+discovery_warning: ''
+updated_at: '2026-08-13T11:20:20.891988Z'
