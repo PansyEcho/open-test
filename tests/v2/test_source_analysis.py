@@ -658,7 +658,7 @@ def test_cli_scan_returns_task_id_and_persists_terminal_result(tmp_path: Path) -
         system_id="train-booking-core",
         environment="qa",
         types="facade,job",
-        facade_http_prefix="",
+        facade_http_prefix="http://servicegw.qa.example/gateway/train.booking/v2",
         job_rule=[],
         timeout=30,
     )

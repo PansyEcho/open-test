@@ -18,6 +18,7 @@
         <dal.version>3.6.6</dal.version>
         <cache.version>3.6.8</cache.version>
         <configcenter.version>6.2.8</configcenter.version>
+        <turbomq.version>4.2.5</turbomq.version>
     </properties>
 
     <dependencies>
@@ -30,6 +31,21 @@
             <groupId>com.ly.tcbase</groupId>
             <artifactId>cache</artifactId>
             <version>${cache.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.ly.turbomq</groupId>
+            <artifactId>turbomq-client</artifactId>
+            <version>${turbomq.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.ly.turbomq</groupId>
+            <artifactId>turbomq-common</artifactId>
+            <version>${turbomq.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.ly.turbomq</groupId>
+            <artifactId>turbomq-remoting</artifactId>
+            <version>${turbomq.version}</version>
         </dependency>
         <dependency>
             <groupId>com.ly.tcbase</groupId>

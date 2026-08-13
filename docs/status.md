@@ -2,7 +2,7 @@
 
 ## 当前Change
 
-`dsf-execution-and-oracles`
+`system-specific-knowledge-discovery-and-task-progress` 已完成并归档；`dsf-execution-and-oracles` 保持 `WAITING_QA_INPUT`
 
 ## 已完成任务
 
@@ -18,6 +18,10 @@
 - 对真实火车票项目验证 `TradeFacade#createOrder` 纵向扫描入口。
 - 完成源码扫描两轮OCR delegation审查，并修复3 High与后续全部Medium发现。
 - 完成 `TradeFacade#createOrder`、Validator、ServiceInvoker、OrderBuilder与订单状态机的纵向知识追踪。
+- 完成V2引导式控制台与系统接入：九个左侧工作区、DSF注册自动扫描、90/36/5/1/19真实目录、MQ单集群聚合、结果校验能力抽屉和可访问帮助提示。
+- 完成本地Labrador Token安全边界：回环读写、原子0600保存、旧文件读取前收紧、文件与目录符号链接拒绝、环境引用兼容及共享产物泄漏测试。
+- 完成资源连接与业务验证双状态持久化，临时连接失败不会抹掉Snapshot业务证据；旧MQ资源ID在探测、证据和Snapshot边界统一规范化为集群ID。
+- 已归档`v2-guided-console-and-system-onboarding`并同步8项主规格要求；创建并严格校验`generalized-knowledge-case-and-natural-language-workflow`的proposal、specs、design和tasks。
 - 完成Git知识发布、人工确认保护、高影响问题批次和SQLite重建闭环。
 - 增加最小权限AgentRunner、知识CLI与FastAPI入口。
 - 对真实项目生成10个知识节点、10条关系和2个高影响问题，港币规则证据定位到OrderBuilder第359和594行。
@@ -69,11 +73,44 @@
 - 远程审批恢复后重新执行完整本地门禁：V2 `131 passed`、legacy `43 passed`、Worker `40 passed`，OpenSpec strict、compileall和diff检查通过。
 - 重新提交24项QA只读探测任务 `task-9c4d0d8ad319466d`：订单主库、临时库和Redis当前为 `CONNECTED`；两个TiDB仍为 `BLOCKED / READ_POOL_UNAVAILABLE`；MQ保持源码发现和 `EFFECT_ONLY` 边界。
 - 创建最终内容绑定Snapshot `snapshot-c3a234935513e2d9452accbb`，绑定当前源码基线、知识、31个Case、真实工具、最新Worker Jar、Oracle目录和Skill摘要。
+- 完成通用深层知识追踪：Facade、Job、MQ Listener、状态Actor、Event Listener和共享公共逻辑均生成源码可证明草稿；`TradeFacade#createOrder`专用深层知识未退化。
+- 完成知识可信闭环：后台串行生成、最小权限本地Agent增强、集中去重问题、答案传播、开放High/Medium问题发布门禁、人工确认发布和SQLite索引重建。
+- 完成回归Case三阶段流程：场景矩阵草稿、人工确认、Case与执行步骤；非createOrder入口和缺少Fixture/结果校验能力的场景明确保持`BLOCKED`，31个人工Booking.Core Case未被覆盖。
+- 完成自然语言业务流程：业务描述生成唯一不可变预览、业务表单答案写回结构化约束、确认前不探测QA或创单、按当前系统结果校验能力解析资源、执行后可保存Git长期回归Case。
+- 完成V2控制台知识树、Case树、自然语言预览和动态帮助交互；浏览器验收确认90个Facade、36个Job、19条状态流转、单MQ集群、结果校验能力抽屉和390×844移动布局。
+- 完成`generalized-knowledge-case-and-natural-language-workflow` OCR delegation：初审4 High/1 Medium与唯一复审新增1 Medium全部接受并修复，无拒绝、仲裁或遗留High/Medium。
+- 已严格校验并归档`generalized-knowledge-case-and-natural-language-workflow`，同步新增`confirmed-case-generation`、`generalized-knowledge-workflow`和`natural-language-test-workflow`三份主规格。
+- 完成多系统注册表合并更新和系统内资产隔离；更新一个系统不会重写其他系统。
+- 完成可恢复系统归档与恢复：公开知识和本地派生资产分别归档，清单记录大小与SHA-256，恢复前校验冲突并重建SQLite。
+- 当前混合 `train-booking-core` 已归档为 `archive-20260813T053636-c4e3533e`，613个文件摘要全部复验通过，本地清单权限为0600；活动系统列表和SQLite索引已清空，未永久删除资产。
+- 本机scriptgen路径已保存到Git忽略的 `.opentest/settings.yaml`，动态启动诊断为 `READY / local_settings`；扫描提交前门禁不再依赖Uvicorn启动时环境变量。
+- 完成本地QA网关前缀、不含Token的Facade Curl结构API，以及跨进程全局排他长任务和页面刷新活动状态API。
+- 系统接入改为“先占用全局门禁、再发布配置与任务”的可回滚事务；扫描冲突或线程池提交失败不会留下半注册、半更新或本地设置漂移。
+- 成功扫描Manifest固化数据库、Redis与MQ资源事实；资源主表不再读取尚未成功扫描的工作区改动，旧Manifest和未扫描系统保留安全兼容行为。
+- 控制台系统切换增加请求代次与显式系统作用域，旧系统异步响应不会覆盖当前Token、扫描、资源或问题状态；Facade Curl对Token、JSON与URL使用POSIX单引号安全包装。
+- 完成多系统可靠性唯一复审收口：已有QA配置使用UTF-8原文快照精确恢复，回滚自身失败不再掩盖提交根因或泄漏全局锁，Booking校验目录安装失败不会遗留孤儿系统，同ID可以安全重试。
+- 重扫、扫描目录和Facade Curl的成功/失败回写均绑定请求系统代次；切换系统后迟到响应不会污染新系统页面。
+- 已严格校验并归档`multi-system-console-reliability-and-reset`，混合数据归档`archive-20260813T053636-c4e3533e`保持613个文件可验证恢复，活动系统列表为空。
+- 完成知识访谈和修订闭环：项目背景、上下游、分单关系和术语可集中维护，答案传播到受影响草稿；用户反馈先形成问题、影响清单和前后差异，人工确认后才发布Git知识并重建索引。
+- 自然语言缺少确认知识时返回带扫描、生成知识和回答问题入口的`BLOCKED`预览，确认前不读取Fixture、不探测资源且不创建订单。
+- 完成Booking.Core `TradeFacade#createOrder` MVP本地Fixture、Snapshot摘要和排他执行编排；完整请求只写Git忽略0600文件，API、任务和报告只返回安全摘要。
+- MVP固定校验真实DSF响应、MySQL主库、临时收单库、逐乘客Item和Redis；异步票机仅在明确观察到从空到有时记录MQ `EFFECT_ONLY`，TiDB保持`BLOCKED`。
+- Worker Jar或结果校验目录缺失时，MVP计划会在构造DSF客户端前保持`BLOCKED`，避免创建订单后才发现无法完成业务断言。
+- 完成知识与createOrder MVP的OCR delegation独立审查：初审1 High/3 Medium、唯一复审1 Medium全部接受并修复；Fixture非法JSON不再回显输入，无效乘客或跨系统历史Fixture均在QA前转为可恢复`BLOCKED`，知识访谈与修订状态机不会截断人工内容或接受重复回答。
+- 修复普通DSF扫描未使用系统本地QA网关的问题：显式扫描前缀优先，否则动态读取当前系统`qa_gateway_prefix`；Labrador Token不会进入扫描请求、任务、Manifest或scriptgen参数。
+- 修复扫描失败后的错误反馈链：失败或中断终态会停止扫描历史和Manifest读取，保存或重扫只有在任务完成且目录加载成功后才显示成功提示。
+- 对退款系统`ifightchainsaas.java.refund.core`完成不访问QA的真实源码重扫：34个Facade均生成可用真实工具，`CallbackFacade#refundApplyCallback`已恢复，扫描Manifest包含1个状态机。
+- 收紧Facade网关基础URL校验：畸形IPv6、非法端口、userinfo、query、fragment和空白均在scriptgen启动前转换为稳定领域错误。
+- 完成系统专属知识发现：上下文、业务术语、外部应用、统一问题和人工答案按`system_id`隔离保存，增量重扫保留人工含义并把变化项标记为待复核、消失项标记为过期。
+- 退款系统真实本地发现得到18个活跃候选（12个业务术语、6个外部应用）和19个开放问题；通用页面不再加载港币、EBK、票机、收单、HT或createOrder专属输入。
+- 完成知识目标工作区和统一进度契约：Facade按类/方法分层，点击叶子加载证据、草稿、正文、问题与反馈；扫描、知识、资源、Case、执行和索引任务均可持久化并恢复真实阶段与处理数量。
+- 完成侧边栏左侧收起/恢复、桌面端和390×844移动端验收；浏览器无横向溢出或控制台错误，本轮未访问QA。
+- 完成系统专属知识Change的OCR delegation审查：初审2个Medium均接受修复，唯一复审确认全部闭合且无新增High/Medium/Low；Java符号链接不能逃逸源码根，进度越界返回稳定领域异常。
 
 ## 进行中任务
 
-- 等待首条境内EBK金丝雀的本地QA Fixture、清理能力和新轮换Labrador Token注入后执行真实业务闭环。
-- 等待Booking.Core业务TiDB READ池恢复，再执行依赖TiDB硬断言的生命周期Case。
+- `system-specific-knowledge-discovery-and-task-progress` 已完成实现、真实退款源码验证、浏览器验收、OCR delegation审查和完整本地门禁，并归档。
+- `dsf-execution-and-oracles`处于`WAITING_QA_INPUT`，任务5.4保持未完成且不归档；等待Fixture与TiDB READ池期间不视为正在编码的核心change。
 
 ## 待开始任务
 
@@ -91,6 +128,40 @@
 - Booking.Core业务TiDB和分析TiDB均未暴露可验证READ池；安全Worker不允许回退WRITE，依赖TiDB硬断言的Case必须保持 `BLOCKED`。
 
 ## 最近验证结果
+
+- 2026-08-13：系统专属知识与任务进度最终门禁通过：定向`16 passed`、V2 `218 passed / 1 skipped`、legacy `43 passed`、Worker `45 passed`且离线Maven `BUILD SUCCESS`；OpenSpec strict、compileall、Node语法、`pip check`和diff检查通过。
+- 2026-08-13：本轮OCR delegation初审发现2个Medium并全部接受修复，唯一复审确认符号链接源码逃逸和进度异常类型问题均闭合，无新增High/Medium/Low；审查代理只读且未访问QA、Token、Fixture或网络。
+- 2026-08-13：真实退款系统本地发现得到18个活跃候选（12个术语、6个外部应用）和19个开放问题；所有活跃外部应用均绑定受影响入口，证据行号落在真实源码范围，`POST`和`UTF`已按增量规则标记为`STALE`。
+- 2026-08-13：桌面端与390×844浏览器验收通过：退款Facade三级目录、叶子详情、问题红点和侧栏收起恢复正常，浏览器warning/error为0；只调用本地GET接口，未访问QA。
+- 2026-08-13：DSF扫描网关与反馈热修最终门禁通过：定向`42 passed`、V2 `201 passed / 1 skipped`、legacy `43 passed`、Worker `45 passed`且Maven `BUILD SUCCESS`；OpenSpec strict、compileall、Node语法和diff检查通过。
+- 2026-08-13：本轮OCR delegation初审发现1个Medium并接受修复，唯一复审确认原问题闭合且High/Medium/Low均为0；审查代理只读，未访问QA、Token或Fixture。
+- 2026-08-13：退款系统真实本地重扫任务`task-23ec7bdb3dd3467b`完成，发布`scan-20260813090627-9d02e3d62a-5c2117d5`：34个Facade、34个ready工具、1个状态机；未访问QA。项目缺少`JobTypeEnum.java`，因此0个Job并保留独立`JOB_TYPE_ENUM_MISSING`提示。
+- 2026-08-13：严格校验后归档`knowledge-interview-and-create-order-mvp`，新增并同步`create-order-mvp`、`knowledge-interview-and-revision`和`natural-language-blocked-guidance`三份主规格。
+- 2026-08-13：知识访谈与createOrder MVP最终门禁通过：定向 `23 passed`、V2 `192 passed / 1 skipped`、legacy `43 passed`、Worker `45 passed`且离线Maven `BUILD SUCCESS`；OpenSpec strict、compileall、Node语法和diff检查通过，全程未访问QA。
+- 2026-08-13：本轮OCR delegation初审发现1 High/3 Medium，唯一复审新增1 Medium，全部接受并修复；无拒绝或仲裁项，审查代理只读且未访问QA、Token或Fixture正文。
+- 2026-08-13：知识访谈与createOrder MVP本地门禁通过：V2 `180 passed / 1 skipped`、legacy `43 passed`、Worker `45 passed`且离线Maven `BUILD SUCCESS`；OpenSpec strict、compileall、Node语法和diff检查通过。
+- 2026-08-13：MVP前置校验补强定向测试 `12 passed`；Worker Jar或校验目录缺失时计划在DSF前阻塞，未访问QA或创建订单。
+- 2026-08-13：当前代码浏览器验收通过：空系统引导、知识访谈/修订、MVP Fixture区、28个帮助提示和自然语言业务化阻塞文案正常，MVP执行按钮保持禁用，浏览器warning/error为0；未提交表单或访问QA。
+
+- 2026-08-13：多系统可靠性唯一复审发现2 High/4 Medium，全部接受并修复：本地设置快照类型、回滚异常锁释放、Booking固定目录孤儿、重扫未声明作用域、扫描目录和Curl迟到失败覆盖；无拒绝或仲裁项，审查代理只读且未访问QA、Token或Fixture。
+- 2026-08-13：最终门禁通过：V2 `169 passed / 1 skipped`、legacy `43 passed`、Worker `45 passed`且离线Maven `BUILD SUCCESS`；compileall、Node语法、diff检查和OpenSpec strict通过。
+- 2026-08-13：当前代码重启本机服务后实际浏览器验收通过：活动系统为空、scriptgen为READY，空系统表单展示4项字段错误，侧栏收起/恢复正常，浏览器warning/error为0；未访问QA或发送Curl。
+
+- 2026-08-13：多系统可靠性OCR delegation初审发现2 High/4 Medium，全部接受并修复：接入半状态、跨系统异步回写、归档预览/Run缺口、活动摘要发布窗口、资源绕过成功扫描边界、Curl shell转义；无拒绝或仲裁项。
+- 2026-08-13：审查修复后的完整门禁通过：V2 `165 passed / 1 skipped`、legacy `43 passed`、Worker `45 passed`且离线Maven `BUILD SUCCESS`；compileall、Node语法、注释AST检查、diff检查和OpenSpec strict通过。
+- 2026-08-13：审查修复后重启本机服务并实际浏览器复验，活动系统仍为空、归档`613 + 1`摘要与scriptgen READY正常、无横向溢出，浏览器错误日志为空；未访问QA或执行Curl。
+- 2026-08-13：多系统可靠性Change完整本地门禁通过：V2 `163 passed / 1 skipped`、legacy `43 passed`、Worker `45 passed`且离线Maven `BUILD SUCCESS`；compileall、Node语法、diff检查和OpenSpec strict通过。
+- 2026-08-13：最新版控制台实际浏览器验收通过：活动系统为空、归档显示`613个可恢复文件 + 1个审计元数据`、scriptgen为`READY / local_settings`、必填字段逐项提示、Toast、侧栏折叠恢复及390×844布局正常，浏览器错误日志为空；未访问QA或提交业务请求。
+- 2026-08-13：真实Booking.Core只读扫描在临时知识目录得到`90 Facade / 36 Job / 5 MQ Consumer / 1状态机 / 19流转 / 126工具 / 0 warning`；注册流程已补齐QA Job规则，扫描未写入活动系统。
+
+- 2026-08-12：通用知识与自然语言工作流最终验证通过：V2 `157 passed`、legacy `43 passed`、Worker `45 passed`且离线Maven `BUILD SUCCESS`；compileall、Node语法、diff检查通过；归档后OpenSpec strict `20 passed / 0 failed`。
+- 2026-08-12：通用工作流OCR delegation初审发现4 High/1 Medium，唯一复审确认原发现闭合并新增1 Medium；全部接受并修复。最终无遗留High/Medium、无拒绝或仲裁项，审查代理未修改文件、未访问QA、Token或Fixture。
+- 2026-08-12：浏览器验收完成知识后台生成、90/36/19目录、MQ单集群、结果校验能力抽屉、31个人工Case保护、非createOrder阻塞原因和390×844移动布局；未发布生产知识、未读取Fixture、未触发真实DSF调用。
+- 2026-08-12：引导式控制台OCR delegation初审为0 High、4 Medium、2 Low；全部接受并修复。唯一复审为0 High、1 Medium、0 Low，接受并修复符号链接路径问题；无拒绝或仲裁项，审查代理未修改文件、未访问QA或密钥。
+- 2026-08-12：最终引导式控制台验证通过：V2 `143 passed`、legacy `43 passed`、Worker `45 passed`且离线Maven `BUILD SUCCESS`；compileall、Node语法、diff检查和OpenSpec strict通过。本地现有`qa.yaml`权限已收紧为`0600`。
+- 2026-08-12：引导式控制台定向测试、完整V2测试和legacy测试通过：V2 `137 passed`、legacy `43 passed`；Worker新增MQ只读路由成功、无路由、异常脱敏和请求参数封闭测试后为 `45 passed`，离线Maven `BUILD SUCCESS`。
+- 2026-08-12：真实Booking Manifest页面投影为90个Facade、36个Job、5个MQ Consumer、1个状态机和19条流转；19个MQ Producer/Consumer交互按 `mq.nameSrvAddress` 聚合为1个集群资源。
+- 2026-08-12：新版控制台浏览器验收通过：九个左侧导航、全局与行级结果校验能力抽屉、知识树、18个可访问帮助提示、无QA JSON自然语言入口和390px移动布局均正常；未点击连接探测或触发QA业务执行，浏览器错误日志为空。
 
 - 2026-08-11：legacy测试 `43 passed`。
 - 2026-08-11：真实示例项目扫描得到90个Facade、36个Job和129个工具。
@@ -138,7 +209,11 @@
 
 ## 下一步
 
-- 在Git忽略的本地 `qa.yaml` 中准备首条 `domestic_ebk` Fixture与外部清理能力；请求和身份值不得写入聊天、Git、页面或报告。
+- 保持`dsf-execution-and-oracles`为`WAITING_QA_INPUT`；只有真实QA金丝雀和31个业务Case完成后才归档。
+- 在系统配置新增`travelsystem.java.dsf.supplychain.booking.core`，本地填写源码路径、Labrador Token和QA网关前缀并完成自动扫描。
+- 在知识页面填写项目背景与术语，回答并人工确认`TradeFacade#createOrder`知识；不得直接把`code_verified`升级为已确认。
+- 在测试执行页本地填写一份可成功的完整createOrder请求、预期EBK供应商和票机模式；请求和身份值不得写入聊天、Git、Snapshot或报告。
+- Fixture保存并完成知识确认后创建新Snapshot，先预览MVP计划；只有页面显示READY且用户显式确认时才发起首条真实QA创单。
 - 由QA资源维护方提供TiDB READ池或确认不承载核心生命周期数据；不允许使用WRITE池或MySQL结果冒充TiDB。
 - 在Uvicorn进程安全注入新Token并补齐Fixture后，先执行境内普通EBK创单与出票金丝雀，并用DSF、MySQL、临时库、Item、Redis及MQ效果证据交叉确认路由。
 - 金丝雀通过后按业务域分批执行31项；所有必需Oracle通过且OCR delegation收口后，才归档当前change并启动下一change。

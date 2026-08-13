@@ -516,6 +516,37 @@ def test_snapshot_changes_when_worker_or_oracle_catalog_changes(tmp_path: Path) 
     assert catalog_bound.oracle_catalog_digest
 
 
+def test_snapshot_normalizes_legacy_mq_resource_id_without_rewriting_case(tmp_path: Path) -> None:
+    """Snapshot应绑定MQ集群ID，同时保留人工Case中的旧Consumer兼容字段。
+
+    Args:
+        tmp_path: Pytest提供的隔离知识、扫描和Case目录。
+    """
+
+    service, _, snapshots = _execution_fixture(tmp_path)
+    case_root = snapshots.store.system_root("train-booking-core") / "cases/custom"
+    case_root.mkdir(parents=True)
+    case_path = case_root / "legacy-mq.yaml"
+    legacy_resource_id = "resource:train-booking-core:mq:consumer:jobmessagelistener"
+    case_path.write_text(
+        "steps:\n"
+        "- action: oracle\n"
+        "  oracle:\n"
+        f"    resource_id: {legacy_resource_id}\n",
+        encoding="utf-8",
+    )
+    snapshots.resource_id_resolver = lambda _system_id, resource_id: (
+        "resource:train-booking-core:mq:cluster:mq-namesrvaddress"
+        if resource_id == legacy_resource_id
+        else resource_id
+    )
+
+    snapshot = snapshots.create("train-booking-core")
+
+    assert snapshot.resource_ids == ["resource:train-booking-core:mq:cluster:mq-namesrvaddress"]
+    assert legacy_resource_id in case_path.read_text(encoding="utf-8")
+
+
 def test_snapshot_rejects_tampered_content_addressed_file(tmp_path: Path) -> None:
     """手工修改Snapshot摘要字段后读取必须因内容寻址身份不匹配而失败。"""
 

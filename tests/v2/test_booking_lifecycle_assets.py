@@ -15,9 +15,13 @@ from opentest.application.regression import RegressionSuiteReader
 from opentest.domain.models import KnowledgeNodeKind, KnowledgeStatus, LifecycleCaseStep
 
 
+ARCHIVE_ID = "archive-20260813T053636-c4e3533e"
 SYSTEM_ROOT = (
     Path(__file__).parents[2]
     / "open-test-knowledge"
+    / "archives"
+    / ARCHIVE_ID
+    / "knowledge"
     / "systems"
     / "train-booking-core"
 )
@@ -279,15 +283,15 @@ def test_case_oracles_match_public_catalog_and_mq_is_effect_only() -> None:
     catalog = _load_yaml(CATALOG_PATH)
     operations = catalog["operations"]
 
-    # 公开目录必须完整覆盖11个逻辑操作和resource.probe的5个独立资源绑定。
+    # 公开目录必须完整覆盖11个逻辑操作，并增加MQ集群只读路由探测绑定。
     operation_ids = {operation["operation_id"] for operation in operations}
     operation_contracts = {
         (operation["operation_id"], operation["resource_id"]): operation
         for operation in operations
     }
-    assert len(operations) == 15
+    assert len(operations) == 16
     assert len(operation_ids) == 11
-    assert len(operation_contracts) == 15
+    assert len(operation_contracts) == 16
     assert set(suite["approved_operation_ids"]) == operation_ids
 
     oracle_count = 0

@@ -1,8 +1,8 @@
 systems:
-- system_id: train-booking-core
-  name: 火车票预订核心
-  source_path: /Users/user/data/code/tc/travelsystem.java.dsf.supplychain.booking.core
+- system_id: ifightchainsaas.java.refund.core
+  name: SaaS退票核心
+  source_path: /Users/user/data/code/tc/ifightchainsaas.java.refund.core
   language: java
-  description: 一期DSF真实扫描与测试闭环目标系统
+  description: 由V2引导式控制台接入的DSF系统
   baseline: null
-  created_at: '2026-08-11T08:18:20.412140Z'
+  created_at: '2026-08-13T08:54:34.705914Z'

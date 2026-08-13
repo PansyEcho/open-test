@@ -226,6 +226,8 @@ __marimo__/
 .streamlit/secrets.toml
 # OpenTest V2 本地派生索引与任务状态
 open-test-knowledge/.opentest/
+# OpenTest 本机运行设置（scriptgen路径等）
+.opentest/
 
 # macOS Finder metadata
 .DS_Store

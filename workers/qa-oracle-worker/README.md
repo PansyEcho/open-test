@@ -4,7 +4,7 @@
 
 ## 安全约束
 
-- 固定 `system_id=train-booking-core`、`environment=qa`。
+- 固定 `system_id=travelsystem.java.dsf.supplychain.booking.core`、`environment=qa`。
 - 进程必须使用 `-DappName=travelsystem.java.dsf.supplychain.booking.core -Denvironment=qa`。
 - 启动器必须清除 `DAOKEAPPUK` 和 `DAOKEENV`；Worker 检测到继承值会拒绝运行。
 - 请求只能使用 `OperationCatalog` 中的 `operation_id + parameters`，不能传 SQL、JDBC URL、Host、密码、Token、Redis命令、MQ URL或HTTP路径。
@@ -25,12 +25,12 @@ META-INF/services/com.opentest.qaoracle.resource.CompanyResourceFactory
 
 适配器使用 `dal-new:3.6.6`、`cache:3.6.8` 和 `configcenterclient:6.2.8`，固定使用上述 appName 和 QA 环境，由SDK在Worker进程内从远程配置解析连接，不接收或输出连接地址与密钥：
 
-- `resource:train-booking-core:mysql:database:bookingcoredatasource`：订单主库 READ 池；
-- `resource:train-booking-core:mysql:database:temporderdatasource`：收单临时库 READ 池；
-- `resource:train-booking-core:tidb:database:bookingcoretidbdatasource`：业务 TiDB READ 池；
-- `resource:train-booking-core:tidb:database:bookingcoretidbanalydatasource`：分析 TiDB READ 池；
-- `resource:train-booking-core:redis:cache:redissionproxy`：Redis逻辑资源的只读包装。适配器不得直接暴露Redisson可写客户端；
-- `resource:train-booking-core:mq:consumer:jobmessagelistener`：源码发现的实际 Consumer 逻辑资源；一期不连接MQ，仅声明下游效果验证模式。
+- `resource:travelsystem.java.dsf.supplychain.booking.core:mysql:database:bookingcoredatasource`：订单主库 READ 池；
+- `resource:travelsystem.java.dsf.supplychain.booking.core:mysql:database:temporderdatasource`：收单临时库 READ 池；
+- `resource:travelsystem.java.dsf.supplychain.booking.core:tidb:database:bookingcoretidbdatasource`：业务 TiDB READ 池；
+- `resource:travelsystem.java.dsf.supplychain.booking.core:tidb:database:bookingcoretidbanalydatasource`：分析 TiDB READ 池；
+- `resource:travelsystem.java.dsf.supplychain.booking.core:redis:cache:redissionproxy`：Redis逻辑资源的只读包装。适配器不得直接暴露Redisson可写客户端；
+- `resource:travelsystem.java.dsf.supplychain.booking.core:mq:consumer:jobmessagelistener`：源码发现的实际 Consumer 逻辑资源；一期不连接MQ，仅声明下游效果验证模式。
 
 数据库映射来自 booking.core 的 `bookingcore-db-beans.xml`：订单主库、临时库、业务TiDB和分析TiDB分别固定到
 `TETravelTrainSupplychainOrder`、`TETravelTrainScTempOrder`、`TETravelTrainSupplychainOrder_tidb` 和
@@ -43,7 +43,7 @@ META-INF/services/com.opentest.qaoracle.resource.CompanyResourceFactory
 
 ## 固定操作目录
 
-Git知识库中的 `open-test-knowledge/systems/train-booking-core/oracles/catalog.yaml` 是不含SQL、Key模板或连接信息的公开目录。内置目录固定为15个
+Python包中的 `opentest/assets/booking_core_validation_catalog.yaml` 是不含SQL、Key模板或连接信息的交付模板；注册Booking.Core后会原子复制到对应系统知识目录。内置目录固定为16个
 `operation_id/resource_id` 复合绑定、11个唯一 `operation_id`：
 
 | operation_id | 资源 | 请求参数 | 安全投影/结果 |
@@ -71,9 +71,9 @@ Worker 会在解析并验证 catalog 后重新计算文件摘要；该摘要与�
 ```json
 {
   "request_id": "req-001",
-  "system_id": "train-booking-core",
+  "system_id": "travelsystem.java.dsf.supplychain.booking.core",
   "environment": "qa",
-  "resource_id": "resource:train-booking-core:mysql:database:bookingcoredatasource",
+  "resource_id": "resource:travelsystem.java.dsf.supplychain.booking.core:mysql:database:bookingcoredatasource",
   "operation_id": "order.primary_detail",
   "parameters": {
     "order_serial_no": "HT...",
@@ -88,10 +88,10 @@ Worker 会在解析并验证 catalog 后重新计算文件摘要；该摘要与�
 
 ```yaml
 schema_version: 1
-system_id: train-booking-core
+system_id: travelsystem.java.dsf.supplychain.booking.core
 operations:
   - operation_id: order.primary_detail
-    resource_id: resource:train-booking-core:mysql:database:bookingcoredatasource
+    resource_id: resource:travelsystem.java.dsf.supplychain.booking.core:mysql:database:bookingcoredatasource
     kind: mysql
     title: 订单主表状态查询
     parameter_names:

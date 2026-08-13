@@ -15,6 +15,9 @@ from opentest.domain.errors import KnowledgeValidationError
 from opentest.domain.models import LocalEnvironmentDefinition, OracleRequest
 
 
+BOOKING_CORE_SYSTEM_ID = "travelsystem.java.dsf.supplychain.booking.core"
+
+
 def _client_fixture(tmp_path: Path, runner: Any) -> QaWorkerClient:
     """创建最小Worker Jar、操作目录和可注入进程执行器。"""
 
@@ -30,7 +33,7 @@ def _request(**overrides: Any) -> OracleRequest:
 
     payload = {
         "oracle_id": "oracle:order-primary",
-        "system_id": "train-booking-core",
+        "system_id": BOOKING_CORE_SYSTEM_ID,
         "kind": "mysql",
         "connection": "booking-main-mysql",
         "operation": "order.primary_detail",
@@ -44,7 +47,7 @@ def _request(**overrides: Any) -> OracleRequest:
 def _environment(name: str = "qa") -> LocalEnvironmentDefinition:
     """创建不含数据库连接参数的本地环境范围定义。"""
 
-    return LocalEnvironmentDefinition(system_id="train-booking-core", environment=name)
+    return LocalEnvironmentDefinition(system_id=BOOKING_CORE_SYSTEM_ID, environment=name)
 
 
 def test_worker_client_uses_file_protocol_and_returns_projected_value(tmp_path: Path, monkeypatch) -> None:

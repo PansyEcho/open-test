@@ -1,4 +1,0 @@
-interface:
-  display_name: "Train Booking Core"
-  short_description: "Query train booking business rules and flows"
-  default_prompt: "Use $train-booking-core to explain or test a train booking business flow."

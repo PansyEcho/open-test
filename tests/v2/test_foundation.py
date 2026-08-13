@@ -194,14 +194,17 @@ def test_second_task_manager_does_not_interrupt_live_owner(tmp_path: Path) -> No
     assert first.get(task.task_id).status == TaskStatus.COMPLETED
 
 
-def test_store_rejects_second_system_and_preserves_manual_markdown(tmp_path: Path) -> None:
-    """一期存储应拒绝第二系统，并在自动更新时保留人工补充内容。"""
+def test_store_supports_second_system_and_preserves_manual_markdown(tmp_path: Path) -> None:
+    """存储应隔离注册第二系统，并在自动更新时保留人工补充内容。"""
 
     store, _ = _registered_store(tmp_path)
     second_source = tmp_path / "second-source"
     second_source.mkdir()
-    with pytest.raises(ScopeViolationError):
-        store.register_system(SystemDefinition(system_id="settlement-core", name="结算", source_path=str(second_source)))
+    second = store.register_system(
+        SystemDefinition(system_id="settlement-core", name="结算", source_path=str(second_source))
+    )
+    assert [item.system_id for item in store.list_systems()] == ["settlement-core", "train-booking-core"]
+    assert second.source_path == str(second_source.resolve())
 
     facade, _ = _write_sample_graph(store)
     path = store.node_path(facade)
@@ -216,8 +219,8 @@ def test_store_rejects_second_system_and_preserves_manual_markdown(tmp_path: Pat
     assert updated.count("<!-- kb:auto-start -->") == 1
 
 
-def test_store_rejects_manual_multi_system_registry(tmp_path: Path) -> None:
-    """人工编辑YAML加入第二系统时，读取和索引边界也必须拒绝越过一期范围。"""
+def test_store_reads_manual_multi_system_registry_and_indexes_each_scope(tmp_path: Path) -> None:
+    """人工加入合法第二系统时，读取和索引应保持每个系统独立范围。"""
 
     store, source = _registered_store(tmp_path)
     second_source = tmp_path / "second-source"
@@ -230,10 +233,11 @@ def test_store_rejects_manual_multi_system_registry(tmp_path: Path) -> None:
     }
     store.registry_path.write_text(json.dumps(registry_payload, ensure_ascii=False), encoding="utf-8")
 
-    with pytest.raises(ScopeViolationError):
-        store.list_systems()
-    with pytest.raises(ScopeViolationError):
-        SqliteKnowledgeIndex(store.root / ".opentest" / "index.sqlite").rebuild(store)
+    systems = store.list_systems()
+    counts = SqliteKnowledgeIndex(store.root / ".opentest" / "index.sqlite").rebuild(store)
+
+    assert [item.system_id for item in systems] == ["settlement-core", "train-booking-core"]
+    assert counts["systems"] == 2
 
 
 def test_node_paths_are_collision_safe_and_legacy_body_is_preserved(tmp_path: Path) -> None:
