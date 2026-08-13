@@ -1,0 +1,598 @@
+openspec/changes/archive/2026-08-13-dsf-scan-gateway-and-task-feedback-fix/specs/runtime-scanner-settings/spec.md
+  s_dd6ae313b13d0d::t_2fa29369d94417 1-18
+openspec/specs/runtime-scanner-settings/spec.md
+  s_dd6ae313b13d0d::t_125d01b25dfa48 1-25
+  s_dd6ae313b13d0d::t_2fa29369d94417 26-42
+open-test-knowledge/systems/ifightchainsaas.java.refund.core/references/terms/ForceUnlockEnum-3615b79c055749d3.yaml
+  s_dd6ae313b13d0d::t_07cfd2d054e6f8 31
+  s_dd6ae313b13d0d::t_f89bb1339f2d19 1-30
+openspec/specs/console-reliability/spec.md
+  s_dd6ae313b13d0d::t_125d01b25dfa48 1-41
+  s_dd6ae313b13d0d::t_2fa29369d94417 42-58
+open-test-knowledge/systems/ifightchainsaas.java.refund.core/references/terms/RefundOrderStateEnum-7eda536df67e3114.yaml
+  s_dd6ae313b13d0d::t_07cfd2d054e6f8 53
+  s_dd6ae313b13d0d::t_f89bb1339f2d19 1-52
+open-test-knowledge/systems/ifightchainsaas.java.refund.core/references/terms/RefundFeeTypeEnum-838ff1a5818df5c8.yaml
+  s_dd6ae313b13d0d::t_07cfd2d054e6f8 51
+  s_dd6ae313b13d0d::t_f89bb1339f2d19 1-50
+openspec/specs/confirmed-case-generation/spec.md
+  s_dd6ae313b13d0d::t_7dc97e6fea1450 1-33
+open-test-knowledge/systems/ifightchainsaas.java.refund.core/references/terms/FeeTypeEnum-ff55b037cd227360.yaml
+  s_dd6ae313b13d0d::t_07cfd2d054e6f8 31
+  s_dd6ae313b13d0d::t_f89bb1339f2d19 1-30
+open-test-knowledge/systems/ifightchainsaas.java.refund.core/references/external-applications/LockClient-840a9781b2509dbe.yaml
+  s_dd6ae313b13d0d::t_07cfd2d054e6f8 11-13,17-19,21,55,57
+  s_dd6ae313b13d0d::t_f89bb1339f2d19 1-10,14-16,20,22-54,56
+tests/v2/test_system_specific_knowledge_progress.py
+  s_dd6ae313b13d0d::t_8a812bbe0971b0 574,576,579,581-582,585
+  s_dd6ae313b13d0d::t_6206cdc2d04c34 561,563-565
+  s_dd6ae313b13d0d::t_0e69d539b35ed0 6,44-69,591-651
+  s_dd6ae313b13d0d::t_b3510197ea463f 173-203
+  s_dd6ae313b13d0d::t_f4bddd832080fb 272-273
+  s_dd6ae313b13d0d::t_fbf8f940457db6 507
+  s_dd6ae313b13d0d::t_76744dda01690d 212-215,230,516-521
+  s_dd6ae313b13d0d::t_aa1074d0ec9f45 21-22,204-211,216-229,231-245,247-271,274-275,372-420
+  s_dd6ae313b13d0d::t_1b1b1c7b594813 1-5,7-14,17-19,23-36,38-43,70-125,127-151,276-371,421-457,492-493,535-560,562
+  s_dd6ae313b13d0d::t_6fec553fa85d3d 494-506,508-515,522-534
+  s_dd6ae313b13d0d::t_a701c40f62a887 20,126
+  s_dd6ae313b13d0d::t_dd2fb7b1621ed6 15-16,37,152-172,458-491,566-573,575,577-578,580,583-584,586-590
+  s_dd6ae313b13d0d::t_54f6427c0520d6 246
+open-test-knowledge/systems/ifightchainsaas.java.refund.core/references/terms/ApplyToAirlineEnum-4aefea677cfacfc7.yaml
+  s_dd6ae313b13d0d::t_f89bb1339f2d19 1-30
+  s_dd6ae313b13d0d::t_07cfd2d054e6f8 31
+open-test-knowledge/systems/ifightchainsaas.java.refund.core/source.yaml
+  s_dd6ae313b13d0d::t_a6ff39f99095ff 6-12
+  s_dd6ae313b13d0d::t_447843af3ac9b0 3-5
+  s_dd6ae313b13d0d::t_56b1cc692257a3 13-14
+open-test-knowledge/systems/ifightchainsaas.java.refund.core/references/external-applications/BaseDataClient-ae0bcb7a5e5702b6.yaml
+  s_dd6ae313b13d0d::t_f89bb1339f2d19 1-24
+  s_dd6ae313b13d0d::t_07cfd2d054e6f8 25
+openspec/specs/guided-console/spec.md
+  s_dd6ae313b13d0d::t_5705f763180ec2 1-21
+open-test-knowledge/systems/ifightchainsaas.java.refund.core/references/terms/RefundCheckTypeEnum-982db5c763198366.yaml
+  s_dd6ae313b13d0d::t_f89bb1339f2d19 1-39
+  s_dd6ae313b13d0d::t_07cfd2d054e6f8 40
+open-test-knowledge/systems/ifightchainsaas.java.refund.core/references/terms/LogTypeEnum-ddc262638100286d.yaml
+  s_dd6ae313b13d0d::t_07cfd2d054e6f8 31
+  s_dd6ae313b13d0d::t_f89bb1339f2d19 1-30
+openspec/specs/natural-language-test-workflow/spec.md
+  s_dd6ae313b13d0d::t_7dc97e6fea1450 1-33
+open-test-knowledge/systems/ifightchainsaas.java.refund.core/references/terms/MsgOrderTypeEnum-ec599b7ef5812e06.yaml
+  s_dd6ae313b13d0d::t_f89bb1339f2d19 1-30
+  s_dd6ae313b13d0d::t_07cfd2d054e6f8 31
+open-test-knowledge/systems/ifightchainsaas.java.refund.core/references/terms/MonitorCategoryEnum-9d36d7680bb79514.yaml
+  s_dd6ae313b13d0d::t_f89bb1339f2d19 1-30
+  s_dd6ae313b13d0d::t_07cfd2d054e6f8 31
+open-test-knowledge/systems/ifightchainsaas.java.refund.core/references/terms/InvoluntaryRefundTypeEnum-c5929198d1e3de47.yaml
+  s_dd6ae313b13d0d::t_f89bb1339f2d19 1-30
+  s_dd6ae313b13d0d::t_07cfd2d054e6f8 31
+openspec/specs/guided-system-onboarding/spec.md
+  s_dd6ae313b13d0d::t_5705f763180ec2 1-33
+opentest/application/catalogs.py
+  s_dd6ae313b13d0d::t_dd832429fd3a1f 1-9,11-357,360-375
+  s_dd6ae313b13d0d::t_9d0559dc7da90a 10,358-359
+tests/v2/test_generalized_workflows.py
+  s_dd6ae313b13d0d::t_3745d400180522 1-7,9-15,17-18,22-23,25,29,32-33,36-38,76-192,196-199,540-567
+  s_dd6ae313b13d0d::t_7cd8dc3ff0e0ef 24,35,348-376,430-437,460-469,485-501
+  s_dd6ae313b13d0d::t_38250acc33929e 232,246,281
+  s_dd6ae313b13d0d::t_70be7163ff4721 652
+  s_dd6ae313b13d0d::t_ce3a1e322f843c 39-47,568-569,643-651,653-672,708
+  s_dd6ae313b13d0d::t_a926e6a0bca73d 19-21,26-27,34,194-195,200-231,233-245,247-280,282-304,306-347,438-459,470-471,473-484,502-539
+  s_dd6ae313b13d0d::t_1885642a0d0d39 570-635,642
+  s_dd6ae313b13d0d::t_e5ce145bbce1d2 48-75,673-707
+  s_dd6ae313b13d0d::t_23eeb9642ec226 16,305,472
+  s_dd6ae313b13d0d::t_e881fe6b0560e9 636-641
+  s_dd6ae313b13d0d::t_ab73595e5e92bf 28,30-31,377-429
+  s_dd6ae313b13d0d::t_62adb562428d42 193
+  s_dd6ae313b13d0d::t_87bbf6d5ff2aac 8
+open-test-knowledge/systems/ifightchainsaas.java.refund.core/references/external-applications/BusinessLogFacadeProxy-34e629143f8db5f6.yaml
+  s_dd6ae313b13d0d::t_f89bb1339f2d19 1-21,23
+  s_dd6ae313b13d0d::t_07cfd2d054e6f8 22,24
+open-test-knowledge/systems/ifightchainsaas.java.refund.core/references/terms/DefaultState-ec38ec7d04cc0816.yaml
+  s_dd6ae313b13d0d::t_f89bb1339f2d19 1-30
+  s_dd6ae313b13d0d::t_07cfd2d054e6f8 31
+open-test-knowledge/systems/ifightchainsaas.java.refund.core/references/external-applications/DmsClient-f4d92311b841056a.yaml
+  s_dd6ae313b13d0d::t_f89bb1339f2d19 1-18
+  s_dd6ae313b13d0d::t_07cfd2d054e6f8 19
+open-test-knowledge/systems/ifightchainsaas.java.refund.core/references/terms/CallbackErrorCodeEnum-b57337869a2a576a.yaml
+  s_dd6ae313b13d0d::t_f89bb1339f2d19 1-30
+  s_dd6ae313b13d0d::t_07cfd2d054e6f8 31
+open-test-knowledge/systems/ifightchainsaas.java.refund.core/references/terms/PassengerTypeEnum-c5831f0be41e49f3.yaml
+  s_dd6ae313b13d0d::t_07cfd2d054e6f8 37
+  s_dd6ae313b13d0d::t_f89bb1339f2d19 1-36
+open-test-knowledge/systems/ifightchainsaas.java.refund.core/references/external-applications/PlatformFeePolicyFacadeProxy-282a1c58df7c4a73.yaml
+  s_dd6ae313b13d0d::t_f89bb1339f2d19 1-18
+  s_dd6ae313b13d0d::t_07cfd2d054e6f8 19
+open-test-knowledge/systems/ifightchainsaas.java.refund.core/references/external-applications/RefundResourcesFacadeProxy-5a5eccf27c296849.yaml
+  s_dd6ae313b13d0d::t_f89bb1339f2d19 1-18
+  s_dd6ae313b13d0d::t_07cfd2d054e6f8 19
+openspec/changes/archive/2026-08-13-dsf-scan-gateway-and-task-feedback-fix/specs/console-reliability/spec.md
+  s_dd6ae313b13d0d::t_2fa29369d94417 1-18
+open-test-knowledge/systems/ifightchainsaas.java.refund.core/references/terms/AutoVoidEnum-1dafdb288f41c6d4.yaml
+  s_dd6ae313b13d0d::t_07cfd2d054e6f8 31
+  s_dd6ae313b13d0d::t_f89bb1339f2d19 1-30
+open-test-knowledge/systems/ifightchainsaas.java.refund.core/references/terms/OrderLockEnum-3980f38308da1dcb.yaml
+  s_dd6ae313b13d0d::t_07cfd2d054e6f8 40
+  s_dd6ae313b13d0d::t_f89bb1339f2d19 1-39
+open-test-knowledge/systems/ifightchainsaas.java.refund.core/references/terms/AutoRefundEnum-9f53fce1a5edeae2.yaml
+  s_dd6ae313b13d0d::t_f89bb1339f2d19 1-30
+  s_dd6ae313b13d0d::t_07cfd2d054e6f8 31
+opentest/adapters/create_order_fixture.py
+  s_dd6ae313b13d0d::t_53d277e4b69658 117-118
+  s_dd6ae313b13d0d::t_f95f7852ec2d7a 119-122
+  s_dd6ae313b13d0d::t_63ae4223524376 1-45,48-87,90-116,123-160
+  s_dd6ae313b13d0d::t_45a58cd7d38f55 46-47
+  s_dd6ae313b13d0d::t_1fe529598f8d07 88-89
+open-test-knowledge/systems/ifightchainsaas.java.refund.core/references/external-applications/OrderFacadeProxy-678accf6fdd0eb1c.yaml
+  s_dd6ae313b13d0d::t_f89bb1339f2d19 1-10,16,22,28,34,40,46,52,58-81,83
+  s_dd6ae313b13d0d::t_07cfd2d054e6f8 11-15,17-21,23-27,29-33,35-39,41-45,47-51,53-57,82,84
+open-test-knowledge/systems/ifightchainsaas.java.refund.core/references/external-applications/ResourcesClient-8182daf6ed758949.yaml
+  s_dd6ae313b13d0d::t_f89bb1339f2d19 1-10,14,16,20,22,26,28,32,34,38,40-63,65
+  s_dd6ae313b13d0d::t_07cfd2d054e6f8 11-13,15,17-19,21,23-25,27,29-31,33,35-37,39,64,66
+open-test-knowledge/systems/ifightchainsaas.java.refund.core/references/external-applications/WalletFacadeProxy-4fa2c3eb8b110f91.yaml
+  s_dd6ae313b13d0d::t_07cfd2d054e6f8 25
+  s_dd6ae313b13d0d::t_f89bb1339f2d19 1-24
+open-test-knowledge/systems/ifightchainsaas.java.refund.core/references/terms/ErrorMessageEnum-55b2bcb707757803.yaml
+  s_dd6ae313b13d0d::t_f89bb1339f2d19 1-36
+  s_dd6ae313b13d0d::t_07cfd2d054e6f8 37
+open-test-knowledge/systems/ifightchainsaas.java.refund.core/references/terms/EventType-a9f82981867d69e3.yaml
+  s_dd6ae313b13d0d::t_f89bb1339f2d19 1-30
+  s_dd6ae313b13d0d::t_07cfd2d054e6f8 31
+opentest/adapters/knowledge_interview.py
+  s_dd6ae313b13d0d::t_be69890c0be2c4 11,46,104,164-167,180-182,184
+  s_dd6ae313b13d0d::t_63ae4223524376 1-10,12-45,47-103,105-163,168-179,183,185-205
+open-test-knowledge/systems/ifightchainsaas.java.refund.core/references/terms/OrderSourceEnum-61bf25f14ef069f9.yaml
+  s_dd6ae313b13d0d::t_07cfd2d054e6f8 53
+  s_dd6ae313b13d0d::t_f89bb1339f2d19 1-52
+openspec/specs/multi-system-workspace/spec.md
+  s_dd6ae313b13d0d::t_125d01b25dfa48 1-29
+opentest/adapters/system_archive.py
+  s_dd6ae313b13d0d::t_308ceac1b8a365 388-397
+  s_dd6ae313b13d0d::t_3f2b9ee248682f 13-14
+  s_dd6ae313b13d0d::t_d1ad534ddf0175 1-12,15-22,34-85,87-94,103-105,107-114,117-118,146-325,331-373,399-439
+  s_dd6ae313b13d0d::t_8e9b4b12dae4a8 23-24,27-32
+  s_dd6ae313b13d0d::t_0c78f7c3befffe 25-26,33
+  s_dd6ae313b13d0d::t_46c1ba3204a360 86,95-102,115-116,326-330,374-387,398
+  s_dd6ae313b13d0d::t_e5ae90ad481857 106,119-145
+openspec/specs/resource-projection/spec.md
+  s_dd6ae313b13d0d::t_125d01b25dfa48 1-25
+open-test-knowledge/systems/ifightchainsaas.java.refund.core/references/terms/UTF-c2db2330824484e7.yaml
+  s_dd6ae313b13d0d::t_f89bb1339f2d19 1-118
+  s_dd6ae313b13d0d::t_07cfd2d054e6f8 119
+openspec/specs/task-progress-and-console-recovery/spec.md
+  s_dd6ae313b13d0d::t_b4c58a919cb4a3 1-37
+open-test-knowledge/systems/ifightchainsaas.java.refund.core/references/external-applications/PayInfoSender-5204619151dfe5a4.yaml
+  s_dd6ae313b13d0d::t_07cfd2d054e6f8 19
+  s_dd6ae313b13d0d::t_f89bb1339f2d19 1-18
+open-test-knowledge/systems/ifightchainsaas.java.refund.core/references/terms/EventStateEnum-00972134af499ca3.yaml
+  s_dd6ae313b13d0d::t_f89bb1339f2d19 1-30
+  s_dd6ae313b13d0d::t_07cfd2d054e6f8 31
+open-test-knowledge/systems/ifightchainsaas.java.refund.core/references/terms/CreditTypeEnum-151ab13ac8fd6c2e.yaml
+  s_dd6ae313b13d0d::t_07cfd2d054e6f8 31
+  s_dd6ae313b13d0d::t_f89bb1339f2d19 1-30
+open-test-knowledge/systems/ifightchainsaas.java.refund.core/references/terms/LogModuleEnum-dcc9905efdedf6da.yaml
+  s_dd6ae313b13d0d::t_07cfd2d054e6f8 31
+  s_dd6ae313b13d0d::t_f89bb1339f2d19 1-30
+opentest/assets/booking_core_validation_catalog.yaml
+  s_dd6ae313b13d0d::t_21821aff4d7da2 1-116
+tests/v2/test_guided_onboarding.py
+  s_dd6ae313b13d0d::t_e7a99a7c097755 1-9,11-15,17-57,59-66,68-145,264-267,271-274,276-281,286-314
+  s_dd6ae313b13d0d::t_c03b309af3e663 10,268-270
+  s_dd6ae313b13d0d::t_3e1f2eff89fa02 275,282-285
+  s_dd6ae313b13d0d::t_295d1194bfe09c 146-166,168-177,179-186,188-224
+  s_dd6ae313b13d0d::t_7859f3bd80cce1 16,255,257
+  s_dd6ae313b13d0d::t_7019550a391c2e 225-254,256,258-263
+  s_dd6ae313b13d0d::t_2ff0a59dbf4229 58,67,167,178,187
+open-test-knowledge/systems/ifightchainsaas.java.refund.core/references/external-applications/SupplementCallbackFacadeProxy-501ca688b0083d0a.yaml
+  s_dd6ae313b13d0d::t_f89bb1339f2d19 1-18
+  s_dd6ae313b13d0d::t_07cfd2d054e6f8 19
+openspec/specs/system-specific-knowledge-context/spec.md
+  s_dd6ae313b13d0d::t_b4c58a919cb4a3 1-38
+open-test-knowledge/systems/ifightchainsaas.java.refund.core/references/external-applications/RedisClient-eb3b37e45e8f1b98.yaml
+  s_dd6ae313b13d0d::t_07cfd2d054e6f8 25
+  s_dd6ae313b13d0d::t_f89bb1339f2d19 1-24
+opentest/application/create_order_mvp.py
+  s_dd6ae313b13d0d::t_4dc7f60af2146e 297,306,325-334
+  s_dd6ae313b13d0d::t_bc5ba14b6a8168 136-141,426,428-444
+  s_dd6ae313b13d0d::t_b9c4d4b6d07d18 186-187
+  s_dd6ae313b13d0d::t_736746f3fed761 211-214,234
+  s_dd6ae313b13d0d::t_463eaf74c10dfe 24,37,202,206,239,243,253,266,279,299,307-308,335,358-382
+  s_dd6ae313b13d0d::t_be69890c0be2c4 8-9,18,100-101,698,701-724
+  s_dd6ae313b13d0d::t_8347df6aea329f 340
+  s_dd6ae313b13d0d::t_22788f26f14af3 300-305,655
+  s_dd6ae313b13d0d::t_9771aeee614b7b 12,14,51-61,205,242,255-261,268-274,281-291,310-320,423,480,488,497-504,591-592,645,657,659
+  s_dd6ae313b13d0d::t_d4c4577703ca23 338-339
+  s_dd6ae313b13d0d::t_9d7981681372a1 62-71,80,88,95-96,102-106,223-227
+  s_dd6ae313b13d0d::t_32fb212a929ede 1-7,10-11,13,15-17,19-23,25-36,38-50,72-79,81-87,89-94,97-99,107-135,142-185,188-201,203-204,207-210,215-222,228-233,235-238,240-241,244-252,254,262-265,267,275-278,280,292-296,298,309,321-324,336-337,341-357,383-422,424-425,427,445-479,481-487,489-496,505-590,593-644,646-654,656,658,660-697,699-700
+opentest/application/knowledge_discovery.py
+  s_dd6ae313b13d0d::t_e422469882dc3f 39,447-448,467,470,485-489,494-496,567,575-578,580-589,591-593,690-695
+  s_dd6ae313b13d0d::t_73ea0ae4895160 1-5,7-12,14-30,32-38,40-208,215-218,221-235,242-359,365-366,368-395,405,421,425-429,437-442,449-450,454-455,501-508,513-521,526-527,551-566,736-744,753,758-759,776-777,783-878
+  s_dd6ae313b13d0d::t_403fe99bd6d2fe 510,522-525
+  s_dd6ae313b13d0d::t_3d2acf9c4b0305 13,31,209-214,219-220,236-241,406-420,422-424,431-436,443,468-469,471-484,490,497,568-574,579,590,594-689
+  s_dd6ae313b13d0d::t_b3510197ea463f 444-446,452,456-466
+  s_dd6ae313b13d0d::t_428a6582f6a4f2 509,511-512
+  s_dd6ae313b13d0d::t_76744dda01690d 451,453,491-493,498-500,696-735,745-752,754-757,760-775,778-782
+  s_dd6ae313b13d0d::t_dd2fb7b1621ed6 430,528-550
+  s_dd6ae313b13d0d::t_633d3b4734e6ae 6,360-364,367,396-404,879-907
+open-test-knowledge/systems/ifightchainsaas.java.refund.core/references/terms/CommonStateEnum-364adf1a391a06b5.yaml
+  s_dd6ae313b13d0d::t_f89bb1339f2d19 1-30
+  s_dd6ae313b13d0d::t_07cfd2d054e6f8 31
+open-test-knowledge/systems/ifightchainsaas.java.refund.core/references/terms/BuyerTypeEnum-0d7507e1d9c6fbb6.yaml
+  s_dd6ae313b13d0d::t_07cfd2d054e6f8 31
+  s_dd6ae313b13d0d::t_f89bb1339f2d19 1-30
+open-test-knowledge/systems/ifightchainsaas.java.refund.core/references/terms/ApplicationEnum-c3ad1e4b51dfa3a9.yaml
+  s_dd6ae313b13d0d::t_07cfd2d054e6f8 31
+  s_dd6ae313b13d0d::t_f89bb1339f2d19 1-30
+open-test-knowledge/systems/ifightchainsaas.java.refund.core/references/terms/LogEnum-6ac01ead9e1e066b.yaml
+  s_dd6ae313b13d0d::t_07cfd2d054e6f8 31
+  s_dd6ae313b13d0d::t_f89bb1339f2d19 1-30
+tests/v2/test_knowledge_interview_create_order_mvp.py
+  s_dd6ae313b13d0d::t_53d277e4b69658 614-636
+  s_dd6ae313b13d0d::t_505b1e74b36655 536
+  s_dd6ae313b13d0d::t_4dc7f60af2146e 186-196,869-917
+  s_dd6ae313b13d0d::t_45a58cd7d38f55 19,293,297
+  s_dd6ae313b13d0d::t_d4c4577703ca23 275-284
+  s_dd6ae313b13d0d::t_454a2e30002851 292
+  s_dd6ae313b13d0d::t_f95f7852ec2d7a 34,37,320-373,399-437,540-568,570-610
+  s_dd6ae313b13d0d::t_1fe529598f8d07 128-143,155-185,267,269-270,272-274,825-848,850-868
+  s_dd6ae313b13d0d::t_ab8e689b435bb2 775
+  s_dd6ae313b13d0d::t_28665d3f0116f1 234-251,674-695,698-710,754,849
+  s_dd6ae313b13d0d::t_f70cd12164e859 441-479
+  s_dd6ae313b13d0d::t_314c8b92abfa3e 520-535,537-539,569,611-613
+  s_dd6ae313b13d0d::t_be69890c0be2c4 774,776
+  s_dd6ae313b13d0d::t_26be078c6fec58 714-741
+  s_dd6ae313b13d0d::t_d622aa4b2c16da 696-697
+  s_dd6ae313b13d0d::t_736746f3fed761 144-154,779-824
+  s_dd6ae313b13d0d::t_9cc3327a54d4e8 1-18,20-33,35-36,38-127,197-233,252-266,268,271,285-291,294-296,298-319,374-398,438-440,480-519,637-673,711-713,742-753,755-773,777-778,918-924
+opentest/domain/identifiers.py
+  s_dd6ae313b13d0d::t_e618bb7d5e6164 1-63
+openspec/specs/knowledge-interview-and-revision/spec.md
+  s_dd6ae313b13d0d::t_c16f939e493e39 1-25
+open-test-knowledge/archives/archive-20260813T053636-c4e3533e/manifest.json
+  s_dd6ae313b13d0d::t_d7111226048b70 3692-3694
+  s_dd6ae313b13d0d::t_eeb29ef3451da2 1-3691,3700-3702
+  s_dd6ae313b13d0d::t_9ad741f1dbd61e 3695-3699,3703
+opentest/adapters/runtime_settings.py
+  s_dd6ae313b13d0d::t_e5ae90ad481857 112-116
+  s_dd6ae313b13d0d::t_23c06f51d86e8d 1-111,117-188
+open-test-knowledge/systems/ifightchainsaas.java.refund.core/references/terms/RefundNodeEnum-d5f8bf4d9a2b91e9.yaml
+  s_dd6ae313b13d0d::t_07cfd2d054e6f8 44
+  s_dd6ae313b13d0d::t_f89bb1339f2d19 1-43
+open-test-knowledge/systems/ifightchainsaas.java.refund.core/references/external-applications/BookOrderClient-b6b509254eaee3de.yaml
+  s_dd6ae313b13d0d::t_07cfd2d054e6f8 11-13,15,17-19,21,23-25,27,29-31,33,35-37,39,41-43,45,47-49,51,53-55,57,59-61,63,65-67,69,71-73,75,77-79,81,115,117
+  s_dd6ae313b13d0d::t_f89bb1339f2d19 1-10,14,16,20,22,26,28,32,34,38,40,44,46,50,52,56,58,62,64,68,70,74,76,80,82-114,116
+open-test-knowledge/archives/archive-20260813T053636-c4e3533e/knowledge/registry/systems.yaml
+  s_dd6ae313b13d0d::t_3f2b9ee248682f 1-8
+openspec/specs/natural-language-blocked-guidance/spec.md
+  s_dd6ae313b13d0d::t_c16f939e493e39 1-13
+open-test-knowledge/systems/ifightchainsaas.java.refund.core/references/terms/GenderEnum-3df53133de790130.yaml
+  s_dd6ae313b13d0d::t_07cfd2d054e6f8 31
+  s_dd6ae313b13d0d::t_f89bb1339f2d19 1-30
+open-test-knowledge/systems/ifightchainsaas.java.refund.core/references/terms/CallbackStatusEnum-a3f8e7c9ed6c6c65.yaml
+  s_dd6ae313b13d0d::t_f89bb1339f2d19 1-30
+  s_dd6ae313b13d0d::t_07cfd2d054e6f8 31
+open-test-knowledge/systems/ifightchainsaas.java.refund.core/references/terms/RefundMonitorSourceEnum-32caccc9111eac62.yaml
+  s_dd6ae313b13d0d::t_07cfd2d054e6f8 44
+  s_dd6ae313b13d0d::t_f89bb1339f2d19 1-43
+openspec/specs/create-order-mvp/spec.md
+  s_dd6ae313b13d0d::t_c16f939e493e39 1-25
+open-test-knowledge/systems/ifightchainsaas.java.refund.core/references/terms/EmailSceneEnum-5294d092c7cc34d1.yaml
+  s_dd6ae313b13d0d::t_07cfd2d054e6f8 31
+  s_dd6ae313b13d0d::t_f89bb1339f2d19 1-30
+tests/v2/test_multi_system_reliability.py
+  s_dd6ae313b13d0d::t_6c1e024c4c319b 104,116-133
+  s_dd6ae313b13d0d::t_102bdb860ad83f 1-14,16,26-84,91-97,105-113,134-154,294-318
+  s_dd6ae313b13d0d::t_5607900684b2d3 15,18-25
+  s_dd6ae313b13d0d::t_188e63a23a7feb 17
+  s_dd6ae313b13d0d::t_91211d149f0da8 253-293
+  s_dd6ae313b13d0d::t_e611b6b3e96b56 350-399,401-477
+  s_dd6ae313b13d0d::t_6c2040dea89c50 85-90,98-103,114-115,319-349
+  s_dd6ae313b13d0d::t_47de58fa32c1ca 400
+  s_dd6ae313b13d0d::t_84f556728d4107 190,192-250
+  s_dd6ae313b13d0d::t_ab6472e199f49f 155-189,191,251-252
+open-test-knowledge/systems/ifightchainsaas.java.refund.core/references/terms/ActorType-c65d93f9f5b39f95.yaml
+  s_dd6ae313b13d0d::t_07cfd2d054e6f8 31
+  s_dd6ae313b13d0d::t_f89bb1339f2d19 1-30
+open-test-knowledge/systems/ifightchainsaas.java.refund.core/references/terms/ProductTypeEnum-f24d1dc9bc8ce51e.yaml
+  s_dd6ae313b13d0d::t_07cfd2d054e6f8 31
+  s_dd6ae313b13d0d::t_f89bb1339f2d19 1-30
+openspec/specs/resource-validation-console/spec.md
+  s_dd6ae313b13d0d::t_5705f763180ec2 1-33
+open-test-knowledge/systems/ifightchainsaas.java.refund.core/references/terms/IntegrationErrorCodeEnum-81e7ee475d17ffb1.yaml
+  s_dd6ae313b13d0d::t_07cfd2d054e6f8 31
+  s_dd6ae313b13d0d::t_f89bb1339f2d19 1-30
+open-test-knowledge/systems/ifightchainsaas.java.refund.core/context.yaml
+  s_dd6ae313b13d0d::t_07cfd2d054e6f8 7
+  s_dd6ae313b13d0d::t_8d92d15b5b231c 1-6
+open-test-knowledge/systems/ifightchainsaas.java.refund.core/references/terms/RefundOrderServiceEnum-e08ee17215dde0e9.yaml
+  s_dd6ae313b13d0d::t_f89bb1339f2d19 1-52
+  s_dd6ae313b13d0d::t_07cfd2d054e6f8 53
+open-test-knowledge/systems/ifightchainsaas.java.refund.core/references/terms/AutoPricingResultEnum-da5fd352d4df873e.yaml
+  s_dd6ae313b13d0d::t_f89bb1339f2d19 1-30
+  s_dd6ae313b13d0d::t_07cfd2d054e6f8 31
+openspec/specs/knowledge-target-workspace/spec.md
+  s_dd6ae313b13d0d::t_b4c58a919cb4a3 1-26
+open-test-knowledge/systems/ifightchainsaas.java.refund.core/references/terms/AutoPricingEnum-faf1982fb161222e.yaml
+  s_dd6ae313b13d0d::t_f89bb1339f2d19 1-30
+  s_dd6ae313b13d0d::t_07cfd2d054e6f8 31
+open-test-knowledge/systems/ifightchainsaas.java.refund.core/references/terms/BitOperareTypeEnum-523787b6ec7a8d2d.yaml
+  s_dd6ae313b13d0d::t_f89bb1339f2d19 1-30
+  s_dd6ae313b13d0d::t_07cfd2d054e6f8 31
+openspec/specs/generalized-knowledge-workflow/spec.md
+  s_dd6ae313b13d0d::t_7dc97e6fea1450 1-37
+open-test-knowledge/systems/ifightchainsaas.java.refund.core/references/terms/AutoRefundResultEnum-2c99cddbdd0da87a.yaml
+  s_dd6ae313b13d0d::t_07cfd2d054e6f8 31
+  s_dd6ae313b13d0d::t_f89bb1339f2d19 1-30
+open-test-knowledge/systems/ifightchainsaas.java.refund.core/references/external-applications/ReverseCommonFacadeProxy-7504c0063c3047cf.yaml
+  s_dd6ae313b13d0d::t_f89bb1339f2d19 1-18
+  s_dd6ae313b13d0d::t_07cfd2d054e6f8 19
+open-test-knowledge/systems/ifightchainsaas.java.refund.core/references/terms/RefundOperateTypeEnum-7cde921ba5973054.yaml
+  s_dd6ae313b13d0d::t_07cfd2d054e6f8 44
+  s_dd6ae313b13d0d::t_f89bb1339f2d19 1-43
+open-test-knowledge/systems/ifightchainsaas.java.refund.core/references/external-applications/PlatformFeeClient-dd074bf8255dc06c.yaml
+  s_dd6ae313b13d0d::t_07cfd2d054e6f8 25
+  s_dd6ae313b13d0d::t_f89bb1339f2d19 1-24
+open-test-knowledge/systems/ifightchainsaas.java.refund.core/references/terms/AutoVoidResultEnum-9ea2ec02947a0efb.yaml
+  s_dd6ae313b13d0d::t_07cfd2d054e6f8 31
+  s_dd6ae313b13d0d::t_f89bb1339f2d19 1-30
+open-test-knowledge/systems/ifightchainsaas.java.refund.core/references/terms/PayNotifyEnum-9d8c32435aa96353.yaml
+  s_dd6ae313b13d0d::t_07cfd2d054e6f8 31
+  s_dd6ae313b13d0d::t_f89bb1339f2d19 1-30
+open-test-knowledge/systems/ifightchainsaas.java.refund.core/references/external-applications/ChangeFacadeProxy-bf56b6560941321c.yaml
+  s_dd6ae313b13d0d::t_f89bb1339f2d19 1-10,14,16,20,22-45,47
+  s_dd6ae313b13d0d::t_07cfd2d054e6f8 11-13,15,17-19,21,46,48
+open-test-knowledge/systems/ifightchainsaas.java.refund.core/references/terms/CacheEnum-d4a17b26f2f8688f.yaml
+  s_dd6ae313b13d0d::t_07cfd2d054e6f8 31
+  s_dd6ae313b13d0d::t_f89bb1339f2d19 1-30
+open-test-knowledge/systems/ifightchainsaas.java.refund.core/references/terms/OrderAutoEnum-73ec120f9357322e.yaml
+  s_dd6ae313b13d0d::t_07cfd2d054e6f8 42
+  s_dd6ae313b13d0d::t_f89bb1339f2d19 1-41
+open-test-knowledge/systems/ifightchainsaas.java.refund.core/references/terms/FareTypeEnum-ef91d8ede0a4bb5a.yaml
+  s_dd6ae313b13d0d::t_f89bb1339f2d19 1-30
+  s_dd6ae313b13d0d::t_07cfd2d054e6f8 31
+open-test-knowledge/systems/ifightchainsaas.java.refund.core/references/terms/OrderRefundTypeEnum-b81826e253d58f34.yaml
+  s_dd6ae313b13d0d::t_07cfd2d054e6f8 51
+  s_dd6ae313b13d0d::t_f89bb1339f2d19 1-50
+open-test-knowledge/systems/ifightchainsaas.java.refund.core/references/terms/RefundChannelEnum-cbc72f196a0f25be.yaml
+  s_dd6ae313b13d0d::t_07cfd2d054e6f8 44
+  s_dd6ae313b13d0d::t_f89bb1339f2d19 1-43
+open-test-knowledge/systems/ifightchainsaas.java.refund.core/references/terms/POST-506f201e68c7e3e2.yaml
+  s_dd6ae313b13d0d::t_07cfd2d054e6f8 119
+  s_dd6ae313b13d0d::t_f89bb1339f2d19 1-118
+open-test-knowledge/archives/archive-20260813T053636-c4e3533e/knowledge/systems/train-booking-core/SKILL.md
+  s_dd6ae313b13d0d::t_7fe9635080272b 1-33
+open-test-knowledge/archives/archive-20260813T053636-c4e3533e/knowledge/systems/train-booking-core/agents/openai.yaml
+  s_dd6ae313b13d0d::t_758fdb8181b017 1-4
+open-test-knowledge/archives/archive-20260813T053636-c4e3533e/knowledge/systems/train-booking-core/cases/coverage-targets.yaml
+  s_dd6ae313b13d0d::t_e4e065fd8751d4 1-36
+open-test-knowledge/archives/archive-20260813T053636-c4e3533e/knowledge/systems/train-booking-core/cases/custom/001-realtime-ebk-success.yaml
+  s_dd6ae313b13d0d::t_721f9577f34024 1-116
+open-test-knowledge/archives/archive-20260813T053636-c4e3533e/knowledge/systems/train-booking-core/cases/custom/002-realtime-api-success.yaml
+  s_dd6ae313b13d0d::t_4f9f2bd517d62e 1-22
+open-test-knowledge/archives/archive-20260813T053636-c4e3533e/knowledge/systems/train-booking-core/cases/custom/003-realtime-empty-fallback.yaml
+  s_dd6ae313b13d0d::t_4ff5957d20a79a 1-24
+open-test-knowledge/archives/archive-20260813T053636-c4e3533e/knowledge/systems/train-booking-core/cases/custom/004-realtime-exception-fallback.yaml
+  s_dd6ae313b13d0d::t_c1ea2a4d77a110 1-24
+open-test-knowledge/archives/archive-20260813T053636-c4e3533e/knowledge/systems/train-booking-core/cases/custom/005-occupy-ebk-full-success.yaml
+  s_dd6ae313b13d0d::t_12bd00581ae515 1-24
+open-test-knowledge/archives/archive-20260813T053636-c4e3533e/knowledge/systems/train-booking-core/cases/custom/006-occupy-api-full-success.yaml
+  s_dd6ae313b13d0d::t_67270bda6971e0 1-24
+open-test-knowledge/archives/archive-20260813T053636-c4e3533e/knowledge/systems/train-booking-core/cases/custom/007-grab-approach-departure.yaml
+  s_dd6ae313b13d0d::t_3f1d96de3d5500 1-20
+open-test-knowledge/archives/archive-20260813T053636-c4e3533e/knowledge/systems/train-booking-core/cases/custom/008-grab-outside-sale-time.yaml
+  s_dd6ae313b13d0d::t_6b13b8ed5e9d6b 1-19
+open-test-knowledge/archives/archive-20260813T053636-c4e3533e/knowledge/systems/train-booking-core/cases/custom/009-grab-no-merchant.yaml
+  s_dd6ae313b13d0d::t_d4973e7fa019c0 1-20
+open-test-knowledge/archives/archive-20260813T053636-c4e3533e/knowledge/systems/train-booking-core/cases/custom/010-occupy-final-fail.yaml
+  s_dd6ae313b13d0d::t_6e2a2e19ff511b 1-21
+open-test-knowledge/archives/archive-20260813T053636-c4e3533e/knowledge/systems/train-booking-core/cases/custom/011-occupy-second-dispatch.yaml
+  s_dd6ae313b13d0d::t_b4218cb758674a 1-25
+open-test-knowledge/archives/archive-20260813T053636-c4e3533e/knowledge/systems/train-booking-core/cases/custom/012-reject-final-fail.yaml
+  s_dd6ae313b13d0d::t_e86896010b6fa0 1-21
+open-test-knowledge/archives/archive-20260813T053636-c4e3533e/knowledge/systems/train-booking-core/cases/custom/013-reject-switch-ticket-machine.yaml
+  s_dd6ae313b13d0d::t_355fc63cb622c6 1-21
+open-test-knowledge/archives/archive-20260813T053636-c4e3533e/knowledge/systems/train-booking-core/cases/custom/014-reject-switch-merchant.yaml
+  s_dd6ae313b13d0d::t_b2e84433ba4e0a 1-21
+open-test-knowledge/archives/archive-20260813T053636-c4e3533e/knowledge/systems/train-booking-core/cases/custom/015-reject-lack-ticket-accept.yaml
+  s_dd6ae313b13d0d::t_2d2fd27ad5941e 1-21
+open-test-knowledge/archives/archive-20260813T053636-c4e3533e/knowledge/systems/train-booking-core/cases/custom/016-mtr-standard.yaml
+  s_dd6ae313b13d0d::t_4bd2ba3650649e 1-21
+open-test-knowledge/archives/archive-20260813T053636-c4e3533e/knowledge/systems/train-booking-core/cases/custom/017-mtr-12306-eticket.yaml
+  s_dd6ae313b13d0d::t_0bc12692fd363f 1-21
+open-test-knowledge/archives/archive-20260813T053636-c4e3533e/knowledge/systems/train-booking-core/cases/custom/018-hkd-all-priced.yaml
+  s_dd6ae313b13d0d::t_37e03d1b4fb850 1-21
+open-test-knowledge/archives/archive-20260813T053636-c4e3533e/knowledge/systems/train-booking-core/cases/custom/019-hkd-partial-price-missing.yaml
+  s_dd6ae313b13d0d::t_02e3e12e2a5372 1-19
+open-test-knowledge/archives/archive-20260813T053636-c4e3533e/knowledge/systems/train-booking-core/cases/custom/020-hkd-price-mismatch.yaml
+  s_dd6ae313b13d0d::t_aab4670fad5db4 1-19
+open-test-knowledge/archives/archive-20260813T053636-c4e3533e/knowledge/systems/train-booking-core/cases/custom/021-connect-two-leg.yaml
+  s_dd6ae313b13d0d::t_0cb790511127bd 1-23
+open-test-knowledge/archives/archive-20260813T053636-c4e3533e/knowledge/systems/train-booking-core/cases/custom/022-connect-three-leg.yaml
+  s_dd6ae313b13d0d::t_ba68e9088ac985 1-23
+open-test-knowledge/archives/archive-20260813T053636-c4e3533e/knowledge/systems/train-booking-core/cases/custom/023-connect-batch-reject-compensation.yaml
+  s_dd6ae313b13d0d::t_a9bb807f04cfa2 1-24
+open-test-knowledge/archives/archive-20260813T053636-c4e3533e/knowledge/systems/train-booking-core/cases/custom/024-cancel-ticketing.yaml
+  s_dd6ae313b13d0d::t_ac57b3cc00c9f4 1-21
+open-test-knowledge/archives/archive-20260813T053636-c4e3533e/knowledge/systems/train-booking-core/cases/custom/025-cancel-occupy-success.yaml
+  s_dd6ae313b13d0d::t_3dba79c667ce1b 1-20
+open-test-knowledge/archives/archive-20260813T053636-c4e3533e/knowledge/systems/train-booking-core/cases/custom/026-cancel-occupying-unlocked.yaml
+  s_dd6ae313b13d0d::t_0afbe321a8814c 1-20
+open-test-knowledge/archives/archive-20260813T053636-c4e3533e/knowledge/systems/train-booking-core/cases/custom/027-cancel-occupying-locked-delay.yaml
+  s_dd6ae313b13d0d::t_9104059b09f069 1-21
+open-test-knowledge/archives/archive-20260813T053636-c4e3533e/knowledge/systems/train-booking-core/cases/custom/028-timeout-job.yaml
+  s_dd6ae313b13d0d::t_3d48011f88dfbc 1-22
+open-test-knowledge/archives/archive-20260813T053636-c4e3533e/knowledge/systems/train-booking-core/cases/custom/029-supplier-batch-revoke.yaml
+  s_dd6ae313b13d0d::t_49a02a6bb63c21 1-22
+open-test-knowledge/archives/archive-20260813T053636-c4e3533e/knowledge/systems/train-booking-core/cases/custom/030-ht-active-idempotent.yaml
+  s_dd6ae313b13d0d::t_16a0f2313f8069 1-20
+open-test-knowledge/archives/archive-20260813T053636-c4e3533e/knowledge/systems/train-booking-core/cases/custom/031-ht-terminal-repeat-book.yaml
+  s_dd6ae313b13d0d::t_549ae93716bd5a 1-20
+open-test-knowledge/archives/archive-20260813T053636-c4e3533e/knowledge/systems/train-booking-core/cases/scenarios/scenario-create-order-main-flow-352228ae3b64.yaml
+  s_dd6ae313b13d0d::t_eff3d846dc714c 1-57
+open-test-knowledge/archives/archive-20260813T053636-c4e3533e/knowledge/systems/train-booking-core/cases/suites/core-order-lifecycle-coverage.yaml
+  s_dd6ae313b13d0d::t_646a9d16631bbb 1-57
+open-test-knowledge/archives/archive-20260813T053636-c4e3533e/knowledge/systems/train-booking-core/cases/suites/core-order-lifecycle.yaml
+  s_dd6ae313b13d0d::t_f92a04e6bdc158 1-109
+open-test-knowledge/archives/archive-20260813T053636-c4e3533e/knowledge/systems/train-booking-core/cases/variants/variant-create-order-031d02d55cb92538bdfe-d9b2e292a375.yaml
+  s_dd6ae313b13d0d::t_d01eb4d051868b 1-104
+open-test-knowledge/archives/archive-20260813T053636-c4e3533e/knowledge/systems/train-booking-core/cases/variants/variant-create-order-1b52141cb6b5cc9254c9-58974815ba41.yaml
+  s_dd6ae313b13d0d::t_4ec3ec02f16813 1-104
+open-test-knowledge/archives/archive-20260813T053636-c4e3533e/knowledge/systems/train-booking-core/cases/variants/variant-create-order-25283822dfac3864cb45-78192f19baf5.yaml
+  s_dd6ae313b13d0d::t_f3eda7f8a419e4 1-110
+open-test-knowledge/archives/archive-20260813T053636-c4e3533e/knowledge/systems/train-booking-core/cases/variants/variant-create-order-3d37ffdd4e37e963388b-a8d4302d2644.yaml
+  s_dd6ae313b13d0d::t_70456e28d8f866 1-109
+open-test-knowledge/archives/archive-20260813T053636-c4e3533e/knowledge/systems/train-booking-core/cases/variants/variant-create-order-3dc642b0be146b808382-16b01ff204dc.yaml
+  s_dd6ae313b13d0d::t_c5be04f9f79755 1-99
+open-test-knowledge/archives/archive-20260813T053636-c4e3533e/knowledge/systems/train-booking-core/cases/variants/variant-create-order-43b9ed529ca00c5856e7-66b8148ea7cc.yaml
+  s_dd6ae313b13d0d::t_fe44a9c6823699 1-112
+open-test-knowledge/archives/archive-20260813T053636-c4e3533e/knowledge/systems/train-booking-core/cases/variants/variant-create-order-4cba6175d79964aa7b20-2aa72f57c86a.yaml
+  s_dd6ae313b13d0d::t_6db75268b49599 1-108
+open-test-knowledge/archives/archive-20260813T053636-c4e3533e/knowledge/systems/train-booking-core/cases/variants/variant-create-order-5b595e7d0be1aa89ab17-5a84edc24a0a.yaml
+  s_dd6ae313b13d0d::t_9dc9544c9e7d42 1-92
+open-test-knowledge/archives/archive-20260813T053636-c4e3533e/knowledge/systems/train-booking-core/cases/variants/variant-create-order-5b687b076eb8e01804ed-140365ec6751.yaml
+  s_dd6ae313b13d0d::t_d0b1a334c805ea 1-103
+open-test-knowledge/archives/archive-20260813T053636-c4e3533e/knowledge/systems/train-booking-core/cases/variants/variant-create-order-657338ceccf3ea188906-90f941e17b83.yaml
+  s_dd6ae313b13d0d::t_e01570062b5440 1-109
+open-test-knowledge/archives/archive-20260813T053636-c4e3533e/knowledge/systems/train-booking-core/cases/variants/variant-create-order-7a7a324a0ad45a5efb03-c8f9b1beff74.yaml
+  s_dd6ae313b13d0d::t_26dc43a35449a8 1-107
+open-test-knowledge/archives/archive-20260813T053636-c4e3533e/knowledge/systems/train-booking-core/cases/variants/variant-create-order-84019840d828a2e0092e-f4cf0952c75e.yaml
+  s_dd6ae313b13d0d::t_5744a4fd9602e9 1-100
+open-test-knowledge/archives/archive-20260813T053636-c4e3533e/knowledge/systems/train-booking-core/cases/variants/variant-create-order-b2e97b718ab960ce8880-df64c33b1b8a.yaml
+  s_dd6ae313b13d0d::t_51be75e73ce14f 1-102
+open-test-knowledge/archives/archive-20260813T053636-c4e3533e/knowledge/systems/train-booking-core/cases/variants/variant-create-order-b977a8c4c409acd27512-70b3567d3034.yaml
+  s_dd6ae313b13d0d::t_d244788d29dd3f 1-101
+open-test-knowledge/archives/archive-20260813T053636-c4e3533e/knowledge/systems/train-booking-core/cases/variants/variant-create-order-bdb3e4e788a55f8ecda7-545998e04181.yaml
+  s_dd6ae313b13d0d::t_6f2d61d7bbf228 1-89
+open-test-knowledge/archives/archive-20260813T053636-c4e3533e/knowledge/systems/train-booking-core/cases/variants/variant-create-order-be666cc76401caa0b5d2-db1b6a7cf388.yaml
+  s_dd6ae313b13d0d::t_d89361fd358c24 1-92
+open-test-knowledge/archives/archive-20260813T053636-c4e3533e/knowledge/systems/train-booking-core/cases/variants/variant-create-order-ebe91d237462b4cab2cf-fea4527ccc4f.yaml
+  s_dd6ae313b13d0d::t_4a2712e46a993c 1-106
+open-test-knowledge/archives/archive-20260813T053636-c4e3533e/knowledge/systems/train-booking-core/cases/variants/variant-create-order-f58d4d4da592e808dbd7-90932b312080.yaml
+  s_dd6ae313b13d0d::t_c8e82f5c52decd 1-92
+open-test-knowledge/archives/archive-20260813T053636-c4e3533e/knowledge/systems/train-booking-core/cases/variants/variant-create-order-f8022b541d393ea4ae1e-3c3400cdcf10.yaml
+  s_dd6ae313b13d0d::t_35a764db116a71 1-108
+open-test-knowledge/archives/archive-20260813T053636-c4e3533e/knowledge/systems/train-booking-core/oracles/catalog.yaml
+  s_dd6ae313b13d0d::t_5a5e09034cdec4 1-115
+open-test-knowledge/archives/archive-20260813T053636-c4e3533e/knowledge/systems/train-booking-core/questions/lifecycle-questions.yaml
+  s_dd6ae313b13d0d::t_c677510905e2b8 1-97
+open-test-knowledge/archives/archive-20260813T053636-c4e3533e/knowledge/systems/train-booking-core/questions/questions.yaml
+  s_dd6ae313b13d0d::t_917f80e50fc54a 1-20
+open-test-knowledge/archives/archive-20260813T053636-c4e3533e/knowledge/systems/train-booking-core/references/core-lifecycle/core-scenario-matrix.md
+  s_dd6ae313b13d0d::t_c0297a5f8081ef 1-47
+open-test-knowledge/archives/archive-20260813T053636-c4e3533e/knowledge/systems/train-booking-core/references/core-lifecycle/lifecycle-and-recovery-flows.md
+  s_dd6ae313b13d0d::t_3fcce9f5329973 1-49
+open-test-knowledge/archives/archive-20260813T053636-c4e3533e/knowledge/systems/train-booking-core/references/core-lifecycle/oracle-and-execution-boundaries.md
+  s_dd6ae313b13d0d::t_b6564275ac64aa 1-49
+open-test-knowledge/archives/archive-20260813T053636-c4e3533e/knowledge/systems/train-booking-core/references/data/sources/data-source-base-ticket-price-5917eb04b151.md
+  s_dd6ae313b13d0d::t_c79592f29321f4 1-36
+open-test-knowledge/archives/archive-20260813T053636-c4e3533e/knowledge/systems/train-booking-core/references/data/sources/data-source-mtr-ticket-price-6fcbba3e7fa5.md
+  s_dd6ae313b13d0d::t_d026e89b758eeb 1-36
+open-test-knowledge/archives/archive-20260813T053636-c4e3533e/knowledge/systems/train-booking-core/references/facades/facade-TradeFacade-createOrder-ea1999f3cd0b.md
+  s_dd6ae313b13d0d::t_9b0147bce8b81d 1-37
+open-test-knowledge/archives/archive-20260813T053636-c4e3533e/knowledge/systems/train-booking-core/references/shared/business-rules/rule-create-order-adult-required-796144fd0c88.md
+  s_dd6ae313b13d0d::t_5068baf63de319 1-37
+open-test-knowledge/archives/archive-20260813T053636-c4e3533e/knowledge/systems/train-booking-core/references/shared/business-rules/rule-create-order-direct-accept-066f4faf23eb.md
+  s_dd6ae313b13d0d::t_0c38aecd80569c 1-36
+open-test-knowledge/archives/archive-20260813T053636-c4e3533e/knowledge/systems/train-booking-core/references/shared/business-rules/rule-create-order-hk-payment-verify-f91749cf24b8.md
+  s_dd6ae313b13d0d::t_7a4436fb683863 1-38
+open-test-knowledge/archives/archive-20260813T053636-c4e3533e/knowledge/systems/train-booking-core/references/shared/business-rules/rule-create-order-hk-plan-price-63c753295709.md
+  s_dd6ae313b13d0d::t_9834e7e6758eed 1-37
+open-test-knowledge/archives/archive-20260813T053636-c4e3533e/knowledge/systems/train-booking-core/references/shared/common-logic/logic-CreateOrderServiceInvoker-invokeInner-abcd8a7a8d18.md
+  s_dd6ae313b13d0d::t_7ce4611201efb9 1-36
+open-test-knowledge/archives/archive-20260813T053636-c4e3533e/knowledge/systems/train-booking-core/references/shared/common-logic/logic-CreateOrderValidator-validate-6afe6197793b.md
+  s_dd6ae313b13d0d::t_bba99dd1296ddc 1-36
+open-test-knowledge/archives/archive-20260813T053636-c4e3533e/knowledge/systems/train-booking-core/references/state-machine/state-machine-OrderStateEnum-300267b00d3e.md
+  s_dd6ae313b13d0d::t_207ec98365b1d2 1-145
+open-test-knowledge/archives/archive-20260813T053636-c4e3533e/knowledge/systems/train-booking-core/relations.yaml
+  s_dd6ae313b13d0d::t_f0c3560260c3b4 1-71
+open-test-knowledge/archives/archive-20260813T053636-c4e3533e/knowledge/systems/train-booking-core/source.yaml
+  s_dd6ae313b13d0d::t_15c8ebee78df40 1-7
+openspec/changes/archive/2026-08-12-generalized-knowledge-case-and-natural-language-workflow/tasks.md
+  s_dd6ae313b13d0d::t_ca94d86328258e 1-30
+openspec/changes/archive/2026-08-12-generalized-knowledge-case-and-natural-language-workflow/design.md
+  s_dd6ae313b13d0d::t_84061d4ea07d78 1-43
+openspec/changes/archive/2026-08-12-generalized-knowledge-case-and-natural-language-workflow/proposal.md
+  s_dd6ae313b13d0d::t_f360c0a5cf775f 1-24
+openspec/changes/archive/2026-08-12-generalized-knowledge-case-and-natural-language-workflow/specs/confirmed-case-generation/spec.md
+  s_dd6ae313b13d0d::t_6a6b7a6168248a 1-29
+openspec/changes/archive/2026-08-12-generalized-knowledge-case-and-natural-language-workflow/specs/generalized-knowledge-workflow/spec.md
+  s_dd6ae313b13d0d::t_91a959522f18a4 1-33
+openspec/changes/archive/2026-08-12-generalized-knowledge-case-and-natural-language-workflow/specs/natural-language-test-workflow/spec.md
+  s_dd6ae313b13d0d::t_4180aa3d932b4c 1-29
+openspec/changes/archive/2026-08-12-v2-guided-console-and-system-onboarding/design.md
+  s_dd6ae313b13d0d::t_d5409f76ac22de 1-33
+openspec/changes/archive/2026-08-12-v2-guided-console-and-system-onboarding/proposal.md
+  s_dd6ae313b13d0d::t_e97e8629a55206 1-25
+openspec/changes/archive/2026-08-12-v2-guided-console-and-system-onboarding/specs/guided-console/spec.md
+  s_dd6ae313b13d0d::t_e79713a35460fc 1-17
+openspec/changes/archive/2026-08-12-v2-guided-console-and-system-onboarding/specs/guided-system-onboarding/spec.md
+  s_dd6ae313b13d0d::t_ae189c70af41b3 1-29
+openspec/changes/archive/2026-08-12-v2-guided-console-and-system-onboarding/specs/resource-validation-console/spec.md
+  s_dd6ae313b13d0d::t_421709f47289f5 1-29
+openspec/changes/archive/2026-08-12-v2-guided-console-and-system-onboarding/tasks.md
+  s_dd6ae313b13d0d::t_0aedf3b3ed399f 1-24
+openspec/changes/archive/2026-08-13-dsf-scan-gateway-and-task-feedback-fix/design.md
+  s_dd6ae313b13d0d::t_5b8e9f2bd4c900 1-23
+openspec/changes/archive/2026-08-13-dsf-scan-gateway-and-task-feedback-fix/proposal.md
+  s_dd6ae313b13d0d::t_dba352755ab683 1-24
+openspec/changes/archive/2026-08-13-dsf-scan-gateway-and-task-feedback-fix/tasks.md
+  s_dd6ae313b13d0d::t_659cf213e76036 1-18
+openspec/changes/archive/2026-08-13-knowledge-interview-and-create-order-mvp/.openspec.yaml
+  s_dd6ae313b13d0d::t_4966ca254a8dd8 1-2
+openspec/changes/archive/2026-08-13-knowledge-interview-and-create-order-mvp/design.md
+  s_dd6ae313b13d0d::t_5186296a91a962 1-41
+openspec/changes/archive/2026-08-13-knowledge-interview-and-create-order-mvp/proposal.md
+  s_dd6ae313b13d0d::t_e8beb49b23e2be 1-26
+openspec/changes/archive/2026-08-13-knowledge-interview-and-create-order-mvp/specs/create-order-mvp/spec.md
+  s_dd6ae313b13d0d::t_ec4b6cf241abb8 1-21
+openspec/changes/archive/2026-08-13-knowledge-interview-and-create-order-mvp/specs/knowledge-interview-and-revision/spec.md
+  s_dd6ae313b13d0d::t_19bca347b22835 1-21
+openspec/changes/archive/2026-08-13-knowledge-interview-and-create-order-mvp/specs/natural-language-blocked-guidance/spec.md
+  s_dd6ae313b13d0d::t_f231b12bcd4b82 1-9
+openspec/changes/archive/2026-08-13-knowledge-interview-and-create-order-mvp/tasks.md
+  s_dd6ae313b13d0d::t_13ac027fc40f80 1-23
+openspec/changes/archive/2026-08-13-multi-system-console-reliability-and-reset/.openspec.yaml
+  s_dd6ae313b13d0d::t_cf6400f58f864e 1-2
+openspec/changes/archive/2026-08-13-multi-system-console-reliability-and-reset/design.md
+  s_dd6ae313b13d0d::t_1d5e246d291fa8 1-49
+openspec/changes/archive/2026-08-13-multi-system-console-reliability-and-reset/proposal.md
+  s_dd6ae313b13d0d::t_cb2dddc8076955 1-26
+openspec/changes/archive/2026-08-13-multi-system-console-reliability-and-reset/specs/console-reliability/spec.md
+  s_dd6ae313b13d0d::t_e31d83345bdee1 1-37
+openspec/changes/archive/2026-08-13-multi-system-console-reliability-and-reset/specs/multi-system-workspace/spec.md
+  s_dd6ae313b13d0d::t_505073b98e7254 1-25
+openspec/changes/archive/2026-08-13-multi-system-console-reliability-and-reset/specs/resource-projection/spec.md
+  s_dd6ae313b13d0d::t_762b1a333dc9d4 1-21
+openspec/changes/archive/2026-08-13-multi-system-console-reliability-and-reset/specs/runtime-scanner-settings/spec.md
+  s_dd6ae313b13d0d::t_fd05bd4a3ea40b 1-21
+openspec/changes/archive/2026-08-13-multi-system-console-reliability-and-reset/tasks.md
+  s_dd6ae313b13d0d::t_471fd87e8f9509 1-27
+openspec/changes/archive/2026-08-13-system-specific-knowledge-discovery-and-task-progress/design.md
+  s_dd6ae313b13d0d::t_1ebbf9df61b429 1-35
+openspec/changes/archive/2026-08-13-system-specific-knowledge-discovery-and-task-progress/proposal.md
+  s_dd6ae313b13d0d::t_34842f53727d94 1-25
+openspec/changes/archive/2026-08-13-system-specific-knowledge-discovery-and-task-progress/specs/knowledge-target-workspace/spec.md
+  s_dd6ae313b13d0d::t_cd0c2d61375b0f 1-22
+openspec/changes/archive/2026-08-13-system-specific-knowledge-discovery-and-task-progress/specs/system-specific-knowledge-context/spec.md
+  s_dd6ae313b13d0d::t_9485efb6fbcc4b 1-34
+openspec/changes/archive/2026-08-13-system-specific-knowledge-discovery-and-task-progress/specs/task-progress-and-console-recovery/spec.md
+  s_dd6ae313b13d0d::t_a5d947b585da1b 1-33
+openspec/changes/archive/2026-08-13-system-specific-knowledge-discovery-and-task-progress/tasks.md
+  s_dd6ae313b13d0d::t_8d8b1ffc351f69 1-33
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.18",
+  "base_commit_sha": "9b6cdcb4bbba98a4f108ee095e26000b4ffdc678",
+  "prompts": {},
+  "sessions": {
+    "s_dd6ae313b13d0d": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019fef82-2a2c-7652-ad03-63eecfd2754c",
+        "model": "gpt-5.6-sol"
+      },
+      "human_author": "shizhen <yuuu.shizhen@gmail.com>"
+    }
+  }
+}
