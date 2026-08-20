@@ -51,7 +51,14 @@ def test_console_static_client_uses_only_v2_routes_and_safe_rendering() -> None:
     assert "finishKnowledgeGeneration" in script
     assert "helpedAction" in script
     assert "阻塞：${condition.reason}" in script
-    assert 'id="knowledge-interview-panel"' in html
+    assert 'id="knowledge-background-editor"' in html
+    assert 'id="knowledge-question-pane"' in html
+    assert 'id="question-scope-filter"' in html
+    assert 'id="question-priority-filter"' in html
+    assert 'id="question-category-filter"' in html
+    assert "renderKnowledgeQuestions" in script
+    target_renderer = script[script.index("function renderKnowledgeTargetDetail") : script.index("async function loadKnowledgeInterview")]
+    assert "detail.questions" not in target_renderer
     assert 'id="knowledge-feedback"' in html
     assert 'id="mvp-create-order-request"' in html
     assert 'id="run-create-order-mvp"' in html
@@ -64,6 +71,13 @@ def test_console_static_client_uses_only_v2_routes_and_safe_rendering() -> None:
     assert "/knowledge/revisions" in script
     assert "/create-order-mvp/fixture" in script
     assert "/create-order-mvp/plan" in script
+    assert "/dsf-operations/canary-fixture" in script
+    assert "/dsf-operations/canary-executions" in script
+    assert 'id="dsf-operation-list"' in html
+    assert 'id="save-dsf-canary-fixture"' in html
+    assert "const operationIds = new Set(" in script
+    assert "operationIds.delete(input.dataset.dsfOperationChoice)" in script
+    assert "${profile.registry_host}" not in script
     assert "页面不再保留请求正文" in script
     assert "请先在系统配置中新增或切换一个系统" in script
     # 通用知识工作区不得再硬编码Booking.Core术语或默认自然语言示例。
@@ -85,6 +99,23 @@ def test_all_long_task_callers_use_the_progress_endpoint() -> None:
 
     assert "showTaskProgress" in poll_task
     assert "payload.task.operation" not in poll_task
+
+
+def test_knowledge_workspace_css_prevents_hidden_overflow_and_mobile_nested_scrolling() -> None:
+    """三栏隐藏控件不得扩张页面，窄屏知识内容应只保留页面或抽屉主滚动。"""
+
+    styles_path = Path(__file__).parents[2] / "opentest" / "web" / "styles.css"
+    styles = styles_path.read_text(encoding="utf-8")
+
+    # 关闭状态的气泡与抽屉不能继续扩大桌面文档宽度。
+    assert '[role="tooltip"] { display: none;' in styles
+    assert ".drawer { position: fixed; inset: 0; z-index: 100; overflow: hidden;" in styles
+
+    # 390像素布局由页面或侧栏统一滚动，正文、候选和目录树不得形成第二层滚动区。
+    assert ".candidate-grid { grid-template-columns: 1fr; max-height: none; overflow: visible; }" in styles
+    assert ".knowledge-main-pane .draft-content { max-height: none; overflow: visible; }" in styles
+    assert ".knowledge-directory-pane .tree-panel { max-height: none; overflow: visible; }" in styles
+    assert "overflow-x: hidden; overflow-y: auto; overflow-wrap: anywhere" in styles
 
 
 def test_console_ignores_late_failures_from_previous_system_scope() -> None:

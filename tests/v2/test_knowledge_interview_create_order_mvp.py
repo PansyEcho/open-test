@@ -301,6 +301,7 @@ def test_interview_propagates_to_multiple_drafts_without_publishing(tmp_path: Pa
     artifacts.write_manifest(manifest)
     artifacts.publish_latest("demo-system", manifest.scan_id)
     application.store.update_source_baseline("demo-system", manifest.baseline)
+    application.skip_background_interview("demo-system")
     batch = application.knowledge.generate_drafts(
         KnowledgeGenerationBatchRequest(system_id="demo-system", target_ids=[manifest.entries[0].entry_id], use_agent=False),
         _UnavailableAgent(),
@@ -336,6 +337,7 @@ def test_resaving_interview_preserves_answered_draft_content(tmp_path: Path) -> 
     artifacts.write_manifest(manifest)
     artifacts.publish_latest("demo-system", manifest.scan_id)
     application.store.update_source_baseline("demo-system", manifest.baseline)
+    application.skip_background_interview("demo-system")
     batch = application.knowledge.generate_drafts(
         KnowledgeGenerationBatchRequest(system_id="demo-system", target_ids=[manifest.entries[0].entry_id], use_agent=False),
         _UnavailableAgent(),

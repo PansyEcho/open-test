@@ -24,6 +24,9 @@ from opentest.application.execution_core import (
 from opentest.application.snapshots import SnapshotService
 from opentest.domain.errors import KnowledgeValidationError
 from opentest.domain.models import (
+    DsfClientProfile,
+    DsfOperationDefinition,
+    DsfOperationMutability,
     ExecutionRequest,
     LocalEnvironmentDefinition,
     OracleRequest,
@@ -32,7 +35,9 @@ from opentest.domain.models import (
     ScenarioGenerationBatch,
     ScenarioStep,
     ScenarioVariant,
+    SemanticAnalysisResult,
     SourceBaseline,
+    SourceReference,
     SystemDefinition,
     ToolDefinition,
 )
@@ -79,7 +84,17 @@ class FakeClock:
 
 
 def _execution_fixture(tmp_path: Path) -> tuple[ScenarioExecutionService, ScenarioVariant, SnapshotService]:
-    """创建真实生成脚本、Case、环境配置和Snapshot执行夹具。"""
+    """创建同时绑定工具、DSF目录和语义摘要的Snapshot执行夹具。
+
+    Args:
+        tmp_path: Pytest提供的隔离源码、知识、Worker和环境目录。
+
+    Returns:
+        可执行场景服务、当前变体和内容寻址Snapshot服务。
+
+    Side Effects:
+        仅在测试临时目录写入脚本、Manifest、Case和本地环境文件。
+    """
 
     source = tmp_path / "source"
     source.mkdir()
@@ -115,6 +130,35 @@ def _execution_fixture(tmp_path: Path) -> tuple[ScenarioExecutionService, Scenar
         system_id="train-booking-core",
         baseline=baseline,
         tools=[tool],
+        dsf_profile=DsfClientProfile(
+            system_id="train-booking-core",
+            registry_host="qa-registry.invalid",
+            client_name="booking-client",
+            target_environment="qa",
+        ),
+        dsf_operations=[
+            DsfOperationDefinition(
+                operation_id="dsf:train-booking-core:order:detail",
+                provider_system_id="train-booking-core",
+                gs_name="dsf.train.booking",
+                service_name="order",
+                version="1.0.0",
+                action="detail",
+                mutability=DsfOperationMutability.READ_ONLY,
+                source_refs=[
+                    SourceReference(
+                        path="OrderFacade.java",
+                        symbol="demo.OrderFacade#detail",
+                        line=1,
+                    )
+                ],
+            )
+        ],
+        semantic_analysis=SemanticAnalysisResult(
+            analyzer="fixture-semantic-analyzer",
+            analyzer_version="1",
+            system_id="train-booking-core",
+        ),
         tool_root=str(tool_root),
     )
     artifacts.write_manifest(manifest)
@@ -486,8 +530,128 @@ def test_snapshot_is_stable_and_changes_when_case_changes(tmp_path: Path) -> Non
     assert changed.snapshot_id != first.snapshot_id
 
 
+def test_snapshot_binds_dsf_profile_operation_catalog_and_semantic_analysis(tmp_path: Path) -> None:
+    """验证Snapshot显式保存DSF Profile、固定操作目录和语义分析摘要。
+
+    Args:
+        tmp_path: Pytest提供的隔离Snapshot资产目录。
+
+    Side Effects:
+        在测试临时目录创建并重新读取一个内容寻址Snapshot。
+    """
+
+    _, _, snapshots = _execution_fixture(tmp_path)
+
+    snapshot = snapshots.create("train-booking-core")
+
+    assert snapshot.dsf_profile_digest
+    assert snapshot.dsf_operation_catalog_digest
+    assert snapshot.semantic_analysis_digest
+    assert snapshots.get(snapshot.snapshot_id) == snapshot
+
+
+def test_snapshot_identity_binds_caller_allowlist_and_cross_system_dsf_contract(tmp_path: Path) -> None:
+    """调用方确认或跨系统provider定义摘要变化后不得复用旧Snapshot。
+
+    Args:
+        tmp_path: pytest隔离Snapshot资产目录。
+
+    Side Effects:
+        仅创建两个本地内容寻址Snapshot，不访问DSF或QA。
+    """
+
+    _, _, snapshots = _execution_fixture(tmp_path)
+    contract = {"digest": "a" * 64}
+
+    def contract_digest(_system_id: str, _scan_id: str) -> str:
+        """返回测试当前指定的DSF执行契约摘要。"""
+
+        return contract["digest"]
+
+    snapshots.dsf_execution_contract_provider = contract_digest
+
+    first = snapshots.create("train-booking-core")
+    contract["digest"] = "b" * 64
+    changed = snapshots.create("train-booking-core")
+
+    assert first.dsf_execution_contract_digest == "a" * 64
+    assert changed.dsf_execution_contract_digest == "b" * 64
+    assert changed.snapshot_id != first.snapshot_id
+
+
+def test_historical_snapshot_requests_matching_dsf_execution_contract(tmp_path: Path) -> None:
+    """历史Snapshot必须使用同一历史scan的调用身份而不是latest Profile。
+
+    Args:
+        tmp_path: Pytest提供的隔离扫描与Snapshot目录。
+
+    Side Effects:
+        发布一个更新的本地Manifest，并记录摘要回调收到的scan ID。
+    """
+
+    _, _, snapshots = _execution_fixture(tmp_path)
+    historical = snapshots.artifacts.read("train-booking-core", "latest")
+    latest = historical.model_copy(
+        update={
+            "scan_id": "scan-new-caller-profile",
+            "dsf_profile": historical.dsf_profile.model_copy(update={"client_name": "new-booking-client"}),
+        }
+    )
+    snapshots.artifacts.write_manifest(latest)
+    snapshots.artifacts.publish_latest("train-booking-core", latest.scan_id)
+    requested_scans: list[str] = []
+
+    def contract_digest(_system_id: str, scan_id: str) -> str:
+        """记录Snapshot请求的扫描身份并返回稳定契约摘要。"""
+
+        requested_scans.append(scan_id)
+        return "c" * 64
+
+    snapshots.dsf_execution_contract_provider = contract_digest
+
+    snapshot = snapshots.create("train-booking-core", historical.scan_id)
+
+    assert requested_scans == [historical.scan_id]
+    assert snapshot.scan_id == historical.scan_id
+
+
+def test_pure_dsf_consumer_snapshot_binds_worker_bytes(tmp_path: Path) -> None:
+    """纯consumer没有provider操作时也必须把DSF Worker字节绑定进Snapshot。
+
+    Args:
+        tmp_path: Pytest提供的隔离Worker与Snapshot目录。
+
+    Side Effects:
+        把当前Manifest改为纯consumer并写入两版本地测试Worker JAR。
+    """
+
+    _, _, snapshots = _execution_fixture(tmp_path)
+    manifest = snapshots.artifacts.read("train-booking-core", "latest").model_copy(
+        update={"dsf_operations": []}
+    )
+    snapshots.artifacts.write_manifest(manifest)
+
+    def consumer_contract_digest(_system_id: str, _scan_id: str) -> str:
+        """返回纯consumer确认绑定的稳定测试摘要。"""
+
+        return "d" * 64
+
+    snapshots.dsf_execution_contract_provider = consumer_contract_digest
+    worker_path = tmp_path / "workers/qa-dsf-worker/target/opentest-qa-dsf-worker.jar"
+    worker_path.parent.mkdir(parents=True)
+    worker_path.write_bytes(b"consumer-worker-v1")
+
+    first = snapshots.create("train-booking-core")
+    worker_path.write_bytes(b"consumer-worker-v2")
+    changed = snapshots.create("train-booking-core")
+
+    assert first.dsf_operation_catalog_digest
+    assert changed.dsf_operation_catalog_digest != first.dsf_operation_catalog_digest
+    assert changed.snapshot_id != first.snapshot_id
+
+
 def test_snapshot_changes_when_worker_or_oracle_catalog_changes(tmp_path: Path) -> None:
-    """Worker Jar或固定Oracle目录变化后必须生成新的内容寻址Snapshot。
+    """Oracle/DSF Worker或固定Oracle目录变化后必须生成新的内容寻址Snapshot。
 
     Args:
         tmp_path: Pytest提供的隔离临时目录。
@@ -507,12 +671,20 @@ def test_snapshot_changes_when_worker_or_oracle_catalog_changes(tmp_path: Path) 
     assert worker_bound.snapshot_id != initial.snapshot_id
     assert worker_bound.worker_digest
 
+    # DSF Worker与固定provider操作共同决定调用行为，Worker字节变化必须进入操作目录摘要。
+    dsf_worker_path = tmp_path / "workers/qa-dsf-worker/target/opentest-qa-dsf-worker.jar"
+    dsf_worker_path.parent.mkdir(parents=True)
+    dsf_worker_path.write_bytes(b"dsf-worker-v1")
+    dsf_worker_bound = snapshots.create("train-booking-core")
+    assert dsf_worker_bound.snapshot_id != worker_bound.snapshot_id
+    assert dsf_worker_bound.dsf_operation_catalog_digest != worker_bound.dsf_operation_catalog_digest
+
     # 固定操作目录决定可执行查询白名单，其任何变化都不能复用旧Snapshot。
     catalog_path = snapshots.store.system_root("train-booking-core") / "oracles/catalog.yaml"
     catalog_path.parent.mkdir(parents=True)
     catalog_path.write_text("schema_version: 1\noperations: []\n", encoding="utf-8")
     catalog_bound = snapshots.create("train-booking-core")
-    assert catalog_bound.snapshot_id != worker_bound.snapshot_id
+    assert catalog_bound.snapshot_id != dsf_worker_bound.snapshot_id
     assert catalog_bound.oracle_catalog_digest
 
 

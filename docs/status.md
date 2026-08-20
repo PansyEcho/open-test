@@ -2,7 +2,7 @@
 
 ## 当前Change
 
-`system-specific-knowledge-discovery-and-task-progress` 已完成并归档；`dsf-execution-and-oracles` 保持 `WAITING_QA_INPUT`
+`semantic-knowledge-workspace` 已完成实现与本地验收；`dsf-proxy-execution-and-agent-tools` 等待两项只读金丝雀后切换；`dsf-execution-and-oracles` 保持 `WAITING_QA_INPUT`
 
 ## 已完成任务
 
@@ -106,29 +106,40 @@
 - 完成知识目标工作区和统一进度契约：Facade按类/方法分层，点击叶子加载证据、草稿、正文、问题与反馈；扫描、知识、资源、Case、执行和索引任务均可持久化并恢复真实阶段与处理数量。
 - 完成侧边栏左侧收起/恢复、桌面端和390×844移动端验收；浏览器无横向溢出或控制台错误，本轮未访问QA。
 - 完成系统专属知识Change的OCR delegation审查：初审2个Medium均接受修复，唯一复审确认全部闭合且无新增High/Medium/Low；Java符号链接不能逃逸源码根，进度越界返回稳定领域异常。
+- 完成独立Java 8 DSFProxy Worker、DSF客户端Profile/provider操作发现、全局操作索引、调用系统确认绑定、0600只读金丝雀Fixture和脱敏执行API；写操作与非QA环境继续在Worker启动前阻断。
+- Snapshot已绑定调用方扫描、Profile、确认allowlist、跨系统provider定义和DSF Worker字节；历史扫描不再混入latest Profile，纯consumer也不会漏记Worker版本。
+- 完成JavaParser + Symbol Solver本地语义Sidecar与可替换Python端口；公共逻辑共享节点带真实入口`CALLS`边，状态枚举支持`name/desc/description`字段及getter真实绑定。
+- 知识页已改为目录、当前知识、常驻问题三栏；背景访谈按5至7题分轮，未完成/未跳过前禁止对象草稿生成，业务术语只在背景页编辑。
+- Booking.Core与Refund.Core本地Spike达到调用边召回率1.0、模式精确率1.0、22条人工调用边全中、Refund状态标签全中，111个高置信模式无意外误报。
 
 ## 进行中任务
 
-- `system-specific-knowledge-discovery-and-task-progress` 已完成实现、真实退款源码验证、浏览器验收、OCR delegation审查和完整本地门禁，并归档。
 - `dsf-execution-and-oracles`处于`WAITING_QA_INPUT`，任务5.4保持未完成且不归档；等待Fixture与TiDB READ池期间不视为正在编码的核心change。
+- `semantic-knowledge-workspace`代码、Spike、OCR delegation和浏览器验收已完成，任务全部闭合，尚未归档。
+- `dsf-proxy-execution-and-agent-tools`除全量Facade切换、两个真实只读金丝雀和金丝雀后的Labrador移除外均已完成；当前不会自动确认操作或访问QA。
 
 ## 待开始任务
 
-- 完成DSF与MySQL同订单交叉验证后，再分批执行31个核心生命周期变体。
-- 当前change归档后，正式创建 `booking-core-business-lifecycle-regression` change；现有31项资产作为其输入基线。
+- 对Booking.Core与Refund.Core完成一次本地重扫后，在页面核对新发现的Profile和固定操作候选。
+- 两个只读DSF金丝雀都成功后才切换Facade工具并移除Labrador；之后仍只执行一项经确认的createOrder写金丝雀，不运行31个Case。
 
 ## 阻塞项
 
-- 当前Codex执行环境检查结果为 `OPENTEST_QA_LABRADOR_TOKEN=UNSET`；正在监听的Uvicorn进程是否注入新轮换Token仍未验证。禁止读取进程环境原文、在聊天/Git/本地YAML传递Token或复用旧知识库曾暴露的值。
-- 尚未提供Booking.Core非敏感QA Fixture引用：EBK/API供应商、主备票机、操作员、成人/儿童测试身份、港铁与二/三程路线。
+- 当前活动Manifest生成于DSF Profile扫描能力接入前，页面安全显示`Profile缺失`；需先本地重扫，不能把旧Manifest当作DSFProxy候选。
+- 尚未在本地0600 Fixture页填写有效Booking HT/TX/merchant，以及一笔存在退票记录的原订单号；这些值不得进入聊天、Git、Snapshot、日志或报告。
+- createOrder写金丝雀仍缺一份可成功完整请求、预期EBK供应商/票机模式、清理策略及DSF/MySQL/TiDB/Redis/MQ业务Oracle。
 - Git忽略的 `qa.yaml` 安全骨架已创建，但31组 `values.fixtures` 仍为空；共130个路径已记录在 `docs/development/qa-fixture-checklist.md`，当前不会猜测或自动拼装请求。
 - 首条EBK金丝雀已写入可由源码证明的逐响应和逐Oracle断言；其余30个custom Case仍缺经业务确认的非空断言，空断言门禁会阻止执行或假绿。
 - 5个含Job工具的Case所对应扫描脚本仍绑定 `test` 地址；完成QA重扫或显式QA重绑前禁止执行。
 - 全局Job影响Oracle和隔离口径尚未确认，因此不能签发一次性确认Token。
-- Booking.Core业务TiDB和分析TiDB均未暴露可验证READ池；安全Worker不允许回退WRITE，依赖TiDB硬断言的Case必须保持 `BLOCKED`。
+- TiDB不再作为DSFProxy整体前置阻塞；只在用户单独确认后复测Booking.Core两个已扫描TiDB的`READ + switchToReadDB()`路径，Refund.Core不探测数据源，且永不回退WRITE池。
 
 ## 最近验证结果
 
+- 2026-08-20：最终本地门禁通过：V2 `251 passed / 1 skipped`、legacy `43 passed`，Java语义、DSF Worker和Oracle Worker三个模块均离线`test package`成功；OpenSpec strict `32 passed / 0 failed`，compileall、Node语法、`pip check`和diff检查通过。
+- 2026-08-20：OCR delegation初审发现4 High/7 Medium/1 Low，唯一复审发现1 High/4 Medium，全部接受并修复；历史Snapshot、共享语义调用边、背景访谈阶段门禁、枚举getter绑定及Spike误报门禁均闭合，无拒绝或仲裁项。
+- 2026-08-20：最终主代理完整diff复核未发现遗留High/Medium；审查和修复均未访问QA、Fixture正文、Token或31个Case。
+- 2026-08-20：实际浏览器验收桌面三栏为`270px / 461px / 350px`，中栏问题卡为0，全部/当前对象问题切换为`6 / 3`；390×844目录与问题抽屉互斥，页面及三栏横向溢出为0，控制台warning/error为0。
 - 2026-08-13：系统专属知识与任务进度最终门禁通过：定向`16 passed`、V2 `218 passed / 1 skipped`、legacy `43 passed`、Worker `45 passed`且离线Maven `BUILD SUCCESS`；OpenSpec strict、compileall、Node语法、`pip check`和diff检查通过。
 - 2026-08-13：本轮OCR delegation初审发现2个Medium并全部接受修复，唯一复审确认符号链接源码逃逸和进度异常类型问题均闭合，无新增High/Medium/Low；审查代理只读且未访问QA、Token、Fixture或网络。
 - 2026-08-13：真实退款系统本地发现得到18个活跃候选（12个术语、6个外部应用）和19个开放问题；所有活跃外部应用均绑定受影响入口，证据行号落在真实源码范围，`POST`和`UTF`已按增量规则标记为`STALE`。
@@ -210,10 +221,8 @@
 ## 下一步
 
 - 保持`dsf-execution-and-oracles`为`WAITING_QA_INPUT`；只有真实QA金丝雀和31个业务Case完成后才归档。
-- 在系统配置新增`travelsystem.java.dsf.supplychain.booking.core`，本地填写源码路径、Labrador Token和QA网关前缀并完成自动扫描。
-- 在知识页面填写项目背景与术语，回答并人工确认`TradeFacade#createOrder`知识；不得直接把`code_verified`升级为已确认。
-- 在测试执行页本地填写一份可成功的完整createOrder请求、预期EBK供应商和票机模式；请求和身份值不得写入聊天、Git、Snapshot或报告。
-- Fixture保存并完成知识确认后创建新Snapshot，先预览MVP计划；只有页面显示READY且用户显式确认时才发起首条真实QA创单。
-- 由QA资源维护方提供TiDB READ池或确认不承载核心生命周期数据；不允许使用WRITE池或MySQL结果冒充TiDB。
-- 在Uvicorn进程安全注入新Token并补齐Fixture后，先执行境内普通EBK创单与出票金丝雀，并用DSF、MySQL、临时库、Item、Redis及MQ效果证据交叉确认路由。
-- 金丝雀通过后按业务域分批执行31项；所有必需Oracle通过且OCR delegation收口后，才归档当前change并启动下一change。
+- 在本地重新扫描Booking.Core与Refund.Core，逐项目核对客户端Profile和provider/consumer操作候选；不自动勾选或启用任何操作。
+- 仅在本地0600 Fixture页填写Booking查询标识和Refund原订单号，不要粘贴到聊天中；每次真实QA探测继续单独确认。
+- 先执行Booking.Core自调用`OrderFacade.orderDetail`，成功后再以Booking.Core身份调用Refund.Core `RefundFacade.queryListByOrderNo`。
+- 两个只读金丝雀均成功后再切换全部DSF Facade工具、删除Labrador输入/网关API/脚本执行器；HTTP Job和历史`generated_cli`审计保持原样。
+- createOrder阶段补齐成功请求、路由/票机预期、清理和完整业务Oracle后，只执行一项经确认写金丝雀；31组130个Fixture继续留空并保持全部`BLOCKED`。

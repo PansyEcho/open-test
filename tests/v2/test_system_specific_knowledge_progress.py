@@ -274,7 +274,7 @@ def test_context_candidates_and_answers_are_isolated_between_two_systems(tmp_pat
 
 
 def test_unified_questions_include_old_draft_question(tmp_path: Path) -> None:
-    """旧知识草稿开放问题应立即进入统一红色数量而不等待发布。"""
+    """旧草稿问题应与首轮七个背景问题同时可见，不因新门禁而隐藏。"""
 
     store, _ = _registered_store(tmp_path)
     question = KnowledgeQuestion(
@@ -316,7 +316,7 @@ def test_unified_questions_include_old_draft_question(tmp_path: Path) -> None:
     questions = service.list_questions("refund.core")
 
     assert any(item.question_id == question.question_id and item.source == "draft" for item in questions)
-    assert sum(item.status == "open" for item in questions) == 3
+    assert sum(item.status == "open" for item in questions) == 8
 
 
 def test_target_detail_returns_only_selected_target_context(tmp_path: Path) -> None:

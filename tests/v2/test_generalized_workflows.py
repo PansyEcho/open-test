@@ -449,6 +449,7 @@ def test_open_high_questions_block_draft_publication_until_all_are_answered(tmp_
     artifacts.write_manifest(manifest)
     artifacts.publish_latest("demo-system", manifest.scan_id)
     application.store.update_source_baseline("demo-system", manifest.baseline)
+    application.skip_background_interview("demo-system")
     batch = application.knowledge.generate_drafts(
         KnowledgeGenerationBatchRequest(
             system_id="demo-system",
@@ -654,6 +655,7 @@ def test_draft_batch_survives_unavailable_agent_without_publishing(tmp_path: Pat
     artifacts.write_manifest(manifest)
     artifacts.publish_latest("demo-system", manifest.scan_id)
     application.store.update_source_baseline("demo-system", manifest.baseline)
+    application.skip_background_interview("demo-system")
 
     from opentest.domain.models import KnowledgeGenerationBatchRequest
 
@@ -687,6 +689,7 @@ def test_agent_prompt_excludes_sensitive_inputs_and_invalid_output_is_not_adopte
     artifacts.write_manifest(manifest)
     artifacts.publish_latest("demo-system", manifest.scan_id)
     application.store.update_source_baseline("demo-system", manifest.baseline)
+    application.skip_background_interview("demo-system")
     runner = _InvalidOutputAgentRunner(tmp_path / "unused")
 
     from opentest.domain.models import KnowledgeGenerationBatchRequest
