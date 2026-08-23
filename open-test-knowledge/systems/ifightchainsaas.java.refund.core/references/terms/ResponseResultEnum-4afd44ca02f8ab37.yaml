@@ -1,0 +1,64 @@
+candidate_id: candidate:business_term:4afd44ca02f8ab37
+system_id: ifightchainsaas.java.refund.core
+kind: BUSINESS_TERM
+knowledge_form: BUSINESS_ENUM
+name: ResponseResultEnum
+business_name: ResponseResultEnum
+business_name_source: CODE_DEFAULT
+business_name_known_unknown: false
+enum_values:
+- code: FAIL
+  business_meaning: 失败
+  source: CODE_DEFAULT
+  known_unknown: false
+  confidence: 0.95
+  source_refs:
+  - repository: ''
+    path: app/model/src/main/java/com/ly/flight/chainsaas/refund/enums/monitor/ResponseResultEnum.java
+    symbol: com.ly.flight.chainsaas.refund.enums.monitor.ResponseResultEnum#FAIL
+    line: 22
+    commit: ''
+    content_digest: ''
+- code: SUCCESS
+  business_meaning: 成功
+  source: CODE_DEFAULT
+  known_unknown: false
+  confidence: 0.95
+  source_refs:
+  - repository: ''
+    path: app/model/src/main/java/com/ly/flight/chainsaas/refund/enums/monitor/ResponseResultEnum.java
+    symbol: com.ly.flight.chainsaas.refund.enums.monitor.ResponseResultEnum#SUCCESS
+    line: 18
+    commit: ''
+    content_digest: ''
+suggested_meaning: 枚举名称和值默认采用源码注释；缺少注释时回退代码标识，可再人工修订。
+code_meaning: 失败（FAIL）；成功（SUCCESS）
+unresolved_codes: []
+business_meaning: ''
+status: CODE_VERIFIED
+merged_into_candidate_id: ''
+source_refs:
+- repository: ''
+  path: app/model/src/main/java/com/ly/flight/chainsaas/refund/enums/monitor/ResponseResultEnum.java
+  symbol: com.ly.flight.chainsaas.refund.enums.monitor.ResponseResultEnum
+  line: 13
+  commit: 4da983bfd4d9de362fc5323412e35c1bdbd08236
+  content_digest: c81c96b069a856539a88c9b8a75cb7f8a82263353ca17ece0e541f52d38f13fe
+- repository: ''
+  path: app/model/src/main/java/com/ly/flight/chainsaas/refund/enums/monitor/ResponseResultEnum.java
+  symbol: com.ly.flight.chainsaas.refund.enums.monitor.ResponseResultEnum#FAIL
+  line: 22
+  commit: ''
+  content_digest: ''
+- repository: ''
+  path: app/model/src/main/java/com/ly/flight/chainsaas/refund/enums/monitor/ResponseResultEnum.java
+  symbol: com.ly.flight.chainsaas.refund.enums.monitor.ResponseResultEnum#SUCCESS
+  line: 18
+  commit: ''
+  content_digest: ''
+affected_target_ids:
+- facade:com.ly.flight.chainsaas.refund.facade.CallbackFacade#refundApplyCallback
+- facade:com.ly.flight.chainsaas.refund.facade.CallbackFacade#refundConfirmCallback
+evidence_digest: f8fb7725d5e12d312ee1bbee2e02f12790c43c05f2b991269f3b5c44482fbdc8
+discovered_at: '2026-08-21T06:19:51.512249Z'
+updated_at: '2026-08-22T13:36:34.107017Z'

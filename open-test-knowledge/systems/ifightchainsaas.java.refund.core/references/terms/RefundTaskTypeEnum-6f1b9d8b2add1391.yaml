@@ -1,0 +1,227 @@
+candidate_id: candidate:business_term:6f1b9d8b2add1391
+system_id: ifightchainsaas.java.refund.core
+kind: BUSINESS_TERM
+knowledge_form: BUSINESS_ENUM
+name: RefundTaskTypeEnum
+business_name: 退票任务类型
+business_name_source: CODE_DEFAULT
+business_name_known_unknown: false
+enum_values:
+- code: ACCOUNT_CHECK_SENDER
+  business_meaning: 发送对账
+  source: CODE_DEFAULT
+  known_unknown: false
+  confidence: 0.95
+  source_refs:
+  - repository: ''
+    path: app/biz/src/main/java/com/ly/flight/chainsaas/refund/biz/enums/RefundTaskTypeEnum.java
+    symbol: com.ly.flight.chainsaas.refund.biz.enums.RefundTaskTypeEnum#ACCOUNT_CHECK_SENDER
+    line: 35
+    commit: ''
+    content_digest: ''
+- code: LOG
+  business_meaning: 公共日志
+  source: CODE_DEFAULT
+  known_unknown: false
+  confidence: 0.95
+  source_refs:
+  - repository: ''
+    path: app/biz/src/main/java/com/ly/flight/chainsaas/refund/biz/enums/RefundTaskTypeEnum.java
+    symbol: com.ly.flight.chainsaas.refund.biz.enums.RefundTaskTypeEnum#LOG
+    line: 15
+    commit: ''
+    content_digest: ''
+- code: PAY_NOTIFY
+  business_meaning: 支付通知
+  source: CODE_DEFAULT
+  known_unknown: false
+  confidence: 0.95
+  source_refs:
+  - repository: ''
+    path: app/biz/src/main/java/com/ly/flight/chainsaas/refund/biz/enums/RefundTaskTypeEnum.java
+    symbol: com.ly.flight.chainsaas.refund.biz.enums.RefundTaskTypeEnum#PAY_NOTIFY
+    line: 30
+    commit: ''
+    content_digest: ''
+- code: SEND_EMAIL
+  business_meaning: 公共邮件
+  source: CODE_DEFAULT
+  known_unknown: false
+  confidence: 0.95
+  source_refs:
+  - repository: ''
+    path: app/biz/src/main/java/com/ly/flight/chainsaas/refund/biz/enums/RefundTaskTypeEnum.java
+    symbol: com.ly.flight.chainsaas.refund.biz.enums.RefundTaskTypeEnum#SEND_EMAIL
+    line: 20
+    commit: ''
+    content_digest: ''
+- code: TICKETED_JOURNEY_SENDER
+  business_meaning: 发送行程单
+  source: CODE_DEFAULT
+  known_unknown: false
+  confidence: 0.95
+  source_refs:
+  - repository: ''
+    path: app/biz/src/main/java/com/ly/flight/chainsaas/refund/biz/enums/RefundTaskTypeEnum.java
+    symbol: com.ly.flight.chainsaas.refund.biz.enums.RefundTaskTypeEnum#TICKETED_JOURNEY_SENDER
+    line: 40
+    commit: ''
+    content_digest: ''
+- code: TICKET_NOTIFY
+  business_meaning: 供应商通知
+  source: CODE_DEFAULT
+  known_unknown: false
+  confidence: 0.95
+  source_refs:
+  - repository: ''
+    path: app/biz/src/main/java/com/ly/flight/chainsaas/refund/biz/enums/RefundTaskTypeEnum.java
+    symbol: com.ly.flight.chainsaas.refund.biz.enums.RefundTaskTypeEnum#TICKET_NOTIFY
+    line: 25
+    commit: ''
+    content_digest: ''
+- code: UPDATE_AUTO_TYPE
+  business_meaning: 更新自动类型
+  source: CODE_DEFAULT
+  known_unknown: false
+  confidence: 0.95
+  source_refs:
+  - repository: ''
+    path: app/biz/src/main/java/com/ly/flight/chainsaas/refund/biz/enums/RefundTaskTypeEnum.java
+    symbol: com.ly.flight.chainsaas.refund.biz.enums.RefundTaskTypeEnum#UPDATE_AUTO_TYPE
+    line: 55
+    commit: ''
+    content_digest: ''
+- code: UPDATE_CANCEL_REASON
+  business_meaning: 更新取消原因
+  source: CODE_DEFAULT
+  known_unknown: false
+  confidence: 0.95
+  source_refs:
+  - repository: ''
+    path: app/biz/src/main/java/com/ly/flight/chainsaas/refund/biz/enums/RefundTaskTypeEnum.java
+    symbol: com.ly.flight.chainsaas.refund.biz.enums.RefundTaskTypeEnum#UPDATE_CANCEL_REASON
+    line: 45
+    commit: ''
+    content_digest: ''
+- code: UPDATE_REFUND_PRICE_TIME
+  business_meaning: 更新退款完成时间
+  source: CODE_DEFAULT
+  known_unknown: false
+  confidence: 0.95
+  source_refs:
+  - repository: ''
+    path: app/biz/src/main/java/com/ly/flight/chainsaas/refund/biz/enums/RefundTaskTypeEnum.java
+    symbol: com.ly.flight.chainsaas.refund.biz.enums.RefundTaskTypeEnum#UPDATE_REFUND_PRICE_TIME
+    line: 50
+    commit: ''
+    content_digest: ''
+- code: WALLET_REFUND
+  business_meaning: 钱包退票结算
+  source: CODE_DEFAULT
+  known_unknown: false
+  confidence: 0.95
+  source_refs:
+  - repository: ''
+    path: app/biz/src/main/java/com/ly/flight/chainsaas/refund/biz/enums/RefundTaskTypeEnum.java
+    symbol: com.ly.flight.chainsaas.refund.biz.enums.RefundTaskTypeEnum#WALLET_REFUND
+    line: 60
+    commit: ''
+    content_digest: ''
+suggested_meaning: 枚举名称和值默认采用源码注释；缺少注释时回退代码标识，可再人工修订。
+code_meaning: 发送对账（ACCOUNT_CHECK_SENDER）；公共日志（LOG）；支付通知（PAY_NOTIFY）；公共邮件（SEND_EMAIL）；发送行程单（TICKETED_JOURNEY_SENDER）；供应商通知（TICKET_NOTIFY）；更新自动类型（UPDATE_AUTO_TYPE）；更新取消原因（UPDATE_CANCEL_REASON）；更新退款完成时间（UPDATE_REFUND_PRICE_TIME）；钱包退票结算（WALLET_REFUND）
+unresolved_codes: []
+business_meaning: ''
+status: CODE_VERIFIED
+merged_into_candidate_id: ''
+source_refs:
+- repository: ''
+  path: app/biz/src/main/java/com/ly/flight/chainsaas/refund/biz/enums/RefundTaskTypeEnum.java
+  symbol: com.ly.flight.chainsaas.refund.biz.enums.RefundTaskTypeEnum
+  line: 11
+  commit: 4da983bfd4d9de362fc5323412e35c1bdbd08236
+  content_digest: ff91ba88d6e7eabce670eda700436cca6e93175868fccac3f08d061b999484f4
+- repository: ''
+  path: app/biz/src/main/java/com/ly/flight/chainsaas/refund/biz/enums/RefundTaskTypeEnum.java
+  symbol: com.ly.flight.chainsaas.refund.biz.enums.RefundTaskTypeEnum#ACCOUNT_CHECK_SENDER
+  line: 35
+  commit: ''
+  content_digest: ''
+- repository: ''
+  path: app/biz/src/main/java/com/ly/flight/chainsaas/refund/biz/enums/RefundTaskTypeEnum.java
+  symbol: com.ly.flight.chainsaas.refund.biz.enums.RefundTaskTypeEnum#LOG
+  line: 15
+  commit: ''
+  content_digest: ''
+- repository: ''
+  path: app/biz/src/main/java/com/ly/flight/chainsaas/refund/biz/enums/RefundTaskTypeEnum.java
+  symbol: com.ly.flight.chainsaas.refund.biz.enums.RefundTaskTypeEnum#PAY_NOTIFY
+  line: 30
+  commit: ''
+  content_digest: ''
+- repository: ''
+  path: app/biz/src/main/java/com/ly/flight/chainsaas/refund/biz/enums/RefundTaskTypeEnum.java
+  symbol: com.ly.flight.chainsaas.refund.biz.enums.RefundTaskTypeEnum#SEND_EMAIL
+  line: 20
+  commit: ''
+  content_digest: ''
+- repository: ''
+  path: app/biz/src/main/java/com/ly/flight/chainsaas/refund/biz/enums/RefundTaskTypeEnum.java
+  symbol: com.ly.flight.chainsaas.refund.biz.enums.RefundTaskTypeEnum#TICKETED_JOURNEY_SENDER
+  line: 40
+  commit: ''
+  content_digest: ''
+- repository: ''
+  path: app/biz/src/main/java/com/ly/flight/chainsaas/refund/biz/enums/RefundTaskTypeEnum.java
+  symbol: com.ly.flight.chainsaas.refund.biz.enums.RefundTaskTypeEnum#TICKET_NOTIFY
+  line: 25
+  commit: ''
+  content_digest: ''
+- repository: ''
+  path: app/biz/src/main/java/com/ly/flight/chainsaas/refund/biz/enums/RefundTaskTypeEnum.java
+  symbol: com.ly.flight.chainsaas.refund.biz.enums.RefundTaskTypeEnum#UPDATE_AUTO_TYPE
+  line: 55
+  commit: ''
+  content_digest: ''
+- repository: ''
+  path: app/biz/src/main/java/com/ly/flight/chainsaas/refund/biz/enums/RefundTaskTypeEnum.java
+  symbol: com.ly.flight.chainsaas.refund.biz.enums.RefundTaskTypeEnum#UPDATE_CANCEL_REASON
+  line: 45
+  commit: ''
+  content_digest: ''
+- repository: ''
+  path: app/biz/src/main/java/com/ly/flight/chainsaas/refund/biz/enums/RefundTaskTypeEnum.java
+  symbol: com.ly.flight.chainsaas.refund.biz.enums.RefundTaskTypeEnum#UPDATE_REFUND_PRICE_TIME
+  line: 50
+  commit: ''
+  content_digest: ''
+- repository: ''
+  path: app/biz/src/main/java/com/ly/flight/chainsaas/refund/biz/enums/RefundTaskTypeEnum.java
+  symbol: com.ly.flight.chainsaas.refund.biz.enums.RefundTaskTypeEnum#WALLET_REFUND
+  line: 60
+  commit: ''
+  content_digest: ''
+affected_target_ids:
+- facade:com.ly.flight.chainsaas.refund.facade.RefundFacade#applyToAirline
+- facade:com.ly.flight.chainsaas.refund.facade.RefundFacade#autoRefund
+- facade:com.ly.flight.chainsaas.refund.facade.RefundFacade#autoRefundReshop
+- facade:com.ly.flight.chainsaas.refund.facade.RefundFacade#billSupplement
+- facade:com.ly.flight.chainsaas.refund.facade.RefundFacade#cancel
+- facade:com.ly.flight.chainsaas.refund.facade.RefundFacade#createLog
+- facade:com.ly.flight.chainsaas.refund.facade.RefundFacade#createOrder
+- facade:com.ly.flight.chainsaas.refund.facade.RefundFacade#createPayment
+- facade:com.ly.flight.chainsaas.refund.facade.RefundFacade#getPlatFee
+- facade:com.ly.flight.chainsaas.refund.facade.RefundFacade#lockOrder
+- facade:com.ly.flight.chainsaas.refund.facade.RefundFacade#queryDetailByOrderNo
+- facade:com.ly.flight.chainsaas.refund.facade.RefundFacade#queryDetailByRefundNo
+- facade:com.ly.flight.chainsaas.refund.facade.RefundFacade#queryList
+- facade:com.ly.flight.chainsaas.refund.facade.RefundFacade#queryListByOrderNo
+- facade:com.ly.flight.chainsaas.refund.facade.RefundFacade#refundConfirm
+- facade:com.ly.flight.chainsaas.refund.facade.RefundFacade#refundReshop
+- facade:com.ly.flight.chainsaas.refund.facade.RefundFacade#refundReshopSubmit
+- facade:com.ly.flight.chainsaas.refund.facade.RefundFacade#ticketRefunding
+- facade:com.ly.flight.chainsaas.refund.facade.RefundFacade#unLockOrder
+- facade:com.ly.flight.chainsaas.refund.facade.RefundFacade#voucherRefundSubmit
+- facade:com.ly.flight.chainsaas.refund.facade.RefundFacade#walletRefundRetry
+evidence_digest: cbf070320bdaf15b1b45228ae39699ad4fdc23adbe4c753f9ed0ec37706d4509
+discovered_at: '2026-08-21T06:19:51.512231Z'
+updated_at: '2026-08-22T13:36:34.107014Z'
