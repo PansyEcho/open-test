@@ -1,23 +1,30 @@
 candidate_id: candidate:external_application:840a9781b2509dbe
 system_id: ifightchainsaas.java.refund.core
 kind: EXTERNAL_APPLICATION
+knowledge_form: EXTERNAL_APPLICATION
 name: LockClient
+business_name: ''
+business_name_source: UNRESOLVED
+business_name_known_unknown: false
+enum_values: []
 suggested_meaning: 源码调用该远程协作者；请说明对应应用、业务职责和失败时的业务影响。
-business_meaning: ''
-status: OPEN
+code_meaning: ''
+unresolved_codes: []
+business_meaning: redis锁
+status: CONFIRMED
 merged_into_candidate_id: ''
 source_refs:
 - repository: ''
   path: app/biz/src/main/java/com/ly/flight/chainsaas/refund/biz/lock/DistributedLockService.java
   symbol: com.ly.flight.chainsaas.refund.biz.lock.DistributedLockService
   line: 8
-  commit: 2b175212e26b21abd0a08edeb3a4c7c1e1e2665a
+  commit: 4da983bfd4d9de362fc5323412e35c1bdbd08236
   content_digest: df9304e5d60a163ee989a24a0b0fd517d52122fe682b4b694b5e1bd81ccfb977
 - repository: ''
   path: app/integration/src/main/java/com/ly/flight/chainsaas/refund/integration/lock/client/RedissonLockClient.java
   symbol: com.ly.flight.chainsaas.refund.integration.lock.client.RedissonLockClient
   line: 10
-  commit: 2b175212e26b21abd0a08edeb3a4c7c1e1e2665a
+  commit: 4da983bfd4d9de362fc5323412e35c1bdbd08236
   content_digest: 26037526393448562eb76bfe8b90351f16b68bbf419ec0c622160fe60df6276f
 affected_target_ids:
 - facade:com.ly.flight.chainsaas.refund.facade.CallbackFacade#refundApplyCallback
@@ -54,4 +61,4 @@ affected_target_ids:
 - facade:com.ly.flight.chainsaas.refund.facade.ToolFacade#syncOrder
 evidence_digest: e102bc9114e806ae8ea436061c4af510b68e7cc0c7948d4dbf49693e6ea24bc9
 discovered_at: '2026-08-13T10:23:54.669485Z'
-updated_at: '2026-08-13T11:20:20.891881Z'
+updated_at: '2026-08-22T13:36:34.107033Z'

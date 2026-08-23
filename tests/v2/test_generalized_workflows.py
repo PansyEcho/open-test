@@ -37,12 +37,18 @@ from opentest.domain.models import (
 
 
 class _UnavailableAgentRunner:
-    """模拟本地Agent均不可用，验证确定性草稿仍可完成。"""
+    """模拟本地Agent均不可用，验证提交前门禁。"""
 
-    def detect(self) -> tuple[None, bool, bool]:
+    def availability(self) -> tuple[bool, bool]:
         """返回两个Agent均不可用的固定检测结果。"""
 
-        return None, False, False
+        return False, False
+
+    def is_available(self, agent: str) -> bool:
+        """任一显式Agent选择都不可用。"""
+
+        del agent
+        return False
 
 
 class _InvalidOutputAgentRunner:
@@ -54,10 +60,15 @@ class _InvalidOutputAgentRunner:
         self.output_path = output_path
         self.prompt = ""
 
-    def detect(self) -> tuple[str, bool, bool]:
+    def availability(self) -> tuple[bool, bool]:
         """声明Codex可用以触发增强路径。"""
 
-        return "codex", True, False
+        return True, False
+
+    def is_available(self, agent: str) -> bool:
+        """仅允许测试明确选择Codex。"""
+
+        return agent == "codex"
 
     def run(self, request: object, source_root: Path, evidence_root: Path) -> object:
         """记录提示并返回不符合JSON信封的本地证据。"""
@@ -455,8 +466,18 @@ def test_open_high_questions_block_draft_publication_until_all_are_answered(tmp_
             system_id="demo-system",
             target_ids=["job:demo.TimeoutJob"],
             scan_id=manifest.scan_id,
-            use_agent=False,
-        )
+            agent="codex",
+            confirmed=True,
+        ),
+        runner=_InvalidOutputAgentRunner(tmp_path / "open-question-output"),
+    )
+    first_question = KnowledgeQuestion(
+        question_id="question:first-business-boundary",
+        system_id="demo-system",
+        title="确认过期任务用途",
+        detail="请补充该Job处理的业务对象。",
+        affected_node_ids=[batch.drafts[0].node.node_id],
+        impact="high",
     )
     second_question = KnowledgeQuestion(
         question_id="question:second-business-boundary",
@@ -466,7 +487,7 @@ def test_open_high_questions_block_draft_publication_until_all_are_answered(tmp_
         affected_node_ids=[batch.drafts[0].node.node_id],
         impact="high",
     )
-    batch = batch.model_copy(update={"questions": [*batch.questions, second_question]})
+    batch = batch.model_copy(update={"questions": [first_question, second_question], "status": "PENDING_CONFIRMATION"})
     application.store.write_draft_batch(batch)
     selected = batch.drafts[0]
 
@@ -641,8 +662,8 @@ def test_user_regression_case_is_persisted_without_overwriting_custom_case(tmp_p
     assert saved[0].run_ids == ["run-001", "run-002"]
 
 
-def test_draft_batch_survives_unavailable_agent_without_publishing(tmp_path: Path) -> None:
-    """Agent不可用时应保留确定性草稿和阻塞说明，且不会提前写入知识真相。"""
+def test_unavailable_selected_agent_blocks_before_generation(tmp_path: Path) -> None:
+    """用户选择的Agent不可用时应在目标追踪与知识写入前阻止生成。"""
 
     source = tmp_path / "source"
     source.mkdir()
@@ -659,18 +680,18 @@ def test_draft_batch_survives_unavailable_agent_without_publishing(tmp_path: Pat
 
     from opentest.domain.models import KnowledgeGenerationBatchRequest
 
-    batch = application.knowledge.generate_drafts(
-        KnowledgeGenerationBatchRequest(
-            system_id="demo-system",
-            target_ids=["job:demo.TimeoutJob"],
-            scan_id=manifest.scan_id,
-        ),
-        runner=_UnavailableAgentRunner(),
-    )
+    with pytest.raises(KnowledgeValidationError, match="当前不可用"):
+        application.knowledge.generate_drafts(
+            KnowledgeGenerationBatchRequest(
+                system_id="demo-system",
+                target_ids=["job:demo.TimeoutJob"],
+                scan_id=manifest.scan_id,
+                agent="codex",
+                confirmed=True,
+            ),
+            runner=_UnavailableAgentRunner(),
+        )
 
-    assert batch.drafts
-    assert batch.agent.selected_agent is None
-    assert "均不可用" in batch.agent.blocked_reason
     assert application.store.list_nodes("demo-system") == []
     application.close()
 
@@ -699,13 +720,18 @@ def test_agent_prompt_excludes_sensitive_inputs_and_invalid_output_is_not_adopte
             system_id="demo-system",
             target_ids=["job:demo.TimeoutJob"],
             scan_id=manifest.scan_id,
+            agent="codex",
+            confirmed=True,
         ),
         runner=runner,
     )
 
     assert batch.drafts
     assert all("not-json" not in draft.content for draft in batch.drafts)
-    assert "Agent增强未采用" in batch.agent.blocked_reason
+    assert batch.agent.selected_agent == "codex"
+    assert batch.outcomes[0].status.value == "CODE_ONLY"
+    assert "指定Agent分析失败" in batch.outcomes[0].safe_error
+    assert {node.status.value for node, _, _ in application.store.list_nodes("demo-system")} == {"code_verified"}
     for forbidden in ("qa_labrador_token", "OPENTEST_QA_LABRADOR_TOKEN", "fixtures", ".opentest/environments"):
         assert forbidden not in runner.prompt
     application.close()

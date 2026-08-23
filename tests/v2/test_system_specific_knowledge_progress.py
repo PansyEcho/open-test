@@ -12,6 +12,7 @@ from opentest.adapters.knowledge_interview import KnowledgeInterviewStore
 from opentest.adapters.knowledge_store import GitKnowledgeStore
 from opentest.adapters.knowledge_tracing import JavaKnowledgeTracer
 from opentest.application.knowledge_discovery import KnowledgeDiscoveryService
+from opentest.application.knowledge_context import legacy_knowledge_context_digest
 from opentest.application.tasks import LocalTaskManager, TaskProgressReporter, report_task_progress, report_task_warning
 from opentest.domain.errors import KnowledgeValidationError, ScopeViolationError
 from opentest.domain.models import (
@@ -49,10 +50,15 @@ class _EnvelopeAgentRunner:
 
         self.payload = payload
 
-    def detect(self) -> tuple[str, bool, bool]:
-        """声明Codex可用以触发严格信封校验。"""
+    def availability(self) -> tuple[bool, bool]:
+        """声明只有用户选择的Codex可用。"""
 
-        return "codex", True, False
+        return True, False
+
+    def is_available(self, agent: str) -> bool:
+        """只允许测试请求中明确选择Codex。"""
+
+        return agent == "codex"
 
     def run(self, request: object, source_root: Path, evidence_root: Path) -> object:
         """把预设信封写入允许的本地证据目录并返回路径。"""
@@ -274,7 +280,14 @@ def test_context_candidates_and_answers_are_isolated_between_two_systems(tmp_pat
 
 
 def test_unified_questions_include_old_draft_question(tmp_path: Path) -> None:
-    """旧草稿问题应与首轮七个背景问题同时可见，不因新门禁而隐藏。"""
+    """旧草稿高影响问题应保留，而通用背景题不再进入待确认周期。
+
+    Args:
+        tmp_path: pytest隔离的知识库和草稿目录。
+
+    Returns:
+        None；通过唯一开放问题的来源断言验证旧草稿兼容与新策略。
+    """
 
     store, _ = _registered_store(tmp_path)
     question = KnowledgeQuestion(
@@ -316,7 +329,7 @@ def test_unified_questions_include_old_draft_question(tmp_path: Path) -> None:
     questions = service.list_questions("refund.core")
 
     assert any(item.question_id == question.question_id and item.source == "draft" for item in questions)
-    assert sum(item.status == "open" for item in questions) == 8
+    assert sum(item.status == "open" for item in questions) == 1
 
 
 def test_target_detail_returns_only_selected_target_context(tmp_path: Path) -> None:
@@ -371,6 +384,59 @@ def test_target_detail_returns_only_selected_target_context(tmp_path: Path) -> N
     assert len(store.list_draft_batches("refund.core")) == 1
 
 
+def test_target_detail_light_mode_skips_global_questions_and_context(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """三栏页轻量详情不得读取问题全集或完整背景，并保持小响应。
+
+    Args:
+        tmp_path: pytest隔离的知识仓库目录。
+        monkeypatch: 把禁止执行的全量查询替换为立即失败的守卫。
+
+    Returns:
+        None；通过守卫未触发、字段为空和序列化体积断言验证轻量路径。
+    """
+
+    store, _ = _registered_store(tmp_path)
+    target = KnowledgeTarget(
+        target_id="facade:demo.RefundFacade#queryList",
+        category="facade",
+        group="RefundFacade",
+        display_name="RefundFacade#queryList",
+        source_refs=[SourceReference(path="RefundFacade.java", symbol="demo.RefundFacade#queryList")],
+    )
+    catalog = ScanCatalog(
+        scan_id="scan-refund-1",
+        system_id="refund.core",
+        generated_at=utc_now(),
+        targets=[target],
+    )
+    service = KnowledgeDiscoveryService(store, KnowledgeInterviewStore(store.root / ".opentest"))
+
+    def reject_full_query(*_args: object, **_kwargs: object) -> None:
+        """在轻量路径意外读取全量问题或上下文时立即终止测试。"""
+
+        raise AssertionError("light target detail executed a full knowledge query")
+
+    monkeypatch.setattr(service, "list_questions", reject_full_query)
+    monkeypatch.setattr(service, "get_context", reject_full_query)
+
+    detail = service.target_detail(
+        "refund.core",
+        target.target_id,
+        catalog,
+        include_questions=False,
+        include_context=False,
+    )
+
+    assert detail.questions == []
+    assert detail.related_terms == []
+    assert detail.related_enums == []
+    assert detail.background_context is None
+    assert len(detail.model_dump_json().encode("utf-8")) < 60 * 1024
+
+
 def test_target_detail_marks_draft_without_system_context_digest_as_legacy(tmp_path: Path) -> None:
     """新流程前生成且未绑定系统上下文摘要的旧草稿必须提示重新生成。"""
 
@@ -420,6 +486,64 @@ def test_target_detail_marks_draft_without_system_context_digest_as_legacy(tmp_p
     assert detail.legacy_version is True
 
 
+def test_target_detail_accepts_pre_upgrade_generation_context_digest(tmp_path: Path) -> None:
+    """升级前生成摘要仍匹配当前背景时不得把有效知识误标为旧版本。
+
+    Args:
+        tmp_path: pytest隔离的旧批次和知识上下文目录。
+
+    Returns:
+        None；旧生成契约摘要通过兼容比较时验证成功。
+    """
+
+    store, _ = _registered_store(tmp_path)
+    target_id = "facade:demo.RefundFacade#queryList"
+    node = KnowledgeNode(
+        node_id="entry:demo.RefundFacade#queryList",
+        system_id="refund.core",
+        kind=KnowledgeNodeKind.FACADE,
+        title="RefundFacade#queryList",
+    )
+    store.write_draft_batch(
+        KnowledgeGenerationWorkflowBatch(
+            batch_id="knowledge-workflow-compatible-digest",
+            system_id="refund.core",
+            scan_id="scan-refund-1",
+            target_ids=[target_id],
+            status="PENDING_CONFIRMATION",
+            context_digest=legacy_knowledge_context_digest(store.read_context("refund.core")),
+            drafts=[
+                KnowledgeDraft(
+                    draft_id="draft-compatible-digest",
+                    system_id="refund.core",
+                    target_id=target_id,
+                    node=node,
+                    content="升级前已生成知识",
+                )
+            ],
+        )
+    )
+    target = KnowledgeTarget(
+        target_id=target_id,
+        category="facade",
+        group="RefundFacade",
+        display_name="RefundFacade#queryList",
+    )
+    catalog = ScanCatalog(
+        scan_id="scan-refund-1",
+        system_id="refund.core",
+        generated_at=utc_now(),
+        targets=[target],
+    )
+
+    detail = KnowledgeDiscoveryService(
+        store,
+        KnowledgeInterviewStore(store.root / ".opentest"),
+    ).target_detail("refund.core", target_id, catalog)
+
+    assert detail.legacy_version is False
+
+
 def test_task_progress_persists_stage_items_warnings_and_terminal_state(tmp_path: Path) -> None:
     """长任务进度应在刷新读取后保留真实阶段、当前项和安全警告。"""
 
@@ -437,6 +561,7 @@ def test_task_progress_persists_stage_items_warnings_and_terminal_state(tmp_path
                 completed_units=1,
                 total_units=2,
                 current_item="RefundFacade#queryList",
+                message="剩余问题 0，已知未知 0",
             )
         )
         report_task_warning(TaskWarning(code="AGENT_UNAVAILABLE", message="已保留确定性草稿", retryable=True))
@@ -454,6 +579,7 @@ def test_task_progress_persists_stage_items_warnings_and_terminal_state(tmp_path
     assert current.progress.status == TaskStatus.COMPLETED
     assert current.progress.total_units == 2
     assert current.progress.completed_units == 2
+    assert current.progress.message == "剩余问题 0，已知未知 0"
     assert current.progress.warnings[0].code == "AGENT_UNAVAILABLE"
 
 
@@ -617,6 +743,8 @@ def test_agent_enrichment_rejects_other_system_unknown_target_and_escaping_sourc
     request = KnowledgeGenerationBatchRequest(
         system_id="refund.core",
         target_ids=[manifest.entries[0].entry_id],
+        agent="codex",
+        confirmed=True,
     )
     base = {
         "system_id": "refund.core",

@@ -43,15 +43,31 @@ from opentest.domain.models import (
     ToolDefinition,
     ToolExecutionResult,
 )
+from opentest.domain.errors import ExecutionFailure
 
 
 class _UnavailableAgent:
-    """让草稿测试只验证确定性知识与访谈传播。"""
+    """让草稿测试模拟Codex单目标失败并验证确定性降级。"""
 
-    def detect(self) -> tuple[None, bool, bool]:
-        """声明当前没有可用本地Agent。"""
+    def availability(self) -> tuple[bool, bool]:
+        """声明Codex可提交，使失败发生在单目标执行阶段。"""
 
-        return None, False, False
+        return True, False
+
+    def is_available(self, agent: str) -> bool:
+        """只允许测试显式选择Codex。"""
+
+        return agent == "codex"
+
+    def run(self, request: object, source_root: Path, evidence_root: Path) -> object:
+        """模拟已选Codex执行失败且绝不调用其他Agent。
+
+        Raises:
+            ExecutionFailure: 始终触发当前目标仅代码事实降级。
+        """
+
+        del request, source_root, evidence_root
+        raise ExecutionFailure("simulated codex failure")
 
 
 class _FakeDsfExecutor:
@@ -283,7 +299,7 @@ def test_async_fixture_rejects_predefined_ticket_machine() -> None:
 
 
 def test_interview_propagates_to_multiple_drafts_without_publishing(tmp_path: Path) -> None:
-    """集中访谈应更新多个受影响草稿但不直接写入Git已确认知识。"""
+    """集中访谈应更新草稿，且仅代码事实继续作为非人工知识可浏览。"""
 
     source = tmp_path / "source"
     source.mkdir()
@@ -303,7 +319,12 @@ def test_interview_propagates_to_multiple_drafts_without_publishing(tmp_path: Pa
     application.store.update_source_baseline("demo-system", manifest.baseline)
     application.skip_background_interview("demo-system")
     batch = application.knowledge.generate_drafts(
-        KnowledgeGenerationBatchRequest(system_id="demo-system", target_ids=[manifest.entries[0].entry_id], use_agent=False),
+        KnowledgeGenerationBatchRequest(
+            system_id="demo-system",
+            target_ids=[manifest.entries[0].entry_id],
+            agent="codex",
+            confirmed=True,
+        ),
         _UnavailableAgent(),
     )
 
@@ -312,7 +333,9 @@ def test_interview_propagates_to_multiple_drafts_without_publishing(tmp_path: Pa
 
     assert result["affected_node_ids"]
     assert all("项目访谈口径" in draft.content for draft in updated.drafts)
-    assert not list((application.store.system_root("demo-system") / "references").rglob("*.md"))
+    published_nodes = application.store.list_nodes("demo-system")
+    assert published_nodes
+    assert {node.status for node, _, _ in published_nodes} == {KnowledgeStatus.CODE_VERIFIED}
     interview_path = application.knowledge_root / ".opentest/knowledge-interviews/demo-system/interview.json"
     assert stat.S_IMODE(interview_path.stat().st_mode) == 0o600
     application.close()
@@ -339,7 +362,12 @@ def test_resaving_interview_preserves_answered_draft_content(tmp_path: Path) -> 
     application.store.update_source_baseline("demo-system", manifest.baseline)
     application.skip_background_interview("demo-system")
     batch = application.knowledge.generate_drafts(
-        KnowledgeGenerationBatchRequest(system_id="demo-system", target_ids=[manifest.entries[0].entry_id], use_agent=False),
+        KnowledgeGenerationBatchRequest(
+            system_id="demo-system",
+            target_ids=[manifest.entries[0].entry_id],
+            agent="codex",
+            confirmed=True,
+        ),
         _UnavailableAgent(),
     )
     question = KnowledgeQuestion(
@@ -401,8 +429,8 @@ def test_revision_requires_answer_and_preserves_manual_region(tmp_path: Path) ->
     application.close()
 
 
-def test_revision_rejects_repeated_answer_without_appending_conflicting_content(tmp_path: Path) -> None:
-    """同一修订问题重复提交时必须拒绝覆盖答案和重复追加人工口径。"""
+def test_revision_retries_same_answer_but_rejects_conflicting_content(tmp_path: Path) -> None:
+    """同一修订答案应幂等重放，但必须拒绝覆盖为冲突口径。"""
 
     source = tmp_path / "source"
     source.mkdir()
@@ -425,7 +453,8 @@ def test_revision_rejects_repeated_answer_without_appending_conflicting_content(
         answer="只使用启用的EBK",
         confirmed_node_ids=[node.node_id],
     )
-    application.answer_knowledge_revision("demo-system", plan.revision_id, first_answer)
+    first_plan = application.answer_knowledge_revision("demo-system", plan.revision_id, first_answer)
+    duplicate_plan = application.answer_knowledge_revision("demo-system", plan.revision_id, first_answer)
 
     with pytest.raises(Exception, match="already been answered"):
         application.answer_knowledge_revision(
@@ -435,6 +464,7 @@ def test_revision_rejects_repeated_answer_without_appending_conflicting_content(
         )
 
     updated = application.list_knowledge_revisions("demo-system")[0]
+    assert duplicate_plan == first_plan
     assert updated.proposed_by_node[node.node_id].count("只使用启用的EBK") == 1
     assert "改用另一个冲突口径" not in updated.proposed_by_node[node.node_id]
     application.close()

@@ -1,7 +1,43 @@
 system_id: ifightchainsaas.java.refund.core
-system_purpose: SaaS退票系统
-upstream_entry_narrative: SaaS交易booking.mng和SaaS退票的refund.mng
-last_scan_id: scan-20260813091939-9d02e3d62a-2d178fe9
+system_purpose: 本系统是 SaaS 国际机票退票业务层，服务于公司在各国或渠道销售国际机票的海外子公司租户。SaaS 以同一网址承载运营后台和白屏，按登录账号区分：运营人员使用运营后台，采购商使用权限和展示更少的白屏。系统负责退票业务编排，并对最终退票结果和最终采购账户退款结果承担业务兜底责任。原出票与出票单信息由
+  booking.core 负责；底层 GDS、航司或供应商自动化指令由 resource.core 转发执行；前端入口和展示分别由 booking.mng、refund.mng
+  承担。
+upstream_entry_narrative: 上游：booking.mng 是 SaaS 交易前端，在出票单详情触发 autoRefundReshop、autoRefund
+  和 createOrder；refund.mng 是 SaaS 退票前端，负责退票单创建后的查看与操作；supplement.core 通过 RefundFacadeImpl#billSupplement
+  将 BSP/ARC 等账单补入退票系统。下游：booking.core 查询原出票单，endorse.core 查询改签单，logger.core 保存订单操作日志（非系统日志），resource.core
+  转发 GDS/航司/供应商自动化并转发异步回调，wallet.core 处理采购账户实时结算；完结退票单通过 MQ 分别同步对账系统用于 SaaS 财务、金蟾用于
+  C 端财务、行程单系统生成行程单、埋点系统记录自动化信息、通知系统向采购或运营发送邮件。底层执行由各下游负责，本系统对最终退票和最终采购账户退款结果兜底。
+interview_answers:
+  interview:system-positioning: 本系统是 SaaS 国际机票退票业务层，服务于公司在各国或渠道销售国际机票的海外子公司租户。SaaS
+    以同一网址承载运营后台和白屏，按登录账号区分：运营人员使用运营后台，采购商使用权限和展示更少的白屏。系统负责退票业务编排，并对最终退票结果和最终采购账户退款结果承担业务兜底责任。原出票与出票单信息由
+    booking.core 负责；底层 GDS、航司或供应商自动化指令由 resource.core 转发执行；前端入口和展示分别由 booking.mng、refund.mng
+    承担。
+  interview:core-objects: SaasRefundOrderVO和其内部的psi是核心数据
+  interview:primary-flow: 人工路径：运营创建普通退票单，或自动核价不可用/失败后调用 createOrder 创建；未走自动化的订单由运营或客服在底层完成退票后回到本系统录入并人工流转留底。自动路径：采购在
+    booking.mng 发起退票，先通过 autoRefundReshop 自动核价；采购认可报价后调用 autoRefund，在一个接口内完成创建退票单、核价、审核通过、确认退票等生命周期。运营创建不直接走全自动，因为报价必须由采购确认。自动化失败后在同一退票单转人工处理；废票核验不通过时不得创建退票单。CBDS
+    订单的 GDS 标记为 SAPL，supplier officeNo 以 cbds 开头，由 resource.core 转发给公司 C 端资源并异步回调。
+  interview:responsibility-boundaries: 上游：booking.mng 是 SaaS 交易前端，在出票单详情触发 autoRefundReshop、autoRefund
+    和 createOrder；refund.mng 是 SaaS 退票前端，负责退票单创建后的查看与操作；supplement.core 通过 RefundFacadeImpl#billSupplement
+    将 BSP/ARC 等账单补入退票系统。下游：booking.core 查询原出票单，endorse.core 查询改签单，logger.core 保存订单操作日志（非系统日志），resource.core
+    转发 GDS/航司/供应商自动化并转发异步回调，wallet.core 处理采购账户实时结算；完结退票单通过 MQ 分别同步对账系统用于 SaaS 财务、金蟾用于
+    C 端财务、行程单系统生成行程单、埋点系统记录自动化信息、通知系统向采购或运营发送邮件。底层执行由各下游负责，本系统对最终退票和最终采购账户退款结果兜底。
+  interview:critical-states: REFUND_SUCCESS 表示退票成功。REFUND_DONE 表示已经调用 wallet.core
+    向采购账户退款成功；若原单不走钱包，则退票单可从退票成功直接流转为 REFUND_DONE。自动化失败不新建退票单，而是在同一退票单转人工处理。CBDS 自动核价无回调时一直保持核价中，确认退票无回调时同理保持退票中；人工可在页面主动取消，无需等待回调。
+  interview:amount-rules: 不懂这个具体是什么意思
+  interview:idempotency: 代码已经证明
+  interview:exception-strategy: 未配置自动化的订单直接走人工处理；自动核价或确认退票失败后在同一退票单转人工继续流转，不另建退票单。废票核验不通过时禁止创建退票单。CBDS
+    核价回调携带 confirmLimit，超过价格有效期后由 TimeoutCancelJob 自动取消；若始终没有回调，则保持核价中或退票中，不自动猜测失败。运营人员可以在页面主动取消，不必等待异步结果。
+  interview:consistency-boundary: 金额相关的必须强事务，其余如果可以补偿的话，能接受最终一致
+  interview:retry-time-rules: CBDS 由公司 C 端资源异步处理，耗时可能达到天级。CBDS_REFUND_APPLY 回调核价结果时附带价格有效期
+    confirmLimit；超过该期限由 TimeoutCancelJob 自动取消。若核价或确认退票一直没有回调，退票单持续保持对应处理中状态，不因技术等待时间自动失败；人工可以主动取消。
+  interview:test-oracles: 没懂什么意思，重新举例
+  interview:sensitive-boundaries: 日志不用担心，退票系统目前没有敏感数据
+interview_unknowns: []
+interview_round: 1
+interview_skipped: false
+background_completed_at: '2026-08-13T09:35:45.783311Z'
+stale_target_ids: []
+last_scan_id: scan-20260822121007-6b0d5d1222-8ade0ea6
 discovery_status: COMPLETED
 discovery_warning: ''
-updated_at: '2026-08-13T11:20:20.891988Z'
+updated_at: '2026-08-22T21:47:03.863383Z'

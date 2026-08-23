@@ -1,8 +1,15 @@
 candidate_id: candidate:external_application:4fa2c3eb8b110f91
 system_id: ifightchainsaas.java.refund.core
 kind: EXTERNAL_APPLICATION
+knowledge_form: EXTERNAL_APPLICATION
 name: WalletFacadeProxy
+business_name: ''
+business_name_source: UNRESOLVED
+business_name_known_unknown: false
+enum_values: []
 suggested_meaning: 源码调用该远程协作者；请说明对应应用、业务职责和失败时的业务影响。
+code_meaning: ''
+unresolved_codes: []
 business_meaning: ''
 status: STALE
 merged_into_candidate_id: ''
@@ -22,4 +29,4 @@ source_refs:
 affected_target_ids: []
 evidence_digest: 9f3fcb0498973fc8062b0f9e46ce2d809cb4e683165904f0cb5b45d301c56d06
 discovered_at: '2026-08-13T10:23:54.669501Z'
-updated_at: '2026-08-13T11:20:20.891962Z'
+updated_at: '2026-08-22T13:36:34.107103Z'

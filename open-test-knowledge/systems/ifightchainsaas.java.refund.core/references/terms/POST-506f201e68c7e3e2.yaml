@@ -1,8 +1,15 @@
 candidate_id: candidate:business_term:506f201e68c7e3e2
 system_id: ifightchainsaas.java.refund.core
 kind: BUSINESS_TERM
+knowledge_form: BUSINESS_TERM
 name: POST
+business_name: ''
+business_name_source: UNRESOLVED
+business_name_known_unknown: false
+enum_values: []
 suggested_meaning: 源码出现该枚举、缩写或领域类型；请确认业务口径以及是否需要合并到已有术语。
+code_meaning: ''
+unresolved_codes: []
 business_meaning: ''
 status: STALE
 merged_into_candidate_id: ''
@@ -116,4 +123,4 @@ affected_target_ids:
 - facade:com.ly.flight.chainsaas.refund.facade.ToolFacade#syncOrder
 evidence_digest: 0e92c11b748ba6c3ef1843a6dc67c472e3ac677de021e8bf4e1c3add8a2f7147
 discovered_at: '2026-08-13T10:22:55.640893Z'
-updated_at: '2026-08-13T11:20:20.891940Z'
+updated_at: '2026-08-22T13:36:34.107084Z'

@@ -2,7 +2,7 @@
 
 ## 当前Change
 
-`semantic-knowledge-workspace` 已完成实现与本地验收；`dsf-proxy-execution-and-agent-tools` 等待两项只读金丝雀后切换；`dsf-execution-and-oracles` 保持 `WAITING_QA_INPUT`
+`semantic-knowledge-workspace` 已收敛为“完善背景 → 生成知识 → 确认疑点 → 使用与修订”四步流程；知识生成一次只处理当前对象，必须显式选择 Codex 或 Claude Code，页面流式展示公开分析事件且后台不兜底切换。Refund.Core 当前周期为 `0/0 OPEN`，全局 Agent 保持未选择。`dsf-proxy-execution-and-agent-tools` 等待两项只读金丝雀后切换；`dsf-execution-and-oracles` 保持 `WAITING_QA_INPUT`
 
 ## 已完成任务
 
@@ -109,13 +109,37 @@
 - 完成独立Java 8 DSFProxy Worker、DSF客户端Profile/provider操作发现、全局操作索引、调用系统确认绑定、0600只读金丝雀Fixture和脱敏执行API；写操作与非QA环境继续在Worker启动前阻断。
 - Snapshot已绑定调用方扫描、Profile、确认allowlist、跨系统provider定义和DSF Worker字节；历史扫描不再混入latest Profile，纯consumer也不会漏记Worker版本。
 - 完成JavaParser + Symbol Solver本地语义Sidecar与可替换Python端口；公共逻辑共享节点带真实入口`CALLS`边，状态枚举支持`name/desc/description`字段及getter真实绑定。
-- 知识页已改为目录、当前知识、常驻问题三栏；背景访谈按5至7题分轮，未完成/未跳过前禁止对象草稿生成，业务术语只在背景页编辑。
+- 知识页已改为目录、当前知识、常驻问题三栏；中栏只读展示已确定知识和修订式聊天，所有开放问题及精确变更提案统一进入右栏，问题完整性由持久化周期管理。
 - Booking.Core与Refund.Core本地Spike达到调用边召回率1.0、模式精确率1.0、22条人工调用边全中、Refund状态标签全中，111个高置信模式无意外误报。
+- 将知识访谈改为持久化问题周期：当前分析发现的全部开放问题一次展示，单题只暂存，全部填写并显式完成后才统一应用人工答案和启动本地重算；支持刷新恢复、stale冲突、重复完成幂等与任务失败重试。
+- 唯一高置信枚举映射自动以`CODE_VERIFIED`吸收，和`USER_CONFIRMED`严格分离；Java语义协议升级为schema 3并输出类型/常量Javadoc及直接领域字段关系，技术依赖不再冒充核心业务对象。
+- 原Refund.Core周期`question-cycle-acfb5c9fdfff420f`使用既有29项答案幂等恢复成功：原失败任务`task-5f7712d5bc324d9c`保留，新任务`task-3acd419161364532`完成，最终进度消息为`剩余问题 0，已知未知 0`。
+- 完成Refund.Core新版本地只读重扫，发布Manifest `scan-20260822121007-6b0d5d1222-8ade0ea6`：39个入口、39个工具、1个状态机和73个候选；扫描任务为`task-df330e7782044fbe`。
+- 业务枚举从普通术语拆为独立目录；原15个缺名和82个未解析值问题所在周期`question-cycle-12056ee6a75d4fbc`已安全转为`STALE`，没有丢失历史审计。
+- 枚举现在按“常量Javadoc → 唯一高置信构造描述 → 稳定常量名”形成可人工修订默认知识；Refund.Core 36个业务枚举全部进入目录，当前周期`question-cycle-632f4bd1533445ca`保持`0/0 OPEN`。
+- `OrderLockEnum`已按用户确认显示为“退票单锁单类型”，名称来源为`USER_CONFIRMED`；`LOCK → 锁定`和`UN_LOCK → 未锁定`继续保持`CODE_VERIFIED`，没有笼统升级整份枚举来源。
+- 枚举详情支持从业务背景、接口、公共逻辑和左栏直选返回来源，恢复聊天作用域、问题筛选和移动抽屉；系统变化清栈，同系统刷新重基有效返回栈代次。
+- 完成问答Tab与中栏只读聊天改造的OCR delegation：初审4 High/5 Medium、唯一复审新增1 High/2 Medium，全部接受并修复；闭合证据规范化、服务端真实diff、写目标冲突、任务竞态、0700/0600权限、迟到响应、跨会话精确快照、部分发布stale和索引恢复，无拒绝或仲裁项。
+- 完成本轮业务枚举与重算恢复OCR delegation：初审0 High/5 Medium全部接受并修复；唯一复审确认原问题闭合并发现1个Medium，同样接受。复审代理违反只读约束直接修改`app.js`和对应契约测试，主流程已独立检查并保留正确修复；未开启第三轮审查，无拒绝或仲裁项。
+- 完成枚举默认知识策略OCR delegation：初审1 High/2 Medium/1 Low，全部接受并修复；唯一复审确认原问题闭合并发现1个一对多匹配Medium，改为完整匹配图后闭合。按两轮上限未开启第三轮，无拒绝或仲裁项，代理全程只读。
+- 补齐最低底线知识生成SOP：背景问题归零后，顶部与右栏统一显示“生成全部接口与公共逻辑知识”及准确目标数；批量入口固定禁用Agent/QA，确定性代码事实自动发布，业务缺口进入右栏，整轮确认后自动收敛为人工知识，稳定历史答案在重复生成时继续复用。
+- 修复Refund.Core批量知识生成在`OuterRefundFacadeImpl#pageBusinessLog`中断的问题：方法体定位跳过`@Indicator`同名参数和数组花括号；仅能证明入口存在的目标发布最小代码事实并进入右栏确认，页面失败后保留常驻摘要和错误Toast。
+- 完成本轮OCR delegation两轮只读审查：接受并修复多批次答案传播、人工正文保护、背景门禁、周期刷新和新增人工口径安全追加等合理High/Medium，修正文案Low；撤销已由`write_questions`合并契约覆盖的问题丢失误报，并按用户最新口径拒绝恢复97项枚举问题，无遗留High/Medium。
+- 完成知识库四步SOP：四项核心背景首次确认后永久完成且仍可编辑；背景和术语显式保存后只标记知识过期，不自动调用Agent或产生费用。
+- 知识生成改为全局显式选择Codex或Claude Code，请求和任务全程记录实际Agent，提交前展示当前对象与费用确认；两种Agent互不兜底，单目标Agent失败保留代码事实。
+- 页面暂时下掉“生成全部”，旧批量契约只兼容一个目标；Codex JSONL与Claude Code stream-json由独立工作进程持续落盘，关闭stdin且不设固定分析超时，SSE断线只续传事件而不重复调用。
+- 服务优雅重启只分离当前观察线程，独立Agent继续形成事件和证据，由新服务无费用接管；供应商大结果保留完整私有输出，页面仅接收有界公开事件，高频Claude增量会合并后推送。
+- 重叠服务启动通过持久handoff标记、孤儿付费任务门禁和所有权心跳协调恢复；知识聊天没有接管实现，因此关闭服务时不会错误分离共享Runner。
+- Agent续跑必须绑定首次等待时的固定问题周期及摘要，只有该周期完成后才能再次确认费用；续跑中断会保留原问题来源和最近会话检查点，不会因运行ID变化丢失人工答案。
+- Agent需要高影响答案时先发布代码事实并进入`WAITING_FOR_INPUT`；用户完成问题周期并再次确认费用后只续接原thread/session，人工答案与Agent解释继续分别保持`USER_CONFIRMED`和`INFERRED`。
+- 移除固定业务口径问题，右栏只保留代码和背景仍无法判断的高影响疑点；目录区分已生成、仅代码事实、待确认、已确认、已过期和失败，并增加全部问题入口与对象范围自动切换。
+- 知识页增加四步流程条、全范围Loading、持久化任务恢复和轻量详情；修复状态机父目标重复、旧摘要误判过期及热态详情重复加载问题。
+- 本轮OCR delegation初审发现3 High/4 Medium，唯一复审发现2 High/2 Medium，全部接受并修复；覆盖私有完整结果、旧入口费用确认、服务关闭边界、恢复会话、续传性能和重叠服务接管，无拒绝或仲裁项，按两轮上限不再启动第三轮。
 
 ## 进行中任务
 
 - `dsf-execution-and-oracles`处于`WAITING_QA_INPUT`，任务5.4保持未完成且不归档；等待Fixture与TiDB READ池期间不视为正在编码的核心change。
-- `semantic-knowledge-workspace`代码、Spike、OCR delegation和浏览器验收已完成，任务全部闭合，尚未归档。
+- `semantic-knowledge-workspace`单目标流式改造已完成源码、桌面/移动验收、完整离线门禁和两轮OCR delegation；Refund.Core仍为39个接口和59个公共逻辑/状态目标，全局Agent未选择，本轮未提交任何真实生成任务。
 - `dsf-proxy-execution-and-agent-tools`除全量Facade切换、两个真实只读金丝雀和金丝雀后的Labrador移除外均已完成；当前不会自动确认操作或访问QA。
 
 ## 待开始任务
@@ -125,7 +149,7 @@
 
 ## 阻塞项
 
-- 当前活动Manifest生成于DSF Profile扫描能力接入前，页面安全显示`Profile缺失`；需先本地重扫，不能把旧Manifest当作DSFProxy候选。
+- Booking.Core活动Manifest仍生成于DSF Profile扫描能力接入前，页面安全显示`Profile缺失`；Refund.Core已完成新基线只读重扫，后续问题周期固定复用该Manifest。
 - 尚未在本地0600 Fixture页填写有效Booking HT/TX/merchant，以及一笔存在退票记录的原订单号；这些值不得进入聊天、Git、Snapshot、日志或报告。
 - createOrder写金丝雀仍缺一份可成功完整请求、预期EBK供应商/票机模式、清理策略及DSF/MySQL/TiDB/Redis/MQ业务Oracle。
 - Git忽略的 `qa.yaml` 安全骨架已创建，但31组 `values.fixtures` 仍为空；共130个路径已记录在 `docs/development/qa-fixture-checklist.md`，当前不会猜测或自动拼装请求。
@@ -136,6 +160,31 @@
 
 ## 最近验证结果
 
+- 2026-08-23：单目标知识生成与AI流式进度最终门禁通过：V2 `351 passed / 1 skipped`、legacy `43 passed`、Java语义Sidecar `11 tests / 0 failures`、OpenSpec strict `32 passed / 0 failed`；compileall、Node语法、`pip check`和diff检查通过。桌面与390×844页面验收通过，未运行真实Agent，未访问QA、Fixture正文、DSF、写接口或31个生命周期Case。
+- 2026-08-23：知识目录Facade层级与误确认状态修复完成：左栏按Facade类名分组后展示方法叶子；`RefundDistributionFacade#queryList`已从误标的人工确认一致恢复为仅代码事实，历史问题为open且答案为空。真实页面验收通过；V2 `337 passed / 1 skipped`、legacy `43 passed`、Java语义Sidecar成功打包、OpenSpec strict `32 passed / 0 failed`，compileall、Node语法、`pip check`和diff检查通过。OCR delegation本轮`0 High / 0 Medium / 0 Low`，审查代理全程只读。
+- 2026-08-23：知识库四步流程最终门禁通过：V2 `336 passed / 1 skipped`、legacy `43 passed`、Java语义Sidecar `11 tests / 0 failures`并成功打包；OpenSpec strict `32 passed / 0 failed`、compileall、Node语法和`pip check`通过。
+- 2026-08-23：本任务OCR delegation初审发现3 High/4 Medium/1 Low；接受并修复人工知识刷新、Agent执行级源码边界、聊天费用确认、旧入口绕过、历史疑点、对象切换竞态、长任务轮询和接口说明问题。唯一复审确认6项闭合并指出1 High/1 Medium及Codex MCP残余边界，随后按两轮上限由主流程清空MCP与hooks、修复新增答案和证据元数据刷新，并以定向及完整V2回归闭合；无拒绝或仲裁项，审查代理全程只读。
+- 2026-08-23：知识Agent不再自行浏览工程：应用只提供确定性追踪引用附近、根内校验且总量受限的源码窗口；Codex与Claude Code均关闭文件、命令、浏览器、MCP和扩展工具，OpenTest不读取、记录或展示认证凭据。
+- 2026-08-23：Refund.Core热态轻量详情连续实测约`1.24–1.27秒 / 4,841字节`，持久化问题周期读取约`3–4毫秒`；切换对象后50毫秒采样点已出现可见Loading。页面目标严格保持39个接口和59个公共逻辑/状态目标，未再重复投影状态机子节点。
+- 2026-08-23：桌面与390×844真实页面验收通过：四步流程条、当前Agent、全部问题入口、当前对象范围和移动双抽屉均可用，页面无横向溢出或控制台warning/error；全局Agent保持未选择，未提交98项生成任务，未访问QA、Fixture正文、DSF、写接口或31个生命周期Case。
+- 2026-08-23：批量知识生成热修最终门禁通过：V2 `329 passed / 1 skipped`、legacy `43 passed`、Java语义Sidecar `11 tests / 0 failures`并成功打包；OpenSpec strict `32 passed / 0 failed`、compileall、Node语法、`pip check`和 staged/unstaged diff检查均通过。19个本任务新增/修改Python方法均有文档注释，显式参数超过5个为0。
+- 2026-08-23：OCR delegation初审发现2 High/2 Medium/1 Low，全部接受并修复；唯一复审确认初审项闭合后新增1 High（`>`表达式调用与泛型返回类型混淆），已接受并通过声明深度门禁及Lambda/比较/显式泛型调用回归修复。按两轮上限不再启动第三轮，主流程完成最终diff自检和全量回归；无拒绝或仲裁项，审查代理只读且未修改文件。
+- 2026-08-23：批量知识生成热修逐项目标验证通过：当前Refund.Core 98个目标只读追踪为`98成功 / 0失败`，其中10项按最小代码事实边界处理；`pageBusinessLog`恢复识别两个真实返回阶段且证据定位到真实声明第59行。完整离线门禁与审查修复后的最终计数见本节最新记录。
+- 2026-08-22：本轮未实际提交98项目标写入任务，未访问Agent、QA、Fixture、DSF、退票写接口或31个生命周期Case；修复发布后可直接在页面重试“生成全部接口与公共逻辑知识”。
+- 2026-08-22：最低底线知识生成SOP门禁通过：V2 `321 passed / 1 skipped`、legacy `43 passed`、Java语义Sidecar测试及打包成功；OpenSpec strict `32 passed / 0 failed`、compileall、Node语法、`pip check`和 staged/unstaged diff检查均通过。
+- 2026-08-22：Refund.Core桌面与390×844真实页面显示“生成全部接口与公共逻辑知识（98）”；移动端问题抽屉入口可见可用，业务背景显示“背景已确认”。验收未点击生成，因此没有运行98项目标、Agent、QA、DSF或业务写接口。
+- 2026-08-22：审查修复后，同一稳定问题会传播到全部历史批次；重复生成不覆盖既有`USER_CONFIRMED`正文，新周期明确答案可在保留旧自动区与人工区的前提下安全追加；周期成功后使用真实`loadKnowledgeInterview`刷新背景门禁。
+- 2026-08-22：枚举默认知识策略最终门禁通过：V2 `320 passed / 1 skipped`、legacy `43 passed`、Java语义Sidecar测试及打包成功；OpenSpec strict `32 passed / 0 failed`、compileall、Node语法、`pip check`和 staged/unstaged diff检查均通过。
+- 2026-08-22：Refund.Core复用原Manifest完成确定性投影，没有重新扫描源码；36个业务枚举全部可见，旧97题周期转为`STALE`，当前周期为`question-cycle-632f4bd1533445ca`且问题数为0。`OrderLockEnum`人工名称继续保持`USER_CONFIRMED`。
+- 2026-08-22：人工单值覆盖重扫保护已补强：候选不会回退为纯代码状态，同名类型冲突出现或消失时按全限定源码符号迁移；非法或缺失值级代码证据在落盘前被拒绝。
+- 2026-08-22：本地重算恢复与业务枚举目录最终门禁通过：V2 `313 passed / 1 skipped`、legacy `43 passed`、Java语义Sidecar `10 tests / 0 failures`并成功打包；OpenSpec strict `32 passed / 0 failed`、compileall、Node语法、`pip check`和 staged/unstaged diff检查均通过。
+- 2026-08-22：Refund.Core原29项答案未丢失且恢复完成；新版Manifest为`scan-20260822121007-6b0d5d1222-8ade0ea6`，页面显示21个已命名业务枚举和97个新缺口。`OrderLockEnum`显示“退票单锁单类型”，名称与两个值的人工/代码来源严格分离。
+- 2026-08-22：桌面与390×844真实页面验收通过：背景摘要不再混入枚举长列表，`RefundFacade#createOrder`展示相关业务枚举，来源返回会恢复聊天、问题范围和移动抽屉；页面及两个抽屉横向溢出为0，浏览器console error/warning为0。
+- 2026-08-22：本轮OCR delegation初审0 High/5 Medium、唯一复审新增1 Medium，全部接受并闭合；无遗留或拒绝High/Medium。复审代理意外写入的两处最小修复已由主流程检查并通过完整回归。
+- 2026-08-22：全程未访问QA、未读取Fixture正文、未运行本地知识Agent、DSF金丝雀、退票/createOrder写接口或31个生命周期Case，也未完成当前0题周期。
+- 2026-08-21：问答Tab与中栏只读聊天最终门禁通过：会话定向 `23 passed`、V2 `293 passed / 1 skipped`、legacy `43 passed`、Java语义Sidecar `8 passed`并成功打包；OpenSpec strict、compileall、Node语法、`pip check`和 staged/unstaged diff检查均通过。
+- 2026-08-21：Refund.Core桌面与390×844实际页面验收通过：7/29暂存答案跨刷新恢复，22个缺答使完成按钮保持禁用，移动问题抽屉无横向溢出，浏览器error为0。
+- 2026-08-21：本阶段未访问QA、未执行DSF金丝雀、createOrder/退票写接口或31个生命周期Case，也未读取Fixture正文。首次使用修复前旧页面时只请求过本地Fixture安全摘要端点；随后已移除知识页默认初始化读取，响应不含请求正文或敏感值。
 - 2026-08-20：最终本地门禁通过：V2 `251 passed / 1 skipped`、legacy `43 passed`，Java语义、DSF Worker和Oracle Worker三个模块均离线`test package`成功；OpenSpec strict `32 passed / 0 failed`，compileall、Node语法、`pip check`和diff检查通过。
 - 2026-08-20：OCR delegation初审发现4 High/7 Medium/1 Low，唯一复审发现1 High/4 Medium，全部接受并修复；历史Snapshot、共享语义调用边、背景访谈阶段门禁、枚举getter绑定及Spike误报门禁均闭合，无拒绝或仲裁项。
 - 2026-08-20：最终主代理完整diff复核未发现遗留High/Medium；审查和修复均未访问QA、Fixture正文、Token或31个Case。
@@ -221,7 +270,8 @@
 ## 下一步
 
 - 保持`dsf-execution-and-oracles`为`WAITING_QA_INPUT`；只有真实QA金丝雀和31个业务Case完成后才归档。
-- 在本地重新扫描Booking.Core与Refund.Core，逐项目核对客户端Profile和provider/consumer操作候选；不自动勾选或启用任何操作。
+- 在本地重新扫描Booking.Core并核对客户端Profile和provider/consumer操作候选；Refund.Core后续访谈继续复用`scan-20260822121007-6b0d5d1222-8ade0ea6`，不重复完整扫描。
+- Refund.Core枚举不再形成集中问题；后续只在业务口径需要变更时人工修订具体名称或值，当前0题周期保持不完成，不在本阶段生成测试场景。
 - 仅在本地0600 Fixture页填写Booking查询标识和Refund原订单号，不要粘贴到聊天中；每次真实QA探测继续单独确认。
 - 先执行Booking.Core自调用`OrderFacade.orderDetail`，成功后再以Booking.Core身份调用Refund.Core `RefundFacade.queryListByOrderNo`。
 - 两个只读金丝雀均成功后再切换全部DSF Facade工具、删除Labrador输入/网关API/脚本执行器；HTTP Job和历史`generated_cli`审计保持原样。

@@ -1,31 +1,190 @@
 candidate_id: candidate:business_term:b57337869a2a576a
 system_id: ifightchainsaas.java.refund.core
 kind: BUSINESS_TERM
+knowledge_form: BUSINESS_ENUM
 name: CallbackErrorCodeEnum
-suggested_meaning: 源码出现该枚举、缩写或领域类型；请确认业务口径以及是否需要合并到已有术语。
-business_meaning: ''
-status: STALE
+business_name: cbds 回调错误码
+business_name_source: CODE_DEFAULT
+business_name_known_unknown: false
+enum_values:
+- code: LY0510303000
+  business_meaning: 订单状态错误，当时状态为{0}
+  source: CODE_DEFAULT
+  known_unknown: false
+  confidence: 0.95
+  source_refs:
+  - repository: ''
+    path: app/model/src/main/java/com/ly/flight/chainsaas/refund/enums/CallbackErrorCodeEnum.java
+    symbol: com.ly.flight.chainsaas.refund.enums.CallbackErrorCodeEnum#LY0510303000
+    line: 12
+    commit: ''
+    content_digest: ''
+- code: LY0510303001
+  business_meaning: 查询退改订单详情失败
+  source: CODE_DEFAULT
+  known_unknown: false
+  confidence: 0.95
+  source_refs:
+  - repository: ''
+    path: app/model/src/main/java/com/ly/flight/chainsaas/refund/enums/CallbackErrorCodeEnum.java
+    symbol: com.ly.flight.chainsaas.refund.enums.CallbackErrorCodeEnum#LY0510303001
+    line: 22
+    commit: ''
+    content_digest: ''
+- code: LY0510303002
+  business_meaning: 存在申请退订的乘客不可退
+  source: CODE_DEFAULT
+  known_unknown: false
+  confidence: 0.95
+  source_refs:
+  - repository: ''
+    path: app/model/src/main/java/com/ly/flight/chainsaas/refund/enums/CallbackErrorCodeEnum.java
+    symbol: com.ly.flight.chainsaas.refund.enums.CallbackErrorCodeEnum#LY0510303002
+    line: 32
+    commit: ''
+    content_digest: ''
+- code: LY0510303003
+  business_meaning: 报价数据不全，申请失败
+  source: CODE_DEFAULT
+  known_unknown: false
+  confidence: 0.95
+  source_refs:
+  - repository: ''
+    path: app/model/src/main/java/com/ly/flight/chainsaas/refund/enums/CallbackErrorCodeEnum.java
+    symbol: com.ly.flight.chainsaas.refund.enums.CallbackErrorCodeEnum#LY0510303003
+    line: 27
+    commit: ''
+    content_digest: ''
+- code: LY0510303004
+  business_meaning: 申请退票请求失败，申请失败
+  source: CODE_DEFAULT
+  known_unknown: false
+  confidence: 0.95
+  source_refs:
+  - repository: ''
+    path: app/model/src/main/java/com/ly/flight/chainsaas/refund/enums/CallbackErrorCodeEnum.java
+    symbol: com.ly.flight.chainsaas.refund.enums.CallbackErrorCodeEnum#LY0510303004
+    line: 17
+    commit: ''
+    content_digest: ''
+- code: LY0510303006
+  business_meaning: 退款订单被取消，申请失败
+  source: CODE_DEFAULT
+  known_unknown: false
+  confidence: 0.95
+  source_refs:
+  - repository: ''
+    path: app/model/src/main/java/com/ly/flight/chainsaas/refund/enums/CallbackErrorCodeEnum.java
+    symbol: com.ly.flight.chainsaas.refund.enums.CallbackErrorCodeEnum#LY0510303006
+    line: 37
+    commit: ''
+    content_digest: ''
+- code: LY0510303007
+  business_meaning: 申请退票请求失败，退票失败
+  source: CODE_DEFAULT
+  known_unknown: false
+  confidence: 0.95
+  source_refs:
+  - repository: ''
+    path: app/model/src/main/java/com/ly/flight/chainsaas/refund/enums/CallbackErrorCodeEnum.java
+    symbol: com.ly.flight.chainsaas.refund.enums.CallbackErrorCodeEnum#LY0510303007
+    line: 44
+    commit: ''
+    content_digest: ''
+- code: LY0510303008
+  business_meaning: 确认退款请求失败，退票失败
+  source: CODE_DEFAULT
+  known_unknown: false
+  confidence: 0.95
+  source_refs:
+  - repository: ''
+    path: app/model/src/main/java/com/ly/flight/chainsaas/refund/enums/CallbackErrorCodeEnum.java
+    symbol: com.ly.flight.chainsaas.refund.enums.CallbackErrorCodeEnum#LY0510303008
+    line: 49
+    commit: ''
+    content_digest: ''
+- code: LY0510303009
+  business_meaning: 退款订单被取消，退票失败
+  source: CODE_DEFAULT
+  known_unknown: false
+  confidence: 0.95
+  source_refs:
+  - repository: ''
+    path: app/model/src/main/java/com/ly/flight/chainsaas/refund/enums/CallbackErrorCodeEnum.java
+    symbol: com.ly.flight.chainsaas.refund.enums.CallbackErrorCodeEnum#LY0510303009
+    line: 54
+    commit: ''
+    content_digest: ''
+suggested_meaning: 枚举名称和值默认采用源码注释；缺少注释时回退代码标识，可再人工修订。
+code_meaning: 订单状态错误，当时状态为{0}（LY0510303000）；查询退改订单详情失败（LY0510303001）；存在申请退订的乘客不可退（LY0510303002）；报价数据不全，申请失败（LY0510303003）；申请退票请求失败，申请失败（LY0510303004）；退款订单被取消，申请失败（LY0510303006）；申请退票请求失败，退票失败（LY0510303007）；确认退款请求失败，退票失败（LY0510303008）；退款订单被取消，退票失败（LY0510303009）
+unresolved_codes: []
+business_meaning: 代码注释有
+status: CONFIRMED
 merged_into_candidate_id: ''
 source_refs:
 - repository: ''
   path: app/model/src/main/java/com/ly/flight/chainsaas/refund/enums/CallbackErrorCodeEnum.java
   symbol: com.ly.flight.chainsaas.refund.enums.CallbackErrorCodeEnum
-  line: null
-  commit: 2b175212e26b21abd0a08edeb3a4c7c1e1e2665a
+  line: 7
+  commit: 4da983bfd4d9de362fc5323412e35c1bdbd08236
+  content_digest: 5ae837b5eb21d061ebd77b439a52f7b91d49c2e3eca16c6450db447961f5bb7b
+- repository: ''
+  path: app/model/src/main/java/com/ly/flight/chainsaas/refund/enums/CallbackErrorCodeEnum.java
+  symbol: com.ly.flight.chainsaas.refund.enums.CallbackErrorCodeEnum#LY0510303000
+  line: 12
+  commit: ''
+  content_digest: ''
+- repository: ''
+  path: app/model/src/main/java/com/ly/flight/chainsaas/refund/enums/CallbackErrorCodeEnum.java
+  symbol: com.ly.flight.chainsaas.refund.enums.CallbackErrorCodeEnum#LY0510303001
+  line: 22
+  commit: ''
+  content_digest: ''
+- repository: ''
+  path: app/model/src/main/java/com/ly/flight/chainsaas/refund/enums/CallbackErrorCodeEnum.java
+  symbol: com.ly.flight.chainsaas.refund.enums.CallbackErrorCodeEnum#LY0510303002
+  line: 32
+  commit: ''
+  content_digest: ''
+- repository: ''
+  path: app/model/src/main/java/com/ly/flight/chainsaas/refund/enums/CallbackErrorCodeEnum.java
+  symbol: com.ly.flight.chainsaas.refund.enums.CallbackErrorCodeEnum#LY0510303003
+  line: 27
+  commit: ''
+  content_digest: ''
+- repository: ''
+  path: app/model/src/main/java/com/ly/flight/chainsaas/refund/enums/CallbackErrorCodeEnum.java
+  symbol: com.ly.flight.chainsaas.refund.enums.CallbackErrorCodeEnum#LY0510303004
+  line: 17
+  commit: ''
+  content_digest: ''
+- repository: ''
+  path: app/model/src/main/java/com/ly/flight/chainsaas/refund/enums/CallbackErrorCodeEnum.java
+  symbol: com.ly.flight.chainsaas.refund.enums.CallbackErrorCodeEnum#LY0510303006
+  line: 37
+  commit: ''
+  content_digest: ''
+- repository: ''
+  path: app/model/src/main/java/com/ly/flight/chainsaas/refund/enums/CallbackErrorCodeEnum.java
+  symbol: com.ly.flight.chainsaas.refund.enums.CallbackErrorCodeEnum#LY0510303007
+  line: 44
+  commit: ''
+  content_digest: ''
+- repository: ''
+  path: app/model/src/main/java/com/ly/flight/chainsaas/refund/enums/CallbackErrorCodeEnum.java
+  symbol: com.ly.flight.chainsaas.refund.enums.CallbackErrorCodeEnum#LY0510303008
+  line: 49
+  commit: ''
+  content_digest: ''
+- repository: ''
+  path: app/model/src/main/java/com/ly/flight/chainsaas/refund/enums/CallbackErrorCodeEnum.java
+  symbol: com.ly.flight.chainsaas.refund.enums.CallbackErrorCodeEnum#LY0510303009
+  line: 54
+  commit: ''
   content_digest: ''
 affected_target_ids:
 - facade:com.ly.flight.chainsaas.refund.facade.CallbackFacade#refundApplyCallback
 - facade:com.ly.flight.chainsaas.refund.facade.CallbackFacade#refundConfirmCallback
-- facade:com.ly.flight.chainsaas.refund.facade.CommonFacade#executeJob
-- facade:com.ly.flight.chainsaas.refund.facade.ModelFacade#confirmRefund
-- facade:com.ly.flight.chainsaas.refund.facade.ModelFacade#createRefundOrder
-- facade:com.ly.flight.chainsaas.refund.facade.OuterRefundFacade#cancel
-- facade:com.ly.flight.chainsaas.refund.facade.OuterRefundFacade#pageBusinessLog
-- facade:com.ly.flight.chainsaas.refund.facade.OuterRefundFacade#queryDetailByRefundNo
-- facade:com.ly.flight.chainsaas.refund.facade.OuterRefundFacade#queryList
-- facade:com.ly.flight.chainsaas.refund.facade.OuterRefundFacade#refundConfirm
-- facade:com.ly.flight.chainsaas.refund.facade.RefundDistributionFacade#queryDetail
-- facade:com.ly.flight.chainsaas.refund.facade.RefundDistributionFacade#queryList
-evidence_digest: 4c4e2267a5b0d5a947d2a3d75ea87a7a6889be300bb9b6b24f2eccdc0538efd1
+evidence_digest: 39b3036ce72f92ad34965fac4cf11cc44bc059a57cc4ef21cbfb93eb30cec776
 discovered_at: '2026-08-13T10:23:54.669293Z'
-updated_at: '2026-08-13T11:20:20.891912Z'
+updated_at: '2026-08-22T13:36:34.106902Z'

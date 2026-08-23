@@ -1,31 +1,123 @@
 candidate_id: candidate:business_term:c5929198d1e3de47
 system_id: ifightchainsaas.java.refund.core
 kind: BUSINESS_TERM
+knowledge_form: BUSINESS_ENUM
 name: InvoluntaryRefundTypeEnum
-suggested_meaning: 源码出现该枚举、缩写或领域类型；请确认业务口径以及是否需要合并到已有术语。
+business_name: InvoluntaryRefundTypeEnum
+business_name_source: CODE_DEFAULT
+business_name_known_unknown: false
+enum_values:
+- code: FLIGHT_CHANGE
+  business_meaning: 航变退
+  source: CODE_DEFAULT
+  known_unknown: false
+  confidence: 0.95
+  source_refs:
+  - repository: ''
+    path: app/model/src/main/java/com/ly/flight/chainsaas/refund/enums/InvoluntaryRefundTypeEnum.java
+    symbol: com.ly.flight.chainsaas.refund.enums.InvoluntaryRefundTypeEnum#FLIGHT_CHANGE
+    line: 13
+    commit: ''
+    content_digest: ''
+- code: ILLNESS
+  business_meaning: 病退
+  source: CODE_DEFAULT
+  known_unknown: false
+  confidence: 0.95
+  source_refs:
+  - repository: ''
+    path: app/model/src/main/java/com/ly/flight/chainsaas/refund/enums/InvoluntaryRefundTypeEnum.java
+    symbol: com.ly.flight.chainsaas.refund.enums.InvoluntaryRefundTypeEnum#ILLNESS
+    line: 17
+    commit: ''
+    content_digest: ''
+- code: MISTAKE
+  business_meaning: 错购退
+  source: CODE_DEFAULT
+  known_unknown: false
+  confidence: 0.95
+  source_refs:
+  - repository: ''
+    path: app/model/src/main/java/com/ly/flight/chainsaas/refund/enums/InvoluntaryRefundTypeEnum.java
+    symbol: com.ly.flight.chainsaas.refund.enums.InvoluntaryRefundTypeEnum#MISTAKE
+    line: 26
+    commit: ''
+    content_digest: ''
+- code: REJECTED
+  business_meaning: 拒签退
+  source: CODE_DEFAULT
+  known_unknown: false
+  confidence: 0.95
+  source_refs:
+  - repository: ''
+    path: app/model/src/main/java/com/ly/flight/chainsaas/refund/enums/InvoluntaryRefundTypeEnum.java
+    symbol: com.ly.flight.chainsaas.refund.enums.InvoluntaryRefundTypeEnum#REJECTED
+    line: 22
+    commit: ''
+    content_digest: ''
+suggested_meaning: 枚举名称和值默认采用源码注释；缺少注释时回退代码标识，可再人工修订。
+code_meaning: 航变退（FLIGHT_CHANGE）；病退（ILLNESS）；错购退（MISTAKE）；拒签退（REJECTED）
+unresolved_codes: []
 business_meaning: ''
-status: STALE
+status: CODE_VERIFIED
 merged_into_candidate_id: ''
 source_refs:
 - repository: ''
   path: app/model/src/main/java/com/ly/flight/chainsaas/refund/enums/InvoluntaryRefundTypeEnum.java
   symbol: com.ly.flight.chainsaas.refund.enums.InvoluntaryRefundTypeEnum
-  line: null
-  commit: 2b175212e26b21abd0a08edeb3a4c7c1e1e2665a
+  line: 8
+  commit: 4da983bfd4d9de362fc5323412e35c1bdbd08236
+  content_digest: 5f565bbbeddfebf61033c130d4d4e4f41db1b7f453b4cab545bc37afd6582e74
+- repository: ''
+  path: app/model/src/main/java/com/ly/flight/chainsaas/refund/enums/InvoluntaryRefundTypeEnum.java
+  symbol: com.ly.flight.chainsaas.refund.enums.InvoluntaryRefundTypeEnum#FLIGHT_CHANGE
+  line: 13
+  commit: ''
+  content_digest: ''
+- repository: ''
+  path: app/model/src/main/java/com/ly/flight/chainsaas/refund/enums/InvoluntaryRefundTypeEnum.java
+  symbol: com.ly.flight.chainsaas.refund.enums.InvoluntaryRefundTypeEnum#ILLNESS
+  line: 17
+  commit: ''
+  content_digest: ''
+- repository: ''
+  path: app/model/src/main/java/com/ly/flight/chainsaas/refund/enums/InvoluntaryRefundTypeEnum.java
+  symbol: com.ly.flight.chainsaas.refund.enums.InvoluntaryRefundTypeEnum#MISTAKE
+  line: 26
+  commit: ''
+  content_digest: ''
+- repository: ''
+  path: app/model/src/main/java/com/ly/flight/chainsaas/refund/enums/InvoluntaryRefundTypeEnum.java
+  symbol: com.ly.flight.chainsaas.refund.enums.InvoluntaryRefundTypeEnum#REJECTED
+  line: 22
+  commit: ''
   content_digest: ''
 affected_target_ids:
 - facade:com.ly.flight.chainsaas.refund.facade.CallbackFacade#refundApplyCallback
 - facade:com.ly.flight.chainsaas.refund.facade.CallbackFacade#refundConfirmCallback
-- facade:com.ly.flight.chainsaas.refund.facade.CommonFacade#executeJob
 - facade:com.ly.flight.chainsaas.refund.facade.ModelFacade#confirmRefund
 - facade:com.ly.flight.chainsaas.refund.facade.ModelFacade#createRefundOrder
-- facade:com.ly.flight.chainsaas.refund.facade.OuterRefundFacade#cancel
-- facade:com.ly.flight.chainsaas.refund.facade.OuterRefundFacade#pageBusinessLog
-- facade:com.ly.flight.chainsaas.refund.facade.OuterRefundFacade#queryDetailByRefundNo
-- facade:com.ly.flight.chainsaas.refund.facade.OuterRefundFacade#queryList
-- facade:com.ly.flight.chainsaas.refund.facade.OuterRefundFacade#refundConfirm
-- facade:com.ly.flight.chainsaas.refund.facade.RefundDistributionFacade#queryDetail
-- facade:com.ly.flight.chainsaas.refund.facade.RefundDistributionFacade#queryList
-evidence_digest: 6c8f1ffbe25fe94d07557f8260a15d7feec37ed2e7dc648708aab11bcb214728
+- facade:com.ly.flight.chainsaas.refund.facade.RefundFacade#applyToAirline
+- facade:com.ly.flight.chainsaas.refund.facade.RefundFacade#autoRefund
+- facade:com.ly.flight.chainsaas.refund.facade.RefundFacade#autoRefundReshop
+- facade:com.ly.flight.chainsaas.refund.facade.RefundFacade#billSupplement
+- facade:com.ly.flight.chainsaas.refund.facade.RefundFacade#cancel
+- facade:com.ly.flight.chainsaas.refund.facade.RefundFacade#createLog
+- facade:com.ly.flight.chainsaas.refund.facade.RefundFacade#createOrder
+- facade:com.ly.flight.chainsaas.refund.facade.RefundFacade#createPayment
+- facade:com.ly.flight.chainsaas.refund.facade.RefundFacade#getPlatFee
+- facade:com.ly.flight.chainsaas.refund.facade.RefundFacade#lockOrder
+- facade:com.ly.flight.chainsaas.refund.facade.RefundFacade#queryDetailByOrderNo
+- facade:com.ly.flight.chainsaas.refund.facade.RefundFacade#queryDetailByRefundNo
+- facade:com.ly.flight.chainsaas.refund.facade.RefundFacade#queryList
+- facade:com.ly.flight.chainsaas.refund.facade.RefundFacade#queryListByOrderNo
+- facade:com.ly.flight.chainsaas.refund.facade.RefundFacade#refundConfirm
+- facade:com.ly.flight.chainsaas.refund.facade.RefundFacade#refundReshop
+- facade:com.ly.flight.chainsaas.refund.facade.RefundFacade#refundReshopSubmit
+- facade:com.ly.flight.chainsaas.refund.facade.RefundFacade#ticketRefunding
+- facade:com.ly.flight.chainsaas.refund.facade.RefundFacade#unLockOrder
+- facade:com.ly.flight.chainsaas.refund.facade.RefundFacade#voucherRefundSubmit
+- facade:com.ly.flight.chainsaas.refund.facade.RefundFacade#walletRefundRetry
+evidence_digest: 7c7164ec51fba19870a9422dd8f0bb601e6b3d797153e7320277128c01dcc24f
 discovered_at: '2026-08-13T10:23:54.669367Z'
-updated_at: '2026-08-13T11:20:20.891932Z'
+updated_at: '2026-08-22T13:36:34.106941Z'

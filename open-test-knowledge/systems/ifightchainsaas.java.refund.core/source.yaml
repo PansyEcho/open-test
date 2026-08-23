@@ -5,10 +5,10 @@ language: java
 description: 由V2引导式控制台接入的DSF系统
 baseline:
   source_path: /Users/user/data/code/tc/ifightchainsaas.java.refund.core
-  commit: 2b175212e26b21abd0a08edeb3a4c7c1e1e2665a
-  branch: feature_673598_20260806
+  commit: 4da983bfd4d9de362fc5323412e35c1bdbd08236
+  branch: api_shizhen_20260817
   dirty: false
   dirty_digest: ''
   analyzer_version: 0.2.0
-  captured_at: '2026-08-13T09:19:39.193668Z'
+  captured_at: '2026-08-22T12:10:07.095058Z'
 created_at: '2026-08-13T08:54:34.705914Z'

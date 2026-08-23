@@ -6,7 +6,11 @@ from pathlib import Path
 
 
 def test_console_static_client_uses_only_v2_routes_and_safe_rendering() -> None:
-    """静态客户端应集中使用V2前缀，并通过textContent展示业务响应。"""
+    """静态客户端应集中使用V2前缀，并通过textContent展示业务响应。
+
+    Returns:
+        None；通过静态资源断言验证周期路由、右栏门禁和安全渲染。
+    """
 
     web_root = Path(__file__).parents[2] / "opentest" / "web"
     html = (web_root / "index.html").read_text(encoding="utf-8")
@@ -39,11 +43,32 @@ def test_console_static_client_uses_only_v2_routes_and_safe_rendering() -> None:
     assert 'id="detail-drawer"' in html
     assert "场景矩阵 → 人工确认 → Case → 执行步骤" in html
     assert "QA 数据模板" not in html
-    assert "/knowledge/generation-batches" in script
+    assert "/knowledge/generations" in script
+    assert "/knowledge/generation-batches/" in script
     assert "/case-generations" in script
     assert "/natural-language-tests/previews" in script
     assert "preview-natural-language\" disabled" not in html
-    assert 'id="generate-all-knowledge"' in html
+    assert 'id="generate-all-knowledge"' not in html
+    assert 'id="start-knowledge-generation"' not in html
+    assert "生成全部接口与公共逻辑知识" not in html
+    assert "knowledgeGenerationTargets" not in script
+    assert 'id="knowledge-agent-stream-panel"' in html
+    assert "new EventSource" in script
+    assert 'id="cancel-knowledge-agent"' in html
+    assert 'id="continue-knowledge-agent"' in html
+    continuation = script[
+        script.index("async function continueKnowledgeAgent") : script.index("function refreshKnowledgeGenerationActions")
+    ]
+    assert "waitingQuestionSetDigest" in continuation
+    assert "currentKnowledgeWorkflow?.waiting_question_set_digest" in continuation
+    assert "backgroundKnowledgeReady" in script
+    assert "use_agent" not in script
+    assert "agent," in script
+    assert "requireKnowledgeAgentSelection" in script
+    assert "confirmKnowledgeGeneration" in script
+    assert "finishKnowledgeGeneration(payload.task, requestScope)" in script
+    assert 'finalProgress.status === "superseded"' in script
+    assert "最低底线知识当前没有新缺口，可进入测试场景准备" not in script
     assert 'id="generate-case-matrix"' in html
     assert 'id="run-natural-language"' in html
     assert 'id="save-natural-language-case"' in html
@@ -51,27 +76,56 @@ def test_console_static_client_uses_only_v2_routes_and_safe_rendering() -> None:
     assert "finishKnowledgeGeneration" in script
     assert "helpedAction" in script
     assert "阻塞：${condition.reason}" in script
-    assert 'id="knowledge-background-editor"' in html
+    assert "renderKnowledgeBackgroundEditor" in script
+    assert "saveKnowledgeBackground" in script
+    assert "renderBusinessTermEditor" in script
+    assert 'id="knowledge-workflow-panel"' in html
+    assert 'id="knowledge-agent-select"' in html
+    assert 'id="show-all-knowledge-questions"' in html
     assert 'id="knowledge-question-pane"' in html
+    assert 'role="tablist"' in html
+    assert 'id="question-tab-unanswered"' in html
+    assert 'id="question-tab-answered"' in html
+    assert 'id="question-tab-all"' in html
     assert 'id="question-scope-filter"' in html
     assert 'id="question-priority-filter"' in html
     assert 'id="question-category-filter"' in html
+    assert 'id="complete-question-cycle"' in html
+    assert 'id="question-cycle-analysis-progress"' in html
+    assert "/knowledge/question-cycle" in script
+    assert "/knowledge/question-cycles/" in script
     assert "renderKnowledgeQuestions" in script
+    question_renderer = script[script.index("function renderKnowledgeQuestions") : script.index("function knowledgeQuestionCategoryLabel")]
+    assert "missingQuestions = openQuestions.filter" in question_renderer
+    assert "visibleQuestions.filter" not in question_renderer
+    assert '["OPEN", "BLOCKED"].includes(cycleStatus)' in question_renderer
     target_renderer = script[script.index("function renderKnowledgeTargetDetail") : script.index("async function loadKnowledgeInterview")]
     assert "detail.questions" not in target_renderer
-    assert 'id="knowledge-feedback"' in html
+    assert "detail.latest_drafts" not in target_renderer
+    assert 'id="knowledge-feedback"' not in html
+    assert 'id="knowledge-conversation-history"' in html
+    assert 'id="send-knowledge-conversation"' in html
     assert 'id="mvp-create-order-request"' in html
+    assert 'id="load-mvp-fixture-summary"' in html
     assert 'id="run-create-order-mvp"' in html
     assert "/knowledge/context" in script
     assert "/knowledge/targets/" in script
-    assert "/knowledge/discoveries" in script
-    assert "createKnowledgeCandidate" in script
-    assert "createTargetKnowledgeRevision" in script
+    assert "/knowledge/context/narrative" not in script
+    assert "/knowledge/context/candidates" in script
+    assert "/knowledge/discoveries" not in script
+    assert "createBusinessTerm" in script
+    assert "createTargetKnowledgeRevision" not in script
     assert "source_refs || []" in script
-    assert "/knowledge/revisions" in script
+    assert "/knowledge/revisions" not in script
+    assert "/knowledge/conversation-turns" in script
     assert "/create-order-mvp/fixture" in script
+    assert 'bindShortAction("load-mvp-fixture-summary", loadMvpFixtureSummary)' in script
+    assert "loadMvpFixtureSummary(scope)" not in script
+    assert "[loadMvpFixtureSummary()]" not in script
     assert "/create-order-mvp/plan" in script
     assert "/dsf-operations/canary-fixture" in script
+    assert "loadDsfOperationCatalogWithFixture" in script
+    assert "includeFixture = false" in script
     assert "/dsf-operations/canary-executions" in script
     assert 'id="dsf-operation-list"' in html
     assert 'id="save-dsf-canary-fixture"' in html
@@ -82,7 +136,8 @@ def test_console_static_client_uses_only_v2_routes_and_safe_rendering() -> None:
     assert "请先在系统配置中新增或切换一个系统" in script
     # 通用知识工作区不得再硬编码Booking.Core术语或默认自然语言示例。
     generic_knowledge = html[html.index('id="workspace-knowledge"') : html.index('id="workspace-regression-cases"')]
-    assert all(term not in generic_knowledge for term in ("港币", "EBK", "票机", "收单", "HT", "分单系统关系"))
+    assert all(term not in generic_knowledge for term in ("港币", "EBK", "票机", "收单", "分单系统关系"))
+    assert "不要输入 Token、真实订单号、HT/TX" in generic_knowledge
     assert 'id="booking-mvp-section"' in html
     assert 'id="booking-lifecycle-section"' in html
     assert 'id="collapse-sidebar"' in html[html.index('id="sidebar"') : html.index('class="brand"')]
@@ -99,6 +154,60 @@ def test_all_long_task_callers_use_the_progress_endpoint() -> None:
 
     assert "showTaskProgress" in poll_task
     assert "payload.task.operation" not in poll_task
+
+
+def test_business_enums_have_independent_directory_and_source_aware_return_navigation() -> None:
+    """业务枚举不得混入普通术语，且详情应能恢复来源对象的完整页面作用域。
+
+    Returns:
+        None；通过目录筛选、业务标题、相关枚举和返回栈静态契约断言验证页面改造。
+    """
+
+    web_root = Path(__file__).parents[2] / "opentest" / "web"
+    script = (web_root / "app.js").read_text(encoding="utf-8")
+    styles = (web_root / "styles.css").read_text(encoding="utf-8")
+    tree_renderer = script[script.index("function renderKnowledgeTree") : script.index("function knowledgeTargetButton")]
+    directory_navigation = script[
+        script.index("function openKnowledgeCandidateFromDirectory") : script.index("function pushKnowledgeReturnContext")
+    ]
+    candidate_renderer = script[script.index("function showKnowledgeCandidate") : script.index("async function showKnowledgeTarget")]
+    target_renderer = script[script.index("function renderKnowledgeTargetDetail") : script.index("function knowledgeInterviewQuestionLabel")]
+    summary_renderer = script[script.index("function renderConfirmedCandidateSummary") : script.index("async function loadKnowledgeInterview")]
+
+    assert 'candidate.knowledge_form === "BUSINESS_TERM"' in tree_renderer
+    assert 'candidate.knowledge_form === "BUSINESS_ENUM"' in tree_renderer
+    assert "业务枚举 · ${businessEnums.length}" in tree_renderer
+    assert "businessEnum.business_name" in tree_renderer
+    assert "businessEnum.name" in tree_renderer
+    assert 'CODE_DEFAULT: "代码默认（可修订）"' in script
+    assert "currentKnowledgeDetail && currentSystem" in directory_navigation
+    assert "showKnowledgeCandidate(candidate, hasKnowledgeSource)" in directory_navigation
+    assert 'candidate.knowledge_form !== "BUSINESS_ENUM"' in summary_renderer
+    assert "detail.related_enums" in target_renderer
+    assert "pushKnowledgeReturnContext" in candidate_renderer
+    assert "returnToKnowledgeSource" in candidate_renderer
+    assert "knowledgeReturnStack = []" in script
+    assert "questionScope" in script
+    assert "questionsOpen" in script
+    assert ".business-enum-value-row" in styles
+    assert "grid-template-columns: 1fr; gap: 4px" in styles
+
+
+def test_knowledge_directory_nests_facade_methods_under_their_facade_class() -> None:
+    """Facade目录必须展示类名层级，并让方法叶子只显示方法名。
+
+    Returns:
+        None；通过目录渲染契约断言Facade分组不会退化为接口方法平铺。
+    """
+
+    script_path = Path(__file__).parents[2] / "opentest" / "web" / "app.js"
+    script = script_path.read_text(encoding="utf-8")
+    tree_renderer = script[script.index("function renderKnowledgeTree") : script.index("function knowledgeTargetButton")]
+
+    assert 'for (const [group, items] of Object.entries(groups))' in tree_renderer
+    assert 'category === "facade" ? document.createElement("details") : categorySection' in tree_renderer
+    assert 'targetContainer.appendChild(textNode("summary", `${group} · ${items.length}`))' in tree_renderer
+    assert "targetContainer.appendChild(knowledgeTargetButton(target, leafDisplayName(target)))" in tree_renderer
 
 
 def test_knowledge_workspace_css_prevents_hidden_overflow_and_mobile_nested_scrolling() -> None:
@@ -135,6 +244,131 @@ def test_console_ignores_late_failures_from_previous_system_scope() -> None:
     assert "catch (error) {\n    if (!isCurrentSystemScope(requestScope))" in curl_preview
 
 
+def test_question_cycle_writes_ignore_responses_from_previous_system_scope() -> None:
+    """逐题暂存和整轮完成的迟到响应不得污染切换后的系统或问题周期。"""
+
+    script_path = Path(__file__).parents[2] / "opentest" / "web" / "app.js"
+    script = script_path.read_text(encoding="utf-8")
+    stage_answer = script[
+        script.index("async function stageQuestionCycleAnswer") : script.index("async function completeQuestionCycle")
+    ]
+    complete_cycle = script[
+        script.index("async function completeQuestionCycle") : script.index("async function handleCompleteQuestionCycleClick")
+    ]
+
+    # 两个写入口必须固定系统和周期；响应仅在作用域仍匹配时才允许更新页面缓存。
+    assert "const requestScope = captureSystemScope();" in stage_answer
+    assert "const cycleId = knowledgeQuestionCycle.cycle_id;" in stage_answer
+    assert stage_answer.count("if (!isCurrentQuestionCycleScope(requestScope, cycleId))") >= 2
+    assert "requestScope.systemId" in stage_answer
+    assert "const cycleSnapshot = knowledgeQuestionCycle;" in complete_cycle
+    assert "cycleSnapshot.question_set_digest" in complete_cycle
+    assert complete_cycle.count("if (!isCurrentQuestionCycleScope(requestScope, cycleId))") >= 3
+    assert "loadKnowledgeInterview(requestScope)" in complete_cycle
+    assert "loadQuestionsBadge(requestScope)" in complete_cycle
+    assert "loadScanCatalog(requestScope)" in complete_cycle
+    assert '"正在重新分析知识缺口",\n    requestScope,' in complete_cycle
+
+
+def test_archive_restore_uses_full_system_switch_and_clears_previous_knowledge_state() -> None:
+    """归档恢复不得只刷新系统列表并继续展示恢复前系统的知识缓存。
+
+    Returns:
+        None；选择变化会先清理，且恢复完成后复用正式系统切换路径即通过。
+    """
+
+    script_path = Path(__file__).parents[2] / "opentest" / "web" / "app.js"
+    script = script_path.read_text(encoding="utf-8")
+    load_system = script[script.index("async function loadSystem") : script.index("function renderArchives")]
+    restore_system = script[script.index("async function restoreSystem") : script.index("function validateSystemForm")]
+
+    assert "if (previousSystemId !== selectedSystemId)" in load_system
+    assert "clearSystemWorkspaceState();" in load_system
+    assert "const loaded = await loadSystem();" in restore_system
+    assert "await switchSystem(restoredSystemId);" in restore_system
+
+
+def test_same_system_list_refresh_rebases_knowledge_return_navigation() -> None:
+    """同系统列表刷新应保留候选详情已有的返回入口并更新其异步请求代次。
+
+    Returns:
+        None；刷新前固定系统身份，且同系统分支重基返回栈代次即通过。
+    """
+
+    script_path = Path(__file__).parents[2] / "opentest" / "web" / "app.js"
+    script = script_path.read_text(encoding="utf-8")
+    load_system = script[script.index("async function loadSystem") : script.index("function renderArchives")]
+
+    assert 'const previousSystemId = currentSystem?.system_id || "";' in load_system
+    assert "if (previousSystemId !== selectedSystemId)" in load_system
+    assert "for (const source of knowledgeReturnStack)" in load_system
+    assert "source.generation = requestGeneration;" in load_system
+
+
+def test_conversation_requests_ignore_late_responses_and_advanced_output_hides_questions() -> None:
+    """聊天发送、重试和轮询不得跨系统/对象回写，中栏高级区不得复制问题正文。
+
+    Returns:
+        None；三个异步入口固定作用域，且问题只在右栏展示即通过。
+    """
+
+    script_path = Path(__file__).parents[2] / "opentest" / "web" / "app.js"
+    script = script_path.read_text(encoding="utf-8")
+    send_turn = script[
+        script.index("async function sendKnowledgeConversation") : script.index("async function retryKnowledgeConversationTurn")
+    ]
+    retry_turn = script[
+        script.index("async function retryKnowledgeConversationTurn") : script.index("async function generateCurrentKnowledge")
+    ]
+    load_questions = script[
+        script.index("async function loadQuestions(") : script.index("function renderKnowledgeQuestions")
+    ]
+    task_progress = script[
+        script.index("async function showTaskProgress") : script.index("async function resumeConsoleActivity")
+    ]
+    question_renderer = script[
+        script.index("function renderKnowledgeQuestions") : script.index("function selectKnowledgeQuestionTab")
+    ]
+
+    # 消息、输入清理、轮询、刷新和Toast前后均由同一系统+知识对象作用域保护。
+    assert "captureKnowledgeConversationRequestScope" in send_turn
+    assert send_turn.count("isCurrentKnowledgeConversationRequestScope(requestScope)") >= 5
+    assert "requestScope.systemId" in send_turn
+    assert "requestScope.conversationScopeId" in send_turn
+    assert "captureKnowledgeConversationRequestScope" in retry_turn
+    assert retry_turn.count("isCurrentKnowledgeConversationRequestScope(requestScope)") >= 3
+    assert "confirmKnowledgeAgentOperation" in send_turn
+    assert "confirmKnowledgeAgentOperation" in retry_turn
+    assert "requestScope" in task_progress
+    assert "isCurrentTaskRequestScope(requestScope)" in task_progress
+    assert "if (activeLongTaskId === taskId)" in task_progress
+    assert "while (true)" in task_progress
+    assert "scopedKnowledgeTask" in task_progress
+    assert "375" not in task_progress
+
+    # 中栏高级摘要只保留周期身份和计数，精确差异使用右栏pre卡片展示。
+    assert "questions: knowledgeQuestions" not in load_questions
+    assert 'textNode("pre", question.detail, "question-diff")' in question_renderer
+
+
+def test_knowledge_target_loading_ignores_out_of_order_detail_responses() -> None:
+    """快速切换对象时，旧详情响应和finally都不能覆盖最后选择或提前清除Loading。
+
+    Returns:
+        None；详情函数使用独立目标代次校验而非仅校验系统时通过。
+    """
+
+    script_path = Path(__file__).parents[2] / "opentest" / "web" / "app.js"
+    script = script_path.read_text(encoding="utf-8")
+    detail_loader = script[
+        script.index("async function showKnowledgeTarget") : script.index("function renderKnowledgeTargetDetail")
+    ]
+
+    assert "knowledgeTargetRequestGeneration += 1" in detail_loader
+    assert detail_loader.count("isCurrentKnowledgeTargetRequestScope(requestScope)") >= 3
+    assert "isCurrentSystemScope(requestScope)" not in detail_loader
+
+
 def test_console_scan_failure_stops_manifest_loading_and_success_feedback() -> None:
     """扫描失败终态必须抛给主流程，目录读取失败也不得被内部吞掉。"""
 
@@ -148,6 +382,29 @@ def test_console_scan_failure_stops_manifest_loading_and_success_feedback() -> N
     assert "await loadScanCatalog(scope, true);" in save_system
     assert "await loadScanHistory(requestScope, true);" in retry_scan
     assert "await loadScanCatalog(requestScope, true);" in retry_scan
-    assert 'if (progress.status !== "completed")' in task_progress
+    assert 'if (["failed", "interrupted"].includes(progress.status))' in task_progress
     assert "throw new Error(taskPayload.task.error" in task_progress
     assert "扫描任务执行成功" not in task_progress
+
+
+def test_single_target_knowledge_failure_remains_visible_after_loading_closes() -> None:
+    """单目标知识失败必须同时留下常驻摘要和显眼错误提示。
+
+    Returns:
+        None；当前对象入口的失败分支更新进度卡并显示错误Toast即通过。
+    """
+
+    script_path = Path(__file__).parents[2] / "opentest" / "web" / "app.js"
+    script = script_path.read_text(encoding="utf-8")
+    generate_current = script[
+        script.index("async function generateCurrentKnowledge") : script.index("function backgroundKnowledgeReady")
+    ]
+    finish_generation = script[
+        script.index("async function finishKnowledgeGeneration") : script.index("async function searchKnowledge")
+    ]
+
+    assert 'element("knowledge-task-progress").textContent = `生成失败：${message}`' in generate_current
+    assert 'showToast(`知识生成失败：${message}`, "error")' in generate_current
+    assert "activeKnowledgeStreamTaskId === task.task_id" in finish_generation
+    assert "stopKnowledgeAgentEventStream(true)" in finish_generation
+    assert "流式连接已关闭" in finish_generation

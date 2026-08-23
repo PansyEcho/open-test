@@ -2,12 +2,15 @@
 
 from __future__ import annotations
 
+import time
 from pathlib import Path
 
 from fastapi.testclient import TestClient
 
 from opentest.api import create_app
 from opentest.application.foundation import OpenTestApplication
+from opentest.application.tasks import report_task_progress
+from opentest.domain.models import AgentRunEvent, TaskProgressUpdate, TaskStatus
 
 
 def test_fastapi_registers_multiple_systems_without_overwrite(tmp_path: Path, monkeypatch) -> None:
@@ -78,7 +81,14 @@ def test_v2_console_is_served_and_only_references_v2_api(tmp_path: Path) -> None
 
 
 def test_v2_openapi_contains_complete_single_system_workflow(tmp_path: Path) -> None:
-    """OpenAPI契约应暴露扫描、知识、Case、Snapshot和执行闭环入口。"""
+    """OpenAPI契约应暴露扫描、知识、Case、Snapshot和执行闭环入口。
+
+    Args:
+        tmp_path: pytest隔离的知识根目录。
+
+    Returns:
+        None；通过路径集合断言验证周期接口和既有V2契约。
+    """
 
     application = OpenTestApplication(tmp_path / "knowledge")
     with TestClient(create_app(application)) as client:
@@ -94,10 +104,14 @@ def test_v2_openapi_contains_complete_single_system_workflow(tmp_path: Path) -> 
         "/api/v2/systems/{system_id}/knowledge/context/candidates/{candidate_id}",
         "/api/v2/systems/{system_id}/knowledge/discoveries",
         "/api/v2/systems/{system_id}/knowledge/questions",
+        "/api/v2/systems/{system_id}/knowledge/question-cycle",
+        "/api/v2/systems/{system_id}/knowledge/question-cycles/{cycle_id}/answers/{question_id}",
+        "/api/v2/systems/{system_id}/knowledge/question-cycles/{cycle_id}/complete",
         "/api/v2/systems/{system_id}/knowledge/questions/{question_id}/answers",
         "/api/v2/systems/{system_id}/knowledge/targets/{target_id}",
         "/api/v2/systems/{system_id}/knowledge/nodes/{node_id}",
         "/api/v2/systems/{system_id}/knowledge/generation-batches",
+        "/api/v2/systems/{system_id}/knowledge/generation-batches/{batch_id}/continuations",
         "/api/v2/systems/{system_id}/knowledge/generation-batches/{batch_id}/questions/{question_id}/answers",
         "/api/v2/systems/{system_id}/knowledge/generation-batches/{batch_id}/confirmations",
         "/api/v2/systems/{system_id}/scenarios/generations",
@@ -123,8 +137,146 @@ def test_v2_openapi_contains_complete_single_system_workflow(tmp_path: Path) -> 
         "/api/v2/systems/{system_id}/runs",
         "/api/v2/runs/{run_id}",
         "/api/v2/tasks/{task_id}/progress",
+        "/api/v2/tasks/{task_id}/events",
+        "/api/v2/tasks/{task_id}/cancel-agent",
         "/api/v2/console/activity",
     } <= paths
+
+
+def test_single_target_generation_rejects_legacy_request_without_agent_confirmation(tmp_path: Path) -> None:
+    """单目标API不得接受缺少明确Agent和费用确认的旧请求。
+
+    Args:
+        tmp_path: pytest隔离的知识根与任务目录。
+
+    Returns:
+            None；旧请求在进入业务处理前被结构化契约拒绝时通过。
+    """
+
+    application = OpenTestApplication(tmp_path / "knowledge")
+    with TestClient(create_app(application)) as client:
+        response = client.post(
+            "/api/v2/systems/legacy-demo/knowledge/generations",
+            json={"system_id": "legacy-demo", "entry_id": "facade:demo.Legacy#query"},
+        )
+
+    assert response.status_code == 422
+    assert "target_id" in response.text
+    assert "agent" in response.text
+
+
+def test_compatible_generation_batch_route_requires_explicit_fee_confirmation(tmp_path: Path) -> None:
+    """兼容批次路由也必须在业务查询前拒绝缺少费用确认的请求。
+
+    Args:
+        tmp_path: pytest隔离的知识根和本地任务目录。
+
+    Returns:
+        None；即使明确Agent和单目标都存在，缺少confirmed仍返回422时通过。
+    """
+
+    application = OpenTestApplication(tmp_path / "knowledge")
+    with TestClient(create_app(application)) as client:
+        response = client.post(
+            "/api/v2/systems/legacy-demo/knowledge/generation-batches",
+            json={
+                "system_id": "legacy-demo",
+                "target_ids": ["facade:demo.LegacyFacade#query"],
+                "agent": "codex",
+            },
+        )
+
+    assert response.status_code == 422
+    assert "confirmed" in response.text
+
+
+def test_task_event_stream_replays_persisted_events_and_honors_last_event_id(
+    tmp_path: Path,
+    monkeypatch,
+) -> None:
+    """SSE应重放已落盘公开事件，并从浏览器最后确认的序号继续。
+
+    Args:
+        tmp_path: pytest隔离的知识根、任务文件和Agent事件目录。
+        monkeypatch: 禁止SSE退回每秒全量扫描的旧读取入口。
+
+    Returns:
+        None；首次读取包含事件且重连不会重复发送相同序号时通过。
+
+    Side Effects:
+        仅在临时知识根写入一条脱敏事件和一个本地完成任务，不启动真实Agent。
+    """
+
+    application = OpenTestApplication(tmp_path / "knowledge")
+    run_id = "agent-1234567890abcdef"
+    evidence_root = application.knowledge_root / ".opentest" / "agent-runs"
+    run_root = evidence_root / run_id
+    run_root.mkdir(parents=True)
+    event = AgentRunEvent(
+        run_id=run_id,
+        sequence=1,
+        agent="codex",
+        target_id="facade:demo.QueryFacade#queryList",
+        event_type="reasoning_summary",
+        text="正在核对查询条件与返回分支。",
+    )
+    (run_root / "events.jsonl").write_text(event.model_dump_json() + "\n", encoding="utf-8")
+
+    def completed_agent_job() -> dict[str, object]:
+        """把隔离事件运行ID绑定到任务后完成，供终态SSE验证。
+
+        Returns:
+            不含业务正文的最小完成摘要。
+
+        Side Effects:
+            在线程内持久化当前任务的Agent运行游标和公开阶段。
+        """
+
+        # 任务进度是API从任务ID安全定位事件目录的唯一关联，不接受客户端直接传入运行路径。
+        report_task_progress(
+            TaskProgressUpdate(
+                stage_code="agent_analysis",
+                stage_name="AI分析",
+                stage_index=2,
+                stage_total=4,
+                completed_units=1,
+                total_units=1,
+                current_item=event.target_id,
+                agent="codex",
+                agent_run_id=run_id,
+                agent_event_cursor=1,
+            )
+        )
+        return {"completed": True}
+
+    task = application.tasks.submit("knowledge-target-generation", "demo", completed_agent_job)
+    for _ in range(200):
+        if application.get_task(task.task_id).status == TaskStatus.COMPLETED:
+            break
+        time.sleep(0.01)
+    assert application.get_task(task.task_id).status == TaskStatus.COMPLETED
+
+    def reject_full_event_scan(*_: object, **__: object) -> list[AgentRunEvent]:
+        """若SSE仍调用旧全量读取入口则立即让契约测试失败。"""
+
+        raise AssertionError("SSE must use per-connection event offsets")
+
+    monkeypatch.setattr(application, "list_task_agent_events", reject_full_event_scan)
+
+    with TestClient(create_app(application)) as client:
+        initial = client.get(f"/api/v2/tasks/{task.task_id}/events")
+        resumed = client.get(
+            f"/api/v2/tasks/{task.task_id}/events",
+            headers={"Last-Event-ID": "1"},
+        )
+
+    assert initial.status_code == 200
+    assert initial.headers["content-type"].startswith("text/event-stream")
+    assert "id: 1" in initial.text
+    assert "reasoning_summary" in initial.text
+    assert "正在核对查询条件与返回分支。" in initial.text
+    assert resumed.status_code == 200
+    assert resumed.text == ""
 
 
 def test_fastapi_missing_run_uses_safe_not_found_response(tmp_path: Path) -> None:

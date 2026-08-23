@@ -1,31 +1,838 @@
 candidate_id: candidate:business_term:6ac01ead9e1e066b
 system_id: ifightchainsaas.java.refund.core
 kind: BUSINESS_TERM
+knowledge_form: BUSINESS_ENUM
 name: LogEnum
-suggested_meaning: 源码出现该枚举、缩写或领域类型；请确认业务口径以及是否需要合并到已有术语。
-business_meaning: ''
-status: STALE
+business_name: 日志枚举
+business_name_source: CODE_DEFAULT
+business_name_known_unknown: false
+enum_values:
+- code: ARC_BSP_DATA_SENDER
+  business_meaning: 数据发送
+  source: CODE_DEFAULT
+  known_unknown: false
+  confidence: 0.95
+  source_refs:
+  - repository: ''
+    path: app/biz/src/main/java/com/ly/flight/chainsaas/refund/biz/constants/LogEnum.java
+    symbol: com.ly.flight.chainsaas.refund.biz.constants.LogEnum#ARC_BSP_DATA_SENDER
+    line: 18
+    commit: ''
+    content_digest: ''
+- code: ARC_BSP_MESSAGE
+  business_meaning: ARC_BSP账单消息
+  source: CODE_DEFAULT
+  known_unknown: false
+  confidence: 0.95
+  source_refs:
+  - repository: ''
+    path: app/biz/src/main/java/com/ly/flight/chainsaas/refund/biz/constants/LogEnum.java
+    symbol: com.ly.flight.chainsaas.refund.biz.constants.LogEnum#ARC_BSP_MESSAGE
+    line: 140
+    commit: ''
+    content_digest: ''
+- code: AUTO_REFUND
+  business_meaning: 自动退
+  source: CODE_DEFAULT
+  known_unknown: false
+  confidence: 0.95
+  source_refs:
+  - repository: ''
+    path: app/biz/src/main/java/com/ly/flight/chainsaas/refund/biz/constants/LogEnum.java
+    symbol: com.ly.flight.chainsaas.refund.biz.constants.LogEnum#AUTO_REFUND
+    line: 110
+    commit: ''
+    content_digest: ''
+- code: AUTO_REFUND_RESHOP
+  business_meaning: 自动退-退改查询
+  source: CODE_DEFAULT
+  known_unknown: false
+  confidence: 0.95
+  source_refs:
+  - repository: ''
+    path: app/biz/src/main/java/com/ly/flight/chainsaas/refund/biz/constants/LogEnum.java
+    symbol: com.ly.flight.chainsaas.refund.biz.constants.LogEnum#AUTO_REFUND_RESHOP
+    line: 58
+    commit: ''
+    content_digest: ''
+- code: BILL_SUPPLEMENT
+  business_meaning: 账单补单
+  source: CODE_DEFAULT
+  known_unknown: false
+  confidence: 0.95
+  source_refs:
+  - repository: ''
+    path: app/biz/src/main/java/com/ly/flight/chainsaas/refund/biz/constants/LogEnum.java
+    symbol: com.ly.flight.chainsaas.refund.biz.constants.LogEnum#BILL_SUPPLEMENT
+    line: 155
+    commit: ''
+    content_digest: ''
+- code: BUSINESS_LOG
+  business_meaning: 退票订单日志
+  source: CODE_DEFAULT
+  known_unknown: false
+  confidence: 0.95
+  source_refs:
+  - repository: ''
+    path: app/biz/src/main/java/com/ly/flight/chainsaas/refund/biz/constants/LogEnum.java
+    symbol: com.ly.flight.chainsaas.refund.biz.constants.LogEnum#BUSINESS_LOG
+    line: 104
+    commit: ''
+    content_digest: ''
+- code: CANCEL
+  business_meaning: 取消退票
+  source: CODE_DEFAULT
+  known_unknown: false
+  confidence: 0.95
+  source_refs:
+  - repository: ''
+    path: app/biz/src/main/java/com/ly/flight/chainsaas/refund/biz/constants/LogEnum.java
+    symbol: com.ly.flight.chainsaas.refund.biz.constants.LogEnum#CANCEL
+    line: 15
+    commit: ''
+    content_digest: ''
+- code: CBDS_REFUND_APPLY
+  business_meaning: 费用回填回调
+  source: CODE_DEFAULT
+  known_unknown: false
+  confidence: 0.95
+  source_refs:
+  - repository: ''
+    path: app/biz/src/main/java/com/ly/flight/chainsaas/refund/biz/constants/LogEnum.java
+    symbol: com.ly.flight.chainsaas.refund.biz.constants.LogEnum#CBDS_REFUND_APPLY
+    line: 114
+    commit: ''
+    content_digest: ''
+- code: CBDS_REFUND_CONFIRM
+  business_meaning: 退票确认回调
+  source: CODE_DEFAULT
+  known_unknown: false
+  confidence: 0.95
+  source_refs:
+  - repository: ''
+    path: app/biz/src/main/java/com/ly/flight/chainsaas/refund/biz/constants/LogEnum.java
+    symbol: com.ly.flight.chainsaas.refund.biz.constants.LogEnum#CBDS_REFUND_CONFIRM
+    line: 118
+    commit: ''
+    content_digest: ''
+- code: CREATE_ORDER
+  business_meaning: CREATE_ORDER
+  source: CODE_DEFAULT
+  known_unknown: false
+  confidence: 0.5
+  source_refs:
+  - repository: ''
+    path: app/biz/src/main/java/com/ly/flight/chainsaas/refund/biz/constants/LogEnum.java
+    symbol: com.ly.flight.chainsaas.refund.biz.constants.LogEnum#CREATE_ORDER
+    line: 106
+    commit: ''
+    content_digest: ''
+- code: C_ORDER_SYNC
+  business_meaning: C端同步
+  source: CODE_DEFAULT
+  known_unknown: false
+  confidence: 0.95
+  source_refs:
+  - repository: ''
+    path: app/biz/src/main/java/com/ly/flight/chainsaas/refund/biz/constants/LogEnum.java
+    symbol: com.ly.flight.chainsaas.refund.biz.constants.LogEnum#C_ORDER_SYNC
+    line: 186
+    commit: ''
+    content_digest: ''
+- code: DATA_MIGRATE_JOB
+  business_meaning: 清洗数据
+  source: CODE_DEFAULT
+  known_unknown: false
+  confidence: 0.95
+  source_refs:
+  - repository: ''
+    path: app/biz/src/main/java/com/ly/flight/chainsaas/refund/biz/constants/LogEnum.java
+    symbol: com.ly.flight.chainsaas.refund.biz.constants.LogEnum#DATA_MIGRATE_JOB
+    line: 159
+    commit: ''
+    content_digest: ''
+- code: DETAIL_CREATE_LOG
+  business_meaning: 创建日志
+  source: CODE_DEFAULT
+  known_unknown: false
+  confidence: 0.95
+  source_refs:
+  - repository: ''
+    path: app/biz/src/main/java/com/ly/flight/chainsaas/refund/biz/constants/LogEnum.java
+    symbol: com.ly.flight.chainsaas.refund.biz.constants.LogEnum#DETAIL_CREATE_LOG
+    line: 66
+    commit: ''
+    content_digest: ''
+- code: ITEM_PNR_JOB
+  business_meaning: 清洗item表pnr
+  source: CODE_DEFAULT
+  known_unknown: false
+  confidence: 0.95
+  source_refs:
+  - repository: ''
+    path: app/biz/src/main/java/com/ly/flight/chainsaas/refund/biz/constants/LogEnum.java
+    symbol: com.ly.flight.chainsaas.refund.biz.constants.LogEnum#ITEM_PNR_JOB
+    line: 181
+    commit: ''
+    content_digest: ''
+- code: JOB
+  business_meaning: JOB
+  source: CODE_DEFAULT
+  known_unknown: false
+  confidence: 0.95
+  source_refs:
+  - repository: ''
+    path: app/biz/src/main/java/com/ly/flight/chainsaas/refund/biz/constants/LogEnum.java
+    symbol: com.ly.flight.chainsaas.refund.biz.constants.LogEnum#JOB
+    line: 102
+    commit: ''
+    content_digest: ''
+- code: JOURNEY
+  business_meaning: JOURNEY
+  source: CODE_DEFAULT
+  known_unknown: false
+  confidence: 0.5
+  source_refs:
+  - repository: ''
+    path: app/biz/src/main/java/com/ly/flight/chainsaas/refund/biz/constants/LogEnum.java
+    symbol: com.ly.flight.chainsaas.refund.biz.constants.LogEnum#JOURNEY
+    line: 106
+    commit: ''
+    content_digest: ''
+- code: LOCK_ORDER
+  business_meaning: 锁单服务
+  source: CODE_DEFAULT
+  known_unknown: false
+  confidence: 0.95
+  source_refs:
+  - repository: ''
+    path: app/biz/src/main/java/com/ly/flight/chainsaas/refund/biz/constants/LogEnum.java
+    symbol: com.ly.flight.chainsaas.refund.biz.constants.LogEnum#LOCK_ORDER
+    line: 50
+    commit: ''
+    content_digest: ''
+- code: MODEL_CONFIRM_REFUND
+  business_meaning: 模型确认退票
+  source: CODE_DEFAULT
+  known_unknown: false
+  confidence: 0.95
+  source_refs:
+  - repository: ''
+    path: app/biz/src/main/java/com/ly/flight/chainsaas/refund/biz/constants/LogEnum.java
+    symbol: com.ly.flight.chainsaas.refund.biz.constants.LogEnum#MODEL_CONFIRM_REFUND
+    line: 171
+    commit: ''
+    content_digest: ''
+- code: MODEL_CREATE_REFUND_ORDER
+  business_meaning: 模型创建退票单
+  source: CODE_DEFAULT
+  known_unknown: false
+  confidence: 0.95
+  source_refs:
+  - repository: ''
+    path: app/biz/src/main/java/com/ly/flight/chainsaas/refund/biz/constants/LogEnum.java
+    symbol: com.ly.flight.chainsaas.refund.biz.constants.LogEnum#MODEL_CREATE_REFUND_ORDER
+    line: 167
+    commit: ''
+    content_digest: ''
+- code: ORDER_DETAIL
+  business_meaning: 订单详情服务日志
+  source: CODE_DEFAULT
+  known_unknown: false
+  confidence: 0.95
+  source_refs:
+  - repository: ''
+    path: app/biz/src/main/java/com/ly/flight/chainsaas/refund/biz/constants/LogEnum.java
+    symbol: com.ly.flight.chainsaas.refund.biz.constants.LogEnum#ORDER_DETAIL
+    line: 46
+    commit: ''
+    content_digest: ''
+- code: ORDER_LIST
+  business_meaning: 订单列表服务日志
+  source: CODE_DEFAULT
+  known_unknown: false
+  confidence: 0.95
+  source_refs:
+  - repository: ''
+    path: app/biz/src/main/java/com/ly/flight/chainsaas/refund/biz/constants/LogEnum.java
+    symbol: com.ly.flight.chainsaas.refund.biz.constants.LogEnum#ORDER_LIST
+    line: 40
+    commit: ''
+    content_digest: ''
+- code: ORDER_PAYMENT_JOB_LISTENER
+  business_meaning: ORDER_PAYMENT_JOB_LISTENER
+  source: CODE_DEFAULT
+  known_unknown: false
+  confidence: 0.95
+  source_refs:
+  - repository: ''
+    path: app/biz/src/main/java/com/ly/flight/chainsaas/refund/biz/constants/LogEnum.java
+    symbol: com.ly.flight.chainsaas.refund.biz.constants.LogEnum#ORDER_PAYMENT_JOB_LISTENER
+    line: 76
+    commit: ''
+    content_digest: ''
+- code: OUTER_CANCEL
+  business_meaning: 取消
+  source: CODE_DEFAULT
+  known_unknown: false
+  confidence: 0.95
+  source_refs:
+  - repository: ''
+    path: app/biz/src/main/java/com/ly/flight/chainsaas/refund/biz/constants/LogEnum.java
+    symbol: com.ly.flight.chainsaas.refund.biz.constants.LogEnum#OUTER_CANCEL
+    line: 34
+    commit: ''
+    content_digest: ''
+- code: OUTER_QUERYDETAIL
+  business_meaning: 详情
+  source: CODE_DEFAULT
+  known_unknown: false
+  confidence: 0.95
+  source_refs:
+  - repository: ''
+    path: app/biz/src/main/java/com/ly/flight/chainsaas/refund/biz/constants/LogEnum.java
+    symbol: com.ly.flight.chainsaas.refund.biz.constants.LogEnum#OUTER_QUERYDETAIL
+    line: 30
+    commit: ''
+    content_digest: ''
+- code: OUTER_QUERYLIST
+  business_meaning: 列表
+  source: CODE_DEFAULT
+  known_unknown: false
+  confidence: 0.95
+  source_refs:
+  - repository: ''
+    path: app/biz/src/main/java/com/ly/flight/chainsaas/refund/biz/constants/LogEnum.java
+    symbol: com.ly.flight.chainsaas.refund.biz.constants.LogEnum#OUTER_QUERYLIST
+    line: 22
+    commit: ''
+    content_digest: ''
+- code: OUTER_REFUNDCONFIRM
+  business_meaning: 退票确认
+  source: CODE_DEFAULT
+  known_unknown: false
+  confidence: 0.95
+  source_refs:
+  - repository: ''
+    path: app/biz/src/main/java/com/ly/flight/chainsaas/refund/biz/constants/LogEnum.java
+    symbol: com.ly.flight.chainsaas.refund.biz.constants.LogEnum#OUTER_REFUNDCONFIRM
+    line: 26
+    commit: ''
+    content_digest: ''
+- code: PARSING_ARC_REPORT
+  business_meaning: ARC报表解析
+  source: CODE_DEFAULT
+  known_unknown: false
+  confidence: 0.95
+  source_refs:
+  - repository: ''
+    path: app/biz/src/main/java/com/ly/flight/chainsaas/refund/biz/constants/LogEnum.java
+    symbol: com.ly.flight.chainsaas.refund.biz.constants.LogEnum#PARSING_ARC_REPORT
+    line: 130
+    commit: ''
+    content_digest: ''
+- code: PARSING_BSP_REPORT
+  business_meaning: BSP报表解析
+  source: CODE_DEFAULT
+  known_unknown: false
+  confidence: 0.95
+  source_refs:
+  - repository: ''
+    path: app/biz/src/main/java/com/ly/flight/chainsaas/refund/biz/constants/LogEnum.java
+    symbol: com.ly.flight.chainsaas.refund.biz.constants.LogEnum#PARSING_BSP_REPORT
+    line: 135
+    commit: ''
+    content_digest: ''
+- code: PAYMENT
+  business_meaning: 订单详情服务日志
+  source: CODE_DEFAULT
+  known_unknown: false
+  confidence: 0.95
+  source_refs:
+  - repository: ''
+    path: app/biz/src/main/java/com/ly/flight/chainsaas/refund/biz/constants/LogEnum.java
+    symbol: com.ly.flight.chainsaas.refund.biz.constants.LogEnum#PAYMENT
+    line: 48
+    commit: ''
+    content_digest: ''
+- code: PAY_REFUND_CUSTOMER_NOTIFY
+  business_meaning: PAY_REFUND_NOTIFY
+  source: CODE_DEFAULT
+  known_unknown: false
+  confidence: 0.95
+  source_refs:
+  - repository: ''
+    path: app/biz/src/main/java/com/ly/flight/chainsaas/refund/biz/constants/LogEnum.java
+    symbol: com.ly.flight.chainsaas.refund.biz.constants.LogEnum#PAY_REFUND_CUSTOMER_NOTIFY
+    line: 42
+    commit: ''
+    content_digest: ''
+- code: PAY_REFUND_DONE_LISTENER
+  business_meaning: 退票退款
+  source: CODE_DEFAULT
+  known_unknown: false
+  confidence: 0.95
+  source_refs:
+  - repository: ''
+    path: app/biz/src/main/java/com/ly/flight/chainsaas/refund/biz/constants/LogEnum.java
+    symbol: com.ly.flight.chainsaas.refund.biz.constants.LogEnum#PAY_REFUND_DONE_LISTENER
+    line: 38
+    commit: ''
+    content_digest: ''
+- code: PAY_REFUND_SUPPILER_NOTIFY
+  business_meaning: PAY_REFUND_NOTIFY
+  source: CODE_DEFAULT
+  known_unknown: false
+  confidence: 0.95
+  source_refs:
+  - repository: ''
+    path: app/biz/src/main/java/com/ly/flight/chainsaas/refund/biz/constants/LogEnum.java
+    symbol: com.ly.flight.chainsaas.refund.biz.constants.LogEnum#PAY_REFUND_SUPPILER_NOTIFY
+    line: 44
+    commit: ''
+    content_digest: ''
+- code: PLATFEE
+  business_meaning: 平台费
+  source: CODE_DEFAULT
+  known_unknown: false
+  confidence: 0.95
+  source_refs:
+  - repository: ''
+    path: app/biz/src/main/java/com/ly/flight/chainsaas/refund/biz/constants/LogEnum.java
+    symbol: com.ly.flight.chainsaas.refund.biz.constants.LogEnum#PLATFEE
+    line: 36
+    commit: ''
+    content_digest: ''
+- code: QUERY_DISTRIBUTION_ORDER_DETAIL
+  business_meaning: B端订单详情
+  source: CODE_DEFAULT
+  known_unknown: false
+  confidence: 0.95
+  source_refs:
+  - repository: ''
+    path: app/biz/src/main/java/com/ly/flight/chainsaas/refund/biz/constants/LogEnum.java
+    symbol: com.ly.flight.chainsaas.refund.biz.constants.LogEnum#QUERY_DISTRIBUTION_ORDER_DETAIL
+    line: 126
+    commit: ''
+    content_digest: ''
+- code: QUERY_DISTRIBUTION_ORDER_LIST
+  business_meaning: B端订单列表
+  source: CODE_DEFAULT
+  known_unknown: false
+  confidence: 0.95
+  source_refs:
+  - repository: ''
+    path: app/biz/src/main/java/com/ly/flight/chainsaas/refund/biz/constants/LogEnum.java
+    symbol: com.ly.flight.chainsaas.refund.biz.constants.LogEnum#QUERY_DISTRIBUTION_ORDER_LIST
+    line: 122
+    commit: ''
+    content_digest: ''
+- code: REFUND_APPLY_TO_AIRLINE
+  business_meaning: 已向航司确认
+  source: CODE_DEFAULT
+  known_unknown: false
+  confidence: 0.95
+  source_refs:
+  - repository: ''
+    path: app/biz/src/main/java/com/ly/flight/chainsaas/refund/biz/constants/LogEnum.java
+    symbol: com.ly.flight.chainsaas.refund.biz.constants.LogEnum#REFUND_APPLY_TO_AIRLINE
+    line: 150
+    commit: ''
+    content_digest: ''
+- code: REFUND_CREATE_JOB
+  business_meaning: JOB
+  source: CODE_DEFAULT
+  known_unknown: false
+  confidence: 0.95
+  source_refs:
+  - repository: ''
+    path: app/biz/src/main/java/com/ly/flight/chainsaas/refund/biz/constants/LogEnum.java
+    symbol: com.ly.flight.chainsaas.refund.biz.constants.LogEnum#REFUND_CREATE_JOB
+    line: 88
+    commit: ''
+    content_digest: ''
+- code: REFUND_DONE
+  business_meaning: REFUND_DONE
+  source: CODE_DEFAULT
+  known_unknown: false
+  confidence: 0.95
+  source_refs:
+  - repository: ''
+    path: app/biz/src/main/java/com/ly/flight/chainsaas/refund/biz/constants/LogEnum.java
+    symbol: com.ly.flight.chainsaas.refund.biz.constants.LogEnum#REFUND_DONE
+    line: 72
+    commit: ''
+    content_digest: ''
+- code: REFUND_FINAL_JOB
+  business_meaning: JOB
+  source: CODE_DEFAULT
+  known_unknown: false
+  confidence: 0.95
+  source_refs:
+  - repository: ''
+    path: app/biz/src/main/java/com/ly/flight/chainsaas/refund/biz/constants/LogEnum.java
+    symbol: com.ly.flight.chainsaas.refund.biz.constants.LogEnum#REFUND_FINAL_JOB
+    line: 90
+    commit: ''
+    content_digest: ''
+- code: REFUND_NOTIFY
+  business_meaning: 退票通知MQ
+  source: CODE_DEFAULT
+  known_unknown: false
+  confidence: 0.95
+  source_refs:
+  - repository: ''
+    path: app/biz/src/main/java/com/ly/flight/chainsaas/refund/biz/constants/LogEnum.java
+    symbol: com.ly.flight.chainsaas.refund.biz.constants.LogEnum#REFUND_NOTIFY
+    line: 106
+    commit: ''
+    content_digest: ''
+- code: REFUND_OPERATE_LOG
+  business_meaning: REFUND_OPERATE_LOG
+  source: CODE_DEFAULT
+  known_unknown: false
+  confidence: 0.95
+  source_refs:
+  - repository: ''
+    path: app/biz/src/main/java/com/ly/flight/chainsaas/refund/biz/constants/LogEnum.java
+    symbol: com.ly.flight.chainsaas.refund.biz.constants.LogEnum#REFUND_OPERATE_LOG
+    line: 80
+    commit: ''
+    content_digest: ''
+- code: REFUND_ORDER_SERIAL_NO
+  business_meaning: 查询
+  source: CODE_DEFAULT
+  known_unknown: false
+  confidence: 0.95
+  source_refs:
+  - repository: ''
+    path: app/biz/src/main/java/com/ly/flight/chainsaas/refund/biz/constants/LogEnum.java
+    symbol: com.ly.flight.chainsaas.refund.biz.constants.LogEnum#REFUND_ORDER_SERIAL_NO
+    line: 68
+    commit: ''
+    content_digest: ''
+- code: REFUND_PAID_JOB
+  business_meaning: JOB
+  source: CODE_DEFAULT
+  known_unknown: false
+  confidence: 0.95
+  source_refs:
+  - repository: ''
+    path: app/biz/src/main/java/com/ly/flight/chainsaas/refund/biz/constants/LogEnum.java
+    symbol: com.ly.flight.chainsaas.refund.biz.constants.LogEnum#REFUND_PAID_JOB
+    line: 100
+    commit: ''
+    content_digest: ''
+- code: REFUND_RESHOP
+  business_meaning: 退改查询
+  source: CODE_DEFAULT
+  known_unknown: false
+  confidence: 0.95
+  source_refs:
+  - repository: ''
+    path: app/biz/src/main/java/com/ly/flight/chainsaas/refund/biz/constants/LogEnum.java
+    symbol: com.ly.flight.chainsaas.refund.biz.constants.LogEnum#REFUND_RESHOP
+    line: 56
+    commit: ''
+    content_digest: ''
+- code: REFUND_RESHOP_CONFIRM
+  business_meaning: 退改确认
+  source: CODE_DEFAULT
+  known_unknown: false
+  confidence: 0.95
+  source_refs:
+  - repository: ''
+    path: app/biz/src/main/java/com/ly/flight/chainsaas/refund/biz/constants/LogEnum.java
+    symbol: com.ly.flight.chainsaas.refund.biz.constants.LogEnum#REFUND_RESHOP_CONFIRM
+    line: 60
+    commit: ''
+    content_digest: ''
+- code: REFUND_RESHOP_SUBMIT
+  business_meaning: 退改提交
+  source: CODE_DEFAULT
+  known_unknown: false
+  confidence: 0.95
+  source_refs:
+  - repository: ''
+    path: app/biz/src/main/java/com/ly/flight/chainsaas/refund/biz/constants/LogEnum.java
+    symbol: com.ly.flight.chainsaas.refund.biz.constants.LogEnum#REFUND_RESHOP_SUBMIT
+    line: 64
+    commit: ''
+    content_digest: ''
+- code: REFUND_TIMEOUT_JOB
+  business_meaning: JOB
+  source: CODE_DEFAULT
+  known_unknown: false
+  confidence: 0.95
+  source_refs:
+  - repository: ''
+    path: app/biz/src/main/java/com/ly/flight/chainsaas/refund/biz/constants/LogEnum.java
+    symbol: com.ly.flight.chainsaas.refund.biz.constants.LogEnum#REFUND_TIMEOUT_JOB
+    line: 92
+    commit: ''
+    content_digest: ''
+- code: RESHOP_AUDIT_SUBMIT_JOB
+  business_meaning: JOB
+  source: CODE_DEFAULT
+  known_unknown: false
+  confidence: 0.95
+  source_refs:
+  - repository: ''
+    path: app/biz/src/main/java/com/ly/flight/chainsaas/refund/biz/constants/LogEnum.java
+    symbol: com.ly.flight.chainsaas.refund.biz.constants.LogEnum#RESHOP_AUDIT_SUBMIT_JOB
+    line: 84
+    commit: ''
+    content_digest: ''
+- code: RESHOP_CONFIRM_JOB
+  business_meaning: JOB
+  source: CODE_DEFAULT
+  known_unknown: false
+  confidence: 0.95
+  source_refs:
+  - repository: ''
+    path: app/biz/src/main/java/com/ly/flight/chainsaas/refund/biz/constants/LogEnum.java
+    symbol: com.ly.flight.chainsaas.refund.biz.constants.LogEnum#RESHOP_CONFIRM_JOB
+    line: 86
+    commit: ''
+    content_digest: ''
+- code: SEND_EMAIL
+  business_meaning: 发送邮件
+  source: CODE_DEFAULT
+  known_unknown: false
+  confidence: 0.95
+  source_refs:
+  - repository: ''
+    path: app/biz/src/main/java/com/ly/flight/chainsaas/refund/biz/constants/LogEnum.java
+    symbol: com.ly.flight.chainsaas.refund.biz.constants.LogEnum#SEND_EMAIL
+    line: 163
+    commit: ''
+    content_digest: ''
+- code: SUPPLY_CHANNEL_CLEAN_JOB
+  business_meaning: JOB
+  source: CODE_DEFAULT
+  known_unknown: false
+  confidence: 0.95
+  source_refs:
+  - repository: ''
+    path: app/biz/src/main/java/com/ly/flight/chainsaas/refund/biz/constants/LogEnum.java
+    symbol: com.ly.flight.chainsaas.refund.biz.constants.LogEnum#SUPPLY_CHANNEL_CLEAN_JOB
+    line: 96
+    commit: ''
+    content_digest: ''
+- code: SYNC_ORDER
+  business_meaning: 订单同步
+  source: CODE_DEFAULT
+  known_unknown: false
+  confidence: 0.95
+  source_refs:
+  - repository: ''
+    path: app/biz/src/main/java/com/ly/flight/chainsaas/refund/biz/constants/LogEnum.java
+    symbol: com.ly.flight.chainsaas.refund.biz.constants.LogEnum#SYNC_ORDER
+    line: 52
+    commit: ''
+    content_digest: ''
+- code: SYNC_TO_PRE_REFUND_JOB
+  business_meaning: 同步前置交易退票单
+  source: CODE_DEFAULT
+  known_unknown: false
+  confidence: 0.95
+  source_refs:
+  - repository: ''
+    path: app/biz/src/main/java/com/ly/flight/chainsaas/refund/biz/constants/LogEnum.java
+    symbol: com.ly.flight.chainsaas.refund.biz.constants.LogEnum#SYNC_TO_PRE_REFUND_JOB
+    line: 145
+    commit: ''
+    content_digest: ''
+- code: TICKET_REFUNDING
+  business_meaning: TICKET_REFUNDING
+  source: CODE_DEFAULT
+  known_unknown: false
+  confidence: 0.5
+  source_refs:
+  - repository: ''
+    path: app/biz/src/main/java/com/ly/flight/chainsaas/refund/biz/constants/LogEnum.java
+    symbol: com.ly.flight.chainsaas.refund.biz.constants.LogEnum#TICKET_REFUNDING
+    line: 126
+    commit: ''
+    content_digest: ''
+- code: TIMEOUT_CANCEL_JOB
+  business_meaning: JOB
+  source: CODE_DEFAULT
+  known_unknown: false
+  confidence: 0.95
+  source_refs:
+  - repository: ''
+    path: app/biz/src/main/java/com/ly/flight/chainsaas/refund/biz/constants/LogEnum.java
+    symbol: com.ly.flight.chainsaas.refund.biz.constants.LogEnum#TIMEOUT_CANCEL_JOB
+    line: 94
+    commit: ''
+    content_digest: ''
+- code: TRADE_ORDER_SYNC
+  business_meaning: 订单同步
+  source: CODE_DEFAULT
+  known_unknown: false
+  confidence: 0.95
+  source_refs:
+  - repository: ''
+    path: app/biz/src/main/java/com/ly/flight/chainsaas/refund/biz/constants/LogEnum.java
+    symbol: com.ly.flight.chainsaas.refund.biz.constants.LogEnum#TRADE_ORDER_SYNC
+    line: 183
+    commit: ''
+    content_digest: ''
+- code: TRADE_ORDER_SYNC_LISTENER
+  business_meaning: 同步
+  source: CODE_DEFAULT
+  known_unknown: false
+  confidence: 0.95
+  source_refs:
+  - repository: ''
+    path: app/biz/src/main/java/com/ly/flight/chainsaas/refund/biz/constants/LogEnum.java
+    symbol: com.ly.flight.chainsaas.refund.biz.constants.LogEnum#TRADE_ORDER_SYNC_LISTENER
+    line: 98
+    commit: ''
+    content_digest: ''
+- code: UN_LOCK_ORDER
+  business_meaning: 锁单服务
+  source: CODE_DEFAULT
+  known_unknown: false
+  confidence: 0.95
+  source_refs:
+  - repository: ''
+    path: app/biz/src/main/java/com/ly/flight/chainsaas/refund/biz/constants/LogEnum.java
+    symbol: com.ly.flight.chainsaas.refund.biz.constants.LogEnum#UN_LOCK_ORDER
+    line: 54
+    commit: ''
+    content_digest: ''
+- code: VOIDING_REFUND
+  business_meaning: 废票确认
+  source: CODE_DEFAULT
+  known_unknown: false
+  confidence: 0.95
+  source_refs:
+  - repository: ''
+    path: app/biz/src/main/java/com/ly/flight/chainsaas/refund/biz/constants/LogEnum.java
+    symbol: com.ly.flight.chainsaas.refund.biz.constants.LogEnum#VOIDING_REFUND
+    line: 62
+    commit: ''
+    content_digest: ''
+- code: VOUCHER_REFUND_SUBMIT
+  business_meaning: 代金券退票填报/修改
+  source: CODE_DEFAULT
+  known_unknown: false
+  confidence: 0.95
+  source_refs:
+  - repository: ''
+    path: app/biz/src/main/java/com/ly/flight/chainsaas/refund/biz/constants/LogEnum.java
+    symbol: com.ly.flight.chainsaas.refund.biz.constants.LogEnum#VOUCHER_REFUND_SUBMIT
+    line: 189
+    commit: ''
+    content_digest: ''
+- code: WALLET_REFUND_RETRY
+  business_meaning: 钱包退款重试
+  source: CODE_DEFAULT
+  known_unknown: false
+  confidence: 0.95
+  source_refs:
+  - repository: ''
+    path: app/biz/src/main/java/com/ly/flight/chainsaas/refund/biz/constants/LogEnum.java
+    symbol: com.ly.flight.chainsaas.refund.biz.constants.LogEnum#WALLET_REFUND_RETRY
+    line: 176
+    commit: ''
+    content_digest: ''
+- code: WE_CHAT_NOTIFY
+  business_meaning: WE_CHAT_NOTIFY
+  source: CODE_DEFAULT
+  known_unknown: false
+  confidence: 0.5
+  source_refs:
+  - repository: ''
+    path: app/biz/src/main/java/com/ly/flight/chainsaas/refund/biz/constants/LogEnum.java
+    symbol: com.ly.flight.chainsaas.refund.biz.constants.LogEnum#WE_CHAT_NOTIFY
+    line: 155
+    commit: ''
+    content_digest: ''
+suggested_meaning: 枚举名称和值默认采用源码注释；缺少注释时回退代码标识，可再人工修订。
+code_meaning: 数据发送（ARC_BSP_DATA_SENDER）；ARC_BSP账单消息（ARC_BSP_MESSAGE）；自动退（AUTO_REFUND）；自动退-退改查询（AUTO_REFUND_RESHOP）；账单补单（BILL_SUPPLEMENT）；退票订单日志（BUSINESS_LOG）；取消退票（CANCEL）；费用回填回调（CBDS_REFUND_APPLY）；退票确认回调（CBDS_REFUND_CONFIRM）；CREATE_ORDER（CREATE_ORDER）；C端同步（C_ORDER_SYNC）；清洗数据（DATA_MIGRATE_JOB）；创建日志（DETAIL_CREATE_LOG）；清洗item表pnr（ITEM_PNR_JOB）；JOB（JOB）；JOURNEY（JOURNEY）；锁单服务（LOCK_ORDER）；模型确认退票（MODEL_CONFIRM_REFUND）；模型创建退票单（MODEL_CREATE_REFUND_ORDER）；订单详情服务日志（ORDER_DETAIL）；订单列表服务日志（ORDER_LIST）；ORDER_PAYMENT_JOB_LISTENER（ORDER_PAYMENT_JOB_LISTENER）；取消（OUTER_CANCEL）；详情（OUTER_QUERYDETAIL）；列表（OUTER_QUERYLIST）；退票确认（OUTER_REFUNDCONFIRM）；ARC报表解析（PARSING_ARC_REPORT）；BSP报表解析（PARSING_BSP_REPORT）；订单详情服务日志（PAYMENT）；PAY_REFUND_NOTIFY（PAY_REFUND_CUSTOMER_NOTIFY）；退票退款（PAY_REFUND_DONE_LISTENER）；PAY_REFUND_NOTIFY（PAY_REFUND_SUPPILER_NOTIFY）；平台费（PLATFEE）；B端订单详情（QUERY_DISTRIBUTION_ORDER_DETAIL）；B端订单列表（QUERY_DISTRIBUTION_ORDER_LIST）；已向航司确认（REFUND_APPLY_TO_AIRLINE）；JOB（REFUND_CREATE_JOB）；REFUND_DONE（REFUND_DONE）；JOB（REFUND_FINAL_JOB）；退票通知MQ（REFUND_NOTIFY）；REFUND_OPERATE_LOG（REFUND_OPERATE_LOG）；查询（REFUND_ORDER_SERIAL_NO）；JOB（REFUND_PAID_JOB）；退改查询（REFUND_RESHOP）；退改确认（REFUND_RESHOP_CONFIRM）；退改提交（REFUND_RESHOP_SUBMIT）；JOB（REFUND_TIMEOUT_JOB）；JOB（RESHOP_AUDIT_SUBMIT_JOB）；JOB（RESHOP_CONFIRM_JOB）；发送邮件（SEND_EMAIL）；JOB（SUPPLY_CHANNEL_CLEAN_JOB）；订单同步（SYNC_ORDER）；同步前置交易退票单（SYNC_TO_PRE_REFUND_JOB）；TICKET_REFUNDING（TICKET_REFUNDING）；JOB（TIMEOUT_CANCEL_JOB）；订单同步（TRADE_ORDER_SYNC）；同步（TRADE_ORDER_SYNC_LISTENER）；锁单服务（UN_LOCK_ORDER）；废票确认（VOIDING_REFUND）；代金券退票填报/修改（VOUCHER_REFUND_SUBMIT）；钱包退款重试（WALLET_REFUND_RETRY）；WE_CHAT_NOTIFY（WE_CHAT_NOTIFY）
+unresolved_codes: []
+business_meaning: 日志的枚举，不用关心，代码也都很明确
+status: CONFIRMED
 merged_into_candidate_id: ''
 source_refs:
 - repository: ''
   path: app/biz/src/main/java/com/ly/flight/chainsaas/refund/biz/constants/LogEnum.java
   symbol: com.ly.flight.chainsaas.refund.biz.constants.LogEnum
-  line: null
-  commit: 2b175212e26b21abd0a08edeb3a4c7c1e1e2665a
+  line: 11
+  commit: 4da983bfd4d9de362fc5323412e35c1bdbd08236
+  content_digest: c54c1b933abdfc55220ff2408dd6d2cf9208a3a5dbd017fdd1e28f3d4762bca2
+- repository: ''
+  path: app/biz/src/main/java/com/ly/flight/chainsaas/refund/biz/constants/LogEnum.java
+  symbol: com.ly.flight.chainsaas.refund.biz.constants.LogEnum#ARC_BSP_DATA_SENDER
+  line: 18
+  commit: ''
+  content_digest: ''
+- repository: ''
+  path: app/biz/src/main/java/com/ly/flight/chainsaas/refund/biz/constants/LogEnum.java
+  symbol: com.ly.flight.chainsaas.refund.biz.constants.LogEnum#ARC_BSP_MESSAGE
+  line: 140
+  commit: ''
+  content_digest: ''
+- repository: ''
+  path: app/biz/src/main/java/com/ly/flight/chainsaas/refund/biz/constants/LogEnum.java
+  symbol: com.ly.flight.chainsaas.refund.biz.constants.LogEnum#AUTO_REFUND
+  line: 110
+  commit: ''
+  content_digest: ''
+- repository: ''
+  path: app/biz/src/main/java/com/ly/flight/chainsaas/refund/biz/constants/LogEnum.java
+  symbol: com.ly.flight.chainsaas.refund.biz.constants.LogEnum#AUTO_REFUND_RESHOP
+  line: 58
+  commit: ''
+  content_digest: ''
+- repository: ''
+  path: app/biz/src/main/java/com/ly/flight/chainsaas/refund/biz/constants/LogEnum.java
+  symbol: com.ly.flight.chainsaas.refund.biz.constants.LogEnum#BILL_SUPPLEMENT
+  line: 155
+  commit: ''
+  content_digest: ''
+- repository: ''
+  path: app/biz/src/main/java/com/ly/flight/chainsaas/refund/biz/constants/LogEnum.java
+  symbol: com.ly.flight.chainsaas.refund.biz.constants.LogEnum#BUSINESS_LOG
+  line: 104
+  commit: ''
+  content_digest: ''
+- repository: ''
+  path: app/biz/src/main/java/com/ly/flight/chainsaas/refund/biz/constants/LogEnum.java
+  symbol: com.ly.flight.chainsaas.refund.biz.constants.LogEnum#CANCEL
+  line: 15
+  commit: ''
+  content_digest: ''
+- repository: ''
+  path: app/biz/src/main/java/com/ly/flight/chainsaas/refund/biz/constants/LogEnum.java
+  symbol: com.ly.flight.chainsaas.refund.biz.constants.LogEnum#CBDS_REFUND_APPLY
+  line: 114
+  commit: ''
+  content_digest: ''
+- repository: ''
+  path: app/biz/src/main/java/com/ly/flight/chainsaas/refund/biz/constants/LogEnum.java
+  symbol: com.ly.flight.chainsaas.refund.biz.constants.LogEnum#CBDS_REFUND_CONFIRM
+  line: 118
+  commit: ''
+  content_digest: ''
+- repository: ''
+  path: app/biz/src/main/java/com/ly/flight/chainsaas/refund/biz/constants/LogEnum.java
+  symbol: com.ly.flight.chainsaas.refund.biz.constants.LogEnum#CREATE_ORDER
+  line: 106
+  commit: ''
+  content_digest: ''
+- repository: ''
+  path: app/biz/src/main/java/com/ly/flight/chainsaas/refund/biz/constants/LogEnum.java
+  symbol: com.ly.flight.chainsaas.refund.biz.constants.LogEnum#C_ORDER_SYNC
+  line: 186
+  commit: ''
   content_digest: ''
 affected_target_ids:
 - facade:com.ly.flight.chainsaas.refund.facade.CallbackFacade#refundApplyCallback
 - facade:com.ly.flight.chainsaas.refund.facade.CallbackFacade#refundConfirmCallback
-- facade:com.ly.flight.chainsaas.refund.facade.CommonFacade#executeJob
-- facade:com.ly.flight.chainsaas.refund.facade.ModelFacade#confirmRefund
-- facade:com.ly.flight.chainsaas.refund.facade.ModelFacade#createRefundOrder
-- facade:com.ly.flight.chainsaas.refund.facade.OuterRefundFacade#cancel
-- facade:com.ly.flight.chainsaas.refund.facade.OuterRefundFacade#pageBusinessLog
-- facade:com.ly.flight.chainsaas.refund.facade.OuterRefundFacade#queryDetailByRefundNo
-- facade:com.ly.flight.chainsaas.refund.facade.OuterRefundFacade#queryList
-- facade:com.ly.flight.chainsaas.refund.facade.OuterRefundFacade#refundConfirm
-- facade:com.ly.flight.chainsaas.refund.facade.RefundDistributionFacade#queryDetail
-- facade:com.ly.flight.chainsaas.refund.facade.RefundDistributionFacade#queryList
-evidence_digest: 7ec198ae2236ab71607f1618d7309059868b88dd2c0f2e243f8c540582772eaf
+evidence_digest: 550ff6455439c22d60c7de23ce467f1cc47bf168a2e7bf99a90b78d7d25bc855
 discovered_at: '2026-08-13T10:23:54.669373Z'
-updated_at: '2026-08-13T11:20:20.891933Z'
+updated_at: '2026-08-22T13:36:34.106965Z'

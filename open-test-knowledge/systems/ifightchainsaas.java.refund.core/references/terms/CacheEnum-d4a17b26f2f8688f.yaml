@@ -1,8 +1,15 @@
 candidate_id: candidate:business_term:d4a17b26f2f8688f
 system_id: ifightchainsaas.java.refund.core
 kind: BUSINESS_TERM
+knowledge_form: BUSINESS_TERM
 name: CacheEnum
+business_name: ''
+business_name_source: UNRESOLVED
+business_name_known_unknown: false
+enum_values: []
 suggested_meaning: 源码出现该枚举、缩写或领域类型；请确认业务口径以及是否需要合并到已有术语。
+code_meaning: ''
+unresolved_codes: []
 business_meaning: ''
 status: STALE
 merged_into_candidate_id: ''
@@ -28,4 +35,4 @@ affected_target_ids:
 - facade:com.ly.flight.chainsaas.refund.facade.RefundDistributionFacade#queryList
 evidence_digest: a29f3c392359bcdcfb38441f98998ecefecdb159d489e60e08f222f3e559bab8
 discovered_at: '2026-08-13T10:23:54.669287Z'
-updated_at: '2026-08-13T11:20:20.891909Z'
+updated_at: '2026-08-22T13:36:34.107065Z'

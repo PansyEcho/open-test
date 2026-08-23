@@ -1,18 +1,499 @@
 candidate_id: candidate:business_term:e08ee17215dde0e9
 system_id: ifightchainsaas.java.refund.core
 kind: BUSINESS_TERM
+knowledge_form: BUSINESS_ENUM
 name: RefundOrderServiceEnum
-suggested_meaning: 源码出现该枚举、缩写或领域类型；请确认业务口径以及是否需要合并到已有术语。
+business_name: 退票服务枚举
+business_name_source: CODE_DEFAULT
+business_name_known_unknown: false
+enum_values:
+- code: AUTO_REFUND
+  business_meaning: 自动退票
+  source: CODE_DEFAULT
+  known_unknown: false
+  confidence: 0.95
+  source_refs:
+  - repository: ''
+    path: app/biz/src/main/java/com/ly/flight/chainsaas/refund/biz/core/RefundOrderServiceEnum.java
+    symbol: com.ly.flight.chainsaas.refund.biz.core.RefundOrderServiceEnum#AUTO_REFUND
+    line: 65
+    commit: ''
+    content_digest: ''
+- code: AUTO_REFUND_RESHOP
+  business_meaning: 全自动退-退改罚金查询
+  source: CODE_DEFAULT
+  known_unknown: false
+  confidence: 0.95
+  source_refs:
+  - repository: ''
+    path: app/biz/src/main/java/com/ly/flight/chainsaas/refund/biz/core/RefundOrderServiceEnum.java
+    symbol: com.ly.flight.chainsaas.refund.biz.core.RefundOrderServiceEnum#AUTO_REFUND_RESHOP
+    line: 80
+    commit: ''
+    content_digest: ''
+- code: BILL_SUPPLEMENT
+  business_meaning: 账单补单
+  source: CODE_DEFAULT
+  known_unknown: false
+  confidence: 0.95
+  source_refs:
+  - repository: ''
+    path: app/biz/src/main/java/com/ly/flight/chainsaas/refund/biz/core/RefundOrderServiceEnum.java
+    symbol: com.ly.flight.chainsaas.refund.biz.core.RefundOrderServiceEnum#BILL_SUPPLEMENT
+    line: 111
+    commit: ''
+    content_digest: ''
+- code: BUSINESS_LOG
+  business_meaning: 退票轨迹日志查询
+  source: CODE_DEFAULT
+  known_unknown: false
+  confidence: 0.95
+  source_refs:
+  - repository: ''
+    path: app/biz/src/main/java/com/ly/flight/chainsaas/refund/biz/core/RefundOrderServiceEnum.java
+    symbol: com.ly.flight.chainsaas.refund.biz.core.RefundOrderServiceEnum#BUSINESS_LOG
+    line: 39
+    commit: ''
+    content_digest: ''
+- code: CANCEL
+  business_meaning: 交易系统取消
+  source: CODE_DEFAULT
+  known_unknown: false
+  confidence: 0.95
+  source_refs:
+  - repository: ''
+    path: app/biz/src/main/java/com/ly/flight/chainsaas/refund/biz/core/RefundOrderServiceEnum.java
+    symbol: com.ly.flight.chainsaas.refund.biz.core.RefundOrderServiceEnum#CANCEL
+    line: 27
+    commit: ''
+    content_digest: ''
+- code: CBDS_REFUND_APPLY
+  business_meaning: 费用回填
+  source: CODE_DEFAULT
+  known_unknown: false
+  confidence: 0.95
+  source_refs:
+  - repository: ''
+    path: app/biz/src/main/java/com/ly/flight/chainsaas/refund/biz/core/RefundOrderServiceEnum.java
+    symbol: com.ly.flight.chainsaas.refund.biz.core.RefundOrderServiceEnum#CBDS_REFUND_APPLY
+    line: 29
+    commit: ''
+    content_digest: ''
+- code: CBDS_REFUND_CONFIRM
+  business_meaning: 退票确认回调
+  source: CODE_DEFAULT
+  known_unknown: false
+  confidence: 0.95
+  source_refs:
+  - repository: ''
+    path: app/biz/src/main/java/com/ly/flight/chainsaas/refund/biz/core/RefundOrderServiceEnum.java
+    symbol: com.ly.flight.chainsaas.refund.biz.core.RefundOrderServiceEnum#CBDS_REFUND_CONFIRM
+    line: 31
+    commit: ''
+    content_digest: ''
+- code: CREATE_ORDER
+  business_meaning: 创建退票
+  source: CODE_DEFAULT
+  known_unknown: false
+  confidence: 0.95
+  source_refs:
+  - repository: ''
+    path: app/biz/src/main/java/com/ly/flight/chainsaas/refund/biz/core/RefundOrderServiceEnum.java
+    symbol: com.ly.flight.chainsaas.refund.biz.core.RefundOrderServiceEnum#CREATE_ORDER
+    line: 63
+    commit: ''
+    content_digest: ''
+- code: DETAIL_CREATE_LOG
+  business_meaning: 手动编辑日志
+  source: CODE_DEFAULT
+  known_unknown: false
+  confidence: 0.95
+  source_refs:
+  - repository: ''
+    path: app/biz/src/main/java/com/ly/flight/chainsaas/refund/biz/core/RefundOrderServiceEnum.java
+    symbol: com.ly.flight.chainsaas.refund.biz.core.RefundOrderServiceEnum#DETAIL_CREATE_LOG
+    line: 93
+    commit: ''
+    content_digest: ''
+- code: LOCK_ORDER
+  business_meaning: 锁单服务
+  source: CODE_DEFAULT
+  known_unknown: false
+  confidence: 0.95
+  source_refs:
+  - repository: ''
+    path: app/biz/src/main/java/com/ly/flight/chainsaas/refund/biz/core/RefundOrderServiceEnum.java
+    symbol: com.ly.flight.chainsaas.refund.biz.core.RefundOrderServiceEnum#LOCK_ORDER
+    line: 17
+    commit: ''
+    content_digest: ''
+- code: MODEL_CONFIRM_REFUND
+  business_meaning: 模型确认退票
+  source: CODE_DEFAULT
+  known_unknown: false
+  confidence: 0.95
+  source_refs:
+  - repository: ''
+    path: app/biz/src/main/java/com/ly/flight/chainsaas/refund/biz/core/RefundOrderServiceEnum.java
+    symbol: com.ly.flight.chainsaas.refund.biz.core.RefundOrderServiceEnum#MODEL_CONFIRM_REFUND
+    line: 21
+    commit: ''
+    content_digest: ''
+- code: MODEL_CREATE_REFUND_ORDER
+  business_meaning: 模型创建退票单
+  source: CODE_DEFAULT
+  known_unknown: false
+  confidence: 0.95
+  source_refs:
+  - repository: ''
+    path: app/biz/src/main/java/com/ly/flight/chainsaas/refund/biz/core/RefundOrderServiceEnum.java
+    symbol: com.ly.flight.chainsaas.refund.biz.core.RefundOrderServiceEnum#MODEL_CREATE_REFUND_ORDER
+    line: 19
+    commit: ''
+    content_digest: ''
+- code: ORDER_JOB
+  business_meaning: 定时JOB
+  source: CODE_DEFAULT
+  known_unknown: false
+  confidence: 0.95
+  source_refs:
+  - repository: ''
+    path: app/biz/src/main/java/com/ly/flight/chainsaas/refund/biz/core/RefundOrderServiceEnum.java
+    symbol: com.ly.flight.chainsaas.refund.biz.core.RefundOrderServiceEnum#ORDER_JOB
+    line: 15
+    commit: ''
+    content_digest: ''
+- code: OUTER_CANCEL
+  business_meaning: 取消
+  source: CODE_DEFAULT
+  known_unknown: false
+  confidence: 0.95
+  source_refs:
+  - repository: ''
+    path: app/biz/src/main/java/com/ly/flight/chainsaas/refund/biz/core/RefundOrderServiceEnum.java
+    symbol: com.ly.flight.chainsaas.refund.biz.core.RefundOrderServiceEnum#OUTER_CANCEL
+    line: 47
+    commit: ''
+    content_digest: ''
+- code: OUTER_QUERYDETAIL
+  business_meaning: 详情
+  source: CODE_DEFAULT
+  known_unknown: false
+  confidence: 0.95
+  source_refs:
+  - repository: ''
+    path: app/biz/src/main/java/com/ly/flight/chainsaas/refund/biz/core/RefundOrderServiceEnum.java
+    symbol: com.ly.flight.chainsaas.refund.biz.core.RefundOrderServiceEnum#OUTER_QUERYDETAIL
+    line: 43
+    commit: ''
+    content_digest: ''
+- code: OUTER_QUERYLIST
+  business_meaning: 列表
+  source: CODE_DEFAULT
+  known_unknown: false
+  confidence: 0.95
+  source_refs:
+  - repository: ''
+    path: app/biz/src/main/java/com/ly/flight/chainsaas/refund/biz/core/RefundOrderServiceEnum.java
+    symbol: com.ly.flight.chainsaas.refund.biz.core.RefundOrderServiceEnum#OUTER_QUERYLIST
+    line: 35
+    commit: ''
+    content_digest: ''
+- code: OUTER_REFUNDCONFIRM
+  business_meaning: 退票确认
+  source: CODE_DEFAULT
+  known_unknown: false
+  confidence: 0.95
+  source_refs:
+  - repository: ''
+    path: app/biz/src/main/java/com/ly/flight/chainsaas/refund/biz/core/RefundOrderServiceEnum.java
+    symbol: com.ly.flight.chainsaas.refund.biz.core.RefundOrderServiceEnum#OUTER_REFUNDCONFIRM
+    line: 51
+    commit: ''
+    content_digest: ''
+- code: PAYMENT
+  business_meaning: 支付信息录入
+  source: CODE_DEFAULT
+  known_unknown: false
+  confidence: 0.95
+  source_refs:
+  - repository: ''
+    path: app/biz/src/main/java/com/ly/flight/chainsaas/refund/biz/core/RefundOrderServiceEnum.java
+    symbol: com.ly.flight.chainsaas.refund.biz.core.RefundOrderServiceEnum#PAYMENT
+    line: 55
+    commit: ''
+    content_digest: ''
+- code: PLATFEE
+  business_meaning: 平台费
+  source: CODE_DEFAULT
+  known_unknown: false
+  confidence: 0.95
+  source_refs:
+  - repository: ''
+    path: app/biz/src/main/java/com/ly/flight/chainsaas/refund/biz/core/RefundOrderServiceEnum.java
+    symbol: com.ly.flight.chainsaas.refund.biz.core.RefundOrderServiceEnum#PLATFEE
+    line: 59
+    commit: ''
+    content_digest: ''
+- code: QUERY_DISTRIBUTION_ORDER_DETAIL
+  business_meaning: B端订单详情查询
+  source: CODE_VERIFIED
+  known_unknown: false
+  confidence: 1.0
+  source_refs:
+  - repository: ''
+    path: app/biz/src/main/java/com/ly/flight/chainsaas/refund/biz/core/RefundOrderServiceEnum.java
+    symbol: com.ly.flight.chainsaas.refund.biz.core.RefundOrderServiceEnum#QUERY_DISTRIBUTION_ORDER_DETAIL
+    line: 97
+    commit: ''
+    content_digest: ''
+- code: QUERY_DISTRIBUTION_ORDER_LIST
+  business_meaning: 分销商订单详情查询
+  source: CODE_DEFAULT
+  known_unknown: false
+  confidence: 0.95
+  source_refs:
+  - repository: ''
+    path: app/biz/src/main/java/com/ly/flight/chainsaas/refund/biz/core/RefundOrderServiceEnum.java
+    symbol: com.ly.flight.chainsaas.refund.biz.core.RefundOrderServiceEnum#QUERY_DISTRIBUTION_ORDER_LIST
+    line: 106
+    commit: ''
+    content_digest: ''
+- code: QUERY_REFUND_LIST_ORDER_SERIAL_NO
+  business_meaning: 根据订单查询退改订单号列表
+  source: CODE_DEFAULT
+  known_unknown: false
+  confidence: 0.95
+  source_refs:
+  - repository: ''
+    path: app/biz/src/main/java/com/ly/flight/chainsaas/refund/biz/core/RefundOrderServiceEnum.java
+    symbol: com.ly.flight.chainsaas.refund.biz.core.RefundOrderServiceEnum#QUERY_REFUND_LIST_ORDER_SERIAL_NO
+    line: 76
+    commit: ''
+    content_digest: ''
+- code: QUERY_REFUND_ORDER_SERIAL_NO
+  business_meaning: 根据订单查询退改订单号
+  source: CODE_DEFAULT
+  known_unknown: false
+  confidence: 0.95
+  source_refs:
+  - repository: ''
+    path: app/biz/src/main/java/com/ly/flight/chainsaas/refund/biz/core/RefundOrderServiceEnum.java
+    symbol: com.ly.flight.chainsaas.refund.biz.core.RefundOrderServiceEnum#QUERY_REFUND_ORDER_SERIAL_NO
+    line: 72
+    commit: ''
+    content_digest: ''
+- code: QUEYR_ORDER_DETAIL
+  business_meaning: 订单详情查询
+  source: CODE_DEFAULT
+  known_unknown: false
+  confidence: 0.95
+  source_refs:
+  - repository: ''
+    path: app/biz/src/main/java/com/ly/flight/chainsaas/refund/biz/core/RefundOrderServiceEnum.java
+    symbol: com.ly.flight.chainsaas.refund.biz.core.RefundOrderServiceEnum#QUEYR_ORDER_DETAIL
+    line: 68
+    commit: ''
+    content_digest: ''
+- code: QUEYR_ORDER_LIST
+  business_meaning: 订单查询列表
+  source: CODE_DEFAULT
+  known_unknown: false
+  confidence: 0.95
+  source_refs:
+  - repository: ''
+    path: app/biz/src/main/java/com/ly/flight/chainsaas/refund/biz/core/RefundOrderServiceEnum.java
+    symbol: com.ly.flight.chainsaas.refund.biz.core.RefundOrderServiceEnum#QUEYR_ORDER_LIST
+    line: 61
+    commit: ''
+    content_digest: ''
+- code: REFUND_APPLY_TO_AIRLINE
+  business_meaning: 已向航司确认
+  source: CODE_DEFAULT
+  known_unknown: false
+  confidence: 0.95
+  source_refs:
+  - repository: ''
+    path: app/biz/src/main/java/com/ly/flight/chainsaas/refund/biz/core/RefundOrderServiceEnum.java
+    symbol: com.ly.flight.chainsaas.refund.biz.core.RefundOrderServiceEnum#REFUND_APPLY_TO_AIRLINE
+    line: 89
+    commit: ''
+    content_digest: ''
+- code: REFUND_RESHOP
+  business_meaning: 退改罚金查询
+  source: CODE_DEFAULT
+  known_unknown: false
+  confidence: 0.95
+  source_refs:
+  - repository: ''
+    path: app/biz/src/main/java/com/ly/flight/chainsaas/refund/biz/core/RefundOrderServiceEnum.java
+    symbol: com.ly.flight.chainsaas.refund.biz.core.RefundOrderServiceEnum#REFUND_RESHOP
+    line: 78
+    commit: ''
+    content_digest: ''
+- code: REFUND_RESHOP_CONFIRM
+  business_meaning: 退改罚金确认
+  source: CODE_DEFAULT
+  known_unknown: false
+  confidence: 0.95
+  source_refs:
+  - repository: ''
+    path: app/biz/src/main/java/com/ly/flight/chainsaas/refund/biz/core/RefundOrderServiceEnum.java
+    symbol: com.ly.flight.chainsaas.refund.biz.core.RefundOrderServiceEnum#REFUND_RESHOP_CONFIRM
+    line: 84
+    commit: ''
+    content_digest: ''
+- code: REFUND_RESHOP_SUBMIT
+  business_meaning: 退改罚金审核
+  source: CODE_DEFAULT
+  known_unknown: false
+  confidence: 0.95
+  source_refs:
+  - repository: ''
+    path: app/biz/src/main/java/com/ly/flight/chainsaas/refund/biz/core/RefundOrderServiceEnum.java
+    symbol: com.ly.flight.chainsaas.refund.biz.core.RefundOrderServiceEnum#REFUND_RESHOP_SUBMIT
+    line: 82
+    commit: ''
+    content_digest: ''
+- code: SYNC_ORDER
+  business_meaning: 订单同步
+  source: CODE_DEFAULT
+  known_unknown: false
+  confidence: 0.95
+  source_refs:
+  - repository: ''
+    path: app/biz/src/main/java/com/ly/flight/chainsaas/refund/biz/core/RefundOrderServiceEnum.java
+    symbol: com.ly.flight.chainsaas.refund.biz.core.RefundOrderServiceEnum#SYNC_ORDER
+    line: 23
+    commit: ''
+    content_digest: ''
+- code: TICKET_REFUNDING
+  business_meaning: 退票中
+  source: CODE_DEFAULT
+  known_unknown: false
+  confidence: 0.95
+  source_refs:
+  - repository: ''
+    path: app/biz/src/main/java/com/ly/flight/chainsaas/refund/biz/core/RefundOrderServiceEnum.java
+    symbol: com.ly.flight.chainsaas.refund.biz.core.RefundOrderServiceEnum#TICKET_REFUNDING
+    line: 101
+    commit: ''
+    content_digest: ''
+- code: UN_LOCK_ORDER
+  business_meaning: 锁单服务
+  source: CODE_DEFAULT
+  known_unknown: false
+  confidence: 0.95
+  source_refs:
+  - repository: ''
+    path: app/biz/src/main/java/com/ly/flight/chainsaas/refund/biz/core/RefundOrderServiceEnum.java
+    symbol: com.ly.flight.chainsaas.refund.biz.core.RefundOrderServiceEnum#UN_LOCK_ORDER
+    line: 25
+    commit: ''
+    content_digest: ''
+- code: VOUCHER_REFUND_SUBMIT
+  business_meaning: 代金券退票填报/修改
+  source: CODE_DEFAULT
+  known_unknown: false
+  confidence: 0.95
+  source_refs:
+  - repository: ''
+    path: app/biz/src/main/java/com/ly/flight/chainsaas/refund/biz/core/RefundOrderServiceEnum.java
+    symbol: com.ly.flight.chainsaas.refund.biz.core.RefundOrderServiceEnum#VOUCHER_REFUND_SUBMIT
+    line: 86
+    commit: ''
+    content_digest: ''
+- code: WALLET_REFUND_RETRY
+  business_meaning: 钱包退款重试
+  source: CODE_DEFAULT
+  known_unknown: false
+  confidence: 0.95
+  source_refs:
+  - repository: ''
+    path: app/biz/src/main/java/com/ly/flight/chainsaas/refund/biz/core/RefundOrderServiceEnum.java
+    symbol: com.ly.flight.chainsaas.refund.biz.core.RefundOrderServiceEnum#WALLET_REFUND_RETRY
+    line: 116
+    commit: ''
+    content_digest: ''
+suggested_meaning: 枚举名称和值默认采用源码注释；缺少注释时回退代码标识，可再人工修订。
+code_meaning: 自动退票（AUTO_REFUND）；全自动退-退改罚金查询（AUTO_REFUND_RESHOP）；账单补单（BILL_SUPPLEMENT）；退票轨迹日志查询（BUSINESS_LOG）；交易系统取消（CANCEL）；费用回填（CBDS_REFUND_APPLY）；退票确认回调（CBDS_REFUND_CONFIRM）；创建退票（CREATE_ORDER）；手动编辑日志（DETAIL_CREATE_LOG）；锁单服务（LOCK_ORDER）；模型确认退票（MODEL_CONFIRM_REFUND）；模型创建退票单（MODEL_CREATE_REFUND_ORDER）；定时JOB（ORDER_JOB）；取消（OUTER_CANCEL）；详情（OUTER_QUERYDETAIL）；列表（OUTER_QUERYLIST）；退票确认（OUTER_REFUNDCONFIRM）；支付信息录入（PAYMENT）；平台费（PLATFEE）；B端订单详情查询（QUERY_DISTRIBUTION_ORDER_DETAIL）；分销商订单详情查询（QUERY_DISTRIBUTION_ORDER_LIST）；根据订单查询退改订单号列表（QUERY_REFUND_LIST_ORDER_SERIAL_NO）；根据订单查询退改订单号（QUERY_REFUND_ORDER_SERIAL_NO）；订单详情查询（QUEYR_ORDER_DETAIL）；订单查询列表（QUEYR_ORDER_LIST）；已向航司确认（REFUND_APPLY_TO_AIRLINE）；退改罚金查询（REFUND_RESHOP）；退改罚金确认（REFUND_RESHOP_CONFIRM）；退改罚金审核（REFUND_RESHOP_SUBMIT）；订单同步（SYNC_ORDER）；退票中（TICKET_REFUNDING）；锁单服务（UN_LOCK_ORDER）；代金券退票填报/修改（VOUCHER_REFUND_SUBMIT）；钱包退款重试（WALLET_REFUND_RETRY）
+unresolved_codes: []
 business_meaning: ''
-status: OPEN
+status: CODE_VERIFIED
 merged_into_candidate_id: ''
 source_refs:
 - repository: ''
   path: app/biz/src/main/java/com/ly/flight/chainsaas/refund/biz/core/RefundOrderServiceEnum.java
   symbol: com.ly.flight.chainsaas.refund.biz.core.RefundOrderServiceEnum
   line: 13
-  commit: 2b175212e26b21abd0a08edeb3a4c7c1e1e2665a
+  commit: 4da983bfd4d9de362fc5323412e35c1bdbd08236
   content_digest: 4819d30979c7b551f448898b97d72d7c9a621c528aabb1be3744443495dae783
+- repository: ''
+  path: app/biz/src/main/java/com/ly/flight/chainsaas/refund/biz/core/RefundOrderServiceEnum.java
+  symbol: com.ly.flight.chainsaas.refund.biz.core.RefundOrderServiceEnum#AUTO_REFUND
+  line: 65
+  commit: ''
+  content_digest: ''
+- repository: ''
+  path: app/biz/src/main/java/com/ly/flight/chainsaas/refund/biz/core/RefundOrderServiceEnum.java
+  symbol: com.ly.flight.chainsaas.refund.biz.core.RefundOrderServiceEnum#AUTO_REFUND_RESHOP
+  line: 80
+  commit: ''
+  content_digest: ''
+- repository: ''
+  path: app/biz/src/main/java/com/ly/flight/chainsaas/refund/biz/core/RefundOrderServiceEnum.java
+  symbol: com.ly.flight.chainsaas.refund.biz.core.RefundOrderServiceEnum#BILL_SUPPLEMENT
+  line: 111
+  commit: ''
+  content_digest: ''
+- repository: ''
+  path: app/biz/src/main/java/com/ly/flight/chainsaas/refund/biz/core/RefundOrderServiceEnum.java
+  symbol: com.ly.flight.chainsaas.refund.biz.core.RefundOrderServiceEnum#BUSINESS_LOG
+  line: 39
+  commit: ''
+  content_digest: ''
+- repository: ''
+  path: app/biz/src/main/java/com/ly/flight/chainsaas/refund/biz/core/RefundOrderServiceEnum.java
+  symbol: com.ly.flight.chainsaas.refund.biz.core.RefundOrderServiceEnum#CANCEL
+  line: 27
+  commit: ''
+  content_digest: ''
+- repository: ''
+  path: app/biz/src/main/java/com/ly/flight/chainsaas/refund/biz/core/RefundOrderServiceEnum.java
+  symbol: com.ly.flight.chainsaas.refund.biz.core.RefundOrderServiceEnum#CBDS_REFUND_APPLY
+  line: 29
+  commit: ''
+  content_digest: ''
+- repository: ''
+  path: app/biz/src/main/java/com/ly/flight/chainsaas/refund/biz/core/RefundOrderServiceEnum.java
+  symbol: com.ly.flight.chainsaas.refund.biz.core.RefundOrderServiceEnum#CBDS_REFUND_CONFIRM
+  line: 31
+  commit: ''
+  content_digest: ''
+- repository: ''
+  path: app/biz/src/main/java/com/ly/flight/chainsaas/refund/biz/core/RefundOrderServiceEnum.java
+  symbol: com.ly.flight.chainsaas.refund.biz.core.RefundOrderServiceEnum#CREATE_ORDER
+  line: 63
+  commit: ''
+  content_digest: ''
+- repository: ''
+  path: app/biz/src/main/java/com/ly/flight/chainsaas/refund/biz/core/RefundOrderServiceEnum.java
+  symbol: com.ly.flight.chainsaas.refund.biz.core.RefundOrderServiceEnum#DETAIL_CREATE_LOG
+  line: 93
+  commit: ''
+  content_digest: ''
+- repository: ''
+  path: app/biz/src/main/java/com/ly/flight/chainsaas/refund/biz/core/RefundOrderServiceEnum.java
+  symbol: com.ly.flight.chainsaas.refund.biz.core.RefundOrderServiceEnum#LOCK_ORDER
+  line: 17
+  commit: ''
+  content_digest: ''
+- repository: ''
+  path: app/biz/src/main/java/com/ly/flight/chainsaas/refund/biz/core/RefundOrderServiceEnum.java
+  symbol: com.ly.flight.chainsaas.refund.biz.core.RefundOrderServiceEnum#MODEL_CONFIRM_REFUND
+  line: 21
+  commit: ''
+  content_digest: ''
 affected_target_ids:
 - facade:com.ly.flight.chainsaas.refund.facade.CallbackFacade#refundApplyCallback
 - facade:com.ly.flight.chainsaas.refund.facade.CallbackFacade#refundConfirmCallback
@@ -48,6 +529,6 @@ affected_target_ids:
 - facade:com.ly.flight.chainsaas.refund.facade.RefundFacade#voucherRefundSubmit
 - facade:com.ly.flight.chainsaas.refund.facade.RefundFacade#walletRefundRetry
 - facade:com.ly.flight.chainsaas.refund.facade.ToolFacade#syncOrder
-evidence_digest: 00ea8c3e07e1bad907d7b95ae07d802ba4668de674d2ce359e5cb57815d86b19
+evidence_digest: cbb13a0e1e2c61a05627e62d3d6ba207eff3b3717d2e41e5c4fde207944ece47
 discovered_at: '2026-08-13T11:09:41.120203Z'
-updated_at: '2026-08-13T11:20:20.891876Z'
+updated_at: '2026-08-22T13:36:34.106876Z'

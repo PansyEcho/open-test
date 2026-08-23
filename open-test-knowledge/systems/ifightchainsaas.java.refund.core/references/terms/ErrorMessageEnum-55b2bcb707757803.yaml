@@ -1,23 +1,366 @@
 candidate_id: candidate:business_term:55b2bcb707757803
 system_id: ifightchainsaas.java.refund.core
 kind: BUSINESS_TERM
+knowledge_form: BUSINESS_ENUM
 name: ErrorMessageEnum
-suggested_meaning: 源码出现该枚举、缩写或领域类型；请确认业务口径以及是否需要合并到已有术语。
-business_meaning: ''
-status: STALE
+business_name: ErrorMessageEnum
+business_name_source: CODE_DEFAULT
+business_name_known_unknown: false
+enum_values:
+- code: com.ly.flight.chainsaas.refund.biz.error.ErrorMessageEnum#CBDS_NEED_ALL_REFUND
+  business_meaning: CBDS需提交全航段
+  source: CODE_DEFAULT
+  known_unknown: false
+  confidence: 0.95
+  source_refs:
+  - repository: ''
+    path: app/biz/src/main/java/com/ly/flight/chainsaas/refund/biz/error/ErrorMessageEnum.java
+    symbol: com.ly.flight.chainsaas.refund.biz.error.ErrorMessageEnum#CBDS_NEED_ALL_REFUND
+    line: 71
+    commit: ''
+    content_digest: ''
+- code: com.ly.flight.chainsaas.refund.biz.error.ErrorMessageEnum#CBDS_UNSUPPORTED
+  business_meaning: CBDS暂不支持
+  source: CODE_DEFAULT
+  known_unknown: false
+  confidence: 0.95
+  source_refs:
+  - repository: ''
+    path: app/biz/src/main/java/com/ly/flight/chainsaas/refund/biz/error/ErrorMessageEnum.java
+    symbol: com.ly.flight.chainsaas.refund.biz.error.ErrorMessageEnum#CBDS_UNSUPPORTED
+    line: 67
+    commit: ''
+    content_digest: ''
+- code: com.ly.flight.chainsaas.refund.biz.error.ErrorMessageEnum#CONCURRENCY_OPERATE
+  business_meaning: 并发操作
+  source: CODE_DEFAULT
+  known_unknown: false
+  confidence: 0.95
+  source_refs:
+  - repository: ''
+    path: app/biz/src/main/java/com/ly/flight/chainsaas/refund/biz/error/ErrorMessageEnum.java
+    symbol: com.ly.flight.chainsaas.refund.biz.error.ErrorMessageEnum#CONCURRENCY_OPERATE
+    line: 35
+    commit: ''
+    content_digest: ''
+- code: com.ly.flight.chainsaas.refund.biz.error.ErrorMessageEnum#DISTRIBUTION_GDS_NO_AUTO
+  business_meaning: 白屏GDS不支持自动化
+  source: CODE_DEFAULT
+  known_unknown: false
+  confidence: 0.95
+  source_refs:
+  - repository: ''
+    path: app/biz/src/main/java/com/ly/flight/chainsaas/refund/biz/error/ErrorMessageEnum.java
+    symbol: com.ly.flight.chainsaas.refund.biz.error.ErrorMessageEnum#DISTRIBUTION_GDS_NO_AUTO
+    line: 47
+    commit: ''
+    content_digest: ''
+- code: com.ly.flight.chainsaas.refund.biz.error.ErrorMessageEnum#EXIST_REFUND_ORDER
+  business_meaning: 已存在退票单
+  source: CODE_DEFAULT
+  known_unknown: false
+  confidence: 0.95
+  source_refs:
+  - repository: ''
+    path: app/biz/src/main/java/com/ly/flight/chainsaas/refund/biz/error/ErrorMessageEnum.java
+    symbol: com.ly.flight.chainsaas.refund.biz.error.ErrorMessageEnum#EXIST_REFUND_ORDER
+    line: 63
+    commit: ''
+    content_digest: ''
+- code: com.ly.flight.chainsaas.refund.biz.error.ErrorMessageEnum#HAS_CHANGE_ORDER
+  business_meaning: 存在改签订单
+  source: CODE_DEFAULT
+  known_unknown: false
+  confidence: 0.95
+  source_refs:
+  - repository: ''
+    path: app/biz/src/main/java/com/ly/flight/chainsaas/refund/biz/error/ErrorMessageEnum.java
+    symbol: com.ly.flight.chainsaas.refund.biz.error.ErrorMessageEnum#HAS_CHANGE_ORDER
+    line: 51
+    commit: ''
+    content_digest: ''
+- code: com.ly.flight.chainsaas.refund.biz.error.ErrorMessageEnum#HAS_REFUND_ORDER
+  business_meaning: 存在改签订单
+  source: CODE_DEFAULT
+  known_unknown: false
+  confidence: 0.95
+  source_refs:
+  - repository: ''
+    path: app/biz/src/main/java/com/ly/flight/chainsaas/refund/biz/error/ErrorMessageEnum.java
+    symbol: com.ly.flight.chainsaas.refund.biz.error.ErrorMessageEnum#HAS_REFUND_ORDER
+    line: 55
+    commit: ''
+    content_digest: ''
+- code: com.ly.flight.chainsaas.refund.biz.error.ErrorMessageEnum#INVOLUNTARY_NOT_FLIGHT_CHANGE
+  business_meaning: 非自愿非航变退不支持自动化
+  source: CODE_DEFAULT
+  known_unknown: false
+  confidence: 0.95
+  source_refs:
+  - repository: ''
+    path: app/biz/src/main/java/com/ly/flight/chainsaas/refund/biz/error/ErrorMessageEnum.java
+    symbol: com.ly.flight.chainsaas.refund.biz.error.ErrorMessageEnum#INVOLUNTARY_NOT_FLIGHT_CHANGE
+    line: 59
+    commit: ''
+    content_digest: ''
+- code: com.ly.flight.chainsaas.refund.biz.error.ErrorMessageEnum#MERCHANT_NO_AUTO
+  business_meaning: 供应商不支持自动化
+  source: CODE_DEFAULT
+  known_unknown: false
+  confidence: 0.95
+  source_refs:
+  - repository: ''
+    path: app/biz/src/main/java/com/ly/flight/chainsaas/refund/biz/error/ErrorMessageEnum.java
+    symbol: com.ly.flight.chainsaas.refund.biz.error.ErrorMessageEnum#MERCHANT_NO_AUTO
+    line: 43
+    commit: ''
+    content_digest: ''
+- code: com.ly.flight.chainsaas.refund.biz.error.ErrorMessageEnum#NO_AUTH
+  business_meaning: 无权限操作订单
+  source: CODE_DEFAULT
+  known_unknown: false
+  confidence: 0.95
+  source_refs:
+  - repository: ''
+    path: app/biz/src/main/java/com/ly/flight/chainsaas/refund/biz/error/ErrorMessageEnum.java
+    symbol: com.ly.flight.chainsaas.refund.biz.error.ErrorMessageEnum#NO_AUTH
+    line: 39
+    commit: ''
+    content_digest: ''
+- code: com.ly.flight.chainsaas.refund.biz.error.ErrorMessageEnum#ORDER_NOT_EXIST
+  business_meaning: 订单不存在
+  source: CODE_DEFAULT
+  known_unknown: false
+  confidence: 0.95
+  source_refs:
+  - repository: ''
+    path: app/biz/src/main/java/com/ly/flight/chainsaas/refund/biz/error/ErrorMessageEnum.java
+    symbol: com.ly.flight.chainsaas.refund.biz.error.ErrorMessageEnum#ORDER_NOT_EXIST
+    line: 27
+    commit: ''
+    content_digest: ''
+- code: com.ly.flight.chainsaas.refund.biz.error.ErrorMessageEnum#ORDER_STATE_WRONG
+  business_meaning: 订单状态流转不正确
+  source: CODE_DEFAULT
+  known_unknown: false
+  confidence: 0.95
+  source_refs:
+  - repository: ''
+    path: app/biz/src/main/java/com/ly/flight/chainsaas/refund/biz/error/ErrorMessageEnum.java
+    symbol: com.ly.flight.chainsaas.refund.biz.error.ErrorMessageEnum#ORDER_STATE_WRONG
+    line: 31
+    commit: ''
+    content_digest: ''
+- code: com.ly.flight.chainsaas.refund.biz.error.ErrorMessageEnum#ORDER_UNSUPPORTED_AUTO_REFUND
+  business_meaning: 订单不支持自动化退票
+  source: CODE_DEFAULT
+  known_unknown: false
+  confidence: 0.95
+  source_refs:
+  - repository: ''
+    path: app/biz/src/main/java/com/ly/flight/chainsaas/refund/biz/error/ErrorMessageEnum.java
+    symbol: com.ly.flight.chainsaas.refund.biz.error.ErrorMessageEnum#ORDER_UNSUPPORTED_AUTO_REFUND
+    line: 79
+    commit: ''
+    content_digest: ''
+- code: com.ly.flight.chainsaas.refund.biz.error.ErrorMessageEnum#PARAMS_NOT_EXIST
+  business_meaning: 参数为不存在
+  source: CODE_DEFAULT
+  known_unknown: false
+  confidence: 0.95
+  source_refs:
+  - repository: ''
+    path: app/biz/src/main/java/com/ly/flight/chainsaas/refund/biz/error/ErrorMessageEnum.java
+    symbol: com.ly.flight.chainsaas.refund.biz.error.ErrorMessageEnum#PARAMS_NOT_EXIST
+    line: 19
+    commit: ''
+    content_digest: ''
+- code: com.ly.flight.chainsaas.refund.biz.error.ErrorMessageEnum#REFUND_SEARCH_FAIL
+  business_meaning: 核价失败
+  source: CODE_DEFAULT
+  known_unknown: false
+  confidence: 0.95
+  source_refs:
+  - repository: ''
+    path: app/biz/src/main/java/com/ly/flight/chainsaas/refund/biz/error/ErrorMessageEnum.java
+    symbol: com.ly.flight.chainsaas.refund.biz.error.ErrorMessageEnum#REFUND_SEARCH_FAIL
+    line: 75
+    commit: ''
+    content_digest: ''
+- code: com.ly.flight.chainsaas.refund.biz.error.ErrorMessageEnum#SYSTEM_ERROR
+  business_meaning: 系统异常
+  source: CODE_DEFAULT
+  known_unknown: false
+  confidence: 0.95
+  source_refs:
+  - repository: ''
+    path: app/biz/src/main/java/com/ly/flight/chainsaas/refund/biz/error/ErrorMessageEnum.java
+    symbol: com.ly.flight.chainsaas.refund.biz.error.ErrorMessageEnum#SYSTEM_ERROR
+    line: 15
+    commit: ''
+    content_digest: ''
+- code: com.ly.flight.chainsaas.refund.biz.error.ErrorMessageEnum#TICKET_NUM_NOT_EXIST
+  business_meaning: 票号不能为空
+  source: CODE_DEFAULT
+  known_unknown: false
+  confidence: 0.95
+  source_refs:
+  - repository: ''
+    path: app/biz/src/main/java/com/ly/flight/chainsaas/refund/biz/error/ErrorMessageEnum.java
+    symbol: com.ly.flight.chainsaas.refund.biz.error.ErrorMessageEnum#TICKET_NUM_NOT_EXIST
+    line: 23
+    commit: ''
+    content_digest: ''
+- code: com.ly.flight.chainsaas.refund.biz.error.ErrorMessageEnum#TRADE_ORDER_NOT_TICKETED
+  business_meaning: 交易单非出票成功状态
+  source: CODE_DEFAULT
+  known_unknown: false
+  confidence: 0.95
+  source_refs:
+  - repository: ''
+    path: app/biz/src/main/java/com/ly/flight/chainsaas/refund/biz/error/ErrorMessageEnum.java
+    symbol: com.ly.flight.chainsaas.refund.biz.error.ErrorMessageEnum#TRADE_ORDER_NOT_TICKETED
+    line: 83
+    commit: ''
+    content_digest: ''
+- code: com.ly.flight.chainsaas.refund.integration.proxy.callback.message.ErrorMessageEnum#INVALID_URL
+  business_meaning: INVALID_URL
+  source: CODE_DEFAULT
+  known_unknown: false
+  confidence: 0.5
+  source_refs:
+  - repository: ''
+    path: app/integration/src/main/java/com/ly/flight/chainsaas/refund/integration/proxy/callback/message/ErrorMessageEnum.java
+    symbol: com.ly.flight.chainsaas.refund.integration.proxy.callback.message.ErrorMessageEnum#INVALID_URL
+    line: 13
+    commit: ''
+    content_digest: ''
+- code: com.ly.flight.chainsaas.refund.integration.proxy.callback.message.ErrorMessageEnum#PARAMS_NOT_EXIST
+  business_meaning: PARAMS_NOT_EXIST
+  source: CODE_DEFAULT
+  known_unknown: false
+  confidence: 0.5
+  source_refs:
+  - repository: ''
+    path: app/integration/src/main/java/com/ly/flight/chainsaas/refund/integration/proxy/callback/message/ErrorMessageEnum.java
+    symbol: com.ly.flight.chainsaas.refund.integration.proxy.callback.message.ErrorMessageEnum#PARAMS_NOT_EXIST
+    line: 12
+    commit: ''
+    content_digest: ''
+- code: com.ly.flight.chainsaas.refund.integration.proxy.callback.message.ErrorMessageEnum#SYSTEM_ERROR
+  business_meaning: SYSTEM_ERROR
+  source: CODE_DEFAULT
+  known_unknown: false
+  confidence: 0.5
+  source_refs:
+  - repository: ''
+    path: app/integration/src/main/java/com/ly/flight/chainsaas/refund/integration/proxy/callback/message/ErrorMessageEnum.java
+    symbol: com.ly.flight.chainsaas.refund.integration.proxy.callback.message.ErrorMessageEnum#SYSTEM_ERROR
+    line: 10
+    commit: ''
+    content_digest: ''
+- code: com.ly.flight.chainsaas.refund.integration.proxy.callback.message.ErrorMessageEnum#SYSTEM_ERROR_PROCESSING
+  business_meaning: SYSTEM_ERROR_PROCESSING
+  source: CODE_DEFAULT
+  known_unknown: false
+  confidence: 0.5
+  source_refs:
+  - repository: ''
+    path: app/integration/src/main/java/com/ly/flight/chainsaas/refund/integration/proxy/callback/message/ErrorMessageEnum.java
+    symbol: com.ly.flight.chainsaas.refund.integration.proxy.callback.message.ErrorMessageEnum#SYSTEM_ERROR_PROCESSING
+    line: 11
+    commit: ''
+    content_digest: ''
+- code: com.ly.flight.chainsaas.refund.integration.proxy.callback.message.ErrorMessageEnum#TOKEN_ERROR
+  business_meaning: TOKEN_ERROR
+  source: CODE_DEFAULT
+  known_unknown: false
+  confidence: 0.5
+  source_refs:
+  - repository: ''
+    path: app/integration/src/main/java/com/ly/flight/chainsaas/refund/integration/proxy/callback/message/ErrorMessageEnum.java
+    symbol: com.ly.flight.chainsaas.refund.integration.proxy.callback.message.ErrorMessageEnum#TOKEN_ERROR
+    line: 9
+    commit: ''
+    content_digest: ''
+suggested_meaning: 源码存在同名枚举类型，页面按全限定常量展示代码注释默认值，可再人工修订。
+code_meaning: CBDS需提交全航段（com.ly.flight.chainsaas.refund.biz.error.ErrorMessageEnum#CBDS_NEED_ALL_REFUND）；CBDS暂不支持（com.ly.flight.chainsaas.refund.biz.error.ErrorMessageEnum#CBDS_UNSUPPORTED）；并发操作（com.ly.flight.chainsaas.refund.biz.error.ErrorMessageEnum#CONCURRENCY_OPERATE）；白屏GDS不支持自动化（com.ly.flight.chainsaas.refund.biz.error.ErrorMessageEnum#DISTRIBUTION_GDS_NO_AUTO）；已存在退票单（com.ly.flight.chainsaas.refund.biz.error.ErrorMessageEnum#EXIST_REFUND_ORDER）；存在改签订单（com.ly.flight.chainsaas.refund.biz.error.ErrorMessageEnum#HAS_CHANGE_ORDER）；存在改签订单（com.ly.flight.chainsaas.refund.biz.error.ErrorMessageEnum#HAS_REFUND_ORDER）；非自愿非航变退不支持自动化（com.ly.flight.chainsaas.refund.biz.error.ErrorMessageEnum#INVOLUNTARY_NOT_FLIGHT_CHANGE）；供应商不支持自动化（com.ly.flight.chainsaas.refund.biz.error.ErrorMessageEnum#MERCHANT_NO_AUTO）；无权限操作订单（com.ly.flight.chainsaas.refund.biz.error.ErrorMessageEnum#NO_AUTH）；订单不存在（com.ly.flight.chainsaas.refund.biz.error.ErrorMessageEnum#ORDER_NOT_EXIST）；订单状态流转不正确（com.ly.flight.chainsaas.refund.biz.error.ErrorMessageEnum#ORDER_STATE_WRONG）；订单不支持自动化退票（com.ly.flight.chainsaas.refund.biz.error.ErrorMessageEnum#ORDER_UNSUPPORTED_AUTO_REFUND）；参数为不存在（com.ly.flight.chainsaas.refund.biz.error.ErrorMessageEnum#PARAMS_NOT_EXIST）；核价失败（com.ly.flight.chainsaas.refund.biz.error.ErrorMessageEnum#REFUND_SEARCH_FAIL）；系统异常（com.ly.flight.chainsaas.refund.biz.error.ErrorMessageEnum#SYSTEM_ERROR）；票号不能为空（com.ly.flight.chainsaas.refund.biz.error.ErrorMessageEnum#TICKET_NUM_NOT_EXIST）；交易单非出票成功状态（com.ly.flight.chainsaas.refund.biz.error.ErrorMessageEnum#TRADE_ORDER_NOT_TICKETED）；INVALID_URL（com.ly.flight.chainsaas.refund.integration.proxy.callback.message.ErrorMessageEnum#INVALID_URL）；PARAMS_NOT_EXIST（com.ly.flight.chainsaas.refund.integration.proxy.callback.message.ErrorMessageEnum#PARAMS_NOT_EXIST）；SYSTEM_ERROR（com.ly.flight.chainsaas.refund.integration.proxy.callback.message.ErrorMessageEnum#SYSTEM_ERROR）；SYSTEM_ERROR_PROCESSING（com.ly.flight.chainsaas.refund.integration.proxy.callback.message.ErrorMessageEnum#SYSTEM_ERROR_PROCESSING）；TOKEN_ERROR（com.ly.flight.chainsaas.refund.integration.proxy.callback.message.ErrorMessageEnum#TOKEN_ERROR）
+unresolved_codes: []
+business_meaning: 代码有
+status: CONFIRMED
 merged_into_candidate_id: ''
 source_refs:
 - repository: ''
   path: app/biz/src/main/java/com/ly/flight/chainsaas/refund/biz/error/ErrorMessageEnum.java
   symbol: com.ly.flight.chainsaas.refund.biz.error.ErrorMessageEnum
-  line: null
-  commit: 2b175212e26b21abd0a08edeb3a4c7c1e1e2665a
-  content_digest: ''
+  line: 11
+  commit: 4da983bfd4d9de362fc5323412e35c1bdbd08236
+  content_digest: 691b3a61d1095e1f822918d8c71880bad6cf35402e16703526bda06d00ac66b1
 - repository: ''
   path: app/integration/src/main/java/com/ly/flight/chainsaas/refund/integration/proxy/callback/message/ErrorMessageEnum.java
   symbol: com.ly.flight.chainsaas.refund.integration.proxy.callback.message.ErrorMessageEnum
-  line: null
-  commit: 2b175212e26b21abd0a08edeb3a4c7c1e1e2665a
+  line: 8
+  commit: 4da983bfd4d9de362fc5323412e35c1bdbd08236
+  content_digest: b592297fe01c7abfb121a09f44de94ccee2c7deadd161ac42c5f841cbd3d3a73
+- repository: ''
+  path: app/biz/src/main/java/com/ly/flight/chainsaas/refund/biz/error/ErrorMessageEnum.java
+  symbol: com.ly.flight.chainsaas.refund.biz.error.ErrorMessageEnum#CBDS_NEED_ALL_REFUND
+  line: 71
+  commit: ''
+  content_digest: ''
+- repository: ''
+  path: app/biz/src/main/java/com/ly/flight/chainsaas/refund/biz/error/ErrorMessageEnum.java
+  symbol: com.ly.flight.chainsaas.refund.biz.error.ErrorMessageEnum#CBDS_UNSUPPORTED
+  line: 67
+  commit: ''
+  content_digest: ''
+- repository: ''
+  path: app/biz/src/main/java/com/ly/flight/chainsaas/refund/biz/error/ErrorMessageEnum.java
+  symbol: com.ly.flight.chainsaas.refund.biz.error.ErrorMessageEnum#CONCURRENCY_OPERATE
+  line: 35
+  commit: ''
+  content_digest: ''
+- repository: ''
+  path: app/biz/src/main/java/com/ly/flight/chainsaas/refund/biz/error/ErrorMessageEnum.java
+  symbol: com.ly.flight.chainsaas.refund.biz.error.ErrorMessageEnum#DISTRIBUTION_GDS_NO_AUTO
+  line: 47
+  commit: ''
+  content_digest: ''
+- repository: ''
+  path: app/biz/src/main/java/com/ly/flight/chainsaas/refund/biz/error/ErrorMessageEnum.java
+  symbol: com.ly.flight.chainsaas.refund.biz.error.ErrorMessageEnum#EXIST_REFUND_ORDER
+  line: 63
+  commit: ''
+  content_digest: ''
+- repository: ''
+  path: app/biz/src/main/java/com/ly/flight/chainsaas/refund/biz/error/ErrorMessageEnum.java
+  symbol: com.ly.flight.chainsaas.refund.biz.error.ErrorMessageEnum#HAS_CHANGE_ORDER
+  line: 51
+  commit: ''
+  content_digest: ''
+- repository: ''
+  path: app/biz/src/main/java/com/ly/flight/chainsaas/refund/biz/error/ErrorMessageEnum.java
+  symbol: com.ly.flight.chainsaas.refund.biz.error.ErrorMessageEnum#HAS_REFUND_ORDER
+  line: 55
+  commit: ''
+  content_digest: ''
+- repository: ''
+  path: app/biz/src/main/java/com/ly/flight/chainsaas/refund/biz/error/ErrorMessageEnum.java
+  symbol: com.ly.flight.chainsaas.refund.biz.error.ErrorMessageEnum#INVOLUNTARY_NOT_FLIGHT_CHANGE
+  line: 59
+  commit: ''
+  content_digest: ''
+- repository: ''
+  path: app/biz/src/main/java/com/ly/flight/chainsaas/refund/biz/error/ErrorMessageEnum.java
+  symbol: com.ly.flight.chainsaas.refund.biz.error.ErrorMessageEnum#MERCHANT_NO_AUTO
+  line: 43
+  commit: ''
+  content_digest: ''
+- repository: ''
+  path: app/biz/src/main/java/com/ly/flight/chainsaas/refund/biz/error/ErrorMessageEnum.java
+  symbol: com.ly.flight.chainsaas.refund.biz.error.ErrorMessageEnum#NO_AUTH
+  line: 39
+  commit: ''
   content_digest: ''
 affected_target_ids:
 - facade:com.ly.flight.chainsaas.refund.facade.CallbackFacade#refundApplyCallback
@@ -30,8 +373,28 @@ affected_target_ids:
 - facade:com.ly.flight.chainsaas.refund.facade.OuterRefundFacade#queryDetailByRefundNo
 - facade:com.ly.flight.chainsaas.refund.facade.OuterRefundFacade#queryList
 - facade:com.ly.flight.chainsaas.refund.facade.OuterRefundFacade#refundConfirm
-- facade:com.ly.flight.chainsaas.refund.facade.RefundDistributionFacade#queryDetail
-- facade:com.ly.flight.chainsaas.refund.facade.RefundDistributionFacade#queryList
-evidence_digest: a768a26a244d4530fcbd6dfc361fcdc0ab16e3bb3f96986b8a39944f19a669e0
+- facade:com.ly.flight.chainsaas.refund.facade.RefundFacade#applyToAirline
+- facade:com.ly.flight.chainsaas.refund.facade.RefundFacade#autoRefund
+- facade:com.ly.flight.chainsaas.refund.facade.RefundFacade#autoRefundReshop
+- facade:com.ly.flight.chainsaas.refund.facade.RefundFacade#billSupplement
+- facade:com.ly.flight.chainsaas.refund.facade.RefundFacade#cancel
+- facade:com.ly.flight.chainsaas.refund.facade.RefundFacade#createLog
+- facade:com.ly.flight.chainsaas.refund.facade.RefundFacade#createOrder
+- facade:com.ly.flight.chainsaas.refund.facade.RefundFacade#createPayment
+- facade:com.ly.flight.chainsaas.refund.facade.RefundFacade#getPlatFee
+- facade:com.ly.flight.chainsaas.refund.facade.RefundFacade#lockOrder
+- facade:com.ly.flight.chainsaas.refund.facade.RefundFacade#queryDetailByOrderNo
+- facade:com.ly.flight.chainsaas.refund.facade.RefundFacade#queryDetailByRefundNo
+- facade:com.ly.flight.chainsaas.refund.facade.RefundFacade#queryList
+- facade:com.ly.flight.chainsaas.refund.facade.RefundFacade#queryListByOrderNo
+- facade:com.ly.flight.chainsaas.refund.facade.RefundFacade#refundConfirm
+- facade:com.ly.flight.chainsaas.refund.facade.RefundFacade#refundReshop
+- facade:com.ly.flight.chainsaas.refund.facade.RefundFacade#refundReshopSubmit
+- facade:com.ly.flight.chainsaas.refund.facade.RefundFacade#ticketRefunding
+- facade:com.ly.flight.chainsaas.refund.facade.RefundFacade#unLockOrder
+- facade:com.ly.flight.chainsaas.refund.facade.RefundFacade#voucherRefundSubmit
+- facade:com.ly.flight.chainsaas.refund.facade.RefundFacade#walletRefundRetry
+- facade:com.ly.flight.chainsaas.refund.facade.ToolFacade#syncOrder
+evidence_digest: 6d4c1ec1acd03317405fa19ac6aea4177002c2afb9cbbbc3bdeb901169fa1a91
 discovered_at: '2026-08-13T10:23:54.669019Z'
-updated_at: '2026-08-13T11:20:20.891920Z'
+updated_at: '2026-08-22T13:36:34.106926Z'

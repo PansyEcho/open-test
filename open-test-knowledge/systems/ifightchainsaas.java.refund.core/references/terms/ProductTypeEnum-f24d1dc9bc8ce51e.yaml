@@ -1,31 +1,46 @@
 candidate_id: candidate:business_term:f24d1dc9bc8ce51e
 system_id: ifightchainsaas.java.refund.core
 kind: BUSINESS_TERM
+knowledge_form: BUSINESS_ENUM
 name: ProductTypeEnum
-suggested_meaning: 源码出现该枚举、缩写或领域类型；请确认业务口径以及是否需要合并到已有术语。
-business_meaning: ''
-status: STALE
+business_name: 产品类型
+business_name_source: CODE_DEFAULT
+business_name_known_unknown: false
+enum_values:
+- code: REFUND
+  business_meaning: 退票
+  source: CODE_DEFAULT
+  known_unknown: false
+  confidence: 0.95
+  source_refs:
+  - repository: ''
+    path: app/model/src/main/java/com/ly/flight/chainsaas/refund/enums/ProductTypeEnum.java
+    symbol: com.ly.flight.chainsaas.refund.enums.ProductTypeEnum#REFUND
+    line: 16
+    commit: ''
+    content_digest: ''
+suggested_meaning: 枚举名称和值默认采用源码注释；缺少注释时回退代码标识，可再人工修订。
+code_meaning: 退票（REFUND）
+unresolved_codes: []
+business_meaning: 代码注释有
+status: CONFIRMED
 merged_into_candidate_id: ''
 source_refs:
 - repository: ''
   path: app/model/src/main/java/com/ly/flight/chainsaas/refund/enums/ProductTypeEnum.java
   symbol: com.ly.flight.chainsaas.refund.enums.ProductTypeEnum
-  line: null
-  commit: 2b175212e26b21abd0a08edeb3a4c7c1e1e2665a
+  line: 11
+  commit: 4da983bfd4d9de362fc5323412e35c1bdbd08236
+  content_digest: 0935c741cefb4fc7ba15e1173e00026e3df62746c0e84cb8dc8c41420add35df
+- repository: ''
+  path: app/model/src/main/java/com/ly/flight/chainsaas/refund/enums/ProductTypeEnum.java
+  symbol: com.ly.flight.chainsaas.refund.enums.ProductTypeEnum#REFUND
+  line: 16
+  commit: ''
   content_digest: ''
 affected_target_ids:
 - facade:com.ly.flight.chainsaas.refund.facade.CallbackFacade#refundApplyCallback
 - facade:com.ly.flight.chainsaas.refund.facade.CallbackFacade#refundConfirmCallback
-- facade:com.ly.flight.chainsaas.refund.facade.CommonFacade#executeJob
-- facade:com.ly.flight.chainsaas.refund.facade.ModelFacade#confirmRefund
-- facade:com.ly.flight.chainsaas.refund.facade.ModelFacade#createRefundOrder
-- facade:com.ly.flight.chainsaas.refund.facade.OuterRefundFacade#cancel
-- facade:com.ly.flight.chainsaas.refund.facade.OuterRefundFacade#pageBusinessLog
-- facade:com.ly.flight.chainsaas.refund.facade.OuterRefundFacade#queryDetailByRefundNo
-- facade:com.ly.flight.chainsaas.refund.facade.OuterRefundFacade#queryList
-- facade:com.ly.flight.chainsaas.refund.facade.OuterRefundFacade#refundConfirm
-- facade:com.ly.flight.chainsaas.refund.facade.RefundDistributionFacade#queryDetail
-- facade:com.ly.flight.chainsaas.refund.facade.RefundDistributionFacade#queryList
-evidence_digest: 702c4136943d7c7bee494edeac6a88fabb7e7a89fed88b11ddb3a4425ee951d0
+evidence_digest: e80fbbe8646fd74725215f4b8ad4bdb796f851a6de64ce1d49c68b61de6f0dae
 discovered_at: '2026-08-13T10:23:54.669427Z'
-updated_at: '2026-08-13T11:20:20.891944Z'
+updated_at: '2026-08-22T13:36:34.106997Z'

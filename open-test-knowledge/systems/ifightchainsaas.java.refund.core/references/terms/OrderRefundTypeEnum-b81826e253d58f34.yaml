@@ -1,18 +1,79 @@
 candidate_id: candidate:business_term:b81826e253d58f34
 system_id: ifightchainsaas.java.refund.core
 kind: BUSINESS_TERM
+knowledge_form: BUSINESS_ENUM
 name: OrderRefundTypeEnum
-suggested_meaning: 源码出现该枚举、缩写或领域类型；请确认业务口径以及是否需要合并到已有术语。
+business_name: 退票类型
+business_name_source: CODE_DEFAULT
+business_name_known_unknown: false
+enum_values:
+- code: INVALID
+  business_meaning: 当日作废
+  source: CODE_DEFAULT
+  known_unknown: false
+  confidence: 0.95
+  source_refs:
+  - repository: ''
+    path: app/model/src/main/java/com/ly/flight/chainsaas/refund/enums/OrderRefundTypeEnum.java
+    symbol: com.ly.flight.chainsaas.refund.enums.OrderRefundTypeEnum#INVALID
+    line: 32
+    commit: ''
+    content_digest: ''
+- code: INVOLUNTARY
+  business_meaning: 非自愿
+  source: CODE_DEFAULT
+  known_unknown: false
+  confidence: 0.95
+  source_refs:
+  - repository: ''
+    path: app/model/src/main/java/com/ly/flight/chainsaas/refund/enums/OrderRefundTypeEnum.java
+    symbol: com.ly.flight.chainsaas.refund.enums.OrderRefundTypeEnum#INVOLUNTARY
+    line: 23
+    commit: ''
+    content_digest: ''
+- code: VOLUNTARY
+  business_meaning: 自愿退票
+  source: CODE_DEFAULT
+  known_unknown: false
+  confidence: 0.95
+  source_refs:
+  - repository: ''
+    path: app/model/src/main/java/com/ly/flight/chainsaas/refund/enums/OrderRefundTypeEnum.java
+    symbol: com.ly.flight.chainsaas.refund.enums.OrderRefundTypeEnum#VOLUNTARY
+    line: 27
+    commit: ''
+    content_digest: ''
+suggested_meaning: 枚举名称和值默认采用源码注释；缺少注释时回退代码标识，可再人工修订。
+code_meaning: 当日作废（INVALID）；非自愿（INVOLUNTARY）；自愿退票（VOLUNTARY）
+unresolved_codes: []
 business_meaning: ''
-status: OPEN
+status: CODE_VERIFIED
 merged_into_candidate_id: ''
 source_refs:
 - repository: ''
   path: app/model/src/main/java/com/ly/flight/chainsaas/refund/enums/OrderRefundTypeEnum.java
   symbol: com.ly.flight.chainsaas.refund.enums.OrderRefundTypeEnum
   line: 18
-  commit: 2b175212e26b21abd0a08edeb3a4c7c1e1e2665a
+  commit: 4da983bfd4d9de362fc5323412e35c1bdbd08236
   content_digest: bad314a0d71116c5f4833dba362722aad1719058bd6b46f5f097eff5e148fdaf
+- repository: ''
+  path: app/model/src/main/java/com/ly/flight/chainsaas/refund/enums/OrderRefundTypeEnum.java
+  symbol: com.ly.flight.chainsaas.refund.enums.OrderRefundTypeEnum#INVALID
+  line: 32
+  commit: ''
+  content_digest: ''
+- repository: ''
+  path: app/model/src/main/java/com/ly/flight/chainsaas/refund/enums/OrderRefundTypeEnum.java
+  symbol: com.ly.flight.chainsaas.refund.enums.OrderRefundTypeEnum#INVOLUNTARY
+  line: 23
+  commit: ''
+  content_digest: ''
+- repository: ''
+  path: app/model/src/main/java/com/ly/flight/chainsaas/refund/enums/OrderRefundTypeEnum.java
+  symbol: com.ly.flight.chainsaas.refund.enums.OrderRefundTypeEnum#VOLUNTARY
+  line: 27
+  commit: ''
+  content_digest: ''
 affected_target_ids:
 - facade:com.ly.flight.chainsaas.refund.facade.CallbackFacade#refundApplyCallback
 - facade:com.ly.flight.chainsaas.refund.facade.CallbackFacade#refundConfirmCallback
@@ -46,6 +107,6 @@ affected_target_ids:
 - facade:com.ly.flight.chainsaas.refund.facade.RefundFacade#voucherRefundSubmit
 - facade:com.ly.flight.chainsaas.refund.facade.RefundFacade#walletRefundRetry
 - facade:com.ly.flight.chainsaas.refund.facade.ToolFacade#syncOrder
-evidence_digest: c6fef64c151cab5c1bbaa25b591cff96433209db7b47beb773d474e1c121f8ec
+evidence_digest: 50dc9fa4b4d8346c24262805fb66265c975bcddc25489fc7c4f7b98357d39e35
 discovered_at: '2026-08-13T10:23:54.669411Z'
-updated_at: '2026-08-13T11:20:20.891850Z'
+updated_at: '2026-08-22T13:36:34.106827Z'

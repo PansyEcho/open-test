@@ -1,23 +1,174 @@
 candidate_id: candidate:business_term:c5831f0be41e49f3
 system_id: ifightchainsaas.java.refund.core
 kind: BUSINESS_TERM
+knowledge_form: BUSINESS_ENUM
 name: PassengerTypeEnum
-suggested_meaning: 源码出现该枚举、缩写或领域类型；请确认业务口径以及是否需要合并到已有术语。
-business_meaning: ''
-status: STALE
+business_name: PassengerTypeEnum
+business_name_source: CODE_DEFAULT
+business_name_known_unknown: false
+enum_values:
+- code: com.ly.flight.chainsaas.refund.enums.PassengerTypeEnum#ADT
+  business_meaning: 成人
+  source: CODE_DEFAULT
+  known_unknown: false
+  confidence: 0.95
+  source_refs:
+  - repository: ''
+    path: app/model/src/main/java/com/ly/flight/chainsaas/refund/enums/PassengerTypeEnum.java
+    symbol: com.ly.flight.chainsaas.refund.enums.PassengerTypeEnum#ADT
+    line: 11
+    commit: ''
+    content_digest: ''
+- code: com.ly.flight.chainsaas.refund.enums.PassengerTypeEnum#ALL
+  business_meaning: 全部
+  source: CODE_DEFAULT
+  known_unknown: false
+  confidence: 0.95
+  source_refs:
+  - repository: ''
+    path: app/model/src/main/java/com/ly/flight/chainsaas/refund/enums/PassengerTypeEnum.java
+    symbol: com.ly.flight.chainsaas.refund.enums.PassengerTypeEnum#ALL
+    line: 19
+    commit: ''
+    content_digest: ''
+- code: com.ly.flight.chainsaas.refund.enums.PassengerTypeEnum#CHD
+  business_meaning: 儿童
+  source: CODE_DEFAULT
+  known_unknown: false
+  confidence: 0.95
+  source_refs:
+  - repository: ''
+    path: app/model/src/main/java/com/ly/flight/chainsaas/refund/enums/PassengerTypeEnum.java
+    symbol: com.ly.flight.chainsaas.refund.enums.PassengerTypeEnum#CHD
+    line: 13
+    commit: ''
+    content_digest: ''
+- code: com.ly.flight.chainsaas.refund.enums.PassengerTypeEnum#INF
+  business_meaning: 婴儿
+  source: CODE_DEFAULT
+  known_unknown: false
+  confidence: 0.95
+  source_refs:
+  - repository: ''
+    path: app/model/src/main/java/com/ly/flight/chainsaas/refund/enums/PassengerTypeEnum.java
+    symbol: com.ly.flight.chainsaas.refund.enums.PassengerTypeEnum#INF
+    line: 15
+    commit: ''
+    content_digest: ''
+- code: com.ly.flight.chainsaas.refund.facade.model.enums.PassengerTypeEnum#ADT
+  business_meaning: 成人。
+  source: CODE_DEFAULT
+  known_unknown: false
+  confidence: 0.95
+  source_refs:
+  - repository: ''
+    path: app/facade/src/main/java/com/ly/flight/chainsaas/refund/facade/model/enums/PassengerTypeEnum.java
+    symbol: com.ly.flight.chainsaas.refund.facade.model.enums.PassengerTypeEnum#ADT
+    line: 17
+    commit: ''
+    content_digest: ''
+- code: com.ly.flight.chainsaas.refund.facade.model.enums.PassengerTypeEnum#ALL
+  business_meaning: 全部乘客。
+  source: CODE_DEFAULT
+  known_unknown: false
+  confidence: 0.95
+  source_refs:
+  - repository: ''
+    path: app/facade/src/main/java/com/ly/flight/chainsaas/refund/facade/model/enums/PassengerTypeEnum.java
+    symbol: com.ly.flight.chainsaas.refund.facade.model.enums.PassengerTypeEnum#ALL
+    line: 23
+    commit: ''
+    content_digest: ''
+- code: com.ly.flight.chainsaas.refund.facade.model.enums.PassengerTypeEnum#CHD
+  business_meaning: 儿童。
+  source: CODE_DEFAULT
+  known_unknown: false
+  confidence: 0.95
+  source_refs:
+  - repository: ''
+    path: app/facade/src/main/java/com/ly/flight/chainsaas/refund/facade/model/enums/PassengerTypeEnum.java
+    symbol: com.ly.flight.chainsaas.refund.facade.model.enums.PassengerTypeEnum#CHD
+    line: 19
+    commit: ''
+    content_digest: ''
+- code: com.ly.flight.chainsaas.refund.facade.model.enums.PassengerTypeEnum#INF
+  business_meaning: 婴儿。
+  source: CODE_DEFAULT
+  known_unknown: false
+  confidence: 0.95
+  source_refs:
+  - repository: ''
+    path: app/facade/src/main/java/com/ly/flight/chainsaas/refund/facade/model/enums/PassengerTypeEnum.java
+    symbol: com.ly.flight.chainsaas.refund.facade.model.enums.PassengerTypeEnum#INF
+    line: 21
+    commit: ''
+    content_digest: ''
+suggested_meaning: 源码存在同名枚举类型，页面按全限定常量展示代码注释默认值，可再人工修订。
+code_meaning: 成人（com.ly.flight.chainsaas.refund.enums.PassengerTypeEnum#ADT）；全部（com.ly.flight.chainsaas.refund.enums.PassengerTypeEnum#ALL）；儿童（com.ly.flight.chainsaas.refund.enums.PassengerTypeEnum#CHD）；婴儿（com.ly.flight.chainsaas.refund.enums.PassengerTypeEnum#INF）；成人。（com.ly.flight.chainsaas.refund.facade.model.enums.PassengerTypeEnum#ADT）；全部乘客。（com.ly.flight.chainsaas.refund.facade.model.enums.PassengerTypeEnum#ALL）；儿童。（com.ly.flight.chainsaas.refund.facade.model.enums.PassengerTypeEnum#CHD）；婴儿。（com.ly.flight.chainsaas.refund.facade.model.enums.PassengerTypeEnum#INF）
+unresolved_codes: []
+business_meaning: 代码注释有
+status: CONFIRMED
 merged_into_candidate_id: ''
 source_refs:
 - repository: ''
   path: app/facade/src/main/java/com/ly/flight/chainsaas/refund/facade/model/enums/PassengerTypeEnum.java
   symbol: com.ly.flight.chainsaas.refund.facade.model.enums.PassengerTypeEnum
-  line: null
-  commit: 2b175212e26b21abd0a08edeb3a4c7c1e1e2665a
-  content_digest: ''
+  line: 14
+  commit: 4da983bfd4d9de362fc5323412e35c1bdbd08236
+  content_digest: 48479b06d35de2704f02e62e6dede6433c3c45db6b646552e0c7c57e6569061d
 - repository: ''
   path: app/model/src/main/java/com/ly/flight/chainsaas/refund/enums/PassengerTypeEnum.java
   symbol: com.ly.flight.chainsaas.refund.enums.PassengerTypeEnum
-  line: null
-  commit: 2b175212e26b21abd0a08edeb3a4c7c1e1e2665a
+  line: 8
+  commit: 4da983bfd4d9de362fc5323412e35c1bdbd08236
+  content_digest: 6048fba031389820fb24fffca2b539984da73938c3a3d52ceff3680a26429fef
+- repository: ''
+  path: app/model/src/main/java/com/ly/flight/chainsaas/refund/enums/PassengerTypeEnum.java
+  symbol: com.ly.flight.chainsaas.refund.enums.PassengerTypeEnum#ADT
+  line: 11
+  commit: ''
+  content_digest: ''
+- repository: ''
+  path: app/model/src/main/java/com/ly/flight/chainsaas/refund/enums/PassengerTypeEnum.java
+  symbol: com.ly.flight.chainsaas.refund.enums.PassengerTypeEnum#ALL
+  line: 19
+  commit: ''
+  content_digest: ''
+- repository: ''
+  path: app/model/src/main/java/com/ly/flight/chainsaas/refund/enums/PassengerTypeEnum.java
+  symbol: com.ly.flight.chainsaas.refund.enums.PassengerTypeEnum#CHD
+  line: 13
+  commit: ''
+  content_digest: ''
+- repository: ''
+  path: app/model/src/main/java/com/ly/flight/chainsaas/refund/enums/PassengerTypeEnum.java
+  symbol: com.ly.flight.chainsaas.refund.enums.PassengerTypeEnum#INF
+  line: 15
+  commit: ''
+  content_digest: ''
+- repository: ''
+  path: app/facade/src/main/java/com/ly/flight/chainsaas/refund/facade/model/enums/PassengerTypeEnum.java
+  symbol: com.ly.flight.chainsaas.refund.facade.model.enums.PassengerTypeEnum#ADT
+  line: 17
+  commit: ''
+  content_digest: ''
+- repository: ''
+  path: app/facade/src/main/java/com/ly/flight/chainsaas/refund/facade/model/enums/PassengerTypeEnum.java
+  symbol: com.ly.flight.chainsaas.refund.facade.model.enums.PassengerTypeEnum#ALL
+  line: 23
+  commit: ''
+  content_digest: ''
+- repository: ''
+  path: app/facade/src/main/java/com/ly/flight/chainsaas/refund/facade/model/enums/PassengerTypeEnum.java
+  symbol: com.ly.flight.chainsaas.refund.facade.model.enums.PassengerTypeEnum#CHD
+  line: 19
+  commit: ''
+  content_digest: ''
+- repository: ''
+  path: app/facade/src/main/java/com/ly/flight/chainsaas/refund/facade/model/enums/PassengerTypeEnum.java
+  symbol: com.ly.flight.chainsaas.refund.facade.model.enums.PassengerTypeEnum#INF
+  line: 21
+  commit: ''
   content_digest: ''
 affected_target_ids:
 - facade:com.ly.flight.chainsaas.refund.facade.CallbackFacade#refundApplyCallback
@@ -30,8 +181,28 @@ affected_target_ids:
 - facade:com.ly.flight.chainsaas.refund.facade.OuterRefundFacade#queryDetailByRefundNo
 - facade:com.ly.flight.chainsaas.refund.facade.OuterRefundFacade#queryList
 - facade:com.ly.flight.chainsaas.refund.facade.OuterRefundFacade#refundConfirm
-- facade:com.ly.flight.chainsaas.refund.facade.RefundDistributionFacade#queryDetail
-- facade:com.ly.flight.chainsaas.refund.facade.RefundDistributionFacade#queryList
-evidence_digest: 917cf24be1152fef4fb2f9e205897207a046513285a056170ea5826d1506a1ee
+- facade:com.ly.flight.chainsaas.refund.facade.RefundFacade#applyToAirline
+- facade:com.ly.flight.chainsaas.refund.facade.RefundFacade#autoRefund
+- facade:com.ly.flight.chainsaas.refund.facade.RefundFacade#autoRefundReshop
+- facade:com.ly.flight.chainsaas.refund.facade.RefundFacade#billSupplement
+- facade:com.ly.flight.chainsaas.refund.facade.RefundFacade#cancel
+- facade:com.ly.flight.chainsaas.refund.facade.RefundFacade#createLog
+- facade:com.ly.flight.chainsaas.refund.facade.RefundFacade#createOrder
+- facade:com.ly.flight.chainsaas.refund.facade.RefundFacade#createPayment
+- facade:com.ly.flight.chainsaas.refund.facade.RefundFacade#getPlatFee
+- facade:com.ly.flight.chainsaas.refund.facade.RefundFacade#lockOrder
+- facade:com.ly.flight.chainsaas.refund.facade.RefundFacade#queryDetailByOrderNo
+- facade:com.ly.flight.chainsaas.refund.facade.RefundFacade#queryDetailByRefundNo
+- facade:com.ly.flight.chainsaas.refund.facade.RefundFacade#queryList
+- facade:com.ly.flight.chainsaas.refund.facade.RefundFacade#queryListByOrderNo
+- facade:com.ly.flight.chainsaas.refund.facade.RefundFacade#refundConfirm
+- facade:com.ly.flight.chainsaas.refund.facade.RefundFacade#refundReshop
+- facade:com.ly.flight.chainsaas.refund.facade.RefundFacade#refundReshopSubmit
+- facade:com.ly.flight.chainsaas.refund.facade.RefundFacade#ticketRefunding
+- facade:com.ly.flight.chainsaas.refund.facade.RefundFacade#unLockOrder
+- facade:com.ly.flight.chainsaas.refund.facade.RefundFacade#voucherRefundSubmit
+- facade:com.ly.flight.chainsaas.refund.facade.RefundFacade#walletRefundRetry
+- facade:com.ly.flight.chainsaas.refund.facade.ToolFacade#syncOrder
+evidence_digest: 61b24175f8f13e77e1e12710e8de3c86521234e7113b215d7b1ba29beefc6ab3
 discovered_at: '2026-08-13T10:23:54.669152Z'
-updated_at: '2026-08-13T11:20:20.891941Z'
+updated_at: '2026-08-22T13:36:34.106994Z'

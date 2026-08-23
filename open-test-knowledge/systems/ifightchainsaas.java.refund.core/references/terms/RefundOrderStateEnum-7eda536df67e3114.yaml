@@ -1,18 +1,205 @@
 candidate_id: candidate:business_term:7eda536df67e3114
 system_id: ifightchainsaas.java.refund.core
 kind: BUSINESS_TERM
+knowledge_form: BUSINESS_ENUM
 name: RefundOrderStateEnum
-suggested_meaning: 源码出现该枚举、缩写或领域类型；请确认业务口径以及是否需要合并到已有术语。
+business_name: RefundOrderStateEnum
+business_name_source: CODE_DEFAULT
+business_name_known_unknown: false
+enum_values:
+- code: AUDITED
+  business_meaning: 审核通过
+  source: CODE_DEFAULT
+  known_unknown: false
+  confidence: 0.95
+  source_refs:
+  - repository: ''
+    path: app/model/src/main/java/com/ly/flight/chainsaas/refund/enums/RefundOrderStateEnum.java
+    symbol: com.ly.flight.chainsaas.refund.enums.RefundOrderStateEnum#AUDITED
+    line: 19
+    commit: ''
+    content_digest: ''
+- code: DEFAULT_REFUND
+  business_meaning: 无效
+  source: CODE_VERIFIED
+  known_unknown: false
+  confidence: 1.0
+  source_refs:
+  - repository: ''
+    path: app/model/src/main/java/com/ly/flight/chainsaas/refund/enums/RefundOrderStateEnum.java
+    symbol: com.ly.flight.chainsaas.refund.enums.RefundOrderStateEnum#DEFAULT_REFUND
+    line: 13
+    commit: ''
+    content_digest: ''
+- code: PENDING_APPLY
+  business_meaning: 退票申请
+  source: CODE_DEFAULT
+  known_unknown: false
+  confidence: 0.95
+  source_refs:
+  - repository: ''
+    path: app/model/src/main/java/com/ly/flight/chainsaas/refund/enums/RefundOrderStateEnum.java
+    symbol: com.ly.flight.chainsaas.refund.enums.RefundOrderStateEnum#PENDING_APPLY
+    line: 15
+    commit: ''
+    content_digest: ''
+- code: REFUNDING
+  business_meaning: 退票中
+  source: CODE_DEFAULT
+  known_unknown: false
+  confidence: 0.95
+  source_refs:
+  - repository: ''
+    path: app/model/src/main/java/com/ly/flight/chainsaas/refund/enums/RefundOrderStateEnum.java
+    symbol: com.ly.flight.chainsaas.refund.enums.RefundOrderStateEnum#REFUNDING
+    line: 23
+    commit: ''
+    content_digest: ''
+- code: REFUND_CANCEL
+  business_meaning: 已取消
+  source: CODE_DEFAULT
+  known_unknown: false
+  confidence: 0.95
+  source_refs:
+  - repository: ''
+    path: app/model/src/main/java/com/ly/flight/chainsaas/refund/enums/RefundOrderStateEnum.java
+    symbol: com.ly.flight.chainsaas.refund.enums.RefundOrderStateEnum#REFUND_CANCEL
+    line: 29
+    commit: ''
+    content_digest: ''
+- code: REFUND_DONE
+  business_meaning: 退款完成
+  source: CODE_DEFAULT
+  known_unknown: false
+  confidence: 0.95
+  source_refs:
+  - repository: ''
+    path: app/model/src/main/java/com/ly/flight/chainsaas/refund/enums/RefundOrderStateEnum.java
+    symbol: com.ly.flight.chainsaas.refund.enums.RefundOrderStateEnum#REFUND_DONE
+    line: 31
+    commit: ''
+    content_digest: ''
+- code: REFUND_FAIL
+  business_meaning: 退票失败
+  source: CODE_DEFAULT
+  known_unknown: false
+  confidence: 0.95
+  source_refs:
+  - repository: ''
+    path: app/model/src/main/java/com/ly/flight/chainsaas/refund/enums/RefundOrderStateEnum.java
+    symbol: com.ly.flight.chainsaas.refund.enums.RefundOrderStateEnum#REFUND_FAIL
+    line: 27
+    commit: ''
+    content_digest: ''
+- code: REFUND_SUCCESS
+  business_meaning: 退票成功
+  source: CODE_DEFAULT
+  known_unknown: false
+  confidence: 0.95
+  source_refs:
+  - repository: ''
+    path: app/model/src/main/java/com/ly/flight/chainsaas/refund/enums/RefundOrderStateEnum.java
+    symbol: com.ly.flight.chainsaas.refund.enums.RefundOrderStateEnum#REFUND_SUCCESS
+    line: 25
+    commit: ''
+    content_digest: ''
+- code: RESHOPING
+  business_meaning: 核价中
+  source: CODE_DEFAULT
+  known_unknown: false
+  confidence: 0.95
+  source_refs:
+  - repository: ''
+    path: app/model/src/main/java/com/ly/flight/chainsaas/refund/enums/RefundOrderStateEnum.java
+    symbol: com.ly.flight.chainsaas.refund.enums.RefundOrderStateEnum#RESHOPING
+    line: 17
+    commit: ''
+    content_digest: ''
+- code: WAIT_REFUND
+  business_meaning: 待退票
+  source: CODE_DEFAULT
+  known_unknown: false
+  confidence: 0.95
+  source_refs:
+  - repository: ''
+    path: app/model/src/main/java/com/ly/flight/chainsaas/refund/enums/RefundOrderStateEnum.java
+    symbol: com.ly.flight.chainsaas.refund.enums.RefundOrderStateEnum#WAIT_REFUND
+    line: 21
+    commit: ''
+    content_digest: ''
+suggested_meaning: 枚举名称和值默认采用源码注释；缺少注释时回退代码标识，可再人工修订。
+code_meaning: 审核通过（AUDITED）；无效（DEFAULT_REFUND）；退票申请（PENDING_APPLY）；退票中（REFUNDING）；已取消（REFUND_CANCEL）；退款完成（REFUND_DONE）；退票失败（REFUND_FAIL）；退票成功（REFUND_SUCCESS）；核价中（RESHOPING）；待退票（WAIT_REFUND）
+unresolved_codes: []
 business_meaning: ''
-status: OPEN
+status: CODE_VERIFIED
 merged_into_candidate_id: ''
 source_refs:
 - repository: ''
   path: app/model/src/main/java/com/ly/flight/chainsaas/refund/enums/RefundOrderStateEnum.java
   symbol: com.ly.flight.chainsaas.refund.enums.RefundOrderStateEnum
   line: 12
-  commit: 2b175212e26b21abd0a08edeb3a4c7c1e1e2665a
+  commit: 4da983bfd4d9de362fc5323412e35c1bdbd08236
   content_digest: b9dab52d81b53d87ca56d180b12c92d722584006c2de6ed97ef1b36cb9d7c95f
+- repository: ''
+  path: app/model/src/main/java/com/ly/flight/chainsaas/refund/enums/RefundOrderStateEnum.java
+  symbol: com.ly.flight.chainsaas.refund.enums.RefundOrderStateEnum#AUDITED
+  line: 19
+  commit: ''
+  content_digest: ''
+- repository: ''
+  path: app/model/src/main/java/com/ly/flight/chainsaas/refund/enums/RefundOrderStateEnum.java
+  symbol: com.ly.flight.chainsaas.refund.enums.RefundOrderStateEnum#DEFAULT_REFUND
+  line: 13
+  commit: ''
+  content_digest: ''
+- repository: ''
+  path: app/model/src/main/java/com/ly/flight/chainsaas/refund/enums/RefundOrderStateEnum.java
+  symbol: com.ly.flight.chainsaas.refund.enums.RefundOrderStateEnum#PENDING_APPLY
+  line: 15
+  commit: ''
+  content_digest: ''
+- repository: ''
+  path: app/model/src/main/java/com/ly/flight/chainsaas/refund/enums/RefundOrderStateEnum.java
+  symbol: com.ly.flight.chainsaas.refund.enums.RefundOrderStateEnum#REFUNDING
+  line: 23
+  commit: ''
+  content_digest: ''
+- repository: ''
+  path: app/model/src/main/java/com/ly/flight/chainsaas/refund/enums/RefundOrderStateEnum.java
+  symbol: com.ly.flight.chainsaas.refund.enums.RefundOrderStateEnum#REFUND_CANCEL
+  line: 29
+  commit: ''
+  content_digest: ''
+- repository: ''
+  path: app/model/src/main/java/com/ly/flight/chainsaas/refund/enums/RefundOrderStateEnum.java
+  symbol: com.ly.flight.chainsaas.refund.enums.RefundOrderStateEnum#REFUND_DONE
+  line: 31
+  commit: ''
+  content_digest: ''
+- repository: ''
+  path: app/model/src/main/java/com/ly/flight/chainsaas/refund/enums/RefundOrderStateEnum.java
+  symbol: com.ly.flight.chainsaas.refund.enums.RefundOrderStateEnum#REFUND_FAIL
+  line: 27
+  commit: ''
+  content_digest: ''
+- repository: ''
+  path: app/model/src/main/java/com/ly/flight/chainsaas/refund/enums/RefundOrderStateEnum.java
+  symbol: com.ly.flight.chainsaas.refund.enums.RefundOrderStateEnum#REFUND_SUCCESS
+  line: 25
+  commit: ''
+  content_digest: ''
+- repository: ''
+  path: app/model/src/main/java/com/ly/flight/chainsaas/refund/enums/RefundOrderStateEnum.java
+  symbol: com.ly.flight.chainsaas.refund.enums.RefundOrderStateEnum#RESHOPING
+  line: 17
+  commit: ''
+  content_digest: ''
+- repository: ''
+  path: app/model/src/main/java/com/ly/flight/chainsaas/refund/enums/RefundOrderStateEnum.java
+  symbol: com.ly.flight.chainsaas.refund.enums.RefundOrderStateEnum#WAIT_REFUND
+  line: 21
+  commit: ''
+  content_digest: ''
 affected_target_ids:
 - facade:com.ly.flight.chainsaas.refund.facade.CallbackFacade#refundApplyCallback
 - facade:com.ly.flight.chainsaas.refund.facade.CallbackFacade#refundConfirmCallback
@@ -48,6 +235,6 @@ affected_target_ids:
 - facade:com.ly.flight.chainsaas.refund.facade.RefundFacade#voucherRefundSubmit
 - facade:com.ly.flight.chainsaas.refund.facade.RefundFacade#walletRefundRetry
 - facade:com.ly.flight.chainsaas.refund.facade.ToolFacade#syncOrder
-evidence_digest: a08399863de446fe5fc43bdd3e31843186d5d9a77624d327cb8d4ed1d2fe63ed
+evidence_digest: 0d78742256fba20d5605f4db893f5323ab6db9917cd10fe0adca6e0683eb3d09
 discovered_at: '2026-08-13T11:09:41.120220Z'
-updated_at: '2026-08-13T11:20:20.891877Z'
+updated_at: '2026-08-22T13:36:34.106883Z'

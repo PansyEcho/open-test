@@ -1,18 +1,79 @@
 candidate_id: candidate:business_term:32caccc9111eac62
 system_id: ifightchainsaas.java.refund.core
 kind: BUSINESS_TERM
+knowledge_form: BUSINESS_ENUM
 name: RefundMonitorSourceEnum
-suggested_meaning: 源码出现该枚举、缩写或领域类型；请确认业务口径以及是否需要合并到已有术语。
+business_name: RefundMonitorSourceEnum
+business_name_source: CODE_DEFAULT
+business_name_known_unknown: false
+enum_values:
+- code: BUSINESS_MANAGE
+  business_meaning: 运营后台
+  source: CODE_DEFAULT
+  known_unknown: false
+  confidence: 0.95
+  source_refs:
+  - repository: ''
+    path: app/model/src/main/java/com/ly/flight/chainsaas/refund/enums/monitor/RefundMonitorSourceEnum.java
+    symbol: com.ly.flight.chainsaas.refund.enums.monitor.RefundMonitorSourceEnum#BUSINESS_MANAGE
+    line: 22
+    commit: ''
+    content_digest: ''
+- code: MODEL
+  business_meaning: 模型
+  source: CODE_DEFAULT
+  known_unknown: false
+  confidence: 0.95
+  source_refs:
+  - repository: ''
+    path: app/model/src/main/java/com/ly/flight/chainsaas/refund/enums/monitor/RefundMonitorSourceEnum.java
+    symbol: com.ly.flight.chainsaas.refund.enums.monitor.RefundMonitorSourceEnum#MODEL
+    line: 26
+    commit: ''
+    content_digest: ''
+- code: WHITE_DISTRIBUTION
+  business_meaning: 白屏分销
+  source: CODE_DEFAULT
+  known_unknown: false
+  confidence: 0.95
+  source_refs:
+  - repository: ''
+    path: app/model/src/main/java/com/ly/flight/chainsaas/refund/enums/monitor/RefundMonitorSourceEnum.java
+    symbol: com.ly.flight.chainsaas.refund.enums.monitor.RefundMonitorSourceEnum#WHITE_DISTRIBUTION
+    line: 18
+    commit: ''
+    content_digest: ''
+suggested_meaning: 枚举名称和值默认采用源码注释；缺少注释时回退代码标识，可再人工修订。
+code_meaning: 运营后台（BUSINESS_MANAGE）；模型（MODEL）；白屏分销（WHITE_DISTRIBUTION）
+unresolved_codes: []
 business_meaning: ''
-status: OPEN
+status: CODE_VERIFIED
 merged_into_candidate_id: ''
 source_refs:
 - repository: ''
   path: app/model/src/main/java/com/ly/flight/chainsaas/refund/enums/monitor/RefundMonitorSourceEnum.java
   symbol: com.ly.flight.chainsaas.refund.enums.monitor.RefundMonitorSourceEnum
   line: 13
-  commit: 2b175212e26b21abd0a08edeb3a4c7c1e1e2665a
+  commit: 4da983bfd4d9de362fc5323412e35c1bdbd08236
   content_digest: a5a950d29ea66d3fb7419e7cabb81a39f8e2be3cd780ef6bef2833d67a8a58bd
+- repository: ''
+  path: app/model/src/main/java/com/ly/flight/chainsaas/refund/enums/monitor/RefundMonitorSourceEnum.java
+  symbol: com.ly.flight.chainsaas.refund.enums.monitor.RefundMonitorSourceEnum#BUSINESS_MANAGE
+  line: 22
+  commit: ''
+  content_digest: ''
+- repository: ''
+  path: app/model/src/main/java/com/ly/flight/chainsaas/refund/enums/monitor/RefundMonitorSourceEnum.java
+  symbol: com.ly.flight.chainsaas.refund.enums.monitor.RefundMonitorSourceEnum#MODEL
+  line: 26
+  commit: ''
+  content_digest: ''
+- repository: ''
+  path: app/model/src/main/java/com/ly/flight/chainsaas/refund/enums/monitor/RefundMonitorSourceEnum.java
+  symbol: com.ly.flight.chainsaas.refund.enums.monitor.RefundMonitorSourceEnum#WHITE_DISTRIBUTION
+  line: 18
+  commit: ''
+  content_digest: ''
 affected_target_ids:
 - facade:com.ly.flight.chainsaas.refund.facade.CallbackFacade#refundApplyCallback
 - facade:com.ly.flight.chainsaas.refund.facade.CallbackFacade#refundConfirmCallback
@@ -39,6 +100,6 @@ affected_target_ids:
 - facade:com.ly.flight.chainsaas.refund.facade.RefundFacade#unLockOrder
 - facade:com.ly.flight.chainsaas.refund.facade.RefundFacade#voucherRefundSubmit
 - facade:com.ly.flight.chainsaas.refund.facade.RefundFacade#walletRefundRetry
-evidence_digest: ab3eb5558b1c315eb8ca729bb4086d9b3781fba3e9bebde1cf7df77ff21276a3
+evidence_digest: efa2781bb57181de3ddf7e09ca73d39bf46992820f53c3e1e817b508e006f668
 discovered_at: '2026-08-13T11:09:41.120151Z'
-updated_at: '2026-08-13T11:20:20.891870Z'
+updated_at: '2026-08-22T13:36:34.106850Z'
