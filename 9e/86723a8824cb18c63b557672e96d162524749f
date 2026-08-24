@@ -1,0 +1,102 @@
+opentest/application/foundation.py
+  s_94ea90289fc01a::t_989311f137e7fc 2815
+  s_94ea90289fc01a::t_22cd8202839f0a 2812-2814
+  s_94ea90289fc01a::t_c13d1748b7700c 2816-2818
+  s_c774f74b5992a9::t_102bd0df20ad1f 24,56-60,66,127-129,233-246,364-377,954-955,1031-1032,1243-1306,2491-2492,2495,2517,2568-2569,2690-2691,2705,2713,2724,2746,2773-2775,2779-2811,2819-2821,3022-3024
+docs/status.md
+  s_c774f74b5992a9::t_dbf6eff1352dd5 5,11
+openspec/changes/codex-native-open-test-workspace/.openspec.yaml
+  s_c774f74b5992a9::t_14d465527c9ca6 1-2
+openspec/changes/codex-native-open-test-workspace/design.md
+  s_c774f74b5992a9::t_3d3da73222a0cd 1-23
+openspec/changes/codex-native-open-test-workspace/proposal.md
+  s_c774f74b5992a9::t_831396c23f75f8 1-20
+openspec/changes/codex-native-open-test-workspace/specs/codex-knowledge-continuation/spec.md
+  s_c774f74b5992a9::t_468012f7a12b4d 1-31
+openspec/changes/codex-native-open-test-workspace/specs/codex-system-operations/spec.md
+  s_c774f74b5992a9::t_799545b1e875c7 1-31
+openspec/changes/codex-native-open-test-workspace/specs/codex-system-skill/spec.md
+  s_c774f74b5992a9::t_56cf1bdc1b459e 1-17
+openspec/changes/codex-native-open-test-workspace/specs/knowledge-workspace-cache/spec.md
+  s_c774f74b5992a9::t_1533446ddf0a3e 1-27
+openspec/changes/codex-native-open-test-workspace/tasks.md
+  s_c774f74b5992a9::t_a7e3b049eb7d1d 1-34
+opentest-plugin-marketplace/plugins/open-test-knowledge/.codex-plugin/plugin.json
+  s_c774f74b5992a9::t_580a2ecefbba76 3-4,10-12,18-19
+opentest-plugin-marketplace/plugins/open-test-knowledge/.mcp.json
+  s_c774f74b5992a9::t_e3ba60f11476ae 11-19
+opentest-plugin-marketplace/plugins/open-test-knowledge/scripts/opentest_operations_mcp.py
+  s_c774f74b5992a9::t_103ae6c36d68e9 1-325
+opentest-plugin-marketplace/plugins/open-test-knowledge/scripts/sync_system_skills.py
+  s_c774f74b5992a9::t_6e0dbc61cc45b2 1-243
+opentest-plugin-marketplace/plugins/open-test-knowledge/skills/open-test-ifightchainsaas-java-refund-core/.opentest-generated-system-skill.json
+  s_c774f74b5992a9::t_d1d7eae0de0478 1-4
+opentest-plugin-marketplace/plugins/open-test-knowledge/skills/open-test-ifightchainsaas-java-refund-core/SKILL.md
+  s_c774f74b5992a9::t_024312cdde8f7d 1-18
+opentest-plugin-marketplace/plugins/open-test-knowledge/skills/open-test-ifightchainsaas-java-refund-core/agents/openai.yaml
+  s_c774f74b5992a9::t_e33be4a822a882 1-6
+opentest/adapters/codex_app_server.py
+  s_c774f74b5992a9::t_c55d53fe2b3f78 111-163
+opentest/adapters/knowledge_store.py
+  s_c774f74b5992a9::t_440f2b554d554f 21,62,571-610,1185-1193,1200-1203
+opentest/adapters/operation_execution_store.py
+  s_c774f74b5992a9::t_acac56b0ae549b 1-308
+opentest/adapters/source_analysis.py
+  s_c774f74b5992a9::t_0e298ab5f9f9f5 22,859,950-951,954-955,958-959,962,965,977,979-997
+opentest/adapters/sqlite_index.py
+  s_c774f74b5992a9::t_7e4d024c2f6570 11,17,32,78-106,301-447,562-574,581
+opentest/adapters/workspace_revision.py
+  s_c774f74b5992a9::t_324d597770d1fb 1-151
+opentest/api.py
+  s_c774f74b5992a9::t_70baa113d5c307 30,80-82,243-253,256-257,287-289,298-302,627-695,829,881,889,892,901,903,911,913,939,950,959,962,973,981,984,1006,1012-1013,1016,1027,1034-1035,1038,1046,1048,1173,1175,1183,1185,1189,1191,1198,1200
+opentest/application/catalogs.py
+  s_c774f74b5992a9::t_13f2704a6dcdb6 6-7,9-12,14,43-48,59-81,95-169,209-317,320-325,334-335,399-411,427-630,788
+opentest/application/dsf_operations.py
+  s_c774f74b5992a9::t_462408a0750bc1 331-391
+opentest/application/knowledge_discovery.py
+  s_c774f74b5992a9::t_16f7a3a4cb64ca 1020,1029,1041-1045,1048-1064,1069,1076-1081,1100,1119,1135,1138-1139
+opentest/application/operations.py
+  s_c774f74b5992a9::t_d66c66849408e3 1-922
+opentest/domain/errors.py
+  s_c774f74b5992a9::t_5f493bd9e2b150 26-39
+opentest/domain/models.py
+  s_c774f74b5992a9::t_e2c823ff397dd6 315-393,769,772-774
+opentest/web/app.js
+  s_c774f74b5992a9::t_8b617a7aeaf5bb 430-431,442,732,734-735,737,741,774,792,794,796-798,804-906,2257,2259-2260,2263-2265,2694,2869,3000,3003-3004,3007-3009,3092,3094-3095,3098-3100,3104,3107-3108,3111-3113,3147,3149-3150,3177,3186,3210,3212-3219,3221,3679,3681-3682,3685-3687,3698,3700,3702,3721,3736,3867,3869-3873,3876-3878,3881-3884,4224,4227-4228,4246,4250-4251,4254-4257,4261,4263-4264,4267-4268,5035
+opentest/web/index.html
+  s_c774f74b5992a9::t_45c07204d0a154 134-135,139,142-143,152,176,186-191,210
+opentest/web/styles.css
+  s_c774f74b5992a9::t_1429b649e19b84 273-281
+tests/v2/test_codex_native_workspace.py
+  s_c774f74b5992a9::t_982f5b4da46183 1-785
+tests/v2/test_console_contract.py
+  s_c774f74b5992a9::t_88d3c00d07aa81 47,82-83,89,97,122,155-161,180,307-308,319-326,364-365,368,385-389,397-399
+tests/v2/test_knowledge_conversation.py
+  s_c774f74b5992a9::t_797364a67d4080 1337-1338,1344,1361-1362,1366
+tests/v2/test_knowledge_interview_frontier.py
+  s_c774f74b5992a9::t_955827c26e2713 1077-1078,1084,1099-1100,1103-1104,1109-1111,1377-1408
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.18",
+  "base_commit_sha": "9e86723a8824cb18c63b557672e96d162524749f",
+  "prompts": {},
+  "sessions": {
+    "s_94ea90289fc01a": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a02297-e0a7-7af1-b468-6bdf6ab81dbc",
+        "model": "gpt-5.6-sol"
+      },
+      "human_author": "shizhen <yuuu.shizhen@gmail.com>"
+    },
+    "s_c774f74b5992a9": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a032a4-b995-7fa2-b9eb-496659acac79",
+        "model": "unknown"
+      },
+      "human_author": "shizhen <yuuu.shizhen@gmail.com>"
+    }
+  }
+}
