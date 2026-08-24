@@ -1,0 +1,110 @@
+AGENTS.md
+  h_3484aac7699d62 1-69
+openspec/changes/capability-driven-operation-resolution/design.md
+  s_c774f74b5992a9::t_56fa75db2dee35 1-18
+openspec/changes/capability-driven-operation-resolution/proposal.md
+  s_c774f74b5992a9::t_6a080d3cff848d 1-18
+openspec/changes/capability-driven-operation-resolution/specs/codex-operation-resolution/spec.md
+  s_c774f74b5992a9::t_2d258a2511fde5 1-24
+openspec/changes/capability-driven-operation-resolution/specs/declarative-capability-profiles/spec.md
+  s_c774f74b5992a9::t_f7cf919ad516f0 1-12
+openspec/changes/capability-driven-operation-resolution/specs/semantic-operation-contract/spec.md
+  s_c774f74b5992a9::t_423594e4721055 1-39
+openspec/changes/capability-driven-operation-resolution/tasks.md
+  s_c774f74b5992a9::t_af705b2de29d51 1-30
+opentest-plugin-marketplace/plugins/open-test-knowledge/.codex-plugin/plugin.json
+  s_c774f74b5992a9::t_64f2dcbfb4f049 3
+opentest-plugin-marketplace/plugins/open-test-knowledge/scripts/opentest_operations_mcp.py
+  s_c774f74b5992a9::t_a5c28b6a31b6e7 126,153,265,273,281
+opentest-plugin-marketplace/plugins/open-test-knowledge/scripts/sync_system_skills.py
+  s_c774f74b5992a9::t_e013c59fab1e05 117,127-130,132-140
+opentest-plugin-marketplace/plugins/open-test-knowledge/skills/open-test-ifightchainsaas-java-refund-core/SKILL.md
+  s_c774f74b5992a9::t_3dca397338ddab 12-15
+opentest/adapters/dsf_proxy_worker.py
+  s_c774f74b5992a9::t_45fb16964ed51f 69-73,75,244-245
+opentest/adapters/knowledge_tracing.py
+  s_c774f74b5992a9::t_5ea26b85b291c9 10,75,77,80-82,87,121-122,124-125,127
+opentest/adapters/qa_worker.py
+  s_c774f74b5992a9::t_6ebdb3d1bca4d9 16-17,35,44,54-55,131-135,137-147,184-192,194,197,199-200,211-234
+opentest/adapters/sqlite_index.py
+  s_c774f74b5992a9::t_ec131786a0099d 20-22,83-85,100,316-319,322-326,342,345,349-378,413-421,435-441,448,471-500,503-529,680-681
+opentest/application/capability_profiles.py
+  s_c774f74b5992a9::t_22ff31479835e7 1-316
+opentest/application/create_order_mvp.py
+  s_c774f74b5992a9::t_8d2b51f674073d 1,23-27,48-53,78,86,95,106,129,133,140,153,184,199,258,268,281,294,315,324,395-402,404-408,410-431,466-476,478-480,482,684,693,708
+opentest/application/execution.py
+  s_c774f74b5992a9::t_b20f7935eec133 22,441-445
+opentest/application/foundation.py
+  s_c774f74b5992a9::t_e8f265f0a6427a 62,198,233-237,253-257,275,407-410,418-419,422,425,431-434,436,439,486,492,1067,1075,1079-1080,1082,1086-1087,1127-1128,1142,1147
+opentest/application/resources.py
+  s_c774f74b5992a9::t_85c736452c9d9c 19,55,63,73,123-124,147,150-151,208-211,455-463
+opentest/application/scenarios.py
+  s_c774f74b5992a9::t_6a7f404959b0d2 19-22,56-64,188,226-229,379,381,399-400,436,443-445,447-449,473,569,576,593,727,739,843-844,871,1086,1225,1247,1376,1382,1397,1757,1799
+opentest/assets/capability_profiles.yaml
+  s_c774f74b5992a9::t_881c06a651453f 1-56
+opentest/domain/errors.py
+  s_c774f74b5992a9::t_4bb5e3d553bf0d 44-59
+opentest/domain/models.py
+  s_c774f74b5992a9::t_6aa4cad02d88d5 236,339-355,359,363,368-369,469-470,472,474,514-521,2419
+opentest/web/app.js
+  s_c774f74b5992a9::t_7a2303ad2d2844 380-382
+tests/v2/test_capability_profiles.py
+  s_c774f74b5992a9::t_ef7415ee2196e6 1-235
+tests/v2/test_codex_native_workspace.py
+  s_c774f74b5992a9::t_91601a600daaab 38-43,56-59,122,141-142,172-193,282,300-354,359-503,744-860,891-923,1097-1100
+tests/v2/test_dsf_operations.py
+  s_c774f74b5992a9::t_a06041179b3f16 62,129,138-156,179,318-328,351-354,382-383,388,403,424,430,434-591,624,693,751,784
+tests/v2/test_multi_system_reliability.py
+  s_c774f74b5992a9::t_b46512b698b2f1 554,561,569
+tests/v2/test_qa_worker.py
+  s_c774f74b5992a9::t_ed62940c292441 27-33,124-139
+workers/java-semantic-analyzer/src/main/java/com/opentest/semantic/JavaSemanticAnalyzerService.java
+  s_c774f74b5992a9::t_bec7dacd419583 4,6,134-137,145-157,306-429,499-500,502,504,506,509,529-542,1230,1232
+workers/java-semantic-analyzer/src/test/java/com/opentest/semantic/JavaSemanticAnalyzerServiceTest.java
+  s_c774f74b5992a9::t_5f879807c31335 15,196,203-246,294-309
+workers/qa-dsf-worker/src/main/java/com/opentest/dsfworker/WorkerResponse.java
+  s_c774f74b5992a9::t_cc71837fdfd364 56,60-88
+workers/qa-dsf-worker/src/test/java/com/opentest/dsfworker/WorkerProtocolTest.java
+  s_c774f74b5992a9::t_005c55d43ce19b 7,90-113
+workers/qa-oracle-worker/src/main/java/com/opentest/qaoracle/WorkerMain.java
+  s_c774f74b5992a9::t_f0c0b275d750f5 48-50,54-55,84-98
+workers/qa-oracle-worker/src/main/java/com/opentest/qaoracle/catalog/CatalogManifestLoader.java
+  s_c774f74b5992a9::t_19e639a7332e72 93
+workers/qa-oracle-worker/src/main/java/com/opentest/qaoracle/catalog/OperationCatalog.java
+  s_c774f74b5992a9::t_548f1d18da8a18 38,41-43,45-49,148-152,158-166
+workers/qa-oracle-worker/src/main/java/com/opentest/qaoracle/resource/CompanySdkResourceFactory.java
+  s_c774f74b5992a9::t_c1178ebbd99231 24,36-60,101,111-113,133-134,199
+workers/qa-oracle-worker/src/main/java/com/opentest/qaoracle/service/IdentityGate.java
+  s_c774f74b5992a9::t_97329482e33b96 8,13-14,17,20-21,23,25-26,41,46,54-77
+workers/qa-oracle-worker/src/main/java/com/opentest/qaoracle/service/OracleWorkerService.java
+  s_c774f74b5992a9::t_a4e47b22b11722 450
+workers/qa-oracle-worker/src/test/java/com/opentest/qaoracle/catalog/CatalogManifestLoaderTest.java
+  s_c774f74b5992a9::t_6f46ab0cde4dd7 27-28,35,47,62,76,88,102,125
+workers/qa-oracle-worker/src/test/java/com/opentest/qaoracle/resource/CompanySdkResourceFactoryTest.java
+  s_c774f74b5992a9::t_4269fa00884928 13-14,18-20,22,25-28,35,47,59
+workers/qa-oracle-worker/src/test/java/com/opentest/qaoracle/service/IdentityGateTest.java
+  s_c774f74b5992a9::t_ae63a3c22cb9ab 20-22,36-37,48-49,62,69,76
+workers/qa-oracle-worker/src/test/java/com/opentest/qaoracle/service/OracleWorkerServiceTest.java
+  s_c774f74b5992a9::t_af75228d36a526 32-33,39,41,393-394,407
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.18",
+  "base_commit_sha": "0937a939bfa9c7ce80adc520799190ec24ab259e",
+  "prompts": {},
+  "humans": {
+    "h_3484aac7699d62": {
+      "author": "shizhen <yuuu.shizhen@gmail.com>"
+    }
+  },
+  "sessions": {
+    "s_c774f74b5992a9": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a032a4-b995-7fa2-b9eb-496659acac79",
+        "model": "unknown"
+      },
+      "human_author": "shizhen <yuuu.shizhen@gmail.com>"
+    }
+  }
+}
