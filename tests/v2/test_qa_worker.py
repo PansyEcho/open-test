@@ -24,8 +24,13 @@ def _client_fixture(tmp_path: Path, runner: Any) -> QaWorkerClient:
     worker_jar = tmp_path / "worker.jar"
     worker_jar.write_bytes(b"test-worker")
     catalog = tmp_path / "catalog.yaml"
-    catalog.write_text("operations: []\n", encoding="utf-8")
-    return QaWorkerClient(worker_jar, catalog, process_runner=runner)
+    catalog.write_text(f"system_id: {BOOKING_CORE_SYSTEM_ID}\noperations: []\n", encoding="utf-8")
+    return QaWorkerClient(
+        worker_jar,
+        catalog,
+        process_runner=runner,
+        application_name=BOOKING_CORE_SYSTEM_ID,
+    )
 
 
 def _request(**overrides: Any) -> OracleRequest:
@@ -114,6 +119,22 @@ def test_worker_client_rejects_non_qa_environment_before_process(tmp_path: Path)
     client = _client_fixture(tmp_path, unexpected_runner)
     with pytest.raises(KnowledgeValidationError, match="qa environment"):
         client.execute(_request(), _environment("prod"), 10)
+
+
+def test_worker_client_requires_profile_application_identity_before_process(tmp_path: Path) -> None:
+    """公开目录不能替代Capability Profile批准的远程配置应用身份。"""
+
+    def unexpected_runner(command: list[str], **options: Any) -> subprocess.CompletedProcess[str]:
+        """若缺少Profile身份仍启动进程则立即暴露测试失败。"""
+
+        raise AssertionError(f"worker must not start: {command} {options}")
+
+    configured = _client_fixture(tmp_path, unexpected_runner)
+    client = QaWorkerClient(configured.worker_jar, configured.catalog_path)
+
+    # 身份缺失必须在Java进程和任何远程配置初始化之前被拒绝。
+    with pytest.raises(KnowledgeValidationError, match="application identity"):
+        client.execute(_request(), _environment(), 10)
 
 
 @pytest.mark.parametrize("forbidden_key", ["sql", "command", "host", "password", "token"])

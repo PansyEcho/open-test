@@ -551,14 +551,14 @@ def test_booking_catalog_install_failure_leaves_no_orphan_directory(tmp_path: Pa
         name="Booking.Core",
         source_path=str(source),
     )
-    original_installer = application._install_booking_core_validation_catalog
+    original_installer = application._install_validation_catalog
 
     def fail_catalog_install(_system_id: str) -> None:
         """模拟固定目录资产在系统骨架创建后无法安装。"""
 
         raise RuntimeError("catalog installation failed")
 
-    monkeypatch.setattr(application, "_install_booking_core_validation_catalog", fail_catalog_install)
+    monkeypatch.setattr(application, "_install_validation_catalog", fail_catalog_install)
     with pytest.raises(RuntimeError, match="catalog installation failed"):
         application.register_system(system)
 
@@ -566,7 +566,7 @@ def test_booking_catalog_install_failure_leaves_no_orphan_directory(tmp_path: Pa
     assert not application.store.system_root(system.system_id).exists()
 
     # 恢复真实安装器后，同一稳定ID必须能够重新注册并得到校验目录。
-    monkeypatch.setattr(application, "_install_booking_core_validation_catalog", original_installer)
+    monkeypatch.setattr(application, "_install_validation_catalog", original_installer)
     registered = application.register_system(system)
     assert registered.system_id == system.system_id
     assert (application.store.system_root(system.system_id) / "oracles/catalog.yaml").is_file()

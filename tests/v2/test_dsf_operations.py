@@ -59,6 +59,7 @@ def _write_dsf_project(source_root: Path) -> None:
             (
                 "dsf.service.config.registryhost=qa-registry.invalid",
                 "dsf.service.config.name=demo-client",
+                "dsf.service.config.env=qa",
                 "dsf.service.config.targetenv=qa",
                 "provider.gs.name=dsf.demo.booking",
                 "provider.version=1.2.3",
@@ -125,12 +126,32 @@ def test_dsf_source_discovery_builds_profile_and_fixed_operations(tmp_path: Path
 
     assert profile.registry_host == "qa-registry.invalid"
     assert profile.client_name == "demo-client"
+    assert profile.routing_environment == "qa"
     assert profile.target_environment == "qa"
     assert warnings == []
     by_action = {operation.action: operation for operation in operations}
     assert by_action["orderDetail"].mutability == DsfOperationMutability.READ_ONLY
     assert by_action["createOrder"].mutability == DsfOperationMutability.WRITE
     assert by_action["orderDetail"].operation_id == f"dsf:{SYSTEM_ID}:order:orderDetail"
+
+
+def test_dsf_revision_materialization_rejects_parent_path(tmp_path: Path) -> None:
+    """Git revision配置路径不得通过父级跳转逃出临时根。
+
+    Args:
+        tmp_path: Pytest隔离的revision临时根。
+
+    Side Effects:
+        不创建逃逸文件，也不调用Git或QA。
+    """
+
+    discoverer = DsfSourceDiscoverer()
+
+    # 直接验证最终写入边界，异常必须发生在任何目录或文件创建之前。
+    with pytest.raises(KnowledgeValidationError, match="path is unsafe"):
+        discoverer._safe_materialization_path(tmp_path / "revision", Path("../escape.qa"))
+
+    assert not (tmp_path / "escape.qa").exists()
 
 
 def test_dsf_source_discovery_resolves_main_properties_and_rejects_non_qa_environment(tmp_path: Path) -> None:
@@ -155,6 +176,7 @@ def test_dsf_source_discovery_resolves_main_properties_and_rejects_non_qa_enviro
     properties_path.write_text(
         "dsf.service.config.registryhost=${registry.host}\n"
         "dsf.service.config.name=${client.identity}\n"
+        "dsf.service.config.env=qa\n"
         "dsf.service.config.targetenv=${target.environment}\n",
         encoding="utf-8",
     )
@@ -293,6 +315,17 @@ def test_dsf_canary_fixture_merge_preserves_concurrent_operation_updates(tmp_pat
 class SuccessfulProtocolLauncher(DsfProxyWorkerLauncher):
     """不访问QA，仅模拟Worker正确写入0600成功响应。"""
 
+    def __init__(self, worker_jar: Path, expected_target_environment: str = "qa"):
+        """配置假Worker需要验证的独立targetenv。
+
+        Args:
+            worker_jar: 满足启动器存在性门禁的测试Jar路径。
+            expected_target_environment: 本次协议请求应写入的targetenv值。
+        """
+
+        super().__init__(worker_jar)
+        self.expected_target_environment = expected_target_environment
+
     def _run_worker(
         self,
         temporary_root: Path,
@@ -315,6 +348,10 @@ class SuccessfulProtocolLauncher(DsfProxyWorkerLauncher):
 
         del timeout_seconds
         request = json.loads((temporary_root / "request.json").read_text(encoding="utf-8"))
+        properties = (temporary_root / "dsf_application.properties").read_text(encoding="utf-8")
+        # DSF Client 2.5.11依赖env选择QA服务组，不能只写targetenv。
+        assert "dsf.service.config.env=qa\n" in properties
+        assert f"dsf.service.config.targetenv={self.expected_target_environment}\n" in properties
         response_path.write_text(
             json.dumps(
                 {
@@ -342,12 +379,13 @@ def test_worker_launcher_uses_operation_id_protocol_without_exposing_service_fie
         system_id=SYSTEM_ID,
         registry_host="qa-registry.invalid",
         client_name="demo-client",
-        target_environment="qa",
+        routing_environment="qa",
+        target_environment="test",
     )
     operation = _operation()
     request = DsfExecutionRequest(operation_id=operation.operation_id, payload={"orderNo": "local-fixture"})
 
-    response = SuccessfulProtocolLauncher(worker_jar).execute(SYSTEM_ID, profile, operation, request)
+    response = SuccessfulProtocolLauncher(worker_jar, "test").execute(SYSTEM_ID, profile, operation, request)
 
     assert response.status == "success"
     assert response.output == {"found": True}
@@ -362,6 +400,7 @@ def test_worker_launcher_rejects_request_operation_identity_mismatch(tmp_path: P
         system_id=SYSTEM_ID,
         registry_host="qa-registry.invalid",
         client_name="demo-client",
+        routing_environment="qa",
         target_environment="qa",
     )
     request = DsfExecutionRequest(
@@ -382,13 +421,172 @@ def test_worker_launcher_rejects_non_qa_profile_before_process_start(tmp_path: P
         system_id=SYSTEM_ID,
         registry_host="prod-registry.invalid",
         client_name="demo-client",
+        routing_environment="prod",
         target_environment="prod",
     )
     operation = _operation()
     request = DsfExecutionRequest(operation_id=operation.operation_id, payload={})
 
-    with pytest.raises(ScopeViolationError, match="approved QA environment"):
+    with pytest.raises(ScopeViolationError, match="not approved for QA"):
         SuccessfulProtocolLauncher(worker_jar).execute(SYSTEM_ID, profile, operation, request)
+
+
+def test_indexed_execution_derives_legacy_routing_environment_without_rewriting_scan(tmp_path: Path) -> None:
+    """旧扫描缺少env字段时应从一致源码派生QA路由且保持Manifest不可变。
+
+    Args:
+        tmp_path: Pytest隔离知识仓库、Java配置和假Worker根。
+
+    Side Effects:
+        仅调用本地协议替身并写入临时执行文件，不访问QA。
+    """
+
+    source_root = tmp_path / "source"
+    _write_dsf_project(source_root)
+    application = OpenTestApplication(tmp_path / "knowledge-base")
+    application.initialize()
+    application.register_system(SystemDefinition(system_id=SYSTEM_ID, name="DSF系统", source_path=str(source_root)))
+    manifest = ScanManifest(
+        scan_id="scan-dsf-legacy-routing-profile",
+        system_id=SYSTEM_ID,
+        baseline=application.knowledge.git_repository.capture(source_root),
+        dsf_profile=DsfClientProfile(
+            system_id=SYSTEM_ID,
+            registry_host="qa-registry.invalid",
+            client_name="demo-client",
+            target_environment="qa",
+        ),
+        dsf_operations=[_operation()],
+    )
+    artifacts = SourceScanArtifactStore(application.knowledge_root)
+    manifest_path = artifacts.write_manifest(manifest)
+    artifacts.publish_latest(SYSTEM_ID, manifest.scan_id)
+    original_bytes = manifest_path.read_bytes()
+    worker_jar = tmp_path / "worker.jar"
+    worker_jar.write_bytes(b"test-placeholder")
+    application.dsf_operations.launcher = SuccessfulProtocolLauncher(worker_jar)
+
+    response = application.dsf_operations.execute_indexed(
+        SYSTEM_ID,
+        manifest.scan_id,
+        DsfExecutionRequest(operation_id=_operation().operation_id, payload={"orderNo": "local-only"}),
+    )
+
+    assert response.status == "success"
+    assert manifest_path.read_bytes() == original_bytes
+
+
+def test_indexed_execution_reads_clean_legacy_profile_from_recorded_commit(tmp_path: Path) -> None:
+    """干净Git扫描应从记录提交补导env，不受当前工作树单独修改env影响。
+
+    Args:
+        tmp_path: Pytest隔离Git源码、知识仓库和假Worker根。
+
+    Side Effects:
+        创建本地Git提交和未提交配置差异，仅调用协议替身，不访问QA。
+    """
+
+    source_root = tmp_path / "source"
+    _write_dsf_project(source_root)
+    # 先固化一个不含工作区差异的扫描提交，模拟真实历史Manifest的可重放基线。
+    subprocess.run(["git", "init", "-q", str(source_root)], check=True)
+    subprocess.run(["git", "-C", str(source_root), "config", "user.email", "opentest@example.invalid"], check=True)
+    subprocess.run(["git", "-C", str(source_root), "config", "user.name", "OpenTest"], check=True)
+    subprocess.run(["git", "-C", str(source_root), "add", "."], check=True)
+    subprocess.run(["git", "-C", str(source_root), "commit", "-q", "-m", "baseline"], check=True)
+    application = OpenTestApplication(tmp_path / "knowledge-base")
+    application.initialize()
+    application.register_system(SystemDefinition(system_id=SYSTEM_ID, name="DSF系统", source_path=str(source_root)))
+    baseline = application.knowledge.git_repository.capture(source_root)
+    # 历史Profile故意缺少env，补导只能读取上一步记录的Git提交。
+    manifest = ScanManifest(
+        scan_id="scan-dsf-clean-git-legacy-profile",
+        system_id=SYSTEM_ID,
+        baseline=baseline,
+        dsf_profile=DsfClientProfile(
+            system_id=SYSTEM_ID,
+            registry_host="qa-registry.invalid",
+            client_name="demo-client",
+            target_environment="qa",
+        ),
+        dsf_operations=[_operation()],
+    )
+    artifacts = SourceScanArtifactStore(application.knowledge_root)
+    manifest_path = artifacts.write_manifest(manifest)
+    artifacts.publish_latest(SYSTEM_ID, manifest.scan_id)
+    original_bytes = manifest_path.read_bytes()
+    filter_path = source_root / "conf/filter/application.qa"
+    original_filter = filter_path.read_text(encoding="utf-8")
+    changed_filter = original_filter.replace("dsf.service.config.env=qa", "dsf.service.config.env=test")
+    # 当前工作树只改变路由环境，用于证明执行不会把新env拼到旧provider坐标上。
+    filter_path.write_text(
+        changed_filter,
+        encoding="utf-8",
+    )
+    worker_jar = tmp_path / "worker.jar"
+    worker_jar.write_bytes(b"test-placeholder")
+    application.dsf_operations.launcher = SuccessfulProtocolLauncher(worker_jar)
+
+    # 假Worker要求env=qa；若错误读取当前工作树的test值，本次调用会立即失败。
+    response = application.dsf_operations.execute_indexed(
+        SYSTEM_ID,
+        manifest.scan_id,
+        DsfExecutionRequest(operation_id=_operation().operation_id, payload={"orderNo": "local-only"}),
+    )
+
+    assert response.status == "success"
+    assert manifest_path.read_bytes() == original_bytes
+
+
+def test_indexed_execution_rejects_changed_dirty_legacy_profile(tmp_path: Path) -> None:
+    """带差异的历史扫描在env单独变化后必须拒绝拼接当前配置。
+
+    Args:
+        tmp_path: Pytest隔离的非Git源码、知识仓库和Manifest根。
+
+    Side Effects:
+        修改测试专用环境配置，不启动Worker或访问QA。
+    """
+
+    source_root = tmp_path / "source"
+    _write_dsf_project(source_root)
+    application = OpenTestApplication(tmp_path / "knowledge-base")
+    application.initialize()
+    application.register_system(SystemDefinition(system_id=SYSTEM_ID, name="DSF系统", source_path=str(source_root)))
+    # 非Git扫描依赖dirty_digest重放，后续任何配置变化都必须触发拒绝。
+    manifest = ScanManifest(
+        scan_id="scan-dsf-dirty-legacy-profile",
+        system_id=SYSTEM_ID,
+        baseline=application.knowledge.git_repository.capture(source_root),
+        dsf_profile=DsfClientProfile(
+            system_id=SYSTEM_ID,
+            registry_host="qa-registry.invalid",
+            client_name="demo-client",
+            target_environment="qa",
+        ),
+        dsf_operations=[_operation()],
+    )
+    artifacts = SourceScanArtifactStore(application.knowledge_root)
+    manifest_path = artifacts.write_manifest(manifest)
+    artifacts.publish_latest(SYSTEM_ID, manifest.scan_id)
+    original_bytes = manifest_path.read_bytes()
+    filter_path = source_root / "conf/filter/application.qa"
+    original_filter = filter_path.read_text(encoding="utf-8")
+    changed_filter = original_filter.replace("dsf.service.config.env=qa", "dsf.service.config.env=test")
+    filter_path.write_text(
+        changed_filter,
+        encoding="utf-8",
+    )
+
+    # 基线门禁应在Worker启动前拒绝，且不能以兼容为由改写历史Manifest。
+    with pytest.raises(KnowledgeValidationError, match="source baseline changed"):
+        application.dsf_operations.execute_indexed(
+            SYSTEM_ID,
+            manifest.scan_id,
+            DsfExecutionRequest(operation_id=_operation().operation_id, payload={"orderNo": "local-only"}),
+        )
+
+    assert manifest_path.read_bytes() == original_bytes
 
 
 def test_application_fixture_execution_uses_confirmed_operation_and_consumer_evidence(tmp_path: Path) -> None:
@@ -423,6 +621,7 @@ def test_application_fixture_execution_uses_confirmed_operation_and_consumer_evi
             system_id=SYSTEM_ID,
             registry_host="qa-registry.invalid",
             client_name="demo-client",
+            routing_environment="qa",
             target_environment="qa",
         ),
         dsf_operations=[operation],
@@ -491,6 +690,7 @@ def test_dsf_confirmation_is_invalidated_by_scan_or_operation_definition_drift(t
         system_id=SYSTEM_ID,
         registry_host="qa-registry.invalid",
         client_name="demo-client",
+        routing_environment="qa",
         target_environment="qa",
     )
     operation = _operation()
@@ -548,6 +748,7 @@ def test_dsf_confirmation_rejects_duplicate_operation_ids(tmp_path: Path) -> Non
             system_id=SYSTEM_ID,
             registry_host="qa-registry.invalid",
             client_name="demo-client",
+            routing_environment="qa",
             target_environment="qa",
         ),
         dsf_operations=[operation],
@@ -580,6 +781,7 @@ def test_dsf_canary_fixture_api_never_echoes_sensitive_payload(tmp_path: Path) -
             system_id=SYSTEM_ID,
             registry_host="qa-registry.invalid",
             client_name="demo-client",
+            routing_environment="qa",
             target_environment="qa",
         ),
         dsf_operations=[operation],

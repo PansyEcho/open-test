@@ -35,7 +35,12 @@ from opentest.application.operations import (
     OperationExecutionService,
 )
 from opentest.application.tasks import LocalTaskManager
-from opentest.domain.errors import KnowledgeNotFoundError, KnowledgeValidationError, ScopeViolationError
+from opentest.domain.errors import (
+    KnowledgeNotFoundError,
+    KnowledgeValidationError,
+    OperationProviderFailure,
+    ScopeViolationError,
+)
 from opentest.domain.models import (
     DsfClientProfile,
     DsfOperationDefinition,
@@ -48,6 +53,10 @@ from opentest.domain.models import (
     OperationExecutionRequest,
     OperationExecutionStatus,
     ScanManifest,
+    SemanticAnalysisResult,
+    SemanticFieldDefinition,
+    SemanticMethodDefinition,
+    SemanticTypeDefinition,
     SourceBaseline,
     SourceReference,
     SystemDefinition,
@@ -110,6 +119,7 @@ class FakeOperationProvider:
 
         self.facade_calls = 0
         self.job_calls = 0
+        self.facade_arguments: list[dict[str, Any]] = []
         self._lock = threading.Lock()
 
     def execute_facade(self, capability: OperationCapability, request: OperationExecutionRequest) -> Any:
@@ -128,6 +138,8 @@ class FakeOperationProvider:
 
         with self._lock:
             self.facade_calls += 1
+            # 保存隔离测试参数的副本，用于证明执行层没有添加或改写字段。
+            self.facade_arguments.append(dict(request.arguments))
         return {
             "accepted": True,
             "token": "must-not-persist",
@@ -155,6 +167,28 @@ class FakeOperationProvider:
         with self._lock:
             self.job_calls += 1
         return {"accepted": True}
+
+
+class FailingFacadeProvider(FakeOperationProvider):
+    """模拟DSF Worker完成协议但返回稳定provider失败。"""
+
+    def execute_facade(self, capability: OperationCapability, request: OperationExecutionRequest) -> Any:
+        """抛出带稳定错误码的假DSF失败。
+
+        Args:
+            capability: 已索引Facade操作。
+            request: 已通过QA和Schema校验的请求。
+
+        Returns:
+            此测试替身不返回结果。
+
+        Raises:
+            OperationProviderFailure: 始终模拟QA路由失败。
+        """
+
+        # 先记录一次实际派发，证明失败状态传播没有触发自动重试。
+        super().execute_facade(capability, request)
+        raise OperationProviderFailure("DSF_ROUTING_FAILED", "QA DSF服务发现失败。")
 
 
 def _registered_workspace(tmp_path: Path) -> tuple[GitKnowledgeStore, Path]:
@@ -245,6 +279,7 @@ def _manifest(source_root: Path, scan_id: str = "scan-codex-native-1") -> ScanMa
         ],
         dsf_profile=DsfClientProfile(
             system_id=SYSTEM_ID,
+            routing_environment="qa",
             target_environment="test",
             status=DsfProfileStatus.CONFIRMED,
         ),
@@ -262,7 +297,207 @@ def _manifest(source_root: Path, scan_id: str = "scan-codex-native-1") -> ScanMa
                 source_refs=[facade_ref],
             )
         ],
+        semantic_analysis=SemanticAnalysisResult(
+            schema_version=4,
+            analyzer="test-semantic-analyzer",
+            analyzer_version="operation-evidence-test",
+            system_id=SYSTEM_ID,
+            methods=[
+                SemanticMethodDefinition(
+                    symbol_id="com.example.refund.RefundFacade#createOrder(com.example.refund.RefundCreateRequest)",
+                    qualified_class_name="com.example.refund.RefundFacade",
+                    method_name="createOrder",
+                    javadoc_summary="创建退票单",
+                    parameter_names=["request"],
+                    parameter_types=["RefundCreateRequest"],
+                    parameter_qualified_types=["com.example.refund.RefundCreateRequest"],
+                    return_type="RefundCreateResponse",
+                    return_qualified_type="com.example.refund.RefundCreateResponse",
+                    source_ref=facade_ref,
+                )
+            ],
+            types=[
+                SemanticTypeDefinition(
+                    symbol_id="com.example.refund.RefundCreateRequest",
+                    qualified_class_name="com.example.refund.RefundCreateRequest",
+                    simple_name="RefundCreateRequest",
+                    fields=[
+                        SemanticFieldDefinition(
+                            field_name="refundDetailApiDTO",
+                            declared_type="RefundDetailApiDTO",
+                            javadoc_summary="退票业务明细",
+                            annotations=["NotNull"],
+                            runtime_required=True,
+                            runtime_required_evidence=["NotNull"],
+                            source_ref=facade_ref,
+                        ),
+                        SemanticFieldDefinition(
+                            field_name="orderChannelSource",
+                            declared_type="String",
+                            javadoc_summary="订单渠道来源",
+                            annotations=["NotBlank"],
+                            runtime_required=True,
+                            runtime_required_evidence=["NotBlank"],
+                            source_ref=facade_ref,
+                        ),
+                    ],
+                    source_ref=facade_ref,
+                ),
+                SemanticTypeDefinition(
+                    symbol_id="com.example.refund.RefundCreateResponse",
+                    qualified_class_name="com.example.refund.RefundCreateResponse",
+                    simple_name="RefundCreateResponse",
+                    fields=[],
+                    source_ref=facade_ref,
+                ),
+            ],
+        ),
         tool_root=str(source_root / "generated"),
+    )
+
+
+def _query_list_manifest(source_root: Path) -> ScanManifest:
+    """构造两个等价只读退票查询入口及证据型分页字段。
+
+    Args:
+        source_root: 隔离测试源码根。
+
+    Returns:
+        带旧scriptgen必填标记和v4真实运行时证据的Manifest。
+    """
+
+    entries: list[EntryPoint] = []
+    operations: list[DsfOperationDefinition] = []
+    methods: list[SemanticMethodDefinition] = []
+    for facade_name in ("RefundFacade", "RefundDistributionFacade"):
+        source_id = f"com.example.refund.{facade_name}#queryList"
+        source_ref = SourceReference(
+            path=f"app/facade/{facade_name}.java",
+            symbol=source_id,
+            line=20,
+        )
+        entries.append(
+            EntryPoint(
+                entry_id=f"facade:{source_id}",
+                system_id=SYSTEM_ID,
+                kind=KnowledgeNodeKind.FACADE,
+                display_name=f"{facade_name}#queryList",
+                source_id=source_id,
+                source_path=str(source_root / source_ref.path),
+                metadata={
+                    "request_template": {
+                        "serialVersionUID": 0,
+                        "page": 0,
+                        "pageSize": 0,
+                        "platFormId": "",
+                        "ticketNo": "",
+                    },
+                    # 该旧字段故意保留错误来源，证明v2不会把scriptgen文档标记升级成运行时必填。
+                    "required_fields": ["page", "pageSize", "platFormId"],
+                },
+            )
+        )
+        operations.append(
+            DsfOperationDefinition(
+                operation_id=f"dsf:{SYSTEM_ID}:{facade_name}:queryList",
+                provider_system_id=SYSTEM_ID,
+                gs_name="refund-core",
+                service_name=facade_name,
+                version="1.0.0",
+                action="queryList",
+                request_type="RefundOrderQueryRequest",
+                response_type="RefundOrderListResponse",
+                mutability=DsfOperationMutability.READ_ONLY,
+                source_refs=[source_ref],
+            )
+        )
+        methods.append(
+            SemanticMethodDefinition(
+                symbol_id=f"{source_id}(com.example.refund.RefundOrderQueryRequest)",
+                qualified_class_name=f"com.example.refund.{facade_name}",
+                method_name="queryList",
+                javadoc_summary="按查询条件返回退票单列表",
+                parameter_names=["request"],
+                parameter_types=["RefundOrderQueryRequest"],
+                parameter_qualified_types=["com.example.refund.RefundOrderQueryRequest"],
+                return_type="RefundOrderListResponse",
+                return_qualified_type="com.example.refund.RefundOrderListResponse",
+                source_ref=source_ref,
+            )
+        )
+    request_ref = SourceReference(path="app/facade/RefundOrderQueryRequest.java", symbol="RefundOrderQueryRequest", line=10)
+    response_ref = SourceReference(path="app/facade/RefundOrderListResponse.java", symbol="RefundOrderListResponse", line=10)
+    base = _manifest(source_root, "scan-query-list-evidence")
+    return base.model_copy(
+        update={
+            "entries": entries,
+            "tools": [],
+            "dsf_operations": operations,
+            "semantic_analysis": SemanticAnalysisResult(
+                schema_version=4,
+                analyzer="test-semantic-analyzer",
+                analyzer_version="operation-evidence-test",
+                system_id=SYSTEM_ID,
+                methods=methods,
+                types=[
+                    SemanticTypeDefinition(
+                        symbol_id="com.example.refund.RefundOrderQueryRequest",
+                        qualified_class_name="com.example.refund.RefundOrderQueryRequest",
+                        simple_name="RefundOrderQueryRequest",
+                        fields=[
+                            SemanticFieldDefinition(
+                                field_name="page",
+                                declared_type="int",
+                                javadoc_summary="页码",
+                                documentation_required=True,
+                                has_declared_initializer=True,
+                                declared_initializer=1,
+                                initializer_expression="1",
+                                source_ref=request_ref,
+                            ),
+                            SemanticFieldDefinition(
+                                field_name="pageSize",
+                                declared_type="int",
+                                javadoc_summary="每页条数",
+                                documentation_required=True,
+                                has_declared_initializer=True,
+                                declared_initializer=20,
+                                initializer_expression="20",
+                                source_ref=request_ref,
+                            ),
+                            SemanticFieldDefinition(
+                                field_name="platFormId",
+                                declared_type="String",
+                                javadoc_summary="平台过滤条件",
+                                documentation_required=True,
+                                source_ref=request_ref,
+                            ),
+                            SemanticFieldDefinition(
+                                field_name="ticketNo",
+                                declared_type="String",
+                                javadoc_summary="票号查询条件",
+                                source_ref=request_ref,
+                            ),
+                        ],
+                        source_ref=request_ref,
+                    ),
+                    SemanticTypeDefinition(
+                        symbol_id="com.example.refund.RefundOrderListResponse",
+                        qualified_class_name="com.example.refund.RefundOrderListResponse",
+                        simple_name="RefundOrderListResponse",
+                        fields=[
+                            SemanticFieldDefinition(
+                                field_name="refundSerialNo",
+                                declared_type="String",
+                                javadoc_summary="退票单号",
+                                source_ref=response_ref,
+                            )
+                        ],
+                        source_ref=response_ref,
+                    ),
+                ],
+            ),
+        }
     )
 
 
@@ -506,6 +741,123 @@ def test_operation_search_required_fields_idempotency_and_redaction(tmp_path: Pa
         tasks.close()
 
 
+def test_facade_provider_failure_is_terminal_and_preserves_safe_error_code(tmp_path: Path) -> None:
+    """DSF内层failed必须成为外层failed且相同请求不得再次派发。
+
+    Args:
+        tmp_path: Pytest隔离知识、索引和执行记录根。
+
+    Side Effects:
+        仅写入本地脱敏失败记录，不访问QA。
+    """
+
+    store, source_root = _registered_workspace(tmp_path)
+    artifacts = SourceScanArtifactStore(store.root)
+    _publish_manifest(artifacts, _manifest(source_root))
+    provider = FailingFacadeProvider()
+    service, tasks = _operation_service(store, artifacts, provider)
+    request = OperationExecutionRequest(
+        operation_id=FACADE_OPERATION_ID,
+        arguments={"refundDetailApiDTO": {}, "orderChannelSource": "QA_TEST"},
+        request_id="request-failed-refund-facade-001",
+    )
+    try:
+        failed = service.execute(SYSTEM_ID, request)
+        duplicate = service.execute(SYSTEM_ID, request)
+
+        assert failed.status == OperationExecutionStatus.FAILED
+        assert failed.error_code == "DSF_ROUTING_FAILED"
+        assert failed.message == "QA DSF服务发现失败。"
+        assert duplicate.execution_id == failed.execution_id
+        assert provider.facade_calls == 1
+    finally:
+        tasks.close()
+
+
+def test_query_list_semantic_contract_does_not_promote_defaults_or_documentation(tmp_path: Path) -> None:
+    """票号查询应自动得到等价只读候选，契约和执行均不得注入分页或平台字段。"""
+
+    store, source_root = _registered_workspace(tmp_path)
+    artifacts = SourceScanArtifactStore(store.root)
+    _publish_manifest(artifacts, _query_list_manifest(source_root))
+    provider = FakeOperationProvider()
+    service, tasks = _operation_service(store, artifacts, provider)
+    try:
+        matches = service.search(SYSTEM_ID, "查询票号为SYNTHETIC-TICKET-001的退票单号有哪些")
+        assert len(matches) == 2
+        selected = matches[0]
+        assert selected.mutability.value == "READ_ONLY"
+        assert selected.required_fields == []
+        assert "required" not in selected.input_schema
+        assert "safe_defaults" not in selected.model_dump(mode="json")
+        evidence = {field.field_name: field for field in selected.input_fields}
+        assert evidence["page"].declared_initializer == 1
+        assert evidence["pageSize"].declared_initializer == 20
+        assert evidence["platFormId"].documentation_required is True
+        assert evidence["platFormId"].runtime_required is False
+        assert any(field.description == "退票单号" for field in selected.output_fields)
+
+        nested_schema = {
+            "type": "object",
+            "properties": {
+                "optionalFilter": {
+                    "type": "object",
+                    "properties": {"code": {"type": "string"}},
+                    "additionalProperties": False,
+                }
+            },
+            "additionalProperties": False,
+        }
+        service.catalog._mark_required_path(nested_schema, ["optionalFilter", "code"])
+        assert "required" not in nested_schema
+        assert nested_schema["properties"]["optionalFilter"]["required"] == ["code"]
+
+        request = OperationExecutionRequest(
+            operation_id=selected.operation_id,
+            arguments={"ticketNo": "SYNTHETIC-TICKET-001"},
+            request_id="request-query-refund-ticket-001",
+        )
+        completed = service.execute(SYSTEM_ID, request)
+        duplicate = service.execute(SYSTEM_ID, request)
+
+        assert completed.execution_id == duplicate.execution_id
+        assert provider.facade_calls == 1
+        assert provider.facade_arguments == [{"ticketNo": "SYNTHETIC-TICKET-001"}]
+    finally:
+        tasks.close()
+
+
+def test_pre_v4_manifest_derives_v2_evidence_without_rewriting_history(tmp_path: Path) -> None:
+    """旧Manifest应按原基线派生v2证据，且历史JSON保持逐字节不变。"""
+
+    store, source_root = _registered_workspace(tmp_path)
+    artifacts = SourceScanArtifactStore(store.root)
+    current = _query_list_manifest(source_root)
+    assert current.semantic_analysis is not None
+    legacy_analysis = current.semantic_analysis.model_copy(
+        update={"schema_version": 3, "methods": [], "types": []}
+    )
+    legacy_manifest = current.model_copy(
+        update={"scan_id": "scan-query-list-legacy", "semantic_analysis": legacy_analysis}
+    )
+    manifest_path = artifacts.write_manifest(legacy_manifest)
+    artifacts.publish_latest(SYSTEM_ID, legacy_manifest.scan_id)
+    store.update_source_baseline(SYSTEM_ID, legacy_manifest.baseline)
+    original_bytes = manifest_path.read_bytes()
+    analyzer = MagicMock()
+    analyzer.analyze.return_value = current.semantic_analysis
+    catalog = OperationCapabilityCatalog(store, artifacts, semantic_analyzer=analyzer)
+
+    # 重建只安装内存/SQLite派生结果，不回写旧扫描或触发知识生成任务。
+    capabilities = [item for item in catalog.derive(SYSTEM_ID) if item.operation_id.endswith("#queryList")]
+    assert len(capabilities) == 2
+    assert all(item.contract_version == "operation-capability/v2" for item in capabilities)
+    assert all(item.required_fields == [] for item in capabilities)
+    assert any(field.field_name == "page" and field.declared_initializer == 1 for field in capabilities[0].input_fields)
+    assert manifest_path.read_bytes() == original_bytes
+    analyzer.analyze.assert_called_once_with(SYSTEM_ID, legacy_manifest.baseline.source_path)
+
+
 def test_local_facade_provider_executes_the_capability_source_scan(tmp_path: Path) -> None:
     """Facade派发必须固定到能力来源扫描，不能在执行时重新解析latest。"""
 
@@ -534,6 +886,39 @@ def test_local_facade_provider_executes_the_capability_source_scan(tmp_path: Pat
     assert call.args[0] == SYSTEM_ID
     assert call.args[1] == source_scan_id
     assert call.args[2].operation_id == capability.provider_operation_id
+
+
+def test_local_facade_provider_raises_stable_failure_for_failed_worker_response(tmp_path: Path) -> None:
+    """Worker文件协议成功但DSF结果失败时provider必须抛出结构化异常。
+
+    Args:
+        tmp_path: Pytest隔离知识和扫描根。
+    """
+
+    store, source_root = _registered_workspace(tmp_path)
+    artifacts = SourceScanArtifactStore(store.root)
+    _publish_manifest(artifacts, _manifest(source_root))
+    capability = OperationCapabilityCatalog(store, artifacts).derive(SYSTEM_ID)[0]
+    dsf_operations = MagicMock()
+    dsf_operations.execute_indexed.return_value = DsfExecutionResponse(
+        request_id="worker-request-failed-1",
+        operation_id=capability.provider_operation_id,
+        status="failed",
+        error_code="DSF_ROUTING_FAILED",
+        message="QA DSF服务发现失败。",
+    )
+    provider = LocalQaOperationProvider(dsf_operations, artifacts, MagicMock())
+    request = OperationExecutionRequest(
+        operation_id=capability.operation_id,
+        arguments={"refundDetailApiDTO": {}, "orderChannelSource": "QA_TEST"},
+        request_id="request-fixed-scan-failed-001",
+    )
+
+    with pytest.raises(OperationProviderFailure) as captured:
+        provider.execute_facade(capability, request)
+
+    assert captured.value.error_code == "DSF_ROUTING_FAILED"
+    dsf_operations.execute_indexed.assert_called_once()
 
 
 def test_operation_request_reservation_repairs_without_a_second_execution_id(
@@ -709,6 +1094,10 @@ def test_operation_plugin_and_generated_skill_are_explicit_and_fixed(tmp_path: P
     assert f"`{SYSTEM_ID}`" in skill
     assert "execute_operation` exactly once" in skill
     assert "do not ask for a second confirmation" in skill
+    assert "do not ask the user to choose between equivalent technical Facades" in skill
+    assert "required_fields` contains only runtime validation constraints" in skill
+    assert "Choose or omit pagination, sorting" in skill
+    assert "A `declared_initializer` is source evidence" in skill
     assert "allow_implicit_invocation: false" in metadata
 
 
