@@ -16,8 +16,10 @@ from opentest.application.foundation import OpenTestApplication
 from opentest.application.tasks import LocalTaskManager
 from opentest.domain.errors import KnowledgeValidationError, ScopeViolationError
 from opentest.domain.models import (
+    KnowledgeInvocationContract,
     KnowledgeNode,
     KnowledgeNodeKind,
+    KnowledgeToolIntentRequest,
     RuntimeToolSettings,
     SourceScanRequest,
     SystemDefinition,
@@ -113,6 +115,9 @@ def test_archive_and_restore_verifies_files_and_rebuilds_scope(tmp_path: Path) -
     assert stat.S_IMODE(local_environment.stat().st_mode) == 0o600
     assert preview_path.is_file()
     assert run_path.is_file()
+    assert archives.active_codex_client_handoff_count(record.archive_id) == 0
+    with pytest.raises(ScopeViolationError, match="system already exists"):
+        archives.restore(record.archive_id)
 
 
 def test_restore_does_not_publish_derived_archive_registry(tmp_path: Path) -> None:
@@ -150,6 +155,97 @@ def test_runtime_settings_diagnose_real_scriptgen_without_restart(tmp_path: Path
     assert after.status == "READY"
     assert after.source == "local_settings"
     assert stat.S_IMODE(store.settings_path.stat().st_mode) == 0o600
+
+
+def test_invocation_contract_is_not_searchable_in_normal_knowledge_fts(tmp_path: Path) -> None:
+    """接口调用契约中的专用词不得污染普通全文知识检索。
+
+    Args:
+        tmp_path: Pytest提供的隔离知识仓库与SQLite索引路径。
+
+    Returns:
+        None；正文仍可搜索，而仅存在于调用契约的词无法命中时通过。
+    """
+
+    store, first, second = _register_two_systems(tmp_path)
+    node = KnowledgeNode(
+        node_id="facade:FirstFacade#query",
+        system_id=first.system_id,
+        kind=KnowledgeNodeKind.FACADE,
+        title="查询退票单",
+        summary="按业务条件查询退票单。",
+        invocation_contract=KnowledgeInvocationContract(
+            tool_id="refund-query-list",
+            target_id="facade:FirstFacade#query",
+            request_type="RefundOrderQueryRequest",
+            response_type="RefundOrderPage",
+            field_meanings={"secretCapabilityOnly": "只用于工具路由的字段"},
+            usage_examples=["secretCapabilityOnly=JulyVoluntaryRefund", "查询7月自愿退退票单"],
+        ),
+    )
+    store.write_node(node, "业务知识正文只解释查询退票单。")
+    store.write_node(
+        KnowledgeNode(
+            node_id="facade:SecondFacade#query",
+            system_id=second.system_id,
+            kind=KnowledgeNodeKind.FACADE,
+            title="另一系统查询",
+            invocation_contract=KnowledgeInvocationContract(
+                tool_id="refund-query-list",
+                target_id="facade:SecondFacade#query",
+                usage_examples=["SecondSystemCapability"],
+            ),
+        ),
+        "另一系统的普通业务知识。",
+    )
+    index = SqliteKnowledgeIndex(store.root / ".opentest/index.sqlite")
+
+    # 重建只把正文、标题与摘要写入普通FTS；结构化契约走独立能力索引。
+    index.rebuild(store)
+
+    assert index.search("查询退票单", first.system_id)
+    assert index.search("JulyVoluntaryRefund", first.system_id) == []
+    application = OpenTestApplication(store.root)
+
+    # 只有显式工具意图路由读取独立能力索引；它只返回契约与合并澄清项，不执行真实接口。
+    routed = application.resolve_knowledge_tool_intent(
+        first.system_id,
+        KnowledgeToolIntentRequest(query="查询7月自愿退退票单", intent="query"),
+    )
+
+    assert routed["matches"][0]["tool_id"] == "refund-query-list"
+    assert routed["matches"][0]["node_id"] == node.node_id
+    assert routed["clarifications"] == ["请确认日期指创建、申请、出发还是更新时间"]
+    assert routed["executed"] is False
+
+
+def test_runtime_prompt_and_codex_speed_settings_persist_with_0600(tmp_path: Path) -> None:
+    """全局Prompt与Sol档位必须在本地0600设置中完整保存。
+
+    Args:
+        tmp_path: Pytest提供的隔离本地设置目录。
+
+    Returns:
+        None；模板、模型、档位与文件权限刷新后保持一致时通过。
+    """
+
+    store = RuntimeToolSettingsStore(tmp_path / ".opentest/settings.yaml")
+    saved = store.write(
+        RuntimeToolSettings(
+            knowledge_agent="codex",
+            codex_model="gpt-5.6-sol",
+            codex_reasoning_effort="low",
+            knowledge_agent_prompt_template="分析 {{target_id}} 的完整业务知识。",
+        )
+    )
+
+    assert saved.codex_reasoning_effort == "low"
+    assert store.read().knowledge_agent_prompt_template == "分析 {{target_id}} 的完整业务知识。"
+    assert stat.S_IMODE(store.settings_path.stat().st_mode) == 0o600
+    with pytest.raises(ValueError, match="unsupported knowledge prompt placeholder"):
+        RuntimeToolSettings(
+            knowledge_agent_prompt_template="分析 {{target_id}}，并保留 {{target-id}}。"
+        )
 
 
 def test_booking_core_scan_policy_derives_qa_job_url_without_token(tmp_path: Path) -> None:

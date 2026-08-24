@@ -4,8 +4,11 @@
 
 `semantic-knowledge-workspace` 已收敛为“完善背景 → 生成知识 → 确认疑点 → 使用与修订”四步流程；知识生成一次只处理当前对象，必须显式选择 Codex 或 Claude Code，页面流式展示公开分析事件且后台不兜底切换。Refund.Core 当前周期为 `0/0 OPEN`，全局 Agent 保持未选择。`dsf-proxy-execution-and-agent-tools` 等待两项只读金丝雀后切换；`dsf-execution-and-oracles` 保持 `WAITING_QA_INPUT`
 
+2026-08-24 当前实现将Codex客户端知识生成升级为`gpt-5.6-sol` Low/Medium（默认Medium）、全仓库单活动聊天、0600全局业务Prompt模板及完整合成预览。Facade候选新增安全与内容完整度分层，缺口在原聊天最多自动补全两轮，完整后自动发布；接口`invocation_contract`以结构化附属字段和独立能力索引保存，明确排除普通Markdown、FTS和知识问答上下文。旧`queryList`拒绝聊天已固化为`CANCELLED`并释放全局名额。真实页面已用`gpt-5.6-sol / medium`创建唯一新聊天`01a03270-708f-79d1-80a6-62491ecb863d`，任务`task-c0b2de4673b01efa`在同一线程完成两轮补全并自动发布：真实路径覆盖Facade、`RefundOrderListQueryInvoker`、Service的列表/计数方法、DAO/Mapper和分页边界，候选为`1个节点 / 4步路径 / 0个疑点 / 0个完整度缺口`，调用契约独立保存。Prompt只提供入口、业务背景、术语、确定性契约和确认事实，未预告下游类名；刷新与补全未创建第二个聊天。首次页面尝试`task-c9480ab5887f2a85`因PATH中的旧Codex CLI不认识目标模型而在调用模型前失败、未产生费用；App Server现优先使用桌面应用内置且已验证支持该模型的可执行文件。真实候选暴露的Java到XML Mapper相邻校验崩溃也已加入回归并修复。
+
 ## 已完成任务
 
+- 2026-08-24：Codex快速完整知识与独立调用契约最终验收通过。真实页面以`gpt-5.6-sol / medium`为`RefundFacade#queryList`创建唯一聊天并在同一线程完成两轮补全、自动发布；切换接口立即显示加载态且不保留旧正文，刷新恢复同一任务和会话，调用契约独立折叠展示。最终门禁：V2 `412 passed / 1 skipped`、legacy `43 passed`、Java语义Sidecar `11 tests / 0 failures`、OpenSpec strict `32 passed / 0 failed`，compileall、Node语法、`pip check`和diff检查通过。OCR delegation由同一个只读代理完成两轮：初审`5 High / 2 Medium`与唯一复审`0 High / 2 Medium / 1 Low`均已修复，代理未修改文件。未访问QA或Fixture正文，未执行DSF金丝雀、写接口或31个生命周期Case。
 - 完成现有MVP架构、测试和真实scriptgen扫描审计。
 - 确认采用同仓库旁路重构、Git知识真相源和SQLite派生索引。
 - 初始化OpenSpec，并严格校验首个V2 change。
@@ -134,6 +137,8 @@
 - Agent需要高影响答案时先发布代码事实并进入`WAITING_FOR_INPUT`；用户完成问题周期并再次确认费用后只续接原thread/session，人工答案与Agent解释继续分别保持`USER_CONFIRMED`和`INFERRED`。
 - 移除固定业务口径问题，右栏只保留代码和背景仍无法判断的高影响疑点；目录区分已生成、仅代码事实、待确认、已确认、已过期和失败，并增加全部问题入口与对象范围自动切换。
 - 知识页增加四步流程条、全范围Loading、持久化任务恢复和轻量详情；修复状态机父目标重复、旧摘要误判过期及热态详情重复加载问题。
+- 修复Codex严格结构化输出：动态摘要Map改为全字段必填的摘要数组和最小源码引用，Codex/Claude共用启动前本地Schema预检，无效Schema不会启动Agent或产生费用。
+- Agent失败且代码事实已保存时任务明确显示`partial`和独立失败计数；历史误记completed的安全错误任务只读投影为部分完成，页面刷新恢复原任务并禁用重复生成。
 - 本轮OCR delegation初审发现3 High/4 Medium，唯一复审发现2 High/2 Medium，全部接受并修复；覆盖私有完整结果、旧入口费用确认、服务关闭边界、恢复会话、续传性能和重叠服务接管，无拒绝或仲裁项，按两轮上限不再启动第三轮。
 
 ## 进行中任务
@@ -160,6 +165,8 @@
 
 ## 最近验证结果
 
+- 2026-08-23：知识Agent受控全路径扫描与会话诊断最终门禁通过：V2 `368 passed / 1 skipped`、legacy `43 passed`、Java语义Sidecar `11 tests / 0 failures`、OpenSpec strict `32 passed / 0 failed`；compileall、Node语法、`pip check`和diff检查通过。Codex/Claude均只开放OpenTest注册源码读取MCP，文件名/目录名的QA、Fixture、测试及大写缩写变体被拒绝，疑似认证赋值脱敏，搜索为线性字面量且逐级`O_NOFOLLOW`打开；所有Agent引用与行号必须落在实际`read_source`区间。Facade严格`trace_steps`要求`entry → 可选invoker → service → data_access/remote_boundary`，仅到Invoker的回归被拒绝，读取Service与DAO后才允许完成。页面可回看精确Prompt、公开推理摘要/消息、源码访问、最终输出、会话ID和手动resume命令，过大输出显式标记截断且不展示隐藏思维链。OCR delegation初审`2 High / 3 Medium / 2 Low`、唯一复审`1 High / 1 Medium`，全部修复；按两轮上限由主流程完成最终结构化路径与大写缩写边界自检。桌面与390×844诊断布局已在本轮前段真实浏览器通过，最终布局未变且本地console DOM再次只读验证。未运行真实Agent，未访问项目QA、Fixture正文、DSF、写接口或31个生命周期Case，Refund.Core历史`queryList`知识未自动重生成。
+- 2026-08-23：Codex严格Schema、部分失败和刷新恢复修复最终门禁通过：V2 `361 passed / 1 skipped`、legacy `43 passed`、Java语义Sidecar `11 tests / 0 failures`、OpenSpec strict `32 passed / 0 failed`；compileall、Node语法、`pip check`和diff检查通过。无网络假CLI覆盖全字段必填Schema、无副作用预检、重启后非法信封降级、`partial`计数、历史投影、SSE终止及重复POST `409 / Runner调用1次`；桌面与390×844只读页面均显示历史任务`partial · 仅代码事实1 · Agent失败1 · 确定性失败0`且无横向溢出。OCR delegation初审`0 High / 2 Medium / 2 Low`，唯一复审`0 High / 0 Medium / 2 Low`；初审项全部闭合，复审两项低风险页面竞态由主流程修复并完成最终自检。未运行真实Agent，未访问QA、Fixture正文、DSF、写接口或31个生命周期Case。
 - 2026-08-23：单目标知识生成与AI流式进度最终门禁通过：V2 `351 passed / 1 skipped`、legacy `43 passed`、Java语义Sidecar `11 tests / 0 failures`、OpenSpec strict `32 passed / 0 failed`；compileall、Node语法、`pip check`和diff检查通过。桌面与390×844页面验收通过，未运行真实Agent，未访问QA、Fixture正文、DSF、写接口或31个生命周期Case。
 - 2026-08-23：知识目录Facade层级与误确认状态修复完成：左栏按Facade类名分组后展示方法叶子；`RefundDistributionFacade#queryList`已从误标的人工确认一致恢复为仅代码事实，历史问题为open且答案为空。真实页面验收通过；V2 `337 passed / 1 skipped`、legacy `43 passed`、Java语义Sidecar成功打包、OpenSpec strict `32 passed / 0 failed`，compileall、Node语法、`pip check`和diff检查通过。OCR delegation本轮`0 High / 0 Medium / 0 Low`，审查代理全程只读。
 - 2026-08-23：知识库四步流程最终门禁通过：V2 `336 passed / 1 skipped`、legacy `43 passed`、Java语义Sidecar `11 tests / 0 failures`并成功打包；OpenSpec strict `32 passed / 0 failed`、compileall、Node语法和`pip check`通过。

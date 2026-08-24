@@ -4,6 +4,8 @@ from __future__ import annotations
 
 import json
 import os
+import subprocess
+import sys
 import threading
 import time
 from pathlib import Path
@@ -11,8 +13,16 @@ from pathlib import Path
 import pytest
 
 from opentest.adapters.agent_runner import AgentRunner, AgentRunnerConfig
+from opentest.adapters.codex_app_server import (
+    CodexAppServerClient,
+    CodexAppServerConfig,
+    CodexThreadStartWire,
+    _resolve_codex_app_server_executable,
+)
 from opentest.adapters.knowledge_store import GitKnowledgeStore
 from opentest.adapters.knowledge_tracing import JavaKnowledgeTracer
+from opentest.adapters.registered_source_mcp import RegisteredSourceReader
+from opentest.adapters import registered_source_mcp
 from opentest.adapters.source_analysis import SourceScanArtifactStore
 from opentest.adapters.sqlite_index import SqliteKnowledgeIndex
 from opentest.application.knowledge import KnowledgeGenerationService
@@ -20,11 +30,19 @@ from opentest.application.foundation import OpenTestApplication
 from opentest.application.tasks import LocalTaskManager, report_task_progress
 from opentest.domain.errors import ExecutionFailure, KnowledgeValidationError, ScopeViolationError, TaskCancelledError
 from opentest.domain.models import (
+    AgentKnowledgeEnvelope,
+    AgentKnowledgeCompleteness,
+    AgentKnowledgeSourceReference,
+    AgentRunEvidence,
     AgentRunRequest,
     EntryPoint,
     KnowledgeConfirmation,
     KnowledgeGenerationRequest,
+    KnowledgeGenerationBatchRequest,
+    KnowledgeNode,
     KnowledgeNodeKind,
+    KnowledgeClientCandidateEnvelope,
+    KnowledgeInvocationContract,
     KnowledgeStatus,
     ScanManifest,
     SourceBaseline,
@@ -35,6 +53,43 @@ from opentest.domain.models import (
     TaskProgressUpdate,
     TaskStatus,
 )
+
+
+def _assert_codex_strict_schema(schema: dict[str, object]) -> None:
+    """递归核对Codex结构化输出要求的对象闭合性和必填字段完整性。
+
+    Args:
+        schema: Pydantic生成或假CLI从命令参数读取的JSON Schema节点。
+
+    Raises:
+        AssertionError: 任一对象允许额外字段、漏列必填字段或使用动态Map时抛出。
+    """
+
+    # 每个对象都必须关闭额外字段，并把properties中的全部字段列入required。
+    if schema.get("type") == "object":
+        properties = schema.get("properties", {})
+        assert isinstance(properties, dict)
+        assert schema.get("additionalProperties") is False
+        required = schema.get("required")
+        assert isinstance(required, list)
+        assert len(required) == len(properties)
+        assert set(required) == set(properties)
+    # 递归覆盖属性、数组项、联合分支和模型定义，避免只验证根对象造成假通过。
+    for key in ("properties", "$defs"):
+        children = schema.get(key, {})
+        if isinstance(children, dict):
+            for child in children.values():
+                if isinstance(child, dict):
+                    _assert_codex_strict_schema(child)
+    items = schema.get("items")
+    if isinstance(items, dict):
+        _assert_codex_strict_schema(items)
+    for key in ("anyOf", "oneOf"):
+        branches = schema.get(key, [])
+        if isinstance(branches, list):
+            for branch in branches:
+                if isinstance(branch, dict):
+                    _assert_codex_strict_schema(branch)
 
 
 class FixedBaselineRepository:
@@ -607,10 +662,16 @@ def test_agent_runner_uses_allowlisted_environment_and_local_evidence(
     assert output_path.is_relative_to(evidence_root.resolve())
     output = output_path.read_text(encoding="utf-8")
     assert f"cwd={output_path.parent}" in output
+    assert "-a never exec" in output
     assert "--sandbox read-only" in output
     assert "--disable shell_tool" in output
     assert "--disable unified_exec" in output
-    assert "mcp_servers={}" in output
+    # 只开放OpenTest自带的注册源码读取服务；用户MCP、原生Shell和源码根外读取仍不可用。
+    assert "mcp_servers.opentest_source.command" in output
+    assert "mcp_servers.opentest_source.args" in output
+    assert "mcp_servers={}" not in output
+    assert str(source.resolve()) in output
+    assert "source-access.jsonl" in output
     assert "--disable hooks" in output
     assert evidence.prompt_digest
     # 提示和输出都可能包含未确认业务内容，目录与三类证据文件必须显式限制为当前用户。
@@ -679,9 +740,1615 @@ def test_agent_runner_keeps_codex_resume_session_read_only(
     )
     output = Path(evidence.output_path).read_text(encoding="utf-8")
 
-    assert "exec resume 019c-stream-resume-test" in output
+    assert "-a never exec resume 019c-stream-resume-test" in output
     assert 'sandbox_mode="read-only"' in output
     assert "--ignore-user-config" in output
+    assert "mcp_servers.opentest_source.command" in output
+
+
+def test_agent_runner_limits_claude_to_registered_source_tools(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Claude Code必须忽略用户配置并且只允许OpenTest注册源码工具。
+
+    Args:
+        tmp_path: pytest隔离的假Claude、注册源码根和运行证据目录。
+        monkeypatch: 把假Claude命令放到当前测试PATH首位。
+
+    Returns:
+        None；命令关闭原生工具、固定MCP并保留注册源码根时通过。
+    """
+
+    executable = tmp_path / "claude"
+    executable.write_text("#!/bin/sh\nprintf 'args=%s' \"$*\"\n", encoding="utf-8")
+    executable.chmod(0o755)
+    monkeypatch.setenv("PATH", f"{tmp_path}{os.pathsep}{os.environ.get('PATH', '')}")
+    source = tmp_path / "source"
+    source.mkdir()
+
+    # 使用假CLI只检查最终参数，不启动真实Claude Code或产生外部费用。
+    evidence = AgentRunner(AgentRunnerConfig(claude_executable="claude")).run(
+        AgentRunRequest(system_id="train-booking-core", agent="claude", prompt="只读分析"),
+        source,
+        tmp_path / "evidence",
+    )
+    output = Path(evidence.output_path).read_text(encoding="utf-8")
+
+    assert "--permission-mode dontAsk" in output
+    assert "--setting-sources" in output
+    assert "--strict-mcp-config" in output
+    assert '"opentest_source"' in output
+    assert str(source.resolve()) in output
+    assert "--tools  --allowedTools mcp__opentest_source__list_source_files" in output
+    assert "mcp__opentest_source__search_source" in output
+    assert "mcp__opentest_source__read_source" in output
+    assert "--safe-mode" not in output
+
+
+def test_registered_source_reader_scans_only_main_source_and_audits_access(tmp_path: Path) -> None:
+    """受控源码工具应读取主源码、记录轨迹并拒绝根外与Fixture目录。
+
+    Args:
+        tmp_path: pytest隔离的注册源码根和Agent运行目录。
+
+    Returns:
+        None；列举、搜索、读取和边界拒绝均符合契约时通过。
+    """
+
+    source = tmp_path / "source"
+    main_file = source / "src/main/java/demo/QueryInvoker.java"
+    protected_file = source / "src/test/fixtures/QueryFixture.java"
+    fixture_named_file = source / "src/main/java/demo/RefundFixture.java"
+    qa_client_file = source / "src/main/java/demo/QAClient.java"
+    qa_fixture_file = source / "src/main/java/demo/QAFixture.java"
+    qa_config_file = source / "src/main/resources/application-qa.yml"
+    qa_variant_file = source / "src/qa-config/RefundClient.java"
+    qa_acronym_file = source / "src/RefundQAConfig/RefundClient.java"
+    qa_tools_file = source / "src/QATools/RefundClient.java"
+    test_data_file = source / "src/testdata/RefundOrder.java"
+    redacted_config_file = source / "src/main/resources/application.yml"
+    secret_named_config = source / "src/main/resources/SecretConfig.yml"
+    secret_xml_config = source / "src/main/resources/SecretConfig.xml"
+    auth_java_config = source / "src/main/java/demo/AuthConfig.java"
+    api_key_java_config = source / "src/main/java/demo/ApiKeyConfig.java"
+    access_key_xml_config = source / "src/main/resources/AccessKeyConfig.xml"
+    camel_case_config = source / "src/main/resources/ordinary.xml"
+    main_file.parent.mkdir(parents=True)
+    protected_file.parent.mkdir(parents=True)
+    qa_config_file.parent.mkdir(parents=True)
+    qa_variant_file.parent.mkdir(parents=True)
+    qa_acronym_file.parent.mkdir(parents=True)
+    qa_tools_file.parent.mkdir(parents=True)
+    test_data_file.parent.mkdir(parents=True)
+    main_file.write_text("class QueryInvoker { void invoke() { orderService.queryList(); } }\n", encoding="utf-8")
+    protected_file.write_text("class QueryFixture {}\n", encoding="utf-8")
+    fixture_named_file.write_text("class RefundFixture {}\n", encoding="utf-8")
+    qa_client_file.write_text("class QAClient {}\n", encoding="utf-8")
+    qa_fixture_file.write_text("class QAFixture {}\n", encoding="utf-8")
+    qa_config_file.write_text("password: fake-secret-for-test\n", encoding="utf-8")
+    qa_variant_file.write_text("class RefundClient {}\n", encoding="utf-8")
+    qa_acronym_file.write_text("class RefundClient {}\n", encoding="utf-8")
+    qa_tools_file.write_text("class RefundClient {}\n", encoding="utf-8")
+    test_data_file.write_text("class RefundOrder {}\n", encoding="utf-8")
+    redacted_config_file.write_text(
+        "password: fake-secret-for-test\nauthToken:\nfake-multiline-assignment\nmode: local\n",
+        encoding="utf-8",
+    )
+    secret_named_config.write_text("mode: fake-secret-for-test\n", encoding="utf-8")
+    secret_xml_config.write_text("<configuration/>\n", encoding="utf-8")
+    auth_java_config.write_text("class AuthConfig {}\n", encoding="utf-8")
+    api_key_java_config.write_text("class ApiKeyConfig {}\n", encoding="utf-8")
+    access_key_xml_config.write_text("<configuration/>\n", encoding="utf-8")
+    camel_case_config.write_text(
+        "<clientSecret>fake-inline-secret</clientSecret>\n"
+        "<refreshToken>\n"
+        "fake-multiline-token\n"
+        "</refreshToken>\n"
+        "<mode>local</mode>\n",
+        encoding="utf-8",
+    )
+    run_root = tmp_path / "run"
+    run_root.mkdir()
+    audit_path = run_root / "source-access.jsonl"
+    reader = RegisteredSourceReader(source, audit_path)
+
+    files = reader.list_source_files(query="Query")
+    all_files = reader.list_source_files()
+    matches = reader.search_source("orderService.queryList", file_glob="*.java")
+    literal_matches = reader.search_source("orderService.+queryList", file_glob="*.java")
+    content = reader.read_source("src/main/java/demo/QueryInvoker.java", 1, 1)
+    redacted_config = reader.read_source("src/main/resources/application.yml", 1, 4)
+    redacted_camel_case = reader.read_source("src/main/resources/ordinary.xml", 1, 5)
+
+    assert files["files"] == ["src/main/java/demo/QueryInvoker.java"]
+    assert all_files["files"] == [
+        "src/main/java/demo/QueryInvoker.java",
+        "src/main/resources/application.yml",
+        "src/main/resources/ordinary.xml",
+    ]
+    assert matches["matches"][0]["path"] == "src/main/java/demo/QueryInvoker.java"
+    assert literal_matches["matches"] == []
+    assert "orderService.queryList" in content["content"]
+    assert "fake-secret-for-test" not in redacted_config["content"]
+    assert "fake-multiline-assignment" not in redacted_config["content"]
+    assert "[REDACTED_SENSITIVE_VALUE]" in redacted_config["content"]
+    assert "fake-inline-secret" not in redacted_camel_case["content"]
+    assert "fake-multiline-token" not in redacted_camel_case["content"]
+    assert "<mode>local</mode>" in redacted_camel_case["content"]
+    assert len(audit_path.read_text(encoding="utf-8").splitlines()) == 7
+    assert audit_path.stat().st_mode & 0o077 == 0
+    with pytest.raises(ValueError, match="registered root"):
+        reader.read_source("../outside.java")
+    with pytest.raises(ValueError, match="protected directory"):
+        reader.read_source("src/test/fixtures/QueryFixture.java")
+    for protected_path in (
+        "src/main/java/demo/RefundFixture.java",
+        "src/main/java/demo/QAClient.java",
+        "src/main/java/demo/QAFixture.java",
+        "src/main/resources/application-qa.yml",
+        "src/qa-config/RefundClient.java",
+        "src/RefundQAConfig/RefundClient.java",
+        "src/QATools/RefundClient.java",
+        "src/testdata/RefundOrder.java",
+        "src/main/resources/SecretConfig.yml",
+        "src/main/resources/SecretConfig.xml",
+        "src/main/java/demo/AuthConfig.java",
+        "src/main/java/demo/ApiKeyConfig.java",
+        "src/main/resources/AccessKeyConfig.xml",
+    ):
+        # 文件名和连字符目录也属于固定安全边界，不能只依赖精确父目录名称。
+        with pytest.raises(ValueError, match="protected|not allowed"):
+            reader.read_source(protected_path)
+
+
+def test_registered_source_reader_refuses_a_symlink_at_open_time(tmp_path: Path) -> None:
+    """源码读取最终打开文件时必须再次拒绝符号链接，避免校验后替换逃逸。
+
+    Args:
+        tmp_path: pytest隔离的注册源码、根外文件和审计目录。
+
+    Returns:
+        None；最终文件已变为根外符号链接时不返回任何正文。
+    """
+
+    source = tmp_path / "source"
+    source.mkdir()
+    source_file = source / "QueryService.java"
+    outside_file = tmp_path / "Outside.java"
+    source_file.write_text("class QueryService {}\n", encoding="utf-8")
+    outside_file.write_text("class OutsideSecret {}\n", encoding="utf-8")
+    run_root = tmp_path / "run"
+    run_root.mkdir()
+    reader = RegisteredSourceReader(source, run_root / "source-access.jsonl")
+    source_file.unlink()
+    source_file.symlink_to(outside_file)
+
+    # 直接覆盖最终打开阶段，确保即使前置解析已发生也不会跟随新出现的链接。
+    with pytest.raises(ValueError, match="symbolic link|could not be read"):
+        reader._read_lines(source_file)
+
+
+def test_global_index_transaction_serializes_independent_store_instances(tmp_path: Path) -> None:
+    """不同系统/应用实例的全局索引发布与回滚必须共用跨进程锁。
+
+    Args:
+        tmp_path: pytest隔离的共享知识根与锁文件目录。
+
+    Returns:
+        None；第二实例只在第一实例释放全局索引事务后进入时通过。
+    """
+
+    first_store = GitKnowledgeStore(tmp_path / "knowledge")
+    second_store = GitKnowledgeStore(tmp_path / "knowledge")
+    first_store.initialize()
+    first_entered = threading.Event()
+    release_first = threading.Event()
+    second_entered = threading.Event()
+
+    def hold_first_transaction() -> None:
+        """持有第一实例全局索引锁直到主测试明确释放。
+
+        Returns:
+            None；事件仅用于确定性协调测试线程。
+        """
+
+        with first_store.index_transaction():
+            first_entered.set()
+            assert release_first.wait(timeout=2)
+
+    def enter_second_transaction() -> None:
+        """等待同一全局索引锁并记录真正进入临界区的时刻。
+
+        Returns:
+            None；取得第二实例锁后设置完成事件。
+        """
+
+        with second_store.index_transaction():
+            second_entered.set()
+
+    first_thread = threading.Thread(target=hold_first_transaction)
+    second_thread = threading.Thread(target=enter_second_transaction)
+    first_thread.start()
+    assert first_entered.wait(timeout=2)
+    second_thread.start()
+    assert not second_entered.wait(timeout=0.1)
+    release_first.set()
+    first_thread.join(timeout=2)
+    second_thread.join(timeout=2)
+    assert second_entered.is_set()
+
+
+def test_registered_source_mcp_serves_tools_over_stdio_without_source_writes(tmp_path: Path) -> None:
+    """Codex和Claude启动的stdio服务应列出并执行唯一受控源码工具集。
+
+    Args:
+        tmp_path: pytest隔离的源码文件、运行日志和stdio进程目录。
+
+    Returns:
+        None；初始化、工具发现和读取调用都返回标准JSON-RPC且源码保持不变。
+    """
+
+    source = tmp_path / "source"
+    source.mkdir()
+    source_file = source / "QueryService.java"
+    source_file.write_text("class QueryService {}\n", encoding="utf-8")
+    run_root = tmp_path / "run"
+    run_root.mkdir()
+    audit_path = run_root / "source-access.jsonl"
+    requests = [
+        {"jsonrpc": "2.0", "id": 1, "method": "initialize", "params": {}},
+        {"jsonrpc": "2.0", "id": 2, "method": "tools/list", "params": {}},
+        {
+            "jsonrpc": "2.0",
+            "id": 3,
+            "method": "tools/call",
+            "params": {
+                "name": "read_source",
+                "arguments": {"path": "QueryService.java", "start_line": 1, "end_line": 1},
+            },
+        },
+    ]
+    input_text = "\n".join(json.dumps(item) for item in requests) + "\n"
+
+    # 直接运行生产MCP入口，验证协议布线而不启动或计费任何真实Agent。
+    completed = subprocess.run(
+        [sys.executable, str(Path(registered_source_mcp.__file__).resolve()), str(source), str(audit_path)],
+        input=input_text,
+        text=True,
+        capture_output=True,
+        timeout=5,
+        check=False,
+    )
+    responses = [json.loads(line) for line in completed.stdout.splitlines() if line.strip()]
+
+    assert completed.returncode == 0
+    assert completed.stderr == ""
+    assert [response["id"] for response in responses] == [1, 2, 3]
+    assert {tool["name"] for tool in responses[1]["result"]["tools"]} == {
+        "list_source_files",
+        "search_source",
+        "read_source",
+    }
+    assert "class QueryService" in responses[2]["result"]["content"][0]["text"]
+    assert source_file.read_text(encoding="utf-8") == "class QueryService {}\n"
+
+
+def test_agent_diagnostics_marks_oversized_final_output_as_truncated(tmp_path: Path) -> None:
+    """诊断材料超过页面上限时必须报告原始长度，不能静默冒充完整输出。
+
+    Args:
+        tmp_path: pytest隔离的私有Agent运行证据目录。
+
+    Returns:
+        None；Prompt保持精确且过大最终输出携带显式截断标记时通过。
+    """
+
+    evidence_root = tmp_path / "agent-runs"
+    run_root = evidence_root / "agent-2222222222222222"
+    run_root.mkdir(parents=True)
+    (run_root / "worker-request.json").write_text(
+        json.dumps({"agent": "codex", "target_id": "facade:demo.Query#list"}),
+        encoding="utf-8",
+    )
+    (run_root / "state.json").write_text(json.dumps({"status": "completed"}), encoding="utf-8")
+    (run_root / "prompt.txt").write_text("完整Prompt", encoding="utf-8")
+    (run_root / "output.txt").write_text("x" * 200_001, encoding="utf-8")
+
+    diagnostics = AgentRunner().read_diagnostics(run_root.name, evidence_root)
+
+    assert diagnostics.prompt == "完整Prompt"
+    assert diagnostics.prompt_truncated is False
+    assert diagnostics.final_output_chars == 200_001
+    assert len(diagnostics.final_output) == 200_000
+    assert diagnostics.final_output_truncated is True
+
+
+def test_dynamic_facade_agent_must_read_and_publish_downstream_source_refs(tmp_path: Path) -> None:
+    """动态Facade不得只解释接口契约，完整结果必须包含实际读取的下游业务路径。
+
+    Args:
+        tmp_path: pytest隔离的源码、知识证据和索引目录。
+
+    Returns:
+        None；仅到Invoker时拒绝，读取Service和DAO边界后允许合并到发布节点。
+    """
+
+    service, store, manifest = _knowledge_service(tmp_path)
+    source_root = Path(store.get_system(manifest.system_id).source_path)
+    facade_path = source_root / "DynamicRefundFacadeImpl.java"
+    invoker_path = source_root / "RefundOrderListQueryInvoker.java"
+    service_path = source_root / "OrderServiceImpl.java"
+    dao_path = source_root / "SaasRefundOrderDAOProxy.java"
+    facade_path.write_text(
+        "class DynamicRefundFacadeImpl { Object queryList(Object request) { return execute(RefundOrderServiceEnum.QUERY_LIST); } }\n",
+        encoding="utf-8",
+    )
+    invoker_path.write_text(
+        "@RefundOrderService(RefundOrderServiceEnum.QUERY_LIST) class RefundOrderListQueryInvoker {\n"
+        "  OrderServiceImpl orderService; Object invoke(Object request) { return orderService.queryOrderList(request); }\n"
+        "}\n",
+        encoding="utf-8",
+    )
+    service_path.write_text(
+        "class OrderServiceImpl {\n"
+        "  SaasRefundOrderDAOProxy orderDAO; Object queryOrderList(Object request) { return orderDAO.listPage(request); }\n"
+        "}\n",
+        encoding="utf-8",
+    )
+    dao_path.write_text(
+        "class SaasRefundOrderDAOProxy {\n"
+        "  Object listPage(Object request) { return mapper.listPage(request); }\n"
+        "}\n",
+        encoding="utf-8",
+    )
+    target_id = "facade:demo.DynamicRefundFacade#queryList"
+    node = KnowledgeNode(
+        node_id="entry:dynamic-refund-query-list",
+        system_id=manifest.system_id,
+        kind=KnowledgeNodeKind.FACADE,
+        title="DynamicRefundFacade#queryList",
+        source_refs=[
+            SourceReference(
+                path=facade_path.relative_to(source_root).as_posix(),
+                symbol="DynamicRefundFacadeImpl#queryList",
+                line=1,
+            )
+        ],
+    )
+    invoker_node = KnowledgeNode(
+        node_id="logic:refund-order-list-query",
+        system_id=manifest.system_id,
+        kind=KnowledgeNodeKind.COMMON_LOGIC,
+        title="RefundOrderListQueryInvoker#invoke",
+        source_refs=[
+            SourceReference(
+                path=invoker_path.relative_to(source_root).as_posix(),
+                symbol="RefundOrderListQueryInvoker#invoke",
+                line=2,
+            )
+        ],
+    )
+    nodes = [node, invoker_node]
+    request = KnowledgeGenerationBatchRequest(
+        system_id=manifest.system_id,
+        target_ids=[target_id],
+        scan_id=manifest.scan_id,
+        agent="codex",
+        confirmed=True,
+    )
+    run_root = store.root / ".opentest/agent-runs/agent-1111111111111111"
+    run_root.mkdir(parents=True)
+    output_path = run_root / "output.txt"
+    source_access_path = run_root / "source-access.jsonl"
+    envelope = {
+        "status": "completed",
+        "system_id": manifest.system_id,
+        "target_ids": [target_id],
+        "summaries": [
+            {"node_id": node.node_id, "summary": "沿动态分发进入退款单列表查询并返回查询结果。"},
+            {"node_id": invoker_node.node_id, "summary": "调用订单服务执行列表查询并组装Facade响应。"},
+        ],
+        "questions": [],
+        "source_refs": [],
+        "trace_steps": [],
+    }
+    output_path.write_text(json.dumps(envelope, ensure_ascii=False), encoding="utf-8")
+    source_access_path.write_text("", encoding="utf-8")
+    evidence = AgentRunEvidence(
+        run_id=run_root.name,
+        system_id=manifest.system_id,
+        agent="codex",
+        prompt_digest="0" * 64,
+        output_path=str(output_path),
+        source_access_path=str(source_access_path),
+        exit_code=0,
+        elapsed_seconds=1,
+    )
+
+    # 多节点Facade也必须形成结构化执行路径，不能因确定性闭包节点数大于1而绕过完成门禁。
+    with pytest.raises(KnowledgeValidationError, match="structured business trace"):
+        service._validate_agent_evidence(request, manifest, nodes, evidence, str(source_root))
+
+    facade_relative_path = facade_path.relative_to(source_root).as_posix()
+    downstream_path = invoker_path.relative_to(source_root).as_posix()
+    service_relative_path = service_path.relative_to(source_root).as_posix()
+    dao_relative_path = dao_path.relative_to(source_root).as_posix()
+    facade_reference = {"path": facade_relative_path, "symbol": "DynamicRefundFacadeImpl#queryList", "line": 1}
+    invoker_reference = {"path": downstream_path, "symbol": "RefundOrderListQueryInvoker#invoke", "line": 2}
+    service_reference = {"path": service_relative_path, "symbol": "OrderServiceImpl#queryOrderList", "line": 2}
+    dao_reference = {"path": dao_relative_path, "symbol": "SaasRefundOrderDAOProxy#listPage", "line": 2}
+    envelope["source_refs"] = [
+        facade_reference,
+        invoker_reference,
+    ]
+    envelope["trace_steps"] = [
+        {"sequence": 1, "role": "entry", "source_ref": facade_reference, "summary": "进入退款列表Facade。"},
+        {"sequence": 2, "role": "invoker", "source_ref": invoker_reference, "summary": "动态分发到列表Invoker。"},
+    ]
+    output_path.write_text(json.dumps(envelope, ensure_ascii=False), encoding="utf-8")
+    source_access_path.write_text(
+        "\n".join(
+            json.dumps(item)
+            for item in (
+                {
+                    "sequence": 1,
+                    "tool": "read_source",
+                    "path": facade_relative_path,
+                    "start_line": 1,
+                    "end_line": 1,
+                    "result_count": 1,
+                    "created_at": "2026-08-23T00:00:00Z",
+                },
+                {
+                    "sequence": 2,
+                    "tool": "read_source",
+                    "path": downstream_path,
+                    "start_line": 2,
+                    "end_line": 2,
+                    "result_count": 1,
+                    "created_at": "2026-08-23T00:00:00Z",
+                },
+            )
+        )
+        + "\n",
+        encoding="utf-8",
+    )
+    with pytest.raises(KnowledgeValidationError, match="core service"):
+        service._validate_agent_evidence(request, manifest, nodes, evidence, str(source_root))
+
+    envelope["source_refs"] = [
+        facade_reference,
+        invoker_reference,
+        service_reference,
+        dao_reference,
+    ]
+    envelope["trace_steps"] = [
+        {"sequence": 1, "role": "entry", "source_ref": facade_reference, "summary": "进入退款列表Facade。"},
+        {"sequence": 2, "role": "invoker", "source_ref": invoker_reference, "summary": "动态分发到列表Invoker。"},
+        {"sequence": 3, "role": "service", "source_ref": service_reference, "summary": "执行列表过滤和分页。"},
+        {"sequence": 4, "role": "data_access", "source_ref": dao_reference, "summary": "通过DAO进入分页数据查询。"},
+    ]
+    output_path.write_text(json.dumps(envelope, ensure_ascii=False), encoding="utf-8")
+    source_access_path.write_text(
+        "\n".join(
+            json.dumps(item)
+            for item in (
+                {
+                    "sequence": 1,
+                    "tool": "read_source",
+                    "path": facade_relative_path,
+                    "start_line": 1,
+                    "end_line": 1,
+                    "result_count": 1,
+                    "created_at": "2026-08-23T00:00:00Z",
+                },
+                {
+                    "sequence": 2,
+                    "tool": "read_source",
+                    "path": downstream_path,
+                    "start_line": 2,
+                    "end_line": 2,
+                    "result_count": 1,
+                    "created_at": "2026-08-23T00:00:00Z",
+                },
+                {
+                    "sequence": 3,
+                    "tool": "read_source",
+                    "path": service_relative_path,
+                    "start_line": 2,
+                    "end_line": 2,
+                    "result_count": 1,
+                    "created_at": "2026-08-23T00:00:00Z",
+                },
+            )
+        )
+        + "\n",
+        encoding="utf-8",
+    )
+    with pytest.raises(KnowledgeValidationError, match="not read through the registered source tool"):
+        service._validate_agent_evidence(request, manifest, nodes, evidence, str(source_root))
+
+    source_access_path.write_text(
+        source_access_path.read_text(encoding="utf-8")
+        + json.dumps(
+            {
+                "sequence": 4,
+                "tool": "read_source",
+                "path": dao_relative_path,
+                "start_line": 1,
+                "end_line": 1,
+                "result_count": 1,
+                "created_at": "2026-08-23T00:00:00Z",
+            }
+        )
+        + "\n",
+        encoding="utf-8",
+    )
+    with pytest.raises(KnowledgeValidationError, match="referenced line was not read"):
+        service._validate_agent_evidence(request, manifest, nodes, evidence, str(source_root))
+
+    # 最后一条DAO审计补到实际引用行，前面三段已读路径保持不变。
+    access_records = [
+        json.loads(line)
+        for line in source_access_path.read_text(encoding="utf-8").splitlines()
+        if line.strip()
+    ]
+    access_records[-1]["start_line"] = 2
+    access_records[-1]["end_line"] = 2
+    source_access_path.write_text(
+        "\n".join(json.dumps(item) for item in access_records) + "\n",
+        encoding="utf-8",
+    )
+
+    validated = service._validate_agent_evidence(request, manifest, nodes, evidence, str(source_root))
+    merged = service._merge_agent_source_refs(nodes, validated)
+
+    assert downstream_path in {reference.path for reference in merged[0].source_refs}
+
+    # 并列Service方法必须各自拥有真实read_source证据；只读取列表方法不能夹带计数方法。
+    invoker_path.write_text(
+        "@RefundOrderService(RefundOrderServiceEnum.QUERY_LIST) class RefundOrderListQueryInvoker {\n"
+        "  OrderServiceImpl orderService; Object invoke(Object request) { orderService.queryOrderList(request); return orderService.queryOrderListCount(request); }\n"
+        "}\n",
+        encoding="utf-8",
+    )
+    service_path.write_text(
+        "class OrderServiceImpl {\n"
+        "  SaasRefundOrderDAOProxy orderDAO; Object queryOrderList(Object request) { return orderDAO.listPage(request); }\n"
+        "  Object queryOrderListCount(Object request) { return request; }\n"
+        "}\n",
+        encoding="utf-8",
+    )
+    combined_service_reference = {
+        "path": service_relative_path,
+        "symbol": "OrderServiceImpl#queryOrderList/queryOrderListCount",
+        "line": 2,
+    }
+    count_service_reference = {
+        "path": service_relative_path,
+        "symbol": "OrderServiceImpl#queryOrderListCount",
+        "line": 3,
+    }
+    combined_envelope = json.loads(json.dumps(envelope))
+    combined_envelope["source_refs"] = [
+        facade_reference,
+        invoker_reference,
+        combined_service_reference,
+        service_reference,
+        count_service_reference,
+        dao_reference,
+    ]
+    combined_envelope["trace_steps"][2]["source_ref"] = combined_service_reference
+    output_path.write_text(json.dumps(combined_envelope, ensure_ascii=False), encoding="utf-8")
+    with pytest.raises(KnowledgeValidationError, match="referenced line was not read"):
+        service._validate_agent_evidence(request, manifest, nodes, evidence, str(source_root))
+
+    # 第二个方法的独立声明行补入访问审计后，组合Service步骤及其线性主路径可以发布。
+    source_access_path.write_text(
+        source_access_path.read_text(encoding="utf-8")
+        + json.dumps(
+            {
+                "sequence": 5,
+                "tool": "read_source",
+                "path": service_relative_path,
+                "start_line": 3,
+                "end_line": 3,
+                "result_count": 1,
+                "created_at": "2026-08-23T00:00:00Z",
+            }
+        )
+        + "\n",
+        encoding="utf-8",
+    )
+    service._validate_agent_evidence(request, manifest, nodes, evidence, str(source_root))
+    output_path.write_text(json.dumps(envelope, ensure_ascii=False), encoding="utf-8")
+    invoker_path.write_text(
+        "@RefundOrderService(RefundOrderServiceEnum.QUERY_LIST) class RefundOrderListQueryInvoker {\n"
+        "  OrderServiceImpl orderService; Object invoke(Object request) { return orderService.queryOrderList(request); }\n"
+        "}\n",
+        encoding="utf-8",
+    )
+    service_path.write_text(
+        "class OrderServiceImpl {\n"
+        "  SaasRefundOrderDAOProxy orderDAO; Object queryOrderList(Object request) { return orderDAO.listPage(request); }\n"
+        "}\n",
+        encoding="utf-8",
+    )
+
+    # 同一Facade实现文件的其他真实方法即使拥有完整下游链，也不能冒充当前queryList入口。
+    facade_path.write_text(
+        "class DynamicRefundFacadeImpl { Object queryList(Object request) { return execute(RefundOrderServiceEnum.QUERY_LIST); } Object queryDetailByRefundNo(Object request) { return execute(RefundOrderServiceEnum.QUERY_LIST); } }\n",
+        encoding="utf-8",
+    )
+    wrong_entry_envelope = json.loads(json.dumps(envelope))
+    wrong_entry_reference = {
+        **facade_reference,
+        "symbol": "DynamicRefundFacadeImpl#queryDetailByRefundNo",
+    }
+    wrong_entry_envelope["source_refs"][0] = wrong_entry_reference
+    wrong_entry_envelope["trace_steps"][0]["source_ref"] = wrong_entry_reference
+    output_path.write_text(json.dumps(wrong_entry_envelope, ensure_ascii=False), encoding="utf-8")
+    with pytest.raises(KnowledgeValidationError, match="requested entry"):
+        service._validate_agent_evidence(request, manifest, nodes, evidence, str(source_root))
+    output_path.write_text(json.dumps(envelope, ensure_ascii=False), encoding="utf-8")
+    facade_path.write_text(
+        "class DynamicRefundFacadeImpl { Object queryList(Object request) { return execute(RefundOrderServiceEnum.QUERY_LIST); } }\n",
+        encoding="utf-8",
+    )
+
+    # 前一无关类型出现相同路由常量，不能替没有绑定注解的目标Invoker建立动态连接。
+    invoker_path.write_text(
+        "class UnrelatedRouteHolder { Object other() { return execute(RefundOrderServiceEnum.QUERY_LIST); } }\n"
+        "class RefundOrderListQueryInvoker { OrderServiceImpl orderService; Object invoke(Object request) { return orderService.queryOrderList(request); } }\n",
+        encoding="utf-8",
+    )
+    with pytest.raises(KnowledgeValidationError, match="not connected"):
+        service._validate_agent_evidence(request, manifest, nodes, evidence, str(source_root))
+    invoker_path.write_text(
+        "@RefundOrderService(RefundOrderServiceEnum.QUERY_LIST) class RefundOrderListQueryInvoker {\n"
+        "  OrderServiceImpl orderService; Object invoke(Object request) { return orderService.queryOrderList(request); }\n"
+        "}\n",
+        encoding="utf-8",
+    )
+
+    # 常见方法名和若干相似业务词不能替代真实类型绑定；错误接收器的listPage必须被拒绝。
+    service_path.write_text(
+        "class OrderServiceImpl {\n"
+        "  RefundDetailQueryInvoker refundDetailQueryInvoker; Object queryOrderList(Object request) { return refundDetailQueryInvoker.listPage(request); }\n"
+        "}\n",
+        encoding="utf-8",
+    )
+    with pytest.raises(KnowledgeValidationError, match="not connected"):
+        service._validate_agent_evidence(request, manifest, nodes, evidence, str(source_root))
+    service_path.write_text(
+        "class OrderServiceImpl {\n"
+        "  SaasRefundOrderDAOProxy orderDAO; Object queryOrderList(Object request) { return orderDAO.listPage(request); }\n"
+        "}\n",
+        encoding="utf-8",
+    )
+
+    # 其他方法里的同名正确类型不能替当前方法的错误字段伪造调用关系。
+    service_path.write_text(
+        "class OrderServiceImpl {\n"
+        "  RefundDetailQueryInvoker orderDAO; Object queryOrderList(Object request) { return orderDAO.listPage(request); }\n"
+        "  void unrelated() { SaasRefundOrderDAOProxy orderDAO = new SaasRefundOrderDAOProxy(); orderDAO.listPage(null); }\n"
+        "}\n",
+        encoding="utf-8",
+    )
+    with pytest.raises(KnowledgeValidationError, match="not connected"):
+        service._validate_agent_evidence(request, manifest, nodes, evidence, str(source_root))
+
+    # 当前方法的同名局部变量必须遮蔽正确字段，不能让字段类型误证局部变量调用。
+    service_path.write_text(
+        "class OrderServiceImpl {\n"
+        "  SaasRefundOrderDAOProxy orderDAO; Object queryOrderList(Object request) { RefundDetailQueryInvoker orderDAO; return orderDAO.listPage(request); }\n"
+        "}\n",
+        encoding="utf-8",
+    )
+    with pytest.raises(KnowledgeValidationError, match="not connected"):
+        service._validate_agent_evidence(request, manifest, nodes, evidence, str(source_root))
+
+    # 注释和字符串中的伪调用必须在结构匹配前被屏蔽。
+    service_path.write_text(
+        "class OrderServiceImpl {\n"
+        "  SaasRefundOrderDAOProxy orderDAO; Object queryOrderList(Object request) { String hint = \"orderDAO.listPage(request)\"; /* orderDAO.listPage(request); */ return request; }\n"
+        "}\n",
+        encoding="utf-8",
+    )
+    with pytest.raises(KnowledgeValidationError, match="not connected"):
+        service._validate_agent_evidence(request, manifest, nodes, evidence, str(source_root))
+
+    # 动态路由常量只出现在注释时也不能连接Facade和Invoker。
+    facade_path.write_text(
+        "class DynamicRefundFacadeImpl { Object queryList(Object request) { /* RefundOrderServiceEnum.QUERY_LIST */ return request; } }\n",
+        encoding="utf-8",
+    )
+    with pytest.raises(KnowledgeValidationError, match="not connected"):
+        service._validate_agent_evidence(request, manifest, nodes, evidence, str(source_root))
+    facade_path.write_text(
+        "class DynamicRefundFacadeImpl { Object queryList(Object request) { return execute(RefundOrderServiceEnum.QUERY_LIST); } }\n",
+        encoding="utf-8",
+    )
+    service_path.write_text(
+        "class OrderServiceImpl {\n"
+        "  SaasRefundOrderDAOProxy orderDAO; Object queryOrderList(Object request) { return orderDAO.listPage(request); }\n"
+        "}\n",
+        encoding="utf-8",
+    )
+
+    # 真实读取过文件和行号仍不足以证明Agent填写的符号；伪造Service名称必须被拒绝。
+    forged_symbol_envelope = json.loads(json.dumps(envelope))
+    forged_service_reference = {
+        **service_reference,
+        "symbol": "FakeService#queryOrderList",
+    }
+    forged_symbol_envelope["source_refs"][2] = forged_service_reference
+    forged_symbol_envelope["trace_steps"][2]["source_ref"] = forged_service_reference
+    output_path.write_text(json.dumps(forged_symbol_envelope, ensure_ascii=False), encoding="utf-8")
+    with pytest.raises(KnowledgeValidationError, match="source symbol"):
+        service._validate_agent_evidence(request, manifest, nodes, evidence, str(source_root))
+
+    # 每个符号分别存在也不能组成虚构链；Service没有调用DAO时必须拒绝相邻步骤。
+    output_path.write_text(json.dumps(envelope, ensure_ascii=False), encoding="utf-8")
+    service_path.write_text(
+        "class OrderServiceImpl {\n"
+        "  Object queryOrderList(Object request) { return request; }\n"
+        "}\n",
+        encoding="utf-8",
+    )
+    with pytest.raises(KnowledgeValidationError, match="not connected"):
+        service._validate_agent_evidence(request, manifest, nodes, evidence, str(source_root))
+
+
+def test_agent_java_reference_binds_declared_type_line_and_overload(tmp_path: Path) -> None:
+    """Java证据必须绑定指定类型中由引用行选中的唯一同名重载。
+
+    Args:
+        tmp_path: Pytest提供的隔离知识存储和源码目录。
+
+    Returns:
+        None；跨类型伪造被拒绝且第二个重载的真实正文被精确提取时通过。
+    """
+
+    service, _, _ = _knowledge_service(tmp_path)
+
+    # 同文件另一个类型拥有同名方法时，不能把它冒充为目标类型的方法证据。
+    wrong_type_lines = [
+        "class TargetType { Object other(Object input) { return input; } }",
+        "class OtherType { Object invoke(Object input) { return input; } }",
+    ]
+    with pytest.raises(KnowledgeValidationError, match="method is absent"):
+        service._validate_agent_source_symbol(
+            SourceReference(path="TargetType.java", symbol="TargetType#invoke", line=2),
+            wrong_type_lines,
+        )
+
+    # 引用行落在第二个重载时，符号校验和相邻链证明必须复用同一个方法体。
+    overloaded_lines = [
+        "class TargetType {",
+        "  Object invoke(Object input) { return input; }",
+        "  Object invoke(String input) { return downstream.listPage(input); }",
+        "}",
+    ]
+    reference = SourceReference(path="TargetType.java", symbol="TargetType#invoke", line=3)
+    service._validate_agent_source_symbol(reference, overloaded_lines)
+    reference_block = service._agent_reference_block(reference, overloaded_lines)
+
+    assert "downstream.listPage" in reference_block
+    assert "return input" not in reference_block
+
+
+def test_agent_trace_accepts_proven_inheritance_and_interface_dispatch(tmp_path: Path) -> None:
+    """相邻链应接受源码明确证明的继承重载与接口字段到实现类分派。
+
+    Args:
+        tmp_path: Pytest提供的隔离知识存储目录。
+
+    Returns:
+        None；两类Java多态连接无需插入虚假接口步骤即可通过。
+    """
+
+    service, _, _ = _knowledge_service(tmp_path)
+    inherited_entry = SourceReference(path="RefundFacadeImpl.java", symbol="RefundFacadeImpl#queryList", line=1)
+    inherited_target = SourceReference(path="AbstractFacade.java", symbol="AbstractFacade#execute", line=1)
+    inherited_envelope = AgentKnowledgeEnvelope.model_validate(
+        {
+            "status": "completed",
+            "system_id": "demo-system",
+            "target_ids": ["facade:demo.RefundFacade#queryList"],
+            "summaries": [],
+            "questions": [],
+            "source_refs": [
+                {"path": inherited_entry.path, "symbol": inherited_entry.symbol, "line": inherited_entry.line},
+                {"path": inherited_target.path, "symbol": inherited_target.symbol, "line": inherited_target.line},
+            ],
+            "trace_steps": [
+                {
+                    "sequence": 1,
+                    "role": "entry",
+                    "source_ref": {
+                        "path": inherited_entry.path,
+                        "symbol": inherited_entry.symbol,
+                        "line": inherited_entry.line,
+                    },
+                    "summary": "实现入口调用父类执行重载。",
+                },
+                {
+                    "sequence": 2,
+                    "role": "invoker",
+                    "source_ref": {
+                        "path": inherited_target.path,
+                        "symbol": inherited_target.symbol,
+                        "line": inherited_target.line,
+                    },
+                    "summary": "父类提供受保护执行方法。",
+                },
+            ],
+        }
+    )
+    service._validate_agent_trace_links(
+        inherited_envelope,
+        {
+            inherited_entry.path: [
+                "class RefundFacadeImpl extends AbstractFacade { Object queryList(Object request) { return execute(request); } }"
+            ],
+            inherited_target.path: ["class AbstractFacade { Object execute(Object request) { return request; } }"],
+        },
+    )
+
+    interface_entry = SourceReference(path="AbstractFacade.java", symbol="AbstractFacade#execute", line=1)
+    implementation_target = SourceReference(
+        path="DefaultTradeServiceProxy.java",
+        symbol="DefaultTradeServiceProxy#invoke",
+        line=1,
+    )
+    interface_envelope = AgentKnowledgeEnvelope.model_validate(
+        {
+            "status": "completed",
+            "system_id": "demo-system",
+            "target_ids": ["facade:demo.RefundFacade#queryList"],
+            "summaries": [],
+            "questions": [],
+            "source_refs": [
+                {"path": interface_entry.path, "symbol": interface_entry.symbol, "line": interface_entry.line},
+                {
+                    "path": implementation_target.path,
+                    "symbol": implementation_target.symbol,
+                    "line": implementation_target.line,
+                },
+            ],
+            "trace_steps": [
+                {
+                    "sequence": 1,
+                    "role": "invoker",
+                    "source_ref": {
+                        "path": interface_entry.path,
+                        "symbol": interface_entry.symbol,
+                        "line": interface_entry.line,
+                    },
+                    "summary": "父类通过代理接口字段调用。",
+                },
+                {
+                    "sequence": 2,
+                    "role": "invoker",
+                    "source_ref": {
+                        "path": implementation_target.path,
+                        "symbol": implementation_target.symbol,
+                        "line": implementation_target.line,
+                    },
+                    "summary": "默认代理实现接口并处理调用。",
+                },
+            ],
+        }
+    )
+    service._validate_agent_trace_links(
+        interface_envelope,
+        {
+            interface_entry.path: [
+                "class AbstractFacade { TradeServiceProxy proxy; Object execute(Object request) { return proxy.invoke(request); } }"
+            ],
+            implementation_target.path: [
+                "class DefaultTradeServiceProxy implements TradeServiceProxy { Object invoke(Object request) { return request; } }"
+            ],
+        },
+    )
+
+    inherited_field_entry = SourceReference(
+        path="OrderServiceImpl.java",
+        symbol="OrderServiceImpl#queryOrderList",
+        line=1,
+    )
+    inherited_field_owner = SourceReference(
+        path="AbstractOrderService.java",
+        symbol="AbstractOrderService",
+        line=1,
+    )
+    dao_target = SourceReference(
+        path="SaasRefundOrderDAOProxy.java",
+        symbol="SaasRefundOrderDAOProxy#listPage",
+        line=1,
+    )
+    inherited_field_envelope = AgentKnowledgeEnvelope.model_validate(
+        {
+            "status": "completed",
+            "system_id": "demo-system",
+            "target_ids": ["facade:demo.RefundFacade#queryList"],
+            "summaries": [],
+            "questions": [],
+            "source_refs": [
+                {
+                    "path": inherited_field_entry.path,
+                    "symbol": inherited_field_entry.symbol,
+                    "line": inherited_field_entry.line,
+                },
+                {
+                    "path": inherited_field_owner.path,
+                    "symbol": inherited_field_owner.symbol,
+                    "line": inherited_field_owner.line,
+                },
+                {"path": dao_target.path, "symbol": dao_target.symbol, "line": dao_target.line},
+            ],
+            "trace_steps": [
+                {
+                    "sequence": 1,
+                    "role": "service",
+                    "source_ref": {
+                        "path": inherited_field_entry.path,
+                        "symbol": inherited_field_entry.symbol,
+                        "line": inherited_field_entry.line,
+                    },
+                    "summary": "实现服务通过继承字段读取订单数据。",
+                },
+                {
+                    "sequence": 2,
+                    "role": "data_access",
+                    "source_ref": {
+                        "path": dao_target.path,
+                        "symbol": dao_target.symbol,
+                        "line": dao_target.line,
+                    },
+                    "summary": "DAO执行分页读取。",
+                },
+            ],
+        }
+    )
+    service._validate_agent_trace_links(
+        inherited_field_envelope,
+        {
+            inherited_field_entry.path: [
+                "class OrderServiceImpl extends AbstractOrderService { Object queryOrderList(Object request) { return orderDAO.listPage(request); } }"
+            ],
+            inherited_field_owner.path: [
+                'class AbstractOrderService { @Resource(name="orderDAO") '
+                "SaasRefundOrderDAOProxy orderDAO; }"
+            ],
+            dao_target.path: [
+                "class SaasRefundOrderDAOProxy { Object listPage(Object request) { return request; } }"
+            ],
+        },
+    )
+
+
+def test_agent_trace_rejects_generic_arguments_suffix_guess_and_uninvoked_override(tmp_path: Path) -> None:
+    """泛型实参、实现后缀和未调用的同名override不能伪造多态连接。
+
+    Args:
+        tmp_path: Pytest提供的隔离知识存储目录。
+
+    Returns:
+        None；三类名称相似但无真实调用或声明关系的路径均被拒绝时通过。
+    """
+
+    service, _, _ = _knowledge_service(tmp_path)
+
+    def envelope_for(
+        previous_path: str,
+        previous_symbol: str,
+        next_path: str,
+        next_symbol: str,
+    ) -> AgentKnowledgeEnvelope:
+        """构造只用于相邻多态负例的两步严格信封。
+
+        Args:
+            previous_path: 调用方测试文件名。
+            previous_symbol: 调用方精确类型与方法。
+            next_path: 被声称下游的测试文件名。
+            next_symbol: 被声称下游的精确类型与方法。
+
+        Returns:
+            两步源码引用均完整但尚未验证连接关系的Agent信封。
+        """
+
+        previous_reference = {"path": previous_path, "symbol": previous_symbol, "line": 1}
+        next_reference = {"path": next_path, "symbol": next_symbol, "line": 1}
+        return AgentKnowledgeEnvelope.model_validate(
+            {
+                "status": "completed",
+                "system_id": "demo-system",
+                "target_ids": ["facade:demo.Query#list"],
+                "summaries": [],
+                "questions": [],
+                "source_refs": [previous_reference, next_reference],
+                "trace_steps": [
+                    {
+                        "sequence": 1,
+                        "role": "service",
+                        "source_ref": previous_reference,
+                        "summary": "调用方测试步骤。",
+                    },
+                    {
+                        "sequence": 2,
+                        "role": "data_access",
+                        "source_ref": next_reference,
+                        "summary": "被声称的下游测试步骤。",
+                    },
+                ],
+            }
+        )
+
+    generic_envelope = envelope_for("Caller.java", "Caller#call", "Impl.java", "Impl#invoke")
+    with pytest.raises(KnowledgeValidationError, match="not connected"):
+        service._validate_agent_trace_links(
+            generic_envelope,
+            {
+                "Caller.java": [
+                    "class Caller { WrongType receiver; Object call(Object value) { return receiver.invoke(value); } }"
+                ],
+                "Impl.java": [
+                    "class Impl implements Port<Key, WrongType> { Object invoke(Object value) { return value; } }"
+                ],
+            },
+        )
+
+    suffix_envelope = envelope_for(
+        "Caller.java",
+        "Caller#call",
+        "OrderServiceImpl.java",
+        "OrderServiceImpl#invoke",
+    )
+    with pytest.raises(KnowledgeValidationError, match="not connected"):
+        service._validate_agent_trace_links(
+            suffix_envelope,
+            {
+                "Caller.java": [
+                    "class Caller { OrderService receiver; Object call(Object value) { return receiver.invoke(value); } }"
+                ],
+                "OrderServiceImpl.java": [
+                    "class OrderServiceImpl { Object invoke(Object value) { return value; } }"
+                ],
+            },
+        )
+
+    static_shadow_envelope = envelope_for(
+        "StaticShadowCaller.java",
+        "StaticShadowCaller#call",
+        "OrderServiceImpl.java",
+        "OrderServiceImpl#invoke",
+    )
+    with pytest.raises(KnowledgeValidationError, match="not connected"):
+        service._validate_agent_trace_links(
+            static_shadow_envelope,
+            {
+                "StaticShadowCaller.java": [
+                    "class StaticShadowCaller { Object OrderServiceImpl; "
+                    "Object call(Object value) { return OrderServiceImpl.invoke(value); } }"
+                ],
+                "OrderServiceImpl.java": [
+                    "class OrderServiceImpl { Object invoke(Object value) { return value; } }"
+                ],
+            },
+        )
+
+    inherited_suffix_envelope = envelope_for(
+        "ChildCaller.java",
+        "ChildCaller#call",
+        "OrderServiceProxy.java",
+        "OrderServiceProxy#invoke",
+    )
+    with pytest.raises(KnowledgeValidationError, match="not connected"):
+        service._validate_agent_trace_links(
+            inherited_suffix_envelope,
+            {
+                "ChildCaller.java": [
+                    "class ChildCaller extends ParentCaller { "
+                    "Object call(Object value) { return receiver.invoke(value); } }"
+                ],
+                "ParentCaller.java": ["class ParentCaller { OrderService receiver; }"],
+                "OrderServiceProxy.java": [
+                    "class OrderServiceProxy { Object invoke(Object value) { return value; } }"
+                ],
+            },
+        )
+
+    package_collision_envelope = envelope_for(
+        "PackageCaller.java",
+        "PackageCaller#call",
+        "Impl.java",
+        "Impl#invoke",
+    )
+    with pytest.raises(KnowledgeValidationError, match="not connected"):
+        service._validate_agent_trace_links(
+            package_collision_envelope,
+            {
+                "PackageCaller.java": [
+                    "package caller; class PackageCaller { a.Port receiver; "
+                    "Object call(Object value) { return receiver.invoke(value); } }"
+                ],
+                "Impl.java": [
+                    "package target; class Impl implements b.Port { "
+                    "Object invoke(Object value) { return value; } }"
+                ],
+            },
+        )
+
+    nested_package_collision = envelope_for(
+        "NestedPackageCaller.java",
+        "NestedPackageCaller#call",
+        "NestedImpl.java",
+        "NestedImpl#invoke",
+    )
+    with pytest.raises(KnowledgeValidationError, match="not connected"):
+        service._validate_agent_trace_links(
+            nested_package_collision,
+            {
+                "NestedPackageCaller.java": [
+                    "package caller; import a.Outer; class NestedPackageCaller { Outer.Port receiver; "
+                    "Object call(Object value) { return receiver.invoke(value); } }"
+                ],
+                "NestedImpl.java": [
+                    "package target; import b.Outer; class NestedImpl implements Outer.Port { "
+                    "Object invoke(Object value) { return value; } }"
+                ],
+            },
+        )
+
+    nested_declaration_collision = envelope_for(
+        "NestedDeclarationCaller.java",
+        "NestedDeclarationCaller#call",
+        "Outer.java",
+        "Inner#invoke",
+    )
+    with pytest.raises(KnowledgeValidationError, match="not connected"):
+        service._validate_agent_trace_links(
+            nested_declaration_collision,
+            {
+                "NestedDeclarationCaller.java": [
+                    "package a; class NestedDeclarationCaller { a.Inner receiver; "
+                    "Object call(Object value) { return receiver.invoke(value); } }"
+                ],
+                "Outer.java": [
+                    "package a; class Outer { class Inner { "
+                    "Object invoke(Object value) { return value; } } }"
+                ],
+            },
+        )
+
+    multi_method_without_evidence = envelope_for(
+        "MultiMethodCaller.java",
+        "MultiMethodCaller#call",
+        "MultiMethodService.java",
+        "MultiMethodService#invoke/deleteEverything",
+    )
+    # 即使两个调用都存在，组合步骤也不能凭单个trace引用声称已经读取另一个方法。
+    with pytest.raises(KnowledgeValidationError, match="independently read"):
+        service._validate_agent_trace_links(
+            multi_method_without_evidence,
+            {
+                "MultiMethodCaller.java": [
+                    "class MultiMethodCaller { MultiMethodService receiver; "
+                    "Object call(Object value) { receiver.invoke(value); "
+                    "receiver.deleteEverything(); return value; } }"
+                ],
+                "MultiMethodService.java": [
+                    "class MultiMethodService { Object invoke(Object value) { return value; } "
+                    "void deleteEverything() { } }"
+                ],
+            },
+        )
+
+    multi_method_envelope = multi_method_without_evidence.model_copy(
+        update={
+            "source_refs": [
+                *multi_method_without_evidence.source_refs,
+                AgentKnowledgeSourceReference(
+                    path="MultiMethodService.java",
+                    symbol="MultiMethodService#invoke",
+                    line=1,
+                ),
+                AgentKnowledgeSourceReference(
+                    path="MultiMethodService.java",
+                    symbol="MultiMethodService#deleteEverything",
+                    line=1,
+                ),
+            ]
+        }
+    )
+    with pytest.raises(KnowledgeValidationError, match="not connected"):
+        service._validate_agent_trace_links(
+            multi_method_envelope,
+            {
+                "MultiMethodCaller.java": [
+                    "class MultiMethodCaller { MultiMethodService receiver; "
+                    "Object call(Object value) { return receiver.invoke(value); } }"
+                ],
+                "MultiMethodService.java": [
+                    "class MultiMethodService { Object invoke(Object value) { return value; } "
+                    "void deleteEverything() { } }"
+                ],
+            },
+        )
+
+    # 组合服务步骤允许表达同一Invoker真实并列调用，但每个方法都要有独立声明证据。
+    service._validate_agent_trace_links(
+        multi_method_envelope,
+        {
+            "MultiMethodCaller.java": [
+                "class MultiMethodCaller { MultiMethodService receiver; "
+                "Object call(Object value) { receiver.invoke(value); "
+                "receiver.deleteEverything(); return value; } }"
+            ],
+            "MultiMethodService.java": [
+                "class MultiMethodService { Object invoke(Object value) { return value; } "
+                "void deleteEverything() { } }"
+            ],
+        },
+    )
+
+    inherited_package_collision = envelope_for(
+        "PackageChild.java",
+        "PackageChild#call",
+        "Impl.java",
+        "Impl#invoke",
+    )
+    with pytest.raises(KnowledgeValidationError, match="not connected"):
+        service._validate_agent_trace_links(
+            inherited_package_collision,
+            {
+                "PackageChild.java": [
+                    "package caller; class PackageChild extends com.real.AbstractBase { "
+                    "Object call(Object value) { return receiver.invoke(value); } }"
+                ],
+                "WrongBase.java": [
+                    "package com.other; class AbstractBase { b.Port receiver; }"
+                ],
+                "Impl.java": [
+                    "package target; class Impl implements b.Port { "
+                    "Object invoke(Object value) { return value; } }"
+                ],
+            },
+        )
+
+    override_envelope = envelope_for("Child.java", "Child#execute", "Base.java", "Base#execute")
+    with pytest.raises(KnowledgeValidationError, match="not connected"):
+        service._validate_agent_trace_links(
+            override_envelope,
+            {
+                "Child.java": [
+                    "class Child extends Base { Object execute(Object value) { return value; } }"
+                ],
+                "Base.java": ["class Base { Object execute(Object value) { return value; } }"],
+            },
+        )
+
+    shadowed_parent_envelope = envelope_for("Child.java", "Child#call", "Base.java", "Base#execute")
+    with pytest.raises(KnowledgeValidationError, match="not connected"):
+        service._validate_agent_trace_links(
+            shadowed_parent_envelope,
+            {
+                "Child.java": [
+                    "class Child extends Base { Object call(Object value) { return execute(value); } "
+                    "Object execute(Object value) { return value; } }"
+                ],
+                "Base.java": ["class Base { Object execute(Object value) { return value; } }"],
+            },
+        )
+
+    # 显式super调用是由源码证明的真实父类边，不能与未调用override一起误拒绝。
+    service._validate_agent_trace_links(
+        override_envelope,
+        {
+            "Child.java": [
+                "class Child extends Base { Object execute(Object value) { return super.execute(value); } }"
+            ],
+            "Base.java": ["class Base { Object execute(Object value) { return value; } }"],
+        },
+    )
+
+
+def test_agent_trace_accepts_java_dao_call_to_xml_mapper_boundary(tmp_path: Path) -> None:
+    """Java DAO调用真实Mapper方法时应连接到已验证XML声明而不是触发服务器异常。
+
+    Args:
+        tmp_path: Pytest提供的隔离知识存储目录。
+
+    Returns:
+        None；真实调用通过且缺少调用的伪边界被明确拒绝时通过。
+    """
+
+    service, _, _ = _knowledge_service(tmp_path)
+    envelope = AgentKnowledgeEnvelope.model_validate(
+        {
+            "status": "completed",
+            "system_id": "demo-system",
+            "target_ids": ["facade:demo.QueryFacade#queryList"],
+            "summaries": [],
+            "questions": [],
+            "source_refs": [
+                {"path": "QueryDAO.java", "symbol": "QueryDAO#listPage", "line": 1},
+                {"path": "QueryMapper.xml", "symbol": "listPage", "line": 2},
+            ],
+            "trace_steps": [
+                {
+                    "sequence": 1,
+                    "role": "data_access",
+                    "source_ref": {"path": "QueryDAO.java", "symbol": "QueryDAO#listPage", "line": 1},
+                    "summary": "DAO调用Mapper执行分页查询。",
+                },
+                {
+                    "sequence": 2,
+                    "role": "data_access",
+                    "source_ref": {"path": "QueryMapper.xml", "symbol": "listPage", "line": 2},
+                    "summary": "Mapper声明真实分页SQL。",
+                },
+            ],
+        }
+    )
+    mapper_lines = ["<mapper>", '  <select id="listPage">select 1</select>', "</mapper>"]
+
+    service._validate_agent_trace_links(
+        envelope,
+        {
+            "QueryDAO.java": [
+                "class QueryDAO { QueryMapper mapper; Object listPage(Object query) { return mapper.listPage(query); } }"
+            ],
+            "QueryMapper.xml": mapper_lines,
+        },
+    )
+    with pytest.raises(KnowledgeValidationError, match="not connected"):
+        service._validate_agent_trace_links(
+            envelope,
+            {
+                "QueryDAO.java": [
+                    "class QueryDAO { Object listPage(Object query) { return query; } }"
+                ],
+                "QueryMapper.xml": mapper_lines,
+            },
+        )
+
+
+def test_mapper_reference_requires_one_real_id_declaration(tmp_path: Path) -> None:
+    """Mapper引用不能把include、注释或重复id规范化成唯一声明。
+
+    Args:
+        tmp_path: Pytest提供的隔离知识存储目录。
+
+    Returns:
+        None；只有一个真实Mapper元素id可通过，其他相似文本均被拒绝时通过。
+    """
+
+    service, _, _ = _knowledge_service(tmp_path)
+    include_lines = [
+        '<mapper namespace="demo.Mapper">',
+        '  <!-- <select id="listPage">ignored</select> -->',
+        '  <include refid="listPage"/>',
+        "</mapper>",
+    ]
+    include_reference = SourceReference(path="DemoMapper.xml", symbol="DemoMapper#listPage", line=3)
+    normalized_include = service._normalize_client_source_reference(
+        include_reference,
+        include_lines,
+        [(1, 4)],
+    )
+
+    assert normalized_include.symbol == include_reference.symbol
+    assert normalized_include.line == include_reference.line
+    with pytest.raises(KnowledgeValidationError, match="Mapper"):
+        service._validate_agent_source_symbol(
+            SourceReference(path="DemoMapper.xml", symbol="listPage", line=3),
+            include_lines,
+        )
+
+    duplicate_lines = [
+        '<mapper namespace="demo.Mapper">',
+        '  <select id="listPage">select 1</select>',
+        '  <sql id="listPage">id</sql>',
+        "</mapper>",
+    ]
+    normalized_duplicate = service._normalize_client_source_reference(
+        SourceReference(path="DemoMapper.xml", symbol="DemoMapper#listPage", line=2),
+        duplicate_lines,
+        [(1, 4)],
+    )
+
+    assert normalized_duplicate.symbol == "DemoMapper#listPage"
+    with pytest.raises(KnowledgeValidationError, match="Mapper"):
+        service._validate_agent_source_symbol(
+            SourceReference(path="DemoMapper.xml", symbol="listPage", line=2),
+            duplicate_lines,
+        )
+
+    disguised_lines = [
+        '<mapper namespace="demo.Mapper">',
+        '  <![CDATA[ <select id="listPage"> ]]>',
+        '  <select-item id="listPage">not a mapper statement</select-item>',
+        "</mapper>",
+    ]
+    normalized_disguised = service._normalize_client_source_reference(
+        SourceReference(path="DemoMapper.xml", symbol="DemoMapper#listPage", line=2),
+        disguised_lines,
+        [(1, 4)],
+    )
+
+    assert normalized_disguised.symbol == "DemoMapper#listPage"
+    with pytest.raises(KnowledgeValidationError, match="Mapper"):
+        service._validate_agent_source_symbol(
+            SourceReference(path="DemoMapper.xml", symbol="listPage", line=2),
+            disguised_lines,
+        )
+
+    fake_root_lines = [
+        '<mapper-item namespace="demo.Mapper">',
+        '  <select id="listPage">not inside a mapper root</select>',
+        "</mapper-item>",
+    ]
+    fake_root_reference = SourceReference(path="DemoMapper.xml", symbol="DemoMapper#listPage", line=2)
+
+    normalized_fake_root = service._normalize_client_source_reference(
+        fake_root_reference,
+        fake_root_lines,
+        [(1, 3)],
+    )
+
+    assert normalized_fake_root == fake_root_reference
+
+    truncated_lines = [
+        '<mapper namespace="demo.Mapper">',
+        '  <select id="listPage"',
+        "</mapper>",
+    ]
+    truncated_reference = SourceReference(path="DemoMapper.xml", symbol="DemoMapper#listPage", line=2)
+
+    normalized_truncated = service._normalize_client_source_reference(
+        truncated_reference,
+        truncated_lines,
+        [(1, 3)],
+    )
+
+    assert normalized_truncated == truncated_reference
+    with pytest.raises(KnowledgeValidationError, match="Mapper"):
+        service._validate_agent_source_symbol(
+            SourceReference(path="DemoMapper.xml", symbol="listPage", line=2),
+            truncated_lines,
+        )
+
+    processing_instruction_lines = [
+        '<mapper namespace="demo.Mapper">',
+        '  <?demo text="<select id=\'listPage\'/>"?>',
+        "</mapper>",
+    ]
+    processing_instruction_reference = SourceReference(
+        path="DemoMapper.xml",
+        symbol="DemoMapper#listPage",
+        line=2,
+    )
+
+    normalized_processing_instruction = service._normalize_client_source_reference(
+        processing_instruction_reference,
+        processing_instruction_lines,
+        [(1, 3)],
+    )
+
+    assert normalized_processing_instruction == processing_instruction_reference
+
+    quoted_attribute_lines = [
+        '<mapper namespace="demo.Mapper">',
+        '  <select note=" id=\'listPage\' ">select 1</select>',
+        "</mapper>",
+    ]
+    quoted_attribute_reference = SourceReference(
+        path="DemoMapper.xml",
+        symbol="DemoMapper#listPage",
+        line=2,
+    )
+
+    normalized_quoted_attribute = service._normalize_client_source_reference(
+        quoted_attribute_reference,
+        quoted_attribute_lines,
+        [(1, 3)],
+    )
+
+    assert normalized_quoted_attribute == quoted_attribute_reference
+
+
+def test_java_reference_requires_one_method_declaration_on_evidence_line(tmp_path: Path) -> None:
+    """Java简称与完整符号都不能把单行重载自动绑定为唯一成员。
+
+    Args:
+        tmp_path: Pytest提供的隔离知识存储目录。
+
+    Returns:
+        None；简称保持未补全且严格完整符号因重载歧义被拒绝时通过。
+    """
+
+    service, _, _ = _knowledge_service(tmp_path)
+    source_lines = [
+        "class DemoService { Object execute(String value) { return value; } "
+        "Object execute(Integer value) { return value; } }"
+    ]
+    shorthand = SourceReference(path="DemoService.java", symbol="execute", line=1)
+
+    normalized = service._normalize_client_java_reference(shorthand, source_lines, [(1, 1)])
+
+    assert normalized == shorthand
+    with pytest.raises(KnowledgeValidationError, match="multiple overloaded"):
+        service._validate_agent_source_symbol(
+            SourceReference(path="DemoService.java", symbol="DemoService#execute", line=1),
+            source_lines,
+        )
+
+    same_name_type_lines = [
+        "package demo;",
+        "class Outer { class Inner { Object execute(String value) { return value; } } }",
+        "class Inner { Object execute(Integer value) { return value; } }",
+    ]
+    with pytest.raises(KnowledgeValidationError, match="type is absent"):
+        service._validate_agent_source_symbol(
+            SourceReference(path="Inner.java", symbol="demo.Inner#execute", line=2),
+            same_name_type_lines,
+        )
+
+    unread_declaration_lines = [
+        "class SplitService {",
+        "  Object execute(String value) {",
+        "    return value;",
+        "  }",
+        "}",
+    ]
+    body_reference = SourceReference(path="SplitService.java", symbol="execute", line=3)
+
+    body_only_normalized = service._normalize_client_java_reference(
+        body_reference,
+        unread_declaration_lines,
+        [(3, 3)],
+    )
+
+    assert body_only_normalized == body_reference
+
+    wrong_package_lines = [
+        "package com.real;",
+        "class DemoService { Object execute(String value) { return value; } }",
+    ]
+    with pytest.raises(KnowledgeValidationError, match="package"):
+        service._validate_agent_source_symbol(
+            SourceReference(
+                path="DemoService.java",
+                symbol="com.fake.DemoService#execute",
+                line=2,
+            ),
+            wrong_package_lines,
+        )
+
+
+def test_plain_text_reference_requires_one_accessed_occurrence(tmp_path: Path) -> None:
+    """普通非Java文本中的重复词不能按距离被自动改写为唯一符号证据。
+
+    Args:
+        tmp_path: Pytest提供的隔离知识存储目录。
+
+    Returns:
+        None；重复出现保持原引用并在严格符号校验中被拒绝时通过。
+    """
+
+    service, _, _ = _knowledge_service(tmp_path)
+    source_lines = ["value: first", "value: second"]
+    original = SourceReference(path="notes.yaml", symbol="Demo#value", line=2)
+
+    normalized = service._normalize_client_source_reference(original, source_lines, [(1, 2)])
+
+    assert normalized == original
+    with pytest.raises(KnowledgeValidationError, match="absent"):
+        service._validate_agent_source_symbol(original, source_lines)
 
 
 def test_agent_runner_streams_codex_jsonl_and_closes_standard_input(
@@ -740,6 +2407,555 @@ def test_agent_runner_streams_codex_jsonl_and_closes_standard_input(
     assert [event.sequence for event in events] == list(range(1, len(events) + 1))
     assert "private-provider-id" not in " ".join(event.text for event in events)
     assert Path(evidence.output_path).read_text(encoding="utf-8") == '{"status":"completed"}'
+
+
+def test_agent_runner_passes_a_fully_strict_schema_to_fake_codex(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """假Codex必须先验证实际命令中的严格Schema，再返回一份完整结构化信封。
+
+    Args:
+        tmp_path: pytest隔离的假Codex、源码和运行证据目录。
+        monkeypatch: 把只读假Codex放到本测试PATH首位。
+
+    Returns:
+        None；Schema递归闭合且最终输出完整落盘时通过。
+    """
+
+    executable = tmp_path / "codex"
+    executable.write_text(
+        "#!/usr/bin/env python3\n"
+        "import json, sys\n"
+        "schema_path = sys.argv[sys.argv.index('--output-schema') + 1]\n"
+        "schema = json.load(open(schema_path, encoding='utf-8'))\n"
+        "def check(node):\n"
+        "    if node.get('type') == 'object':\n"
+        "        props = node.get('properties', {})\n"
+        "        assert node.get('additionalProperties') is False\n"
+        "        assert set(node.get('required', [])) == set(props)\n"
+        "        assert len(node.get('required', [])) == len(props)\n"
+        "    for key in ('properties', '$defs'):\n"
+        "        for child in node.get(key, {}).values(): check(child)\n"
+        "    if isinstance(node.get('items'), dict): check(node['items'])\n"
+        "    for key in ('anyOf', 'oneOf'):\n"
+        "        for child in node.get(key, []): check(child)\n"
+        "check(schema)\n"
+        "payload = {'status':'completed','system_id':'train-booking-core','target_ids':['facade:demo.Query#list'],"
+        "'summaries':[],'questions':[],'source_refs':[],'trace_steps':[]}\n"
+        "print(json.dumps({'type':'thread.started','thread_id':'thread-strict-schema'}), flush=True)\n"
+        "print(json.dumps({'type':'item.completed','item':{'type':'agent_message','text':json.dumps(payload)}}), flush=True)\n"
+        "print(json.dumps({'type':'turn.completed','usage':{}}), flush=True)\n",
+        encoding="utf-8",
+    )
+    executable.chmod(0o755)
+    monkeypatch.setenv("PATH", f"{tmp_path}{os.pathsep}{os.environ.get('PATH', '')}")
+    source = tmp_path / "source"
+    source.mkdir()
+    evidence_root = tmp_path / "evidence"
+
+    # 传入生产模型生成的真实Schema，假CLI会在输出任何成功事件前自行递归校验。
+    evidence = AgentRunner(AgentRunnerConfig(codex_executable="codex")).run(
+        AgentRunRequest(
+            system_id="train-booking-core",
+            agent="codex",
+            prompt="只读分析",
+            target_id="facade:demo.Query#list",
+            output_schema=AgentKnowledgeEnvelope.model_json_schema(),
+        ),
+        source,
+        evidence_root,
+    )
+
+    assert evidence.session_id == "thread-strict-schema"
+    assert json.loads(Path(evidence.output_path).read_text(encoding="utf-8"))["summaries"] == []
+
+
+def test_codex_app_server_prefers_desktop_bundled_executable(tmp_path: Path) -> None:
+    """客户端接管必须优先使用桌面同版本二进制，避免旧PATH CLI缺少新模型。
+
+    Args:
+        tmp_path: pytest隔离的可执行候选目录。
+
+    Returns:
+        None；可执行桌面候选被选择且候选缺失时回落``codex``即通过。
+    """
+
+    bundled = tmp_path / "ChatGPT.app" / "Contents" / "Resources" / "codex"
+    bundled.parent.mkdir(parents=True)
+    bundled.write_text("#!/bin/sh\nexit 0\n", encoding="utf-8")
+    bundled.chmod(0o755)
+
+    assert _resolve_codex_app_server_executable((bundled,)) == str(bundled)
+    assert _resolve_codex_app_server_executable((tmp_path / "missing-codex",)) == "codex"
+
+
+def test_codex_app_server_creates_and_injects_thread_without_starting_a_turn(
+    tmp_path: Path,
+) -> None:
+    """客户端接管只应创建持久线程和聊天历史，不得自动发送模型turn。
+
+    Args:
+        tmp_path: pytest隔离的假Codex App Server、协议记录和工作目录。
+
+    Returns:
+        None；线程可深链打开、Prompt已注入且协议中没有turn/start时通过。
+    """
+
+    executable = tmp_path / "codex"
+    request_log = tmp_path / "app-server-requests.jsonl"
+    executable.write_text(
+        "#!/usr/bin/env python3\n"
+        "import json, sys\n"
+        f"log_path = {str(request_log)!r}\n"
+        "for raw in sys.stdin:\n"
+        "    request = json.loads(raw)\n"
+        "    with open(log_path, 'a', encoding='utf-8') as handle:\n"
+        "        handle.write(json.dumps(request, ensure_ascii=False) + '\\n')\n"
+        "    if 'id' not in request:\n"
+        "        continue\n"
+        "    method = request.get('method')\n"
+        "    if 'jsonrpc' in request:\n"
+        "        print(json.dumps({'id':request.get('id'),'error':{'code':-32600,'message':'jsonrpc header forbidden'}}), flush=True)\n"
+        "        continue\n"
+        "    if method == 'initialize':\n"
+        "        result = {'userAgent':'fake-app-server'}\n"
+        "    elif method == 'model/list':\n"
+        "        result = {'data':[{'id':'gpt-5.6-sol','supportedReasoningEfforts':[{'reasoningEffort':'low'},{'reasoningEffort':'medium'}]}]}\n"
+        "    elif method == 'thread/start':\n"
+        "        if request['params'].get('approvalPolicy') != 'never' or request['params'].get('sandbox') != 'readOnly':\n"
+        "            print(json.dumps({'id':request['id'],'error':{'code':-32602,'message':'bad enums'}}), flush=True)\n"
+        "            continue\n"
+        "        result = {'thread':{'id':'01a-client-handoff-test'},'model':'gpt-test','modelProvider':'openai','cwd':request['params']['cwd'],'approvalPolicy':'onRequest','approvalsReviewer':'user','sandbox':{'type':'readOnly'}}\n"
+        "    elif method == 'mcpServerStatus/list':\n"
+        "        names = ['get_knowledge_handoff','list_source_files','search_source','read_source','submit_knowledge_candidate']\n"
+        "        result = {'data':[{'name':'opentest_knowledge','authStatus':'unsupported','resources':[],'resourceTemplates':[],'tools':{name:{'name':name,'inputSchema':{}} for name in names}}],'nextCursor':None}\n"
+        "    else:\n"
+        "        result = {}\n"
+        "    response = json.dumps({'id':request['id'],'result':result})\n"
+        "    if method == 'thread/start':\n"
+        "        notification = json.dumps({'method':'thread/started','params':{'thread':result['thread']}})\n"
+        "        sys.stdout.write(notification + '\\n' + response + '\\n')\n"
+        "        sys.stdout.flush()\n"
+        "    else:\n"
+        "        print(response, flush=True)\n",
+        encoding="utf-8",
+    )
+    executable.chmod(0o755)
+    workspace = tmp_path / "workspace"
+    workspace.mkdir()
+
+    thread = CodexAppServerClient(
+        CodexAppServerConfig(
+            executable=str(executable),
+            thread_start_wire=CodexThreadStartWire(approval_policy="never", sandbox="readOnly"),
+        )
+    ).create_thread(
+        "请分析当前OpenTest知识目标。",
+        "OpenTest · QueryFacade#queryList",
+        workspace,
+        "只能通过OpenTest插件回写候选。",
+        "gpt-5.6-sol",
+        "medium",
+    )
+    requests = [
+        json.loads(line)
+        for line in request_log.read_text(encoding="utf-8").splitlines()
+        if line.strip()
+    ]
+
+    assert thread.thread_id == "01a-client-handoff-test"
+    assert thread.deep_link == "codex://threads/01a-client-handoff-test"
+    assert [request.get("method") for request in requests if "method" in request] == [
+        "initialize",
+        "initialized",
+        "model/list",
+        "thread/start",
+        "mcpServerStatus/list",
+        "thread/name/set",
+        "thread/inject_items",
+    ]
+    assert all("jsonrpc" not in request for request in requests)
+    assert all(request.get("method") != "turn/start" for request in requests)
+    initialized = next(request for request in requests if request.get("method") == "initialized")
+    assert initialized == {"method": "initialized", "params": {}}
+    started = next(request for request in requests if request.get("method") == "thread/start")
+    assert set(started) == {"id", "method", "params"}
+    assert started["params"] == {
+        "cwd": str(workspace.resolve()),
+        "developerInstructions": "只能通过OpenTest插件回写候选。",
+        "model": "gpt-5.6-sol",
+        "config": {"model_reasoning_effort": "medium"},
+        "approvalPolicy": "never",
+        "approvalsReviewer": "user",
+        "sandbox": "readOnly",
+        "ephemeral": False,
+    }
+    status = next(request for request in requests if request.get("method") == "mcpServerStatus/list")
+    assert status["params"] == {
+        "threadId": "01a-client-handoff-test",
+        "detail": "toolsAndAuthOnly",
+        "limit": 100,
+    }
+    injected = next(request for request in requests if request.get("method") == "thread/inject_items")
+    assert injected["params"]["items"][0]["role"] == "user"
+    assert "OpenTest知识目标" in injected["params"]["items"][0]["content"][0]["text"]
+
+
+def test_codex_app_server_rejects_thread_without_ready_opentest_mcp_tools(tmp_path: Path) -> None:
+    """客户端线程未装载全部OpenTest工具时必须在任何turn之前失败关闭。
+
+    Args:
+        tmp_path: pytest隔离的假App Server和工作目录。
+
+    Returns:
+        None；缺少确认工具时抛出精确失败且协议中没有注入或turn/start时通过。
+    """
+
+    executable = tmp_path / "codex"
+    request_log = tmp_path / "missing-mcp-requests.jsonl"
+    executable.write_text(
+        "#!/usr/bin/env python3\n"
+        "import json, sys\n"
+        f"log_path = {str(request_log)!r}\n"
+        "for raw in sys.stdin:\n"
+        "    request = json.loads(raw)\n"
+        "    with open(log_path, 'a', encoding='utf-8') as handle:\n"
+        "        handle.write(json.dumps(request) + '\\n')\n"
+        "    if 'id' not in request:\n"
+        "        continue\n"
+        "    if request['method'] == 'model/list':\n"
+        "        result = {'data':[{'id':'gpt-5.6-sol','supportedReasoningEfforts':['low','medium']}]}\n"
+        "    elif request['method'] == 'thread/start':\n"
+        "        result = {'thread':{'id':'01a-missing-mcp'}}\n"
+        "    elif request['method'] == 'mcpServerStatus/list':\n"
+        "        result = {'data':[{'name':'opentest_knowledge','tools':{'read_source':{'name':'read_source'}}}]}\n"
+        "    else:\n"
+        "        result = {}\n"
+        "    print(json.dumps({'id':request['id'],'result':result}), flush=True)\n",
+        encoding="utf-8",
+    )
+    executable.chmod(0o755)
+    workspace = tmp_path / "workspace"
+    workspace.mkdir()
+
+    with pytest.raises(ExecutionFailure, match="MCP tools are unavailable"):
+        CodexAppServerClient(
+            CodexAppServerConfig(
+                executable=str(executable),
+                thread_start_wire=CodexThreadStartWire(approval_policy="never", sandbox="readOnly"),
+            )
+        ).create_thread(
+            "请分析当前OpenTest知识目标。",
+            "OpenTest · QueryFacade#queryList",
+            workspace,
+            "只能通过OpenTest插件回写候选。",
+            "gpt-5.6-sol",
+            "low",
+        )
+
+    methods = [
+        json.loads(line).get("method")
+        for line in request_log.read_text(encoding="utf-8").splitlines()
+        if line.strip()
+    ]
+    assert "thread/inject_items" not in methods
+    assert "turn/start" not in methods
+
+
+def test_codex_app_server_uses_local_schema_wire_before_side_effectful_thread_start(tmp_path: Path) -> None:
+    """真实Codex旧枚举必须在创建线程前由本机Schema确定且不得失败后重试。
+
+    Args:
+        tmp_path: Pytest隔离的假Codex、Schema输出、请求日志和工作目录。
+
+    Returns:
+        None；只生成一次Schema并以旧枚举创建唯一线程且不启动turn时通过。
+    """
+
+    executable = tmp_path / "codex"
+    request_log = tmp_path / "schema-wire-requests.jsonl"
+    schema_log = tmp_path / "schema-wire-count.txt"
+    executable.write_text(
+        "#!/usr/bin/env python3\n"
+        "import json, pathlib, sys\n"
+        f"request_log = pathlib.Path({str(request_log)!r})\n"
+        f"schema_log = pathlib.Path({str(schema_log)!r})\n"
+        "if 'generate-json-schema' in sys.argv:\n"
+        "    out = pathlib.Path(sys.argv[sys.argv.index('--out') + 1]) / 'v2'\n"
+        "    out.mkdir(parents=True, exist_ok=True)\n"
+        "    schema_log.write_text('generated', encoding='utf-8')\n"
+        "    schema = {'definitions': {'AskForApproval': {'type':'string','enum':['never']}, 'SandboxMode': {'type':'string','enum':['readOnly']}}}\n"
+        "    (out / 'ThreadStartParams.json').write_text(json.dumps(schema), encoding='utf-8')\n"
+        "    raise SystemExit(0)\n"
+        "for raw in sys.stdin:\n"
+        "    request = json.loads(raw)\n"
+        "    request_log.open('a', encoding='utf-8').write(json.dumps(request) + '\\n')\n"
+        "    if 'id' not in request:\n"
+        "        continue\n"
+        "    method = request.get('method')\n"
+        "    if method == 'model/list':\n"
+        "        result = {'data':[{'id':'gpt-5.6-sol','supportedReasoningEfforts':['low','medium']}]}\n"
+        "    elif method == 'thread/start':\n"
+        "        params = request['params']\n"
+        "        if params.get('approvalPolicy') != 'never' or params.get('sandbox') != 'readOnly':\n"
+        "            print(json.dumps({'id':request['id'],'error':{'code':-32602,'message':'bad local enums'}}), flush=True)\n"
+        "            continue\n"
+        "        result = {'thread':{'id':'01a-schema-wire-thread'}}\n"
+        "    elif method == 'mcpServerStatus/list':\n"
+        "        names = ['get_knowledge_handoff','list_source_files','search_source','read_source','submit_knowledge_candidate']\n"
+        "        result = {'data':[{'name':'opentest_knowledge','tools':{name:{'name':name} for name in names}}]}\n"
+        "    else:\n"
+        "        result = {}\n"
+        "    print(json.dumps({'id':request['id'],'result':result}), flush=True)\n",
+        encoding="utf-8",
+    )
+    executable.chmod(0o755)
+    workspace = tmp_path / "workspace"
+    workspace.mkdir()
+
+    thread = CodexAppServerClient(CodexAppServerConfig(executable=str(executable))).create_thread(
+        "请分析当前OpenTest知识目标。",
+        "OpenTest · QueryFacade#queryList",
+        workspace,
+        "只能通过OpenTest插件回写候选。",
+        "gpt-5.6-sol",
+        "medium",
+    )
+    requests = [json.loads(line) for line in request_log.read_text(encoding="utf-8").splitlines()]
+    starts = [request for request in requests if request.get("method") == "thread/start"]
+
+    assert schema_log.read_text(encoding="utf-8") == "generated"
+    assert len(starts) == 1
+    assert starts[0]["params"]["approvalPolicy"] == "never"
+    assert starts[0]["params"]["sandbox"] == "readOnly"
+    assert thread.thread_id == "01a-schema-wire-thread"
+    assert all(request.get("method") != "turn/start" for request in requests)
+
+
+def test_codex_app_server_requires_installed_opentest_plugin_before_thread_creation(tmp_path: Path) -> None:
+    """客户端接管必须确认插件已安装启用，仓库源码存在不能替代Codex安装状态。
+
+    Args:
+        tmp_path: pytest隔离的假Codex插件清单命令。
+
+    Returns:
+        None；正确插件通过、空安装清单被阻止且没有创建线程时通过。
+    """
+
+    executable = tmp_path / "codex-plugin-list"
+    executable.write_text(
+        "#!/usr/bin/env python3\n"
+        "import json\n"
+        "print(json.dumps({'installed':[{'pluginId':'open-test-knowledge@opentest-local','installed':True,'enabled':True}]}))\n",
+        encoding="utf-8",
+    )
+    executable.chmod(0o755)
+    client = CodexAppServerClient(CodexAppServerConfig(executable=str(executable)))
+
+    client.require_knowledge_plugin()
+
+    executable.write_text(
+        "#!/usr/bin/env python3\nimport json\nprint(json.dumps({'installed':[]}))\n",
+        encoding="utf-8",
+    )
+    executable.chmod(0o755)
+    with pytest.raises(KnowledgeValidationError, match="安装并启用OpenTest Codex插件"):
+        client.require_knowledge_plugin()
+
+
+def test_agent_knowledge_envelope_schema_is_fully_codex_strict() -> None:
+    """Agent信封、问题、摘要和源码引用的所有对象都必须满足Codex严格契约。
+
+    Returns:
+        None；不存在动态摘要Map，且所有对象闭合并全字段必填时通过。
+    """
+
+    schema = AgentKnowledgeEnvelope.model_json_schema()
+
+    assert schema["type"] == "object"
+    assert "summaries" in schema["properties"]
+    assert "summaries_by_node" not in schema["properties"]
+    _assert_codex_strict_schema(schema)
+
+
+def test_facade_client_candidate_requires_complete_sections_and_immutable_contract(tmp_path: Path) -> None:
+    """Facade候选缺少业务章节时不得发布，且模型不能改写确定性调用身份。
+
+    Args:
+        tmp_path: Pytest提供的隔离知识服务目录。
+
+    Returns:
+        None；缺口逐项返回、完整候选无缺口且契约改写被安全拒绝时通过。
+    """
+
+    service, _store, _index = _knowledge_service(tmp_path)
+    entry = EntryPoint(
+        entry_id="facade:demo.RefundFacade#queryList",
+        system_id="demo-system",
+        kind=KnowledgeNodeKind.FACADE,
+        display_name="查询退票单",
+        source_id="demo.RefundFacade#queryList",
+        source_path="RefundFacade.java",
+        request_type="RefundQueryRequest",
+        response_type="RefundPage",
+        tool_id="refund-query-list",
+    )
+    contract = service._deterministic_invocation_contract(entry).model_copy(
+        update={
+            "field_meanings": {"refundType": "退票类型筛选条件"},
+            "date_dimensions": {"applyTime": "退票申请时间"},
+            "pagination_semantics": "pageNo从1开始，pageSize限制单页条数。",
+            "error_semantics": ["参数错误返回业务异常，不产生写入。"],
+            "usage_examples": ["查询七月申请的自愿退退票单列表。"],
+        }
+    )
+    reference = {"path": "RefundFacade.java", "symbol": "RefundFacade#queryList", "line": 1}
+    shallow = KnowledgeClientCandidateEnvelope.model_validate(
+        {
+            "status": "completed",
+            "system_id": "demo-system",
+            "target_ids": [entry.entry_id],
+            "summaries": [],
+            "questions": [],
+            "source_refs": [reference],
+            "trace_steps": [{"sequence": 1, "role": "entry", "source_ref": reference, "summary": "入口"}],
+            "completeness": AgentKnowledgeCompleteness().model_dump(),
+            "invocation_contract": contract.model_dump(),
+        }
+    )
+
+    gaps = service._client_completion_gaps(entry, shallow)
+
+    assert "missing_or_shallow:input_semantics" in gaps
+    assert "missing:service_trace" in gaps
+    assert "missing:data_or_remote_boundary" in gaps
+    complete_text = "已结合真实源码读取完整解释该章节的业务语义和可验证结果。"
+    complete = shallow.model_copy(
+        update={
+            "completeness": AgentKnowledgeCompleteness(
+                business_purpose="用于按运营筛选条件查询退票单分页列表，不创建或修改任何退票业务状态。",
+                applicable_scenarios="适用于运营后台按退票类型和时间范围检索订单，并核对列表与总数。",
+                input_semantics="请求包含退票类型、时间范围和分页参数；空筛选按源码默认规则处理。",
+                output_semantics="返回分页退票单及总数；没有匹配记录时返回空集合而不是伪造错误。",
+                business_flow="入口转换请求后调用列表业务服务，再分别读取明细集合和符合条件的总数。",
+                important_branches="自愿退等类型条件会改变查询过滤；分页边界和空条件分支影响最终数据库条件。",
+                failure_handling="非法筛选参数产生业务参数异常，数据访问失败按现有异常边界向上返回。",
+                test_oracles="验证列表元素满足全部过滤条件、总数一致、分页稳定，并覆盖空结果与非法参数。",
+            ),
+            "trace_steps": [
+                shallow.trace_steps[0],
+                shallow.trace_steps[0].model_copy(update={"sequence": 2, "role": "service"}),
+                shallow.trace_steps[0].model_copy(update={"sequence": 3, "role": "data_access"}),
+            ],
+        }
+    )
+
+    assert service._client_completion_gaps(entry, complete) == []
+    repeated = complete.model_copy(
+        update={
+            "completeness": AgentKnowledgeCompleteness(
+                **{
+                    name: f"{name}：{complete_text}"
+                    for name in AgentKnowledgeCompleteness.model_fields
+                }
+            )
+        }
+    )
+    assert any(
+        gap.startswith("duplicate_or_overlapping_content:")
+        for gap in service._client_completion_gaps(entry, repeated)
+    )
+    empty_contract_candidate = complete.model_copy(
+        update={
+            "invocation_contract": contract.model_copy(
+                update={
+                    "field_meanings": {"refundType": ""},
+                    "pagination_semantics": "",
+                    "error_semantics": [""],
+                    "usage_examples": [""],
+                }
+            )
+        }
+    )
+    empty_contract_gaps = service._client_completion_gaps(entry, empty_contract_candidate)
+    assert "missing:invocation_field_meanings" in empty_contract_gaps
+    assert "missing:invocation_usage_examples" in empty_contract_gaps
+    assert "missing:pagination_semantics" in empty_contract_gaps
+    assert "missing:invocation_error_semantics" in empty_contract_gaps
+    with pytest.raises(KnowledgeValidationError, match="changed deterministic"):
+        service._validate_deterministic_invocation_contract(
+            entry,
+            contract.model_copy(update={"tool_id": "forged-write-tool"}),
+        )
+    write_entry = entry.model_copy(
+        update={
+            "entry_id": "facade:demo.RefundFacade#createOrder",
+            "source_id": "demo.RefundFacade#createOrder",
+            "tool_id": "refund-create-order",
+        }
+    )
+
+    # 明确写接口只生成业务知识，不能被Agent包装为可调用的只读能力。
+    assert service._deterministic_invocation_contract(write_entry) is None
+    with pytest.raises(KnowledgeValidationError, match="write or unknown Facade"):
+        service._validate_deterministic_invocation_contract(write_entry, contract)
+
+
+@pytest.mark.parametrize("agent", ["codex", "claude"])
+def test_agent_runner_rejects_invalid_schema_before_starting_provider(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+    agent: str,
+) -> None:
+    """Codex与Claude必须共用本地Schema预检，失败时不得启动供应商或创建运行证据。
+
+    Args:
+        tmp_path: pytest隔离的假供应商、源码和未创建证据目录。
+        monkeypatch: 把假供应商命令放到本测试PATH首位。
+        agent: 当前验证的明确供应商名称。
+
+    Returns:
+        None；无进程执行哨兵且无运行目录时通过。
+    """
+
+    sentinel = tmp_path / "provider-started"
+    executable = tmp_path / agent
+    executable.write_text(f"#!/bin/sh\ntouch '{sentinel}'\n", encoding="utf-8")
+    executable.chmod(0o755)
+    monkeypatch.setenv("PATH", f"{tmp_path}{os.pathsep}{os.environ.get('PATH', '')}")
+    source = tmp_path / "source"
+    source.mkdir()
+    evidence_root = tmp_path / "evidence"
+    config = (
+        AgentRunnerConfig(codex_executable="codex")
+        if agent == "codex"
+        else AgentRunnerConfig(claude_executable="claude")
+    )
+    invalid_schema = {
+        "type": "object",
+        "properties": {
+            "summaries": {"type": "object", "additionalProperties": {"type": "string"}},
+        },
+        "required": [],
+        "additionalProperties": False,
+    }
+
+    # 预检位于证据目录和供应商工作进程创建之前，避免无效请求产生任何API费用。
+    with pytest.raises(KnowledgeValidationError, match="require every property"):
+        AgentRunner(config).run(
+            AgentRunRequest(
+                system_id="train-booking-core",
+                agent=agent,
+                prompt="只读分析",
+                output_schema=invalid_schema,
+            ),
+            source,
+            evidence_root,
+        )
+
+    assert not sentinel.exists()
+    assert not evidence_root.exists()
 
 
 def test_agent_runner_only_stops_a_slow_run_after_explicit_cancel(

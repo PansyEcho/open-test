@@ -747,11 +747,13 @@ def test_agent_enrichment_rejects_other_system_unknown_target_and_escaping_sourc
         confirmed=True,
     )
     base = {
+        "status": "completed",
         "system_id": "refund.core",
         "target_ids": request.target_ids,
-        "summaries_by_node": {node.node_id: "摘要"},
+        "summaries": [{"node_id": node.node_id, "summary": "摘要"}],
         "questions": [],
         "source_refs": [],
+        "trace_steps": [],
     }
     with pytest.raises(ScopeViolationError, match="system and targets"):
         service._run_safe_agent_enrichment(
@@ -775,5 +777,7 @@ def test_agent_enrichment_rejects_other_system_unknown_target_and_escaping_sourc
             str(source_root),
             manifest,
             [node],
-            _EnvelopeAgentRunner({**base, "source_refs": [{"path": "../other.java"}]}),
+            _EnvelopeAgentRunner(
+                {**base, "source_refs": [{"path": "../other.java", "symbol": "Other", "line": None}]}
+            ),
         )

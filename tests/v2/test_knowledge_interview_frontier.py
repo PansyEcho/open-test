@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+import threading
 import time
 from pathlib import Path
 from types import SimpleNamespace
@@ -14,8 +15,18 @@ from fastapi.testclient import TestClient
 from opentest.adapters.source_analysis import SourceScanArtifactStore
 from opentest.api import create_app
 from opentest.application.foundation import OpenTestApplication
-from opentest.domain.errors import AgentRunInterruptedError, KnowledgeQuestionCycleStaleError, KnowledgeValidationError
+from opentest.domain.errors import (
+    AgentObserverDetachedError,
+    AgentRunInterruptedError,
+    ExecutionFailure,
+    KnowledgeNotFoundError,
+    KnowledgeQuestionCycleStaleError,
+    KnowledgeValidationError,
+    ScopeViolationError,
+)
 from opentest.domain.models import (
+    AgentKnowledgeEnvelope,
+    AgentKnowledgeCompleteness,
     EntryPoint,
     KnowledgeConfirmation,
     KnowledgeBackgroundUpdate,
@@ -30,7 +41,11 @@ from opentest.domain.models import (
     KnowledgeEnumValue,
     KnowledgeGenerationBatchRequest,
     KnowledgeGenerationWorkflowBatch,
+    KnowledgeClientCandidateConfirmation,
+    KnowledgeClientCandidateSubmission,
+    KnowledgeClientCandidateEnvelope,
     KnowledgeTargetGenerationOutcome,
+    KnowledgeTargetGenerationRequest,
     KnowledgeQuestion,
     KnowledgeQuestionCycle,
     KnowledgeQuestionCycleAnswer,
@@ -50,7 +65,9 @@ from opentest.domain.models import (
     StateMachineDefinition,
     StateTransition,
     SystemDefinition,
+    TaskRecord,
     RuntimeToolSettings,
+    TaskStatus,
     utc_now,
 )
 
@@ -127,22 +144,204 @@ class _KnowledgeAgentRunner:
         prompt_payload = json.loads(request.prompt.split("\n", 1)[1])
         assert prompt_payload["source_packet"]
         assert all(not Path(item["path"]).is_absolute() for item in prompt_payload["source_packet"])
-        summaries = {
-            item["node_id"]: "基于给定源码证据解释该目标的业务目的、主流程、分支、依赖、副作用与异常边界。"
+        assert prompt_payload["business_context"]
+        assert prompt_payload["analysis_policy"]["mode"] == "registered_source_read_only"
+        assert prompt_payload["analysis_policy"]["available_tools"] == [
+            "list_source_files",
+            "search_source",
+            "read_source",
+        ]
+        assert "完整业务执行路径" in request.prompt
+        assert "不能只复述Facade接口契约" in request.prompt
+        summaries = [
+            {
+                "node_id": item["node_id"],
+                "summary": "基于给定源码证据解释该目标的业务目的、主流程、分支、依赖、副作用与异常边界。",
+            }
             for item in prompt_payload["evidence"]
-        }
+        ]
+        source_refs = [
+            {
+                "path": item["path"],
+                "symbol": item["symbol"],
+                "line": item["start_line"],
+            }
+            for item in prompt_payload["source_packet"]
+        ]
         envelope = {
+            "status": "completed",
             "system_id": prompt_payload["system_id"],
             "target_ids": prompt_payload["target_ids"],
-            "summaries_by_node": summaries,
+            "summaries": summaries,
             "questions": [],
-            "source_refs": [],
+            "source_refs": source_refs,
+            "trace_steps": [
+                {
+                    "sequence": 1,
+                    "role": "no_downstream",
+                    "source_ref": source_refs[0],
+                    "summary": "测试Job的确定性入口没有需要继续展开的数据或远程边界。",
+                }
+            ],
         }
         output_root = evidence_root / f"test-agent-{len(list(evidence_root.glob('test-agent-*')))}"
         output_root.mkdir(parents=True, exist_ok=False)
         output_path = output_root / "output.txt"
         output_path.write_text(json.dumps(envelope, ensure_ascii=False), encoding="utf-8")
         return SimpleNamespace(output_path=str(output_path))
+
+
+class _FakeCodexAppServer:
+    """只创建持久线程身份、不发送模型消息的App Server测试替身。"""
+
+    def __init__(self) -> None:
+        """初始化线程创建计数与最近一次可核对请求。"""
+
+        self.call_count = 0
+        self.requests: list[dict[str, str]] = []
+
+    def require_knowledge_plugin(self) -> None:
+        """模拟已经由用户一次性安装并启用OpenTest插件。
+
+        Returns:
+            None；测试替身不访问用户Codex配置。
+        """
+
+        return None
+
+    def create_thread(
+        self,
+        prompt: str,
+        title: str,
+        cwd: Path,
+        developer_instructions: str,
+        model: str,
+        reasoning_effort: str,
+    ) -> object:
+        """返回不会触发turn/start的固定Codex客户端线程。
+
+        Args:
+            prompt: 注入客户端聊天历史的完整单目标任务说明。
+            title: 页面和Codex侧栏可识别的目标标题。
+            cwd: OpenTest仓库目录，用于加载仓库插件。
+            developer_instructions: 强制使用OpenTest桥接和确认发布的线程约束。
+            model: 页面明确选择的Codex模型ID。
+            reasoning_effort: 页面明确选择的推理档位。
+
+        Returns:
+            带线程ID和深链的轻量客户端线程结果。
+
+        Side Effects:
+            只记录测试调用；不启动Codex、turn或任何外部Agent。
+        """
+
+        self.call_count += 1
+        self.requests.append(
+            {
+                "prompt": prompt,
+                "title": title,
+                "cwd": str(cwd),
+                "developer_instructions": developer_instructions,
+                "model": model,
+                "reasoning_effort": reasoning_effort,
+            }
+        )
+        thread_id = f"01a-client-thread-{self.call_count}"
+        return SimpleNamespace(thread_id=thread_id, deep_link=f"codex://threads/{thread_id}")
+
+
+class _FailingKnowledgeAgentRunner(_KnowledgeAgentRunner):
+    """模拟指定Agent启动后失败且确定性源码事实仍可保存的无费用Runner。"""
+
+    def run(self, request: object, source_root: Path, evidence_root: Path) -> object:
+        """在确定性追踪之后抛出安全执行失败。
+
+        Args:
+            request: 已明确选择Agent的单目标运行请求。
+            source_root: 注册源码根，本桩不读取正文。
+            evidence_root: 私有证据根，本桩不写供应商输出。
+
+        Raises:
+            ExecutionFailure: 固定模拟Agent分析失败。
+        """
+
+        del request, source_root, evidence_root
+        raise ExecutionFailure("simulated invalid_json_schema")
+
+
+class _DetachedInvalidRecoveryRunner(_KnowledgeAgentRunner):
+    """先模拟服务分离，再为接管提供exit 0但结构非法的本地证据。"""
+
+    def run(self, request: object, source_root: Path, evidence_root: Path) -> object:
+        """在确定性检查点保存后模拟旧服务放弃观察权。
+
+        Args:
+            request: 已明确目标与Agent的原始运行请求。
+            source_root: 注册源码根，本桩不读取正文。
+            evidence_root: 私有证据根，非法结果留给接管阶段写入。
+
+        Raises:
+            AgentObserverDetachedError: 固定表示付费进程由新服务接管。
+        """
+
+        del request, source_root, evidence_root
+        raise AgentObserverDetachedError("simulated service handoff")
+
+    def attach(
+        self,
+        run_id: str,
+        evidence_root: Path,
+        event_callback: object | None = None,
+    ) -> object:
+        """返回缺失严格必填字段的已结束证据，模拟重启后校验失败。
+
+        Args:
+            run_id: 原检查点保存的稳定运行ID。
+            evidence_root: 当前测试知识根内的私有Agent目录。
+            event_callback: 兼容生产接管签名，本桩不发送事件。
+
+        Returns:
+            只暴露非法最终输出路径的轻量证据对象。
+        """
+
+        del event_callback
+        output_root = evidence_root / run_id
+        output_root.mkdir(parents=True, exist_ok=True)
+        output_path = output_root / "output.txt"
+        output_path.write_text('{"status":"completed"}', encoding="utf-8")
+        return SimpleNamespace(output_path=str(output_path))
+
+
+class _BlockingKnowledgeAgentRunner(_KnowledgeAgentRunner):
+    """保持单次无费用Agent调用在运行中，供刷新和重复提交门禁测试使用。"""
+
+    def __init__(self) -> None:
+        """初始化运行信号与调用计数，不启动任何外部进程。"""
+
+        self.started = threading.Event()
+        self.release = threading.Event()
+        self.call_count = 0
+
+    def run(self, request: object, source_root: Path, evidence_root: Path) -> object:
+        """等待测试线程放行后复用成功Runner生成严格结果。
+
+        Args:
+            request: 已明确Agent和目标的单次请求。
+            source_root: 注册源码根，本桩只传给父类且不读取QA。
+            evidence_root: 当前隔离知识库的私有证据目录。
+
+        Returns:
+            父类写入的完整严格Agent信封证据。
+
+        Raises:
+            AssertionError: 测试未在两秒内放行时终止，避免后台线程悬挂。
+        """
+
+        self.call_count += 1
+        self.started.set()
+        if not self.release.wait(timeout=2):
+            raise AssertionError("blocking Agent test was not released")
+        return super().run(request, source_root, evidence_root)
 
 
 class _WaitingContinuationAgentRunner:
@@ -157,6 +356,7 @@ class _WaitingContinuationAgentRunner:
 
         self.requests: list[object] = []
         self.node_ids: list[str] = []
+        self.source_refs: list[dict[str, object]] = []
 
     def availability(self) -> tuple[bool, bool]:
         """声明测试环境仅Codex可用。
@@ -199,11 +399,19 @@ class _WaitingContinuationAgentRunner:
         if not request.resume_session_id:
             prompt_payload = json.loads(request.prompt.split("\n", 1)[1])
             self.node_ids = [item["node_id"] for item in prompt_payload["evidence"]]
+            self.source_refs = [
+                {
+                    "path": item["path"],
+                    "symbol": item["symbol"],
+                    "line": item["start_line"],
+                }
+                for item in prompt_payload["source_packet"]
+            ]
             envelope = {
                 "status": "needs_input",
                 "system_id": prompt_payload["system_id"],
                 "target_ids": prompt_payload["target_ids"],
-                "summaries_by_node": {},
+                "summaries": [],
                 "questions": [
                     {
                         "title": "确认异常补偿责任",
@@ -218,7 +426,8 @@ class _WaitingContinuationAgentRunner:
                         "impact": "high",
                     }
                 ],
-                "source_refs": [],
+                "source_refs": self.source_refs,
+                "trace_steps": [],
             }
         else:
             continuation_payload = json.loads(request.prompt.split("\n", 1)[1])
@@ -227,12 +436,23 @@ class _WaitingContinuationAgentRunner:
                 "status": "completed",
                 "system_id": continuation_payload["system_id"],
                 "target_ids": continuation_payload["target_ids"],
-                "summaries_by_node": {
-                    node_id: "异常由本系统记录并执行补偿，人工答案作为确认口径单独保留。"
+                "summaries": [
+                    {
+                        "node_id": node_id,
+                        "summary": "异常由本系统记录并执行补偿，人工答案作为确认口径单独保留。",
+                    }
                     for node_id in self.node_ids
-                },
+                ],
                 "questions": [],
-                "source_refs": [],
+                "source_refs": self.source_refs,
+                "trace_steps": [
+                    {
+                        "sequence": 1,
+                        "role": "no_downstream",
+                        "source_ref": self.source_refs[0],
+                        "summary": "测试Job的补偿结论已经在当前实现中收口。",
+                    }
+                ],
             }
         output_root = evidence_root / f"test-waiting-agent-{len(self.requests)}"
         output_root.mkdir(parents=True, exist_ok=False)
@@ -1053,6 +1273,2144 @@ def test_generation_request_rejects_multiple_targets(tmp_path: Path) -> None:
         )
 
 
+def _prepare_codex_client_handoff_system(
+    tmp_path: Path,
+) -> tuple[OpenTestApplication, ScanManifest, str, Path, _FakeCodexAppServer]:
+    """创建具备单个Job目标和已完成背景的客户端接管测试系统。
+
+    Args:
+        tmp_path: pytest隔离的源码、Manifest、任务和知识根。
+
+    Returns:
+        应用、固定Manifest、目标ID、源码文件和无模型App Server替身。
+
+    Side Effects:
+        只写测试目录内源码与扫描产物，不调用Agent、QA或业务接口。
+    """
+
+    application = _application(tmp_path)
+    source_root = Path(application.store.get_system(SYSTEM_ID).source_path)
+    source_file = source_root / "ClientQueryJob.java"
+    source_file.write_text(
+        "package demo; class ClientQueryJob { void execute() { repository.query(); } }\n",
+        encoding="utf-8",
+    )
+    target_id = "job:demo.ClientQueryJob"
+    manifest = ScanManifest(
+        scan_id="scan-codex-client-handoff",
+        system_id=SYSTEM_ID,
+        baseline=application.knowledge.git_repository.capture(source_root),
+        entries=[
+            EntryPoint(
+                entry_id=target_id,
+                system_id=SYSTEM_ID,
+                kind="job",
+                display_name="客户端查询任务",
+                source_id="demo.ClientQueryJob",
+                source_path=str(source_file),
+            )
+        ],
+    )
+    artifacts = SourceScanArtifactStore(application.knowledge_root)
+    artifacts.write_manifest(manifest)
+    artifacts.publish_latest(SYSTEM_ID, manifest.scan_id)
+    application.store.update_source_baseline(SYSTEM_ID, manifest.baseline)
+    application.skip_background_interview(SYSTEM_ID)
+    application.runtime_settings.write(RuntimeToolSettings(knowledge_agent="codex"))
+    app_server = _FakeCodexAppServer()
+    application.codex_app_server = app_server
+    # 如果客户端接管误走旧Runner，本桩会使测试立即失败而不是产生外部费用。
+    application.agent_runner = _FailingKnowledgeAgentRunner()
+    application.knowledge.runner = application.agent_runner
+    return application, manifest, target_id, source_file, app_server
+
+
+def _register_additional_codex_client_target(
+    application: OpenTestApplication,
+    tmp_path: Path,
+    system_id: str,
+) -> tuple[ScanManifest, str]:
+    """在同一知识仓库注册另一个具备客户端生成条件的隔离系统。
+
+    Args:
+        application: 已配置假App Server和Codex选择的测试应用。
+        tmp_path: Pytest提供的隔离目录。
+        system_id: 用于验证跨系统全局互斥的第二系统ID。
+
+    Returns:
+        第二系统的固定扫描Manifest和唯一目标ID。
+
+    Side Effects:
+        只在测试目录注册系统、写最小源码与扫描产物并跳过背景访谈。
+    """
+
+    source_root = tmp_path / f"source-{system_id}"
+    source_root.mkdir()
+    application.register_system(
+        SystemDefinition(system_id=system_id, name="第二客户端系统", source_path=str(source_root))
+    )
+    source_file = source_root / "OtherClientQueryJob.java"
+    source_file.write_text(
+        "package other; class OtherClientQueryJob { void execute() { repository.query(); } }\n",
+        encoding="utf-8",
+    )
+    target_id = "job:other.OtherClientQueryJob"
+    manifest = ScanManifest(
+        scan_id=f"scan-{system_id}-codex-client",
+        system_id=system_id,
+        baseline=application.knowledge.git_repository.capture(source_root),
+        entries=[
+            EntryPoint(
+                entry_id=target_id,
+                system_id=system_id,
+                kind="job",
+                display_name="第二客户端查询任务",
+                source_id="other.OtherClientQueryJob",
+                source_path=str(source_file),
+            )
+        ],
+    )
+    artifacts = SourceScanArtifactStore(application.knowledge_root)
+    artifacts.write_manifest(manifest)
+    artifacts.publish_latest(system_id, manifest.scan_id)
+    application.store.update_source_baseline(system_id, manifest.baseline)
+    application.skip_background_interview(system_id)
+    return manifest, target_id
+
+
+def test_codex_client_handoff_is_idempotent_and_does_not_publish_or_run_agent(
+    tmp_path: Path,
+) -> None:
+    """同一attempt重复提交必须恢复同一线程，且确认前不发布或运行旧Agent。
+
+    Args:
+        tmp_path: pytest隔离的源码、任务、草稿与App Server记录目录。
+
+    Returns:
+        None；任务等待客户端、线程只创建一次且Git知识仍为空时通过。
+    """
+
+    application, manifest, target_id, _source_file, app_server = _prepare_codex_client_handoff_system(tmp_path)
+    # 已确认背景和业务术语必须进入可见业务模板，不能只藏在固定协议的审计载荷中。
+    application.save_knowledge_context_narrative(
+        SYSTEM_ID,
+        KnowledgeContextNarrativeUpdate(
+            system_purpose="退票查询系统",
+            upstream_entry_narrative="运营后台按筛选条件查询退票单",
+        ),
+    )
+    application.create_knowledge_context_candidate(
+        SYSTEM_ID,
+        KnowledgeContextCandidateCreate(
+            kind="BUSINESS_TERM",
+            name="自愿退",
+            business_meaning="旅客主动申请的退票类型",
+            affected_target_ids=[target_id],
+        ),
+    )
+    request = KnowledgeTargetGenerationRequest(
+        system_id=SYSTEM_ID,
+        target_id=target_id,
+        scan_id=manifest.scan_id,
+        agent="codex",
+        confirmed=True,
+        interaction_mode="codex_client",
+        intent="initial",
+        attempt_id="attempt-client-idempotent-0001",
+    )
+
+    first = application.submit_knowledge_target_generation(request)
+    repeated = application.submit_knowledge_target_generation(request)
+    batch = application.store.read_draft_batch(SYSTEM_ID, first.client_handoff.batch_id)
+
+    assert first.task_id == repeated.task_id
+    assert first.status == TaskStatus.WAITING_FOR_CLIENT
+    assert first.client_handoff is not None
+    assert first.client_handoff.target_id == target_id
+    assert first.client_handoff.attempt_id == request.attempt_id
+    assert first.client_handoff.deep_link == f"codex://threads/{first.client_handoff.thread_id}"
+    assert app_server.call_count == 1
+    assert app_server.requests[0]["model"] == "gpt-5.6-sol"
+    assert app_server.requests[0]["reasoning_effort"] == "medium"
+    assert "退票查询系统" in app_server.requests[0]["prompt"]
+    assert "自愿退" in app_server.requests[0]["prompt"]
+    assert batch.client_handoff is not None
+    assert batch.client_handoff.task_id == first.task_id
+    assert application.store.list_nodes(SYSTEM_ID) == []
+    prompt_payload = json.loads(app_server.requests[0]["prompt"].rsplit("\n", 1)[-1])
+    handoff_payload = application.get_knowledge_client_handoff(first.client_handoff.handoff_id)
+    # 客户端线程只得到请求入口和业务背景；源码正文及确定性下游类必须由三个工具自行发现。
+    assert "source_packet" not in prompt_payload
+    assert "evidence" not in prompt_payload
+    assert handoff_payload["candidate_node_ids"] == [batch.drafts[0].node.node_id]
+    diagnostics = application.get_task_agent_diagnostics(first.task_id)
+    assert diagnostics.session_id == first.client_handoff.thread_id
+    assert diagnostics.prompt
+    assert diagnostics.resume_command == ""
+
+
+def test_codex_client_snapshots_low_effort_and_prompt_template_per_attempt(tmp_path: Path) -> None:
+    """活动聊天必须固定Low档位与创建时模板，后续设置修改只影响新任务。
+
+    Args:
+        tmp_path: Pytest隔离的本地设置、任务、Prompt诊断和假App Server目录。
+
+    Returns:
+        None；同attempt恢复原线程、模型档位和Prompt快照且只创建一次时通过。
+    """
+
+    application, manifest, target_id, _source_file, app_server = _prepare_codex_client_handoff_system(tmp_path)
+    first_template = "为 {{target_id}} 生成第一版完整业务知识。"
+    application.runtime_settings.write(
+        RuntimeToolSettings(
+            knowledge_agent="codex",
+            codex_reasoning_effort="low",
+            knowledge_agent_prompt_template=first_template,
+        )
+    )
+    request = KnowledgeTargetGenerationRequest(
+        system_id=SYSTEM_ID,
+        target_id=target_id,
+        scan_id=manifest.scan_id,
+        agent="codex",
+        confirmed=True,
+        interaction_mode="codex_client",
+        intent="initial",
+        attempt_id="attempt-client-prompt-snapshot-0001",
+        codex_model="gpt-5.6-sol",
+        reasoning_effort="low",
+    )
+
+    first = application.submit_knowledge_target_generation(request)
+    application.runtime_settings.write(
+        RuntimeToolSettings(
+            knowledge_agent="codex",
+            knowledge_agent_prompt_template="为 {{target_id}} 生成后来修改的模板。",
+        )
+    )
+    repeated = application.submit_knowledge_target_generation(request)
+
+    assert repeated.task_id == first.task_id
+    assert app_server.call_count == 1
+    assert app_server.requests[0]["reasoning_effort"] == "low"
+    assert "第一版完整业务知识" in app_server.requests[0]["prompt"]
+    assert "后来修改的模板" not in app_server.requests[0]["prompt"]
+    assert first.client_handoff is not None
+    assert first.client_handoff.prompt_template_version
+
+
+def test_codex_client_completion_gaps_reuse_one_thread_then_wait_safely(tmp_path: Path) -> None:
+    """Facade候选连续不完整时只能复用原聊天补全两轮，随后安全等待。
+
+    Args:
+        tmp_path: Pytest隔离的源码、草稿、任务和假App Server目录。
+
+    Returns:
+        None；三次不同缺口候选始终绑定同一任务和线程且未发布知识时通过。
+    """
+
+    application, manifest, _target_id, source_file, app_server = _prepare_codex_client_handoff_system(tmp_path)
+    target_id = "facade:demo.ClientQueryJob#execute"
+    facade_entry = EntryPoint(
+        entry_id=target_id,
+        system_id=SYSTEM_ID,
+        kind="facade",
+        display_name="客户端查询接口",
+        source_id="demo.ClientQueryJob#execute",
+        source_path=str(source_file),
+        request_type="ClientQueryRequest",
+        response_type="ClientQueryPage",
+        tool_id="client-query",
+    )
+    facade_manifest = manifest.model_copy(update={"entries": [facade_entry]})
+    artifacts = SourceScanArtifactStore(application.knowledge_root)
+    artifacts.write_manifest(facade_manifest)
+    artifacts.publish_latest(SYSTEM_ID, facade_manifest.scan_id)
+    task = application.submit_knowledge_target_generation(
+        KnowledgeTargetGenerationRequest(
+            system_id=SYSTEM_ID,
+            target_id=target_id,
+            scan_id=facade_manifest.scan_id,
+            agent="codex",
+            confirmed=True,
+            interaction_mode="codex_client",
+            intent="initial",
+            attempt_id="attempt-client-completion-rounds-0001",
+        )
+    )
+    assert task.client_handoff is not None
+    handoff_id = task.client_handoff.handoff_id
+    thread_id = task.client_handoff.thread_id
+    application.call_knowledge_client_source_tool(
+        handoff_id,
+        "read_source",
+        {"path": source_file.name, "start_line": 1, "end_line": 1},
+    )
+    fixed_contract = application.get_knowledge_client_handoff(handoff_id)["deterministic_invocation_contract"]
+    reference = {"path": source_file.name, "symbol": "ClientQueryJob#execute", "line": 1}
+
+    # 每轮改变一个已填写章节以形成不同候选摘要，其余缺口持续阻止发布。
+    observed = []
+    for round_number in range(1, 4):
+        candidate = KnowledgeClientCandidateEnvelope(
+            status="completed",
+            system_id=SYSTEM_ID,
+            target_ids=[target_id],
+            summaries=[],
+            questions=[],
+            source_refs=[reference],
+            trace_steps=[
+                {"sequence": 1, "role": "entry", "source_ref": reference, "summary": "真实入口源码"}
+            ],
+            completeness=AgentKnowledgeCompleteness(
+                business_purpose=f"第{round_number}轮已经补充但仍不完整的接口业务目的说明。"
+            ),
+            invocation_contract=fixed_contract,
+        )
+        observed.append(
+            application.submit_knowledge_client_candidate(
+                handoff_id,
+                KnowledgeClientCandidateSubmission(candidate=candidate),
+            )
+        )
+
+    assert [item.status for item in observed] == [
+        TaskStatus.WAITING_FOR_CLIENT,
+        TaskStatus.WAITING_FOR_CLIENT,
+        TaskStatus.WAITING_FOR_COMPLETION,
+    ]
+    assert all(item.task_id == task.task_id for item in observed)
+    assert all(item.client_handoff and item.client_handoff.thread_id == thread_id for item in observed)
+    assert observed[-1].client_handoff is not None
+    assert observed[-1].client_handoff.completion_round == 2
+    assert observed[-1].client_handoff.completion_gaps
+    assert app_server.call_count == 1
+    assert application.store.list_nodes(SYSTEM_ID) == []
+    refreshed_workflow = application.get_knowledge_workflow(SYSTEM_ID)
+    assert refreshed_workflow.active_generation_status == "waiting_for_completion"
+    assert refreshed_workflow.generation_blocked_reason == "waiting_for_completion"
+    assert refreshed_workflow.next_action == "在原Codex客户端任务中继续补读并补全当前候选"
+
+
+def test_codex_client_cancel_repairs_task_after_terminal_write_failure(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """批次取消成功但任务终态写失败时，重复取消必须补齐同一任务而不永久阻塞。
+
+    Args:
+        tmp_path: Pytest隔离的任务、handoff和草稿目录。
+        monkeypatch: 首次任务CANCELLED落盘时注入一次I/O失败。
+
+    Returns:
+        None；第二次请求幂等修复任务且不创建新聊天时通过。
+    """
+
+    application, manifest, target_id, _source_file, app_server = _prepare_codex_client_handoff_system(tmp_path)
+    task = application.submit_knowledge_target_generation(
+        KnowledgeTargetGenerationRequest(
+            system_id=SYSTEM_ID,
+            target_id=target_id,
+            scan_id=manifest.scan_id,
+            agent="codex",
+            confirmed=True,
+            interaction_mode="codex_client",
+            intent="initial",
+            attempt_id="attempt-client-cancel-repair-0001",
+        )
+    )
+    original_transition = application.tasks.transition_waiting_task
+    failed_once = False
+
+    def fail_first_cancel(*args: object, **kwargs: object) -> object:
+        """仅让首次CANCELLED任务写失败，保留批次已提交的恢复现场。
+
+        Args:
+            args: 原状态转换的位置参数。
+            kwargs: 原状态转换的命名参数。
+
+        Returns:
+            非首次取消调用的真实任务记录。
+
+        Raises:
+            OSError: 首次CANCELLED任务文件写入时固定抛出。
+        """
+
+        nonlocal failed_once
+        status = args[1] if len(args) > 1 else kwargs.get("status")
+        if status == TaskStatus.CANCELLED and not failed_once:
+            failed_once = True
+            raise OSError("simulated cancelled task write failure")
+        return original_transition(*args, **kwargs)
+
+    monkeypatch.setattr(application.tasks, "transition_waiting_task", fail_first_cancel)
+    with pytest.raises(OSError, match="cancelled task write failure"):
+        application.cancel_task_agent(task.task_id)
+
+    # 批次已是CANCELLED而任务仍等待；相同请求只补写任务终态，不再修改线程或创建聊天。
+    repaired = application.cancel_task_agent(task.task_id)
+
+    assert repaired.status == TaskStatus.CANCELLED
+    assert repaired.client_handoff is not None
+    assert repaired.client_handoff.status.value == "cancelled"
+    assert app_server.call_count == 1
+
+
+def test_codex_client_rejects_a_second_active_knowledge_chat_for_another_target(
+    tmp_path: Path,
+) -> None:
+    """任一Codex知识聊天活动时必须阻止其他目标并发创建第二聊天。
+
+    Args:
+        tmp_path: Pytest隔离的源码、扫描、草稿和任务目录。
+
+    Returns:
+        None；第二目标被全局单聊天门禁拒绝且App Server只创建一次线程时通过。
+    """
+
+    application, manifest, target_id, _source_file, app_server = _prepare_codex_client_handoff_system(tmp_path)
+    source_root = Path(application.store.get_system(SYSTEM_ID).source_path)
+    other_source = source_root / "AnotherClientQueryJob.java"
+    other_source.write_text(
+        "package demo; class AnotherClientQueryJob { void execute() { repository.query(); } }\n",
+        encoding="utf-8",
+    )
+    other_target_id = "job:demo.AnotherClientQueryJob"
+    refreshed_manifest = manifest.model_copy(
+        update={
+            "baseline": application.knowledge.git_repository.capture(source_root),
+            "entries": [
+                *manifest.entries,
+                EntryPoint(
+                    entry_id=other_target_id,
+                    system_id=SYSTEM_ID,
+                    kind="job",
+                    display_name="另一个客户端查询任务",
+                    source_id="demo.AnotherClientQueryJob",
+                    source_path=str(other_source),
+                ),
+            ],
+        }
+    )
+    artifacts = SourceScanArtifactStore(application.knowledge_root)
+    artifacts.write_manifest(refreshed_manifest)
+    artifacts.publish_latest(SYSTEM_ID, refreshed_manifest.scan_id)
+    application.store.update_source_baseline(SYSTEM_ID, refreshed_manifest.baseline)
+
+    # 第一个页面操作占用唯一知识聊天；不同目标也不能绕过单目标幂等键并发创建线程。
+    first = application.submit_knowledge_target_generation(
+        KnowledgeTargetGenerationRequest(
+            system_id=SYSTEM_ID,
+            target_id=target_id,
+            scan_id=refreshed_manifest.scan_id,
+            agent="codex",
+            confirmed=True,
+            interaction_mode="codex_client",
+            intent="initial",
+            attempt_id="attempt-single-active-chat-0001",
+        )
+    )
+    with pytest.raises(ScopeViolationError, match="已有一个Codex知识聊天"):
+        application.submit_knowledge_target_generation(
+            KnowledgeTargetGenerationRequest(
+                system_id=SYSTEM_ID,
+                target_id=other_target_id,
+                scan_id=refreshed_manifest.scan_id,
+                agent="codex",
+                confirmed=True,
+                interaction_mode="codex_client",
+                intent="initial",
+                attempt_id="attempt-single-active-chat-0002",
+            )
+        )
+
+    assert first.status == TaskStatus.WAITING_FOR_CLIENT
+    assert app_server.call_count == 1
+
+
+def test_codex_client_rejects_a_second_active_chat_across_systems(tmp_path: Path) -> None:
+    """一个系统的活动聊天必须阻止另一个系统顺序创建第二聊天。
+
+    Args:
+        tmp_path: Pytest提供的隔离源码、扫描、任务和草稿目录。
+
+    Returns:
+        None；跨系统第二次提交被拒绝且App Server只收到一次创建请求时通过。
+    """
+
+    application, manifest, target_id, _source_file, app_server = _prepare_codex_client_handoff_system(tmp_path)
+    other_system_id = "other-client-system"
+    other_manifest, other_target_id = _register_additional_codex_client_target(
+        application,
+        tmp_path,
+        other_system_id,
+    )
+    first_request = KnowledgeTargetGenerationRequest(
+        system_id=SYSTEM_ID,
+        target_id=target_id,
+        scan_id=manifest.scan_id,
+        agent="codex",
+        confirmed=True,
+        interaction_mode="codex_client",
+        intent="initial",
+        attempt_id="attempt-cross-system-first-0001",
+    )
+    second_request = KnowledgeTargetGenerationRequest(
+        system_id=other_system_id,
+        target_id=other_target_id,
+        scan_id=other_manifest.scan_id,
+        agent="codex",
+        confirmed=True,
+        interaction_mode="codex_client",
+        intent="initial",
+        attempt_id="attempt-cross-system-second-0002",
+    )
+
+    first = application.submit_knowledge_target_generation(first_request)
+    with pytest.raises(ScopeViolationError, match="已有一个Codex知识聊天"):
+        application.submit_knowledge_target_generation(second_request)
+
+    assert first.status == TaskStatus.WAITING_FOR_CLIENT
+    assert app_server.call_count == 1
+
+
+def test_codex_client_serializes_concurrent_cross_system_chat_creation(tmp_path: Path) -> None:
+    """两个系统同时点击生成时只能有一个线程越过全局创建门禁。
+
+    Args:
+        tmp_path: Pytest提供的隔离源码、扫描、任务和草稿目录。
+
+    Returns:
+        None；并发提交恰有一个成功、一个被拒绝且只创建一个App Server线程时通过。
+    """
+
+    application, manifest, target_id, _source_file, app_server = _prepare_codex_client_handoff_system(tmp_path)
+    other_system_id = "concurrent-client-system"
+    other_manifest, other_target_id = _register_additional_codex_client_target(
+        application,
+        tmp_path,
+        other_system_id,
+    )
+    requests = [
+        KnowledgeTargetGenerationRequest(
+            system_id=SYSTEM_ID,
+            target_id=target_id,
+            scan_id=manifest.scan_id,
+            agent="codex",
+            confirmed=True,
+            interaction_mode="codex_client",
+            intent="initial",
+            attempt_id="attempt-concurrent-first-0001",
+        ),
+        KnowledgeTargetGenerationRequest(
+            system_id=other_system_id,
+            target_id=other_target_id,
+            scan_id=other_manifest.scan_id,
+            agent="codex",
+            confirmed=True,
+            interaction_mode="codex_client",
+            intent="initial",
+            attempt_id="attempt-concurrent-second-0002",
+        ),
+    ]
+    start_barrier = threading.Barrier(2)
+    completed: list[TaskRecord] = []
+    rejected: list[Exception] = []
+
+    def submit(request: KnowledgeTargetGenerationRequest) -> None:
+        """在共同起跑点提交一个跨系统客户端生成请求并收集确定结果。
+
+        Args:
+            request: 绑定唯一系统、目标和attempt的客户端生成请求。
+
+        Returns:
+            None；成功任务或拒绝异常写入线程安全的测试结果列表。
+        """
+
+        start_barrier.wait(timeout=2)
+        try:
+            completed.append(application.submit_knowledge_target_generation(request))
+        except Exception as exc:  # noqa: BLE001 - 测试需要证明竞争败方的精确领域异常。
+            rejected.append(exc)
+
+    workers = [threading.Thread(target=submit, args=(request,)) for request in requests]
+    for worker in workers:
+        worker.start()
+    for worker in workers:
+        worker.join(timeout=3)
+
+    assert all(not worker.is_alive() for worker in workers)
+    assert len(completed) == 1
+    assert completed[0].status == TaskStatus.WAITING_FOR_CLIENT
+    assert len(rejected) == 1
+    assert isinstance(rejected[0], ScopeViolationError)
+    assert app_server.call_count == 1
+
+
+def test_codex_client_active_system_cannot_be_archived_to_bypass_single_chat(
+    tmp_path: Path,
+) -> None:
+    """活动Codex知识聊天所属系统不得归档后从注册表逃逸全局门禁。
+
+    Args:
+        tmp_path: Pytest隔离的系统、归档、任务和草稿目录。
+
+    Returns:
+        None；归档被拒绝且原系统、任务和唯一聊天均保持活动时通过。
+    """
+
+    application, manifest, target_id, _source_file, app_server = _prepare_codex_client_handoff_system(tmp_path)
+    task = application.submit_knowledge_target_generation(
+        KnowledgeTargetGenerationRequest(
+            system_id=SYSTEM_ID,
+            target_id=target_id,
+            scan_id=manifest.scan_id,
+            agent="codex",
+            confirmed=True,
+            interaction_mode="codex_client",
+            intent="initial",
+            attempt_id="attempt-active-system-archive-0001",
+        )
+    )
+
+    with pytest.raises(ScopeViolationError, match="Codex知识聊天"):
+        application.archive_system(SYSTEM_ID, "不得隐藏活动知识聊天")
+
+    assert task.status == TaskStatus.WAITING_FOR_CLIENT
+    assert application.store.get_system(SYSTEM_ID).system_id == SYSTEM_ID
+    assert application.list_archives() == []
+    assert app_server.call_count == 1
+
+
+def test_codex_client_legacy_active_archive_blocks_new_chat_creation(tmp_path: Path) -> None:
+    """旧归档中的等待聊天本身仍占用全仓库唯一聊天名额。
+
+    Args:
+        tmp_path: Pytest提供的隔离系统、归档、任务和草稿目录。
+
+    Returns:
+        None；新聊天创建被拒绝且没有产生第二个App Server线程时通过。
+    """
+
+    application, manifest, target_id, _source_file, app_server = _prepare_codex_client_handoff_system(tmp_path)
+    application.submit_knowledge_target_generation(
+        KnowledgeTargetGenerationRequest(
+            system_id=SYSTEM_ID,
+            target_id=target_id,
+            scan_id=manifest.scan_id,
+            agent="codex",
+            confirmed=True,
+            interaction_mode="codex_client",
+            intent="initial",
+            attempt_id="attempt-legacy-archive-active-0001",
+        )
+    )
+    # 直接调用归档适配器模拟升级前已经存在的活动handoff归档；生产入口如今会拒绝这种归档。
+    legacy_archive = application.archives.archive(SYSTEM_ID, "模拟升级前活动归档")
+    other_system_id = "current-chat-system"
+    other_manifest, other_target_id = _register_additional_codex_client_target(
+        application,
+        tmp_path,
+        other_system_id,
+    )
+    with pytest.raises(ScopeViolationError, match="已有一个Codex知识聊天"):
+        application.submit_knowledge_target_generation(
+            KnowledgeTargetGenerationRequest(
+                system_id=other_system_id,
+                target_id=other_target_id,
+                scan_id=other_manifest.scan_id,
+                agent="codex",
+                confirmed=True,
+                interaction_mode="codex_client",
+                intent="initial",
+                attempt_id="attempt-current-chat-active-0002",
+            )
+        )
+
+    assert application.store.get_system(other_system_id).system_id == other_system_id
+    assert application.archives.active_codex_client_handoff_count(legacy_archive.archive_id) == 1
+    assert app_server.call_count == 1
+
+
+def test_codex_client_serializes_legacy_restore_and_new_chat_creation(tmp_path: Path) -> None:
+    """旧活动归档恢复与新聊天并发时只能有一个操作成功。
+
+    Args:
+        tmp_path: Pytest提供的隔离系统、归档、任务和草稿目录。
+
+    Returns:
+        None；恢复或创建恰有一个成功，仓库最终仍只有一个活动聊天时通过。
+    """
+
+    application, manifest, target_id, _source_file, app_server = _prepare_codex_client_handoff_system(tmp_path)
+    application.submit_knowledge_target_generation(
+        KnowledgeTargetGenerationRequest(
+            system_id=SYSTEM_ID,
+            target_id=target_id,
+            scan_id=manifest.scan_id,
+            agent="codex",
+            confirmed=True,
+            interaction_mode="codex_client",
+            intent="initial",
+            attempt_id="attempt-concurrent-archive-active-0001",
+        )
+    )
+    legacy_archive = application.archives.archive(SYSTEM_ID, "模拟并发恢复的旧活动归档")
+    other_system_id = "restore-race-system"
+    other_manifest, other_target_id = _register_additional_codex_client_target(
+        application,
+        tmp_path,
+        other_system_id,
+    )
+    new_chat_request = KnowledgeTargetGenerationRequest(
+        system_id=other_system_id,
+        target_id=other_target_id,
+        scan_id=other_manifest.scan_id,
+        agent="codex",
+        confirmed=True,
+        interaction_mode="codex_client",
+        intent="initial",
+        attempt_id="attempt-restore-race-new-chat-0002",
+    )
+    start_barrier = threading.Barrier(2)
+    completed: list[object] = []
+    rejected: list[Exception] = []
+
+    def restore_legacy() -> None:
+        """在共同起跑点恢复旧活动归档并记录结果。"""
+
+        start_barrier.wait(timeout=2)
+        try:
+            completed.append(application.restore_system(legacy_archive.archive_id))
+        except Exception as exc:  # noqa: BLE001 - 测试收集竞争败方后断言领域异常。
+            rejected.append(exc)
+
+    def create_new_chat() -> None:
+        """在共同起跑点创建另一个系统的新聊天并记录结果。"""
+
+        start_barrier.wait(timeout=2)
+        try:
+            completed.append(application.submit_knowledge_target_generation(new_chat_request))
+        except Exception as exc:  # noqa: BLE001 - 测试收集竞争败方后断言领域异常。
+            rejected.append(exc)
+
+    workers = [threading.Thread(target=restore_legacy), threading.Thread(target=create_new_chat)]
+    for worker in workers:
+        worker.start()
+    for worker in workers:
+        worker.join(timeout=3)
+
+    assert all(not worker.is_alive() for worker in workers)
+    assert len(completed) == 1
+    assert len(rejected) == 1
+    assert isinstance(rejected[0], ScopeViolationError)
+    assert application._active_codex_client_handoff() is not None
+    # 准备旧归档只创建一次线程；只有新聊天竞争成功时才会再创建一次。
+    assert app_server.call_count in {1, 2}
+
+
+def test_codex_client_normalizes_read_source_reference_shorthand_before_audit(
+    tmp_path: Path,
+) -> None:
+    """客户端候选的Java方法简称和Mapper节点引用应在安全读取范围内自动规范化。
+
+    Args:
+        tmp_path: Pytest隔离的源码、扫描、候选和任务目录。
+
+    Returns:
+        None；等价引用被规范化并进入等待最终确认状态时通过。
+    """
+
+    application, manifest, target_id, source_file, _app_server = _prepare_codex_client_handoff_system(tmp_path)
+    source_root = Path(application.store.get_system(SYSTEM_ID).source_path)
+    mapper_path = source_root / "DemoMapper.xml"
+    mapper_path.write_text(
+        '<mapper namespace="demo.DemoMapper">\n'
+        '  <select id="listPage">\n'
+        "    select 1\n"
+        "  </select>\n"
+        "</mapper>\n",
+        encoding="utf-8",
+    )
+    refreshed_manifest = manifest.model_copy(
+        update={"baseline": application.knowledge.git_repository.capture(source_root)}
+    )
+    artifacts = SourceScanArtifactStore(application.knowledge_root)
+    artifacts.write_manifest(refreshed_manifest)
+    artifacts.publish_latest(SYSTEM_ID, refreshed_manifest.scan_id)
+    application.store.update_source_baseline(SYSTEM_ID, refreshed_manifest.baseline)
+    task = application.submit_knowledge_target_generation(
+        KnowledgeTargetGenerationRequest(
+            system_id=SYSTEM_ID,
+            target_id=target_id,
+            scan_id=refreshed_manifest.scan_id,
+            agent="codex",
+            confirmed=True,
+            interaction_mode="codex_client",
+            intent="initial",
+            attempt_id="attempt-normalize-client-refs-0001",
+        )
+    )
+    assert task.client_handoff is not None
+    handoff_id = task.client_handoff.handoff_id
+    relative_java = source_file.relative_to(source_root).as_posix()
+    relative_mapper = mapper_path.relative_to(source_root).as_posix()
+
+    # 两个引用都必须先经过真实read_source；规范化只消除格式差异，不放宽访问范围。
+    application.call_knowledge_client_source_tool(
+        handoff_id,
+        "read_source",
+        {"path": relative_java, "start_line": 1, "end_line": 1},
+    )
+    application.call_knowledge_client_source_tool(
+        handoff_id,
+        "read_source",
+        {"path": relative_mapper, "start_line": 1, "end_line": 5},
+    )
+    workflow = application.store.read_draft_batch(SYSTEM_ID, task.client_handoff.batch_id)
+    java_reference = {"path": relative_java, "symbol": "execute", "line": 1}
+    mapper_reference = {"path": relative_mapper, "symbol": "DemoMapper#listPage", "line": 3}
+    candidate = AgentKnowledgeEnvelope.model_validate(
+        {
+            "status": "completed",
+            "system_id": SYSTEM_ID,
+            "target_ids": [target_id],
+            "summaries": [
+                {"node_id": workflow.drafts[0].node.node_id, "summary": "查询任务读取Mapper边界。"}
+            ],
+            "questions": [],
+            "source_refs": [java_reference, mapper_reference],
+            "trace_steps": [
+                {
+                    "sequence": 1,
+                    "role": "no_downstream",
+                    "source_ref": java_reference,
+                    "summary": "测试Job读取已验证的Mapper边界。",
+                }
+            ],
+        }
+    )
+
+    waiting = application.submit_knowledge_client_candidate(
+        handoff_id,
+        KnowledgeClientCandidateSubmission(candidate=candidate),
+    )
+
+    assert waiting.status == TaskStatus.WAITING_FOR_CONFIRMATION
+    stored_candidate = AgentKnowledgeEnvelope.model_validate_json(
+        (application.knowledge._client_run_root(waiting.client_handoff) / "output.txt").read_text(encoding="utf-8")
+    )
+    normalized = {(reference.path, reference.symbol, reference.line) for reference in stored_candidate.source_refs}
+    assert (relative_java, "ClientQueryJob#execute", 1) in normalized
+    assert (relative_mapper, "listPage", 2) in normalized
+
+
+def test_codex_client_app_server_failure_persists_task_and_allows_new_attempt(
+    tmp_path: Path,
+) -> None:
+    """线程创建瞬时失败必须形成可恢复终态，并允许用户显式发起新attempt。
+
+    Args:
+        tmp_path: pytest隔离的源码、草稿、任务和假App Server。
+
+    Returns:
+        None；失败attempt幂等恢复同一任务，新attempt可创建唯一新线程时通过。
+    """
+
+    application, manifest, target_id, _source_file, app_server = _prepare_codex_client_handoff_system(tmp_path)
+    original_create_thread = app_server.create_thread
+    call_count = 0
+
+    def flaky_create_thread(
+        prompt: str,
+        title: str,
+        cwd: Path,
+        developer_instructions: str,
+        model: str,
+        reasoning_effort: str,
+    ) -> object:
+        """首次模拟App Server失败，后续按同一模型档位恢复无turn线程创建。"""
+
+        nonlocal call_count
+        call_count += 1
+        if call_count == 1:
+            raise ExecutionFailure("temporary App Server failure")
+        return original_create_thread(prompt, title, cwd, developer_instructions, model, reasoning_effort)
+
+    app_server.create_thread = flaky_create_thread
+    failed_request = KnowledgeTargetGenerationRequest(
+        system_id=SYSTEM_ID,
+        target_id=target_id,
+        scan_id=manifest.scan_id,
+        agent="codex",
+        confirmed=True,
+        interaction_mode="codex_client",
+        intent="initial",
+        attempt_id="attempt-client-app-server-failed-0001",
+    )
+
+    failed = application.submit_knowledge_target_generation(failed_request)
+    repeated = application.submit_knowledge_target_generation(failed_request)
+    recovered = application.submit_knowledge_target_generation(
+        failed_request.model_copy(update={"attempt_id": "attempt-client-app-server-retry-0002"})
+    )
+
+    assert failed.status == TaskStatus.FAILED
+    assert failed.task_id == repeated.task_id
+    assert "未调用模型" in failed.error
+    assert recovered.status == TaskStatus.WAITING_FOR_CLIENT
+    assert recovered.task_id != failed.task_id
+    assert call_count == 2
+
+
+def test_codex_client_candidate_requires_real_read_audit_and_confirmation_before_publish(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """客户端候选必须绑定真实read_source，确认前不得覆盖当前知识。
+
+    Args:
+        tmp_path: pytest隔离的源码、handoff审计、候选与知识目录。
+        monkeypatch: 模拟发布后领域刷新异常及任务终态首次写入失败。
+
+    Returns:
+        None；无审计候选被拒、合法候选等待确认且接受后仍保持INFERRED来源时通过。
+    """
+
+    application, manifest, target_id, source_file, _app_server = _prepare_codex_client_handoff_system(tmp_path)
+    task = application.submit_knowledge_target_generation(
+        KnowledgeTargetGenerationRequest(
+            system_id=SYSTEM_ID,
+            target_id=target_id,
+            scan_id=manifest.scan_id,
+            agent="codex",
+            confirmed=True,
+            interaction_mode="codex_client",
+            intent="initial",
+            attempt_id="attempt-client-confirmation-0001",
+        )
+    )
+    assert task.client_handoff is not None
+    handoff_id = task.client_handoff.handoff_id
+    batch = application.store.read_draft_batch(SYSTEM_ID, task.client_handoff.batch_id)
+    node_ids = [draft.node.node_id for draft in batch.drafts]
+    relative_path = source_file.relative_to(Path(application.store.get_system(SYSTEM_ID).source_path)).as_posix()
+    source_reference = {
+        "path": relative_path,
+        "symbol": "ClientQueryJob#execute",
+        "line": 1,
+    }
+    envelope = AgentKnowledgeEnvelope.model_validate(
+        {
+            "status": "completed",
+            "system_id": SYSTEM_ID,
+            "target_ids": [target_id],
+            "summaries": [
+                {"node_id": node_id, "summary": "读取查询仓储并返回本次任务结果。"}
+                for node_id in node_ids
+            ],
+            "questions": [],
+            "source_refs": [source_reference],
+            "trace_steps": [
+                {
+                    "sequence": 1,
+                    "role": "no_downstream",
+                    "source_ref": source_reference,
+                    "summary": "测试Job的入口已经明确展示唯一查询调用。",
+                }
+            ],
+        }
+    )
+    submission = KnowledgeClientCandidateSubmission(candidate=envelope)
+
+    with pytest.raises(KnowledgeValidationError, match="not read through the registered source tool"):
+        application.submit_knowledge_client_candidate(handoff_id, submission)
+
+    tool_result = application.call_knowledge_client_source_tool(
+        handoff_id,
+        "read_source",
+        {"path": relative_path, "start_line": 1, "end_line": 1},
+    )
+    waiting = application.submit_knowledge_client_candidate(handoff_id, submission)
+
+    assert "ClientQueryJob" in tool_result["content"]
+    assert waiting.status == TaskStatus.WAITING_FOR_CONFIRMATION
+    assert waiting.client_handoff is not None
+    assert waiting.client_handoff.candidate_digest
+    assert application.store.list_nodes(SYSTEM_ID) == []
+
+    confirmation = KnowledgeClientCandidateConfirmation(
+        candidate_digest=waiting.client_handoff.candidate_digest,
+        decision="accept",
+    )
+    original_transition = application.tasks.transition_waiting_task
+    completed_transition_failed = False
+
+    def fail_post_publish_refresh(*_: object) -> None:
+        """模拟正式发布后刷新上下文时出现项目领域异常。
+
+        Raises:
+            ScopeViolationError: 固定验证PUBLISHED提交点之后只能告警而不能反写失败。
+        """
+
+        raise ScopeViolationError("simulated post-publish scope failure")
+
+    def flaky_transition(*args: object, **kwargs: object) -> object:
+        """首次写COMPLETED时模拟任务文件故障，其他等待状态保持原逻辑。
+
+        Args:
+            args: 原任务状态转换的位置参数。
+            kwargs: 原任务状态转换的命名参数。
+
+        Returns:
+            非首次COMPLETED调用的真实任务转换结果。
+
+        Raises:
+            OSError: 第一次尝试写客户端COMPLETED终态时固定抛出。
+        """
+
+        nonlocal completed_transition_failed
+        status = args[1] if len(args) > 1 else kwargs.get("status")
+        if status == TaskStatus.COMPLETED and not completed_transition_failed:
+            completed_transition_failed = True
+            raise OSError("simulated completed task write failure")
+        return original_transition(*args, **kwargs)
+
+    monkeypatch.setattr(application.knowledge, "_clear_refreshed_target", fail_post_publish_refresh)
+    monkeypatch.setattr(application.tasks, "transition_waiting_task", flaky_transition)
+    with pytest.raises(OSError, match="completed task write failure"):
+        application.confirm_knowledge_client_candidate(handoff_id, confirmation)
+
+    # 重复accept只补写同一任务COMPLETED，不能再次发布或永久停在waiting。
+    completed = application.confirm_knowledge_client_candidate(handoff_id, confirmation)
+
+    assert completed.status == TaskStatus.COMPLETED
+    published_nodes = [node for node, _metadata, _content in application.store.list_nodes(SYSTEM_ID)]
+    assert published_nodes
+    assert {node.status for node in published_nodes} == {KnowledgeStatus.INFERRED}
+    assert all(node.status != KnowledgeStatus.USER_CONFIRMED for node in published_nodes)
+
+
+def test_codex_facade_complete_candidate_auto_publishes_with_isolated_contract(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """完整Facade候选应自动发布，且调用契约只保存在结构化附属字段。
+
+    Args:
+        tmp_path: Pytest隔离的源码、Manifest、聊天任务和知识目录。
+        monkeypatch: 在正式发布提交点暂停，以验证并发取消不会覆盖完成终态。
+
+    Returns:
+        None；同一任务完成、正文不含契约示例且能力索引可单独命中时通过。
+    """
+
+    application, _manifest, _target_id, _source_file, _app_server = _prepare_codex_client_handoff_system(tmp_path)
+    source_root = Path(application.store.get_system(SYSTEM_ID).source_path)
+    facade_path = source_root / "QueryFacadeImpl.java"
+    service_path = source_root / "OrderServiceImpl.java"
+    dao_path = source_root / "OrderDAO.java"
+    facade_path.write_text(
+        "package demo;\nclass QueryFacadeImpl {\n  OrderServiceImpl service; Object queryList(Object request) { return service.query(request); }\n}\n",
+        encoding="utf-8",
+    )
+    service_path.write_text(
+        "package demo;\nclass OrderServiceImpl {\n  OrderDAO dao; Object query(Object request) { return dao.list(request); }\n}\n",
+        encoding="utf-8",
+    )
+    dao_path.write_text(
+        "package demo;\nclass OrderDAO {\n  Object list(Object request) { return null; }\n}\n",
+        encoding="utf-8",
+    )
+    target_id = "facade:demo.QueryFacadeImpl#queryList"
+    manifest = ScanManifest(
+        scan_id="scan-client-facade-auto-publish",
+        system_id=SYSTEM_ID,
+        baseline=application.knowledge.git_repository.capture(source_root),
+        entries=[
+            EntryPoint(
+                entry_id=target_id,
+                system_id=SYSTEM_ID,
+                kind="facade",
+                display_name="查询退票单",
+                source_id="demo.QueryFacadeImpl#queryList",
+                source_path=str(facade_path),
+                request_type="RefundQueryRequest",
+                response_type="RefundPage",
+                tool_id="refund-query-list",
+            )
+        ],
+    )
+    artifacts = SourceScanArtifactStore(application.knowledge_root)
+    artifacts.write_manifest(manifest)
+    artifacts.publish_latest(SYSTEM_ID, manifest.scan_id)
+    application.store.update_source_baseline(SYSTEM_ID, manifest.baseline)
+    task = application.submit_knowledge_target_generation(
+        KnowledgeTargetGenerationRequest(
+            system_id=SYSTEM_ID,
+            target_id=target_id,
+            scan_id=manifest.scan_id,
+            agent="codex",
+            confirmed=True,
+            interaction_mode="codex_client",
+            intent="initial",
+            attempt_id="attempt-client-facade-auto-0001",
+        )
+    )
+    assert task.client_handoff is not None
+    handoff_id = task.client_handoff.handoff_id
+    workflow = application.store.read_draft_batch(SYSTEM_ID, task.client_handoff.batch_id)
+    relative_paths = [path.relative_to(source_root).as_posix() for path in (facade_path, service_path, dao_path)]
+    for relative_path in relative_paths:
+        application.call_knowledge_client_source_tool(
+            handoff_id,
+            "read_source",
+            {"path": relative_path, "start_line": 1, "end_line": 4},
+        )
+    references = [
+        {"path": relative_paths[0], "symbol": "QueryFacadeImpl#queryList", "line": 3},
+        {"path": relative_paths[1], "symbol": "OrderServiceImpl#query", "line": 3},
+        {"path": relative_paths[2], "symbol": "OrderDAO#list", "line": 3},
+    ]
+    fixed_contract = application.get_knowledge_client_handoff(handoff_id)["deterministic_invocation_contract"]
+    complete_text = "结合真实源码读取说明查询退票单的完整业务语义、限制条件和可验证结果。"
+    contract = fixed_contract.model_copy(
+        update={
+            "field_meanings": {"refundType": "退票类型，支持区分自愿退。"},
+            "date_dimensions": {"applyTime": "退票申请时间。"},
+            "pagination_semantics": "分页从第一页开始，空列表表示没有匹配退票单。",
+            "error_semantics": ["非法筛选条件返回业务参数异常。"],
+            "usage_examples": ["查询七月申请的自愿退退票单列表。"],
+        }
+    )
+    candidate = KnowledgeClientCandidateEnvelope(
+        status="completed",
+        system_id=SYSTEM_ID,
+        target_ids=[target_id],
+        summaries=[{"node_id": workflow.drafts[0].node.node_id, "summary": complete_text}],
+        questions=[],
+        source_refs=references,
+        trace_steps=[
+            {"sequence": 1, "role": "entry", "source_ref": references[0], "summary": complete_text},
+            {"sequence": 2, "role": "service", "source_ref": references[1], "summary": complete_text},
+            {"sequence": 3, "role": "data_access", "source_ref": references[2], "summary": complete_text},
+        ],
+        completeness=AgentKnowledgeCompleteness(
+            business_purpose="用于按运营筛选条件查询退票单分页列表，不创建或修改任何退票业务状态。",
+            applicable_scenarios="适用于运营后台按退票类型和时间范围检索订单，并核对列表与总数。",
+            input_semantics="请求包含退票类型、时间范围和分页参数；空筛选按源码默认规则处理。",
+            output_semantics="返回分页退票单及总数；没有匹配记录时返回空集合而不是伪造错误。",
+            business_flow="入口转换请求后调用列表业务服务，再读取数据库中的退票订单数据。",
+            important_branches="退票类型条件会改变查询过滤；分页边界和空条件分支影响最终数据库条件。",
+            failure_handling="非法筛选参数产生业务参数异常，数据访问失败按现有异常边界向上返回。",
+            test_oracles="验证列表元素满足全部过滤条件、总数一致、分页稳定，并覆盖空结果与非法参数。",
+        ),
+        invocation_contract=contract,
+    )
+
+    original_publish = application.knowledge.publish_client_candidate
+    publication_started = threading.Event()
+    allow_publication = threading.Event()
+    submit_result: dict[str, TaskRecord] = {}
+    cancel_errors: list[Exception] = []
+
+    def paused_publish(*args: object, **kwargs: object) -> object:
+        """在原子发布前制造可控窗口，让取消请求排队等待同一handoff锁。
+
+        Args:
+            args: 原发布方法的位置参数。
+            kwargs: 原发布方法的命名参数。
+
+        Returns:
+            放行后原发布方法返回的已发布工作流。
+        """
+
+        publication_started.set()
+        assert allow_publication.wait(timeout=2)
+        return original_publish(*args, **kwargs)
+
+    def submit_candidate() -> None:
+        """在线程中提交完整候选并保存最终任务，模拟真实MCP回写。"""
+
+        submit_result["task"] = application.submit_knowledge_client_candidate(
+            handoff_id,
+            KnowledgeClientCandidateSubmission(candidate=candidate),
+        )
+
+    def cancel_same_task() -> None:
+        """在发布持锁期间提交旧页面取消，并记录预期的终态拒绝。"""
+
+        try:
+            application.cancel_task_agent(task.task_id)
+        except Exception as exc:  # noqa: BLE001 - 测试需断言跨线程传播的领域异常
+            cancel_errors.append(exc)
+
+    monkeypatch.setattr(application.knowledge, "publish_client_candidate", paused_publish)
+    submit_thread = threading.Thread(target=submit_candidate)
+    submit_thread.start()
+    assert publication_started.wait(timeout=2)
+    cancel_thread = threading.Thread(target=cancel_same_task)
+    cancel_thread.start()
+    # 取消已在发布期间发起；放行后它必须锁内重读COMPLETED而不是反写旧WAITING快照。
+    allow_publication.set()
+    submit_thread.join(timeout=3)
+    cancel_thread.join(timeout=3)
+    assert not submit_thread.is_alive()
+    assert not cancel_thread.is_alive()
+    completed = submit_result["task"]
+
+    assert completed.status == TaskStatus.COMPLETED
+    assert len(cancel_errors) == 1
+    assert isinstance(cancel_errors[0], KnowledgeValidationError)
+    assert application.tasks.get(task.task_id).status == TaskStatus.COMPLETED
+    node, _path, body = application.store.list_nodes(SYSTEM_ID)[0]
+    assert node.invocation_contract is not None
+    assert "查询七月申请的自愿退退票单列表" not in body
+    assert "#### 输入、默认值与过滤分页语义" in body
+    assert "#### 测试 Oracle" in body
+    assert application.index.search("查询七月申请的自愿退退票单列表", SYSTEM_ID) == []
+    assert application.index.search_invocation_contracts("查询七月申请的自愿退退票单列表", SYSTEM_ID)[0]["tool_id"] == "refund-query-list"
+
+
+def test_codex_client_task_write_failure_is_frozen_without_creating_thread(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """任务首次写入失败应补齐同一稳定ID的FAILED记录且不创建外部线程。
+
+    Args:
+        tmp_path: pytest隔离的源码、草稿和任务目录。
+        monkeypatch: 首次阻断等待任务持久化以复现batch已写的半建状态。
+
+    Returns:
+        None；同attempt恢复同一失败任务，新attempt才创建唯一线程时通过。
+    """
+
+    application, manifest, target_id, _source_file, app_server = _prepare_codex_client_handoff_system(tmp_path)
+    original_create = application.tasks.create_waiting_task
+    failed_once = False
+
+    def fail_first_task_write(*args: object, **kwargs: object) -> TaskRecord:
+        """首次模拟任务文件写入中断，随后允许按预分配ID补齐。
+
+        Args:
+            args: 原create_waiting_task位置参数。
+            kwargs: 原create_waiting_task命名参数。
+
+        Returns:
+            故障后的真实同ID任务记录。
+
+        Raises:
+            OSError: 第一次调用固定模拟本地任务写入故障。
+        """
+
+        nonlocal failed_once
+        if not failed_once:
+            failed_once = True
+            raise OSError("simulated waiting task write failure")
+        return original_create(*args, **kwargs)
+
+    monkeypatch.setattr(application.tasks, "create_waiting_task", fail_first_task_write)
+    request = KnowledgeTargetGenerationRequest(
+        system_id=SYSTEM_ID,
+        target_id=target_id,
+        scan_id=manifest.scan_id,
+        agent="codex",
+        confirmed=True,
+        interaction_mode="codex_client",
+        intent="initial",
+        attempt_id="attempt-client-task-write-failed-0001",
+    )
+
+    failed = application.submit_knowledge_target_generation(request)
+    repeated = application.submit_knowledge_target_generation(request)
+    attempt_digest = hashlib.sha256(
+        f"{SYSTEM_ID}|{target_id}|{manifest.scan_id}|{request.attempt_id}".encode("utf-8")
+    ).hexdigest()
+
+    assert failed.status == TaskStatus.FAILED
+    assert failed.task_id == f"task-{attempt_digest[16:32]}"
+    assert repeated.task_id == failed.task_id
+    assert app_server.call_count == 0
+
+    next_attempt = application.submit_knowledge_target_generation(
+        request.model_copy(update={"attempt_id": "attempt-client-task-write-retry-0002"})
+    )
+
+    assert app_server.call_count == 1
+    assert next_attempt.status == TaskStatus.WAITING_FOR_CLIENT
+    assert next_attempt.task_id != failed.task_id
+
+
+def test_codex_client_batch_bind_failure_replays_local_writes_without_second_thread(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """线程创建后的批次写入瞬断只能重放本地状态，不能再次thread/start。
+
+    Args:
+        tmp_path: pytest隔离的源码、任务、批次和假App Server。
+        monkeypatch: 在线程返回后的首次batch绑定模拟I/O故障。
+
+    Returns:
+        None；同任务恢复deep link且App Server仅调用一次时通过。
+    """
+
+    application, manifest, target_id, _source_file, app_server = _prepare_codex_client_handoff_system(tmp_path)
+    original_bind = application.knowledge.bind_client_handoff_thread
+    bind_count = 0
+
+    def fail_first_threaded_bind(system_id: str, batch_id: str, handoff: object) -> object:
+        """仅在线程身份首次出现时模拟批次写入中断。
+
+        Args:
+            system_id: 当前客户端接管系统。
+            batch_id: 当前稳定草稿批次。
+            handoff: 可能尚未或已经携带thread ID的接管模型。
+
+        Returns:
+            其他阶段的真实批次绑定结果。
+
+        Raises:
+            OSError: 首次带thread ID绑定固定模拟写入故障。
+        """
+
+        nonlocal bind_count
+        if getattr(handoff, "thread_id", ""):
+            bind_count += 1
+            if bind_count == 1:
+                raise OSError("simulated threaded batch bind failure")
+        return original_bind(system_id, batch_id, handoff)
+
+    monkeypatch.setattr(application.knowledge, "bind_client_handoff_thread", fail_first_threaded_bind)
+    task = application.submit_knowledge_target_generation(
+        KnowledgeTargetGenerationRequest(
+            system_id=SYSTEM_ID,
+            target_id=target_id,
+            scan_id=manifest.scan_id,
+            agent="codex",
+            confirmed=True,
+            interaction_mode="codex_client",
+            intent="initial",
+            attempt_id="attempt-client-thread-bind-failed-0001",
+        )
+    )
+
+    assert task.status == TaskStatus.WAITING_FOR_CLIENT
+    assert task.client_handoff is not None
+    assert task.client_handoff.thread_id
+    assert app_server.call_count == 1
+    repeated = application.submit_knowledge_target_generation(
+        KnowledgeTargetGenerationRequest(
+            system_id=SYSTEM_ID,
+            target_id=target_id,
+            scan_id=manifest.scan_id,
+            agent="codex",
+            confirmed=True,
+            interaction_mode="codex_client",
+            intent="initial",
+            attempt_id="attempt-client-thread-bind-failed-0001",
+        )
+    )
+    assert repeated.task_id == task.task_id
+    assert app_server.call_count == 1
+
+
+def test_codex_client_regenerate_keeps_old_knowledge_until_new_candidate_is_accepted(
+    tmp_path: Path,
+) -> None:
+    """有效目标重新生成应创建新线程，但新候选确认前继续展示旧知识。
+
+    Args:
+        tmp_path: pytest隔离的两次客户端接管、知识真相和任务历史目录。
+
+    Returns:
+        None；第二attempt拥有新线程且旧节点正文未提前变化时通过。
+    """
+
+    application, manifest, target_id, source_file, app_server = _prepare_codex_client_handoff_system(tmp_path)
+    source_root = Path(application.store.get_system(SYSTEM_ID).source_path)
+    relative_path = source_file.relative_to(source_root).as_posix()
+
+    def publish_attempt(attempt_id: str, summary: str) -> object:
+        """完成一次测试客户端候选读取、提交和确认。
+
+        Args:
+            attempt_id: 本次明确用户操作的幂等键。
+            summary: 将进入INFERRED自动区域的候选摘要。
+
+        Returns:
+            完成发布的同一任务记录。
+        """
+
+        task = application.submit_knowledge_target_generation(
+            KnowledgeTargetGenerationRequest(
+                system_id=SYSTEM_ID,
+                target_id=target_id,
+                scan_id=manifest.scan_id,
+                agent="codex",
+                confirmed=True,
+                interaction_mode="codex_client",
+                intent="initial" if app_server.call_count == 0 else "regenerate",
+                attempt_id=attempt_id,
+            )
+        )
+        assert task.client_handoff is not None
+        batch = application.store.read_draft_batch(SYSTEM_ID, task.client_handoff.batch_id)
+        source_reference = {"path": relative_path, "symbol": "ClientQueryJob#execute", "line": 1}
+        application.call_knowledge_client_source_tool(
+            task.client_handoff.handoff_id,
+            "read_source",
+            {"path": relative_path, "start_line": 1, "end_line": 1},
+        )
+        candidate = AgentKnowledgeEnvelope.model_validate(
+            {
+                "status": "completed",
+                "system_id": SYSTEM_ID,
+                "target_ids": [target_id],
+                "summaries": [
+                    {"node_id": draft.node.node_id, "summary": summary}
+                    for draft in batch.drafts
+                ],
+                "questions": [],
+                "source_refs": [source_reference],
+                "trace_steps": [
+                    {
+                        "sequence": 1,
+                        "role": "no_downstream",
+                        "source_ref": source_reference,
+                        "summary": "测试Job路径已读取。",
+                    }
+                ],
+            }
+        )
+        waiting = application.submit_knowledge_client_candidate(
+            task.client_handoff.handoff_id,
+            KnowledgeClientCandidateSubmission(candidate=candidate),
+        )
+        assert waiting.client_handoff is not None
+        return application.confirm_knowledge_client_candidate(
+            task.client_handoff.handoff_id,
+            KnowledgeClientCandidateConfirmation(
+                candidate_digest=waiting.client_handoff.candidate_digest,
+                decision="accept",
+            ),
+        )
+
+    first = publish_attempt("attempt-client-regenerate-0001", "第一版稳定查询知识。")
+    original_content = application.store.list_nodes(SYSTEM_ID)[0][2]
+    second = application.submit_knowledge_target_generation(
+        KnowledgeTargetGenerationRequest(
+            system_id=SYSTEM_ID,
+            target_id=target_id,
+            scan_id=manifest.scan_id,
+            agent="codex",
+            confirmed=True,
+            interaction_mode="codex_client",
+            intent="regenerate",
+            attempt_id="attempt-client-regenerate-0002",
+        )
+    )
+
+    assert first.client_handoff is not None
+    assert second.client_handoff is not None
+    assert second.status == TaskStatus.WAITING_FOR_CLIENT
+    assert second.client_handoff.thread_id != first.client_handoff.thread_id
+    assert app_server.call_count == 2
+    assert application.store.list_nodes(SYSTEM_ID)[0][2] == original_content
+
+
+def test_codex_client_publish_failure_preserves_candidate_and_records_exact_error(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """确认后的发布失败必须保留候选并持久化失败，不得自动再次调用Codex。
+
+    Args:
+        tmp_path: pytest隔离的源码、候选、任务和草稿目录。
+        monkeypatch: 在候选通过审计后模拟发布阶段的精确基线错误。
+
+    Returns:
+        None；API抛出原错误且同一任务、候选摘要和草稿仍可恢复时通过。
+    """
+
+    application, manifest, target_id, source_file, app_server = _prepare_codex_client_handoff_system(tmp_path)
+    task = application.submit_knowledge_target_generation(
+        KnowledgeTargetGenerationRequest(
+            system_id=SYSTEM_ID,
+            target_id=target_id,
+            scan_id=manifest.scan_id,
+            agent="codex",
+            confirmed=True,
+            interaction_mode="codex_client",
+            intent="initial",
+            attempt_id="attempt-client-publish-failure-0001",
+        )
+    )
+    assert task.client_handoff is not None
+    handoff = task.client_handoff
+    batch = application.store.read_draft_batch(SYSTEM_ID, handoff.batch_id)
+    relative_path = source_file.relative_to(Path(application.store.get_system(SYSTEM_ID).source_path)).as_posix()
+    source_reference = {"path": relative_path, "symbol": "ClientQueryJob#execute", "line": 1}
+    application.call_knowledge_client_source_tool(
+        handoff.handoff_id,
+        "read_source",
+        {"path": relative_path, "start_line": 1, "end_line": 1},
+    )
+    candidate = AgentKnowledgeEnvelope.model_validate(
+        {
+            "status": "completed",
+            "system_id": SYSTEM_ID,
+            "target_ids": [target_id],
+            "summaries": [
+                {"node_id": draft.node.node_id, "summary": "已核对客户端查询任务。"}
+                for draft in batch.drafts
+            ],
+            "questions": [],
+            "source_refs": [source_reference],
+            "trace_steps": [
+                {
+                    "sequence": 1,
+                    "role": "no_downstream",
+                    "source_ref": source_reference,
+                    "summary": "测试Job入口唯一调用已读取。",
+                }
+            ],
+        }
+    )
+    waiting = application.submit_knowledge_client_candidate(
+        handoff.handoff_id,
+        KnowledgeClientCandidateSubmission(candidate=candidate),
+    )
+    assert waiting.client_handoff is not None
+    candidate_digest = waiting.client_handoff.candidate_digest
+
+    def fail_publish(*_: object, **__: object) -> object:
+        """模拟确认时源码基线变化并阻止任何知识发布。
+
+        Raises:
+            KnowledgeValidationError: 固定精确错误供任务恢复断言。
+        """
+
+        raise KnowledgeValidationError("source baseline changed before client publish")
+
+    monkeypatch.setattr(application.knowledge, "publish_client_candidate", fail_publish)
+    with pytest.raises(KnowledgeValidationError, match="source baseline changed before client publish"):
+        application.confirm_knowledge_client_candidate(
+            handoff.handoff_id,
+            KnowledgeClientCandidateConfirmation(
+                candidate_digest=candidate_digest,
+                decision="accept",
+            ),
+        )
+
+    failed = application.get_task(task.task_id)
+    preserved = application.store.read_draft_batch(SYSTEM_ID, handoff.batch_id)
+    assert failed.status == TaskStatus.FAILED
+    assert failed.error == "source baseline changed before client publish"
+    assert failed.client_handoff is not None
+    assert failed.client_handoff.candidate_digest == candidate_digest
+    assert preserved.drafts
+    assert preserved.client_handoff is not None
+    assert preserved.client_handoff.status.value == "failed"
+    assert app_server.call_count == 1
+    assert application.store.list_nodes(SYSTEM_ID) == []
+
+
+def test_codex_client_publish_rolls_back_nodes_when_index_rebuild_fails(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """发布中后段失败必须回滚已写节点，不能留下failed任务配部分新知识。
+
+    Args:
+        tmp_path: pytest隔离的源码、候选、Git知识与索引目录。
+        monkeypatch: 在节点和关系写入后模拟SQLite索引重建失败。
+
+    Returns:
+        None；确认失败后正式节点仍为空且候选草稿保持可恢复时通过。
+    """
+
+    application, manifest, target_id, source_file, _app_server = _prepare_codex_client_handoff_system(tmp_path)
+    task = application.submit_knowledge_target_generation(
+        KnowledgeTargetGenerationRequest(
+            system_id=SYSTEM_ID,
+            target_id=target_id,
+            scan_id=manifest.scan_id,
+            agent="codex",
+            confirmed=True,
+            interaction_mode="codex_client",
+            intent="initial",
+            attempt_id="attempt-client-index-rollback-0001",
+        )
+    )
+    assert task.client_handoff is not None
+    handoff = task.client_handoff
+    batch = application.store.read_draft_batch(SYSTEM_ID, handoff.batch_id)
+    source_root = Path(application.store.get_system(SYSTEM_ID).source_path)
+    relative_path = source_file.relative_to(source_root).as_posix()
+    source_reference = {"path": relative_path, "symbol": "ClientQueryJob#execute", "line": 1}
+    application.call_knowledge_client_source_tool(
+        handoff.handoff_id,
+        "read_source",
+        {"path": relative_path, "start_line": 1, "end_line": 1},
+    )
+    candidate = AgentKnowledgeEnvelope.model_validate(
+        {
+            "status": "completed",
+            "system_id": SYSTEM_ID,
+            "target_ids": [target_id],
+            "summaries": [
+                {"node_id": draft.node.node_id, "summary": "已核对客户端查询任务。"}
+                for draft in batch.drafts
+            ],
+            "questions": [],
+            "source_refs": [source_reference],
+            "trace_steps": [
+                {
+                    "sequence": 1,
+                    "role": "no_downstream",
+                    "source_ref": source_reference,
+                    "summary": "测试Job入口唯一调用已读取。",
+                }
+            ],
+        }
+    )
+    waiting = application.submit_knowledge_client_candidate(
+        handoff.handoff_id,
+        KnowledgeClientCandidateSubmission(candidate=candidate),
+    )
+    assert waiting.client_handoff is not None
+
+    def fail_index_rebuild(_: object) -> dict[str, int]:
+        """在正式节点写入之后模拟派生索引失败。"""
+
+        raise KnowledgeValidationError("simulated index rebuild failure")
+
+    monkeypatch.setattr(application.index, "rebuild", fail_index_rebuild)
+    with pytest.raises(KnowledgeValidationError, match="simulated index rebuild failure"):
+        application.confirm_knowledge_client_candidate(
+            handoff.handoff_id,
+            KnowledgeClientCandidateConfirmation(
+                candidate_digest=waiting.client_handoff.candidate_digest,
+                decision="accept",
+            ),
+        )
+
+    preserved = application.store.read_draft_batch(SYSTEM_ID, handoff.batch_id)
+    assert application.store.list_nodes(SYSTEM_ID) == []
+    assert preserved.drafts
+    assert preserved.client_handoff is not None
+    assert preserved.client_handoff.status.value == "failed"
+
+
+def test_codex_client_reject_and_accept_are_serialized_across_application_instances(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """跨进程等价应用实例不能让拒绝与接受同时基于旧候选发布。
+
+    Args:
+        tmp_path: pytest隔离但由两个应用实例共享的知识、任务与源码目录。
+        monkeypatch: 暂停拒绝写入以稳定复现跨实例check-then-act竞态。
+
+    Returns:
+        None；拒绝持锁期间接受等待，随后接受失败且没有正式节点时通过。
+    """
+
+    rejecting_application, manifest, target_id, source_file, _app_server = _prepare_codex_client_handoff_system(tmp_path)
+    task = rejecting_application.submit_knowledge_target_generation(
+        KnowledgeTargetGenerationRequest(
+            system_id=SYSTEM_ID,
+            target_id=target_id,
+            scan_id=manifest.scan_id,
+            agent="codex",
+            confirmed=True,
+            interaction_mode="codex_client",
+            intent="initial",
+            attempt_id="attempt-client-confirm-race-0001",
+        )
+    )
+    assert task.client_handoff is not None
+    handoff = task.client_handoff
+    batch = rejecting_application.store.read_draft_batch(SYSTEM_ID, handoff.batch_id)
+    source_root = Path(rejecting_application.store.get_system(SYSTEM_ID).source_path)
+    relative_path = source_file.relative_to(source_root).as_posix()
+    source_reference = {"path": relative_path, "symbol": "ClientQueryJob#execute", "line": 1}
+    rejecting_application.call_knowledge_client_source_tool(
+        handoff.handoff_id,
+        "read_source",
+        {"path": relative_path, "start_line": 1, "end_line": 1},
+    )
+    candidate = AgentKnowledgeEnvelope.model_validate(
+        {
+            "status": "completed",
+            "system_id": SYSTEM_ID,
+            "target_ids": [target_id],
+            "summaries": [
+                {"node_id": draft.node.node_id, "summary": "并发确认候选。"}
+                for draft in batch.drafts
+            ],
+            "questions": [],
+            "source_refs": [source_reference],
+            "trace_steps": [
+                {
+                    "sequence": 1,
+                    "role": "no_downstream",
+                    "source_ref": source_reference,
+                    "summary": "测试Job入口已读取。",
+                }
+            ],
+        }
+    )
+    waiting = rejecting_application.submit_knowledge_client_candidate(
+        handoff.handoff_id,
+        KnowledgeClientCandidateSubmission(candidate=candidate),
+    )
+    assert waiting.client_handoff is not None
+    candidate_digest = waiting.client_handoff.candidate_digest
+    accepting_application = OpenTestApplication(rejecting_application.knowledge_root)
+    original_reject = rejecting_application.knowledge.reject_client_candidate
+    reject_entered = threading.Event()
+    release_reject = threading.Event()
+    accept_finished = threading.Event()
+    errors: dict[str, BaseException] = {}
+
+    def paused_reject(workflow: KnowledgeGenerationWorkflowBatch, digest: str) -> KnowledgeGenerationWorkflowBatch:
+        """在拒绝读取候选后暂停，扩大另一个实例并发接受的窗口。"""
+
+        reject_entered.set()
+        if not release_reject.wait(timeout=3):
+            raise AssertionError("reject pause was not released")
+        return original_reject(workflow, digest)
+
+    def reject_candidate() -> None:
+        """在第一应用实例执行明确拒绝并记录异常。"""
+
+        try:
+            rejecting_application.confirm_knowledge_client_candidate(
+                handoff.handoff_id,
+                KnowledgeClientCandidateConfirmation(candidate_digest=candidate_digest, decision="reject"),
+            )
+        except BaseException as exc:  # noqa: BLE001 - 测试线程必须把所有失败传回主断言
+            errors["reject"] = exc
+
+    def accept_candidate() -> None:
+        """在第二应用实例并发接受，并把终态或异常传回主断言。"""
+
+        try:
+            accepting_application.confirm_knowledge_client_candidate(
+                handoff.handoff_id,
+                KnowledgeClientCandidateConfirmation(candidate_digest=candidate_digest, decision="accept"),
+            )
+        except BaseException as exc:  # noqa: BLE001 - 测试线程必须把所有失败传回主断言
+            errors["accept"] = exc
+        finally:
+            accept_finished.set()
+
+    monkeypatch.setattr(rejecting_application.knowledge, "reject_client_candidate", paused_reject)
+    reject_thread = threading.Thread(target=reject_candidate)
+    accept_thread = threading.Thread(target=accept_candidate)
+    reject_thread.start()
+    assert reject_entered.wait(timeout=2)
+    accept_thread.start()
+    try:
+        # 跨进程系统事务应让接受等待拒绝决策落盘，不能先写入任何正式节点。
+        assert not accept_finished.wait(timeout=0.2)
+        assert accepting_application.store.list_nodes(SYSTEM_ID) == []
+    finally:
+        release_reject.set()
+        reject_thread.join(timeout=3)
+        accept_thread.join(timeout=3)
+        rejecting_application.close()
+        accepting_application.close()
+
+    assert "reject" not in errors
+    assert isinstance(errors.get("accept"), KnowledgeValidationError)
+    settled = rejecting_application.store.read_draft_batch(SYSTEM_ID, handoff.batch_id)
+    assert settled.client_handoff is not None
+    assert settled.client_handoff.status.value == "rejected"
+    assert rejecting_application.store.list_nodes(SYSTEM_ID) == []
+
+
+def test_agent_failure_finishes_partial_and_preserves_code_facts(tmp_path: Path) -> None:
+    """Agent失败但确定性追踪成功时，任务必须部分完成并准确累计失败目标。
+
+    Args:
+        tmp_path: pytest隔离的源码、Manifest、任务和知识目录。
+
+    Returns:
+        None；代码事实保留且任务、进度、计数都呈现partial时通过。
+    """
+
+    application = _application(tmp_path)
+    source_root = Path(application.store.get_system(SYSTEM_ID).source_path)
+    job_path = source_root / "PartialJob.java"
+    job_path.write_text(
+        "package demo; class PartialJob { void execute() { repository.query(); } }",
+        encoding="utf-8",
+    )
+    baseline = application.knowledge.git_repository.capture(source_root)
+    entry_id = "job:demo.PartialJob"
+    manifest = ScanManifest(
+        scan_id="scan-agent-partial-failure",
+        system_id=SYSTEM_ID,
+        baseline=baseline,
+        entries=[
+            EntryPoint(
+                entry_id=entry_id,
+                system_id=SYSTEM_ID,
+                kind="job",
+                display_name="部分完成任务",
+                source_id="demo.PartialJob",
+                source_path=str(job_path),
+            )
+        ],
+    )
+    artifacts = SourceScanArtifactStore(application.knowledge_root)
+    artifacts.write_manifest(manifest)
+    artifacts.publish_latest(SYSTEM_ID, manifest.scan_id)
+    application.store.update_source_baseline(SYSTEM_ID, baseline)
+    application.skip_background_interview(SYSTEM_ID)
+    runner = _FailingKnowledgeAgentRunner()
+    application.runtime_settings.write(RuntimeToolSettings(knowledge_agent="codex"))
+    application.agent_runner = runner
+    application.knowledge.runner = runner
+
+    task = application.submit_knowledge_generation_batch(
+        KnowledgeGenerationBatchRequest(
+            system_id=SYSTEM_ID,
+            target_ids=[entry_id],
+            scan_id=manifest.scan_id,
+            agent="codex",
+            confirmed=True,
+        )
+    )
+    current = application.tasks.get(task.task_id)
+    for _ in range(200):
+        if current.status not in {TaskStatus.PENDING, TaskStatus.RUNNING}:
+            break
+        time.sleep(0.01)
+        current = application.tasks.get(task.task_id)
+
+    assert current.status == TaskStatus.PARTIAL
+    assert current.progress is not None
+    assert current.progress.status == TaskStatus.PARTIAL
+    assert current.result["code_only_count"] == 1
+    assert current.result["agent_failed_count"] == 1
+    assert current.result["deterministic_failed_count"] == 0
+    assert current.result["failed_count"] == 1
+    nodes = [node for node, _, _ in application.store.list_nodes(SYSTEM_ID)]
+    assert nodes
+    assert {node.status for node in nodes} == {KnowledgeStatus.CODE_VERIFIED}
+
+
+def test_deterministic_trace_failure_finishes_failed_without_publishing_facts(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """确定性追踪失败没有可信事实时，任务必须failed并保留独立失败计数。
+
+    Args:
+        tmp_path: pytest隔离的源码、Manifest、任务和知识目录。
+        monkeypatch: 把确定性追踪器替换为固定本地失败，不调用真实Agent。
+
+    Returns:
+        None；任务为failed、确定性失败1且知识目录为空时通过。
+    """
+
+    application = _application(tmp_path)
+    source_root = Path(application.store.get_system(SYSTEM_ID).source_path)
+    job_path = source_root / "BrokenTraceJob.java"
+    job_path.write_text("package demo; class BrokenTraceJob { void execute() {} }", encoding="utf-8")
+    baseline = application.knowledge.git_repository.capture(source_root)
+    entry_id = "job:demo.BrokenTraceJob"
+    manifest = ScanManifest(
+        scan_id="scan-deterministic-failure",
+        system_id=SYSTEM_ID,
+        baseline=baseline,
+        entries=[
+            EntryPoint(
+                entry_id=entry_id,
+                system_id=SYSTEM_ID,
+                kind="job",
+                display_name="追踪失败任务",
+                source_id="demo.BrokenTraceJob",
+                source_path=str(job_path),
+            )
+        ],
+    )
+    artifacts = SourceScanArtifactStore(application.knowledge_root)
+    artifacts.write_manifest(manifest)
+    artifacts.publish_latest(SYSTEM_ID, manifest.scan_id)
+    application.store.update_source_baseline(SYSTEM_ID, baseline)
+    application.skip_background_interview(SYSTEM_ID)
+    runner = _KnowledgeAgentRunner()
+    application.runtime_settings.write(RuntimeToolSettings(knowledge_agent="codex"))
+    application.agent_runner = runner
+    application.knowledge.runner = runner
+
+    def fail_trace(_: object, __: str) -> object:
+        """固定模拟确定性源码证据无法定位。
+
+        Raises:
+            KnowledgeValidationError: 每次调用都表示没有可信最小事实。
+        """
+
+        raise KnowledgeValidationError("simulated deterministic trace failure")
+
+    monkeypatch.setattr(application.knowledge.tracer, "trace", fail_trace)
+    task = application.submit_knowledge_generation_batch(
+        KnowledgeGenerationBatchRequest(
+            system_id=SYSTEM_ID,
+            target_ids=[entry_id],
+            scan_id=manifest.scan_id,
+            agent="codex",
+            confirmed=True,
+        )
+    )
+    current = application.tasks.get(task.task_id)
+    for _ in range(200):
+        if current.status not in {TaskStatus.PENDING, TaskStatus.RUNNING}:
+            break
+        time.sleep(0.01)
+        current = application.tasks.get(task.task_id)
+
+    assert current.status == TaskStatus.FAILED
+    assert current.result["agent_failed_count"] == 0
+    assert current.result["deterministic_failed_count"] == 1
+    assert current.result["failed_count"] == 1
+    assert application.store.list_nodes(SYSTEM_ID) == []
+
+
+def test_recovered_invalid_agent_envelope_finishes_partial_and_publishes_code_facts(
+    tmp_path: Path,
+) -> None:
+    """重启接管到非法Agent信封时应与首次运行一样保留代码事实并partial。
+
+    Args:
+        tmp_path: pytest隔离的源码、工作流检查点、证据和任务目录。
+
+    Returns:
+        None；接管不创建第二次调用，任务计数准确且代码事实已发布时通过。
+    """
+
+    application = _application(tmp_path)
+    source_root = Path(application.store.get_system(SYSTEM_ID).source_path)
+    job_path = source_root / "RecoveredInvalidJob.java"
+    job_path.write_text(
+        "package demo; class RecoveredInvalidJob { void execute() { repository.query(); } }",
+        encoding="utf-8",
+    )
+    baseline = application.knowledge.git_repository.capture(source_root)
+    entry_id = "job:demo.RecoveredInvalidJob"
+    manifest = ScanManifest(
+        scan_id="scan-recovered-invalid-envelope",
+        system_id=SYSTEM_ID,
+        baseline=baseline,
+        entries=[
+            EntryPoint(
+                entry_id=entry_id,
+                system_id=SYSTEM_ID,
+                kind="job",
+                display_name="接管非法输出任务",
+                source_id="demo.RecoveredInvalidJob",
+                source_path=str(job_path),
+            )
+        ],
+    )
+    artifacts = SourceScanArtifactStore(application.knowledge_root)
+    artifacts.write_manifest(manifest)
+    artifacts.publish_latest(SYSTEM_ID, manifest.scan_id)
+    application.store.update_source_baseline(SYSTEM_ID, baseline)
+    application.skip_background_interview(SYSTEM_ID)
+    runner = _DetachedInvalidRecoveryRunner()
+    application.knowledge.runner = runner
+    request = KnowledgeGenerationBatchRequest(
+        system_id=SYSTEM_ID,
+        target_ids=[entry_id],
+        scan_id=manifest.scan_id,
+        agent="codex",
+        confirmed=True,
+    )
+
+    # 首次运行只保存确定性检查点；恢复阶段消费同一run_id的非法终态证据。
+    with pytest.raises(AgentObserverDetachedError):
+        application.knowledge.generate_drafts(request)
+    workflow = application.store.list_draft_batches(SYSTEM_ID)[0]
+    original_run_id = workflow.active_run_id
+
+    def recovery_job() -> dict[str, object]:
+        """消费原运行证据并把降级结果转换为任务partial语义。
+
+        Returns:
+            已发布代码事实与失败分类计数。
+
+        Raises:
+            TaskPartialFailureError: 由应用统一边界把Agent校验失败标为partial。
+        """
+
+        settled = application.knowledge.recover_generation(SYSTEM_ID, workflow.batch_id, runner)
+        result = application._knowledge_generation_result(settled, 0)
+        application._raise_for_partial_generation(result)
+        return result
+
+    task = application.tasks.submit("knowledge-target-generation", SYSTEM_ID, recovery_job)
+    current = application.tasks.get(task.task_id)
+    for _ in range(200):
+        if current.status not in {TaskStatus.PENDING, TaskStatus.RUNNING}:
+            break
+        time.sleep(0.01)
+        current = application.tasks.get(task.task_id)
+
+    assert original_run_id
+    assert current.status == TaskStatus.PARTIAL
+    assert current.result["code_only_count"] == 1
+    assert current.result["agent_failed_count"] == 1
+    assert current.result["deterministic_failed_count"] == 0
+    assert current.result["failed_count"] == 1
+    nodes = [node for node, _, _ in application.store.list_nodes(SYSTEM_ID)]
+    assert nodes
+    assert {node.status for node in nodes} == {KnowledgeStatus.CODE_VERIFIED}
+
+
+def test_legacy_completed_code_only_task_is_projected_as_partial(tmp_path: Path) -> None:
+    """旧completed记录只要outcome含安全错误，读取时就必须无损投影为partial。
+
+    Args:
+        tmp_path: pytest隔离的任务历史目录。
+
+    Returns:
+        None；原任务文件不改写且API读取结果具有正确部分失败计数时通过。
+    """
+
+    application = _application(tmp_path)
+
+    def legacy_job() -> dict[str, object]:
+        """返回历史版本曾误记为completed的CODE_ONLY结果。
+
+        Returns:
+            含一项Agent安全错误、但旧失败计数为零的兼容任务结果。
+        """
+
+        return {
+            "target_count": 1,
+            "code_only_count": 1,
+            "failed_count": 0,
+            "outcomes": [
+                {
+                    "target_id": "facade:demo.Query#list",
+                    "status": "CODE_ONLY",
+                    "safe_error": "ExecutionFailure: 指定Agent分析失败",
+                }
+            ],
+        }
+
+    task = application.tasks.submit("knowledge-target-generation", SYSTEM_ID, legacy_job)
+    raw_task_path = application.tasks.task_root / f"{task.task_id}.json"
+    current = application.tasks.get(task.task_id)
+    for _ in range(200):
+        if current.status in {TaskStatus.COMPLETED, TaskStatus.PARTIAL}:
+            break
+        time.sleep(0.01)
+        current = application.tasks.get(task.task_id)
+    raw_payload = json.loads(raw_task_path.read_text(encoding="utf-8"))
+
+    assert raw_payload["status"] == "completed"
+    assert raw_payload["result"]["failed_count"] == 0
+    assert current.status == TaskStatus.PARTIAL
+    assert current.result["agent_failed_count"] == 1
+    assert current.result["deterministic_failed_count"] == 0
+    assert current.result["failed_count"] == 1
+
+
+def test_refresh_snapshot_restores_running_task_and_duplicate_submit_is_rejected(tmp_path: Path) -> None:
+    """刷新读取必须恢复同一任务身份，运行中重复提交不得创建第二次Agent调用。
+
+    Args:
+        tmp_path: pytest隔离的源码、Manifest、任务和工作流快照目录。
+
+    Returns:
+        None；两次快照身份一致、重复请求被拒绝且Runner只调用一次时通过。
+    """
+
+    application = _application(tmp_path)
+    source_root = Path(application.store.get_system(SYSTEM_ID).source_path)
+    job_path = source_root / "SlowQueryJob.java"
+    job_path.write_text(
+        "package demo; class SlowQueryJob { void execute() { repository.query(); } }",
+        encoding="utf-8",
+    )
+    baseline = application.knowledge.git_repository.capture(source_root)
+    entry_id = "job:demo.SlowQueryJob"
+    manifest = ScanManifest(
+        scan_id="scan-refresh-running-agent",
+        system_id=SYSTEM_ID,
+        baseline=baseline,
+        entries=[
+            EntryPoint(
+                entry_id=entry_id,
+                system_id=SYSTEM_ID,
+                kind="job",
+                display_name="慢速查询任务",
+                source_id="demo.SlowQueryJob",
+                source_path=str(job_path),
+            )
+        ],
+    )
+    artifacts = SourceScanArtifactStore(application.knowledge_root)
+    artifacts.write_manifest(manifest)
+    artifacts.publish_latest(SYSTEM_ID, manifest.scan_id)
+    application.store.update_source_baseline(SYSTEM_ID, baseline)
+    application.skip_background_interview(SYSTEM_ID)
+    runner = _BlockingKnowledgeAgentRunner()
+    application.runtime_settings.write(RuntimeToolSettings(knowledge_agent="codex"))
+    application.agent_runner = runner
+    application.knowledge.runner = runner
+    request = KnowledgeGenerationBatchRequest(
+        system_id=SYSTEM_ID,
+        target_ids=[entry_id],
+        scan_id=manifest.scan_id,
+        agent="codex",
+        confirmed=True,
+    )
+    client = TestClient(create_app(application))
+
+    task = application.submit_knowledge_generation_batch(request)
+    assert task.progress is not None
+    assert task.progress.current_item == entry_id
+    assert task.progress.agent == "codex"
+    try:
+        assert runner.started.wait(timeout=1)
+        first_snapshot = application.get_knowledge_workflow(SYSTEM_ID)
+        refreshed_snapshot = application.get_knowledge_workflow(SYSTEM_ID)
+
+        assert first_snapshot.active_generation_task_id == task.task_id
+        assert refreshed_snapshot.active_generation_task_id == task.task_id
+        assert refreshed_snapshot.active_generation_target_id == entry_id
+        assert refreshed_snapshot.active_generation_agent == "codex"
+        assert refreshed_snapshot.active_generation_status == "running"
+        assert refreshed_snapshot.generation_blocked_reason == "running"
+        with pytest.raises(ScopeViolationError, match="原知识任务仍在运行"):
+            application.submit_knowledge_generation_batch(request)
+        # 第二标签页对应的HTTP重放必须稳定返回409，且不能进入Runner形成第二次费用调用。
+        duplicate = client.post(
+            f"/api/v2/systems/{SYSTEM_ID}/knowledge/generation-batches",
+            json=request.model_dump(mode="json"),
+        )
+        assert duplicate.status_code == 409
+        assert "原知识任务仍在运行" in duplicate.json()["error"]["message"]
+        assert runner.call_count == 1
+    finally:
+        # 无论断言结果如何都放行测试Runner，避免后台任务悬挂到其他测试。
+        runner.release.set()
+        client.close()
+    _wait_for_task(application, task.task_id)
+    with pytest.raises(ScopeViolationError, match="知识已有效"):
+        application.submit_knowledge_generation_batch(request)
+    assert runner.call_count == 1
+
+
 def test_bulk_generation_publishes_code_and_agent_knowledge_without_generic_questions(tmp_path: Path) -> None:
     """指定Agent生成应发布代码事实与解释，且不制造固定业务口径问题。
 
@@ -1136,11 +3494,9 @@ def test_bulk_generation_publishes_code_and_agent_knowledge_without_generic_ques
     )
 
     # 同一源码快照再次生成时继承稳定问题ID的人工答案，不得重新形成开放问题。
-    repeated_task = application.submit_knowledge_generation_batch(request)
-    _wait_for_task(application, repeated_task.task_id)
-    repeated = application.tasks.get(repeated_task.task_id)
-    repeated_batch = application.store.read_draft_batch(SYSTEM_ID, repeated.result["batch_id"])
-    assert repeated.result["question_count"] == 0
+    # 产品入口会阻止有效目标重复付费；此处直接调用领域服务，仅验证内部重算仍保护人工内容。
+    repeated_batch = application.knowledge.generate_drafts(request, runner=_KnowledgeAgentRunner())
+    assert application.get_knowledge_question_cycle(SYSTEM_ID, refresh=True).questions == []
     assert repeated_batch.status == "PUBLISHED"
     assert repeated_batch.questions == []
     assert "人工后续修订不可覆盖" in protected_path.read_text(encoding="utf-8")
@@ -1175,6 +3531,9 @@ def test_bulk_generation_publishes_code_and_agent_knowledge_without_generic_ques
     assert settled_supplement.status == "PUBLISHED"
     assert "人工后续修订不可覆盖" in supplemented_content
     assert supplemental_note in supplemented_content
+    supplemented_node, _, _ = application.store.get_node(SYSTEM_ID, protected_node.node_id)
+    # 新人工答案只确认对应段落；刷新后的Agent解释仍使节点整体保持INFERRED。
+    assert supplemented_node.status == KnowledgeStatus.INFERRED
     assert "刷新后的自动事实" in supplemented_content
 
     # 旧自动区已有确认段时，下一轮的新答案与新证据元数据仍必须同时发布。
@@ -1211,7 +3570,8 @@ def test_bulk_generation_publishes_code_and_agent_knowledge_without_generic_ques
     assert supplemental_note in second_content
     assert second_note in second_content
     assert "第二轮刷新自动事实" in second_content
-    assert refreshed_node.status == KnowledgeStatus.USER_CONFIRMED
+    # 混合节点保留独立人工段，但新Agent摘要不能借历史答案把整个节点升级为USER_CONFIRMED。
+    assert refreshed_node.status == KnowledgeStatus.INFERRED
     assert refreshed_node.summary == "第二轮源码与Agent摘要"
     assert refreshed_node.confidence == 0.91
     assert refreshed_node.metadata["scan_id"] == "scan-refreshed-evidence"
@@ -1277,6 +3637,25 @@ def test_agent_question_answer_continues_original_session_and_preserves_sources(
     assert first_run_id == runner.requests[0].run_id
     assert question.agent_run_id == first_run_id
     assert all(node.status.value == "code_verified" for node, _, _ in application.store.list_nodes(SYSTEM_ID))
+    waiting_snapshot = application.get_knowledge_workflow(SYSTEM_ID)
+    assert waiting_snapshot.active_generation_target_id == target_id
+    assert waiting_snapshot.active_generation_agent == "codex"
+    assert waiting_snapshot.active_generation_status == "waiting_for_input"
+    assert waiting_snapshot.generation_blocked_reason == "waiting_for_input"
+    application.runtime_settings.write(RuntimeToolSettings(knowledge_agent="codex"))
+    application.agent_runner = runner
+    application.knowledge.runner = runner
+    with pytest.raises(ScopeViolationError, match="正在等待回答"):
+        application.submit_knowledge_generation_batch(
+            KnowledgeGenerationBatchRequest(
+                system_id=SYSTEM_ID,
+                target_ids=[target_id],
+                scan_id=manifest.scan_id,
+                agent="codex",
+                confirmed=True,
+            )
+        )
+    assert len(runner.requests) == 1
 
     application.knowledge.answer_draft_question(
         SYSTEM_ID,
@@ -1308,7 +3687,8 @@ def test_agent_question_answer_continues_original_session_and_preserves_sources(
     assert completed.active_run_id == ""
     assert completed.outcomes[0].status.value == "AGENT_ENRICHED"
     node, _, content = application.store.get_node(SYSTEM_ID, completed.drafts[0].node.node_id)
-    assert node.status.value == "user_confirmed"
+    # 人工答案进入独立确认段，但同一节点含有新Agent解释，整体来源不能伪装为USER_CONFIRMED。
+    assert node.status.value == "inferred"
     assert "人工确认：本系统补偿" in content
     assert "Agent代码解释（INFERRED）" in content
 
@@ -2460,6 +4840,59 @@ def test_semantic_enum_rescan_preserves_ignored_human_state(tmp_path: Path) -> N
     ).related_enums == []
     assert application.knowledge._system_context_payload(SYSTEM_ID)["confirmed_candidates"] == []
     assert application.knowledge_discovery._context_digest(SYSTEM_ID) == empty_digest
+
+
+def test_knowledge_target_detail_uses_explicit_historical_scan(tmp_path: Path) -> None:
+    """历史目录目标详情必须读取同一Manifest，不能静默回落到latest。
+
+    Args:
+        tmp_path: pytest隔离的两个扫描Manifest和源码目录。
+
+    Returns:
+        None；旧扫描仍能读取其目标，而默认latest明确找不到该目标时通过。
+    """
+
+    application = _application(tmp_path)
+    source_root = Path(application.store.get_system(SYSTEM_ID).source_path)
+    source_file = source_root / "HistoricalQueryJob.java"
+    source_file.write_text("package demo; class HistoricalQueryJob { void execute() {} }\n", encoding="utf-8")
+    baseline = application.knowledge.git_repository.capture(source_root)
+    target_id = "job:demo.HistoricalQueryJob"
+    old_manifest = ScanManifest(
+        scan_id="scan-historical-detail-old",
+        system_id=SYSTEM_ID,
+        baseline=baseline,
+        entries=[
+            EntryPoint(
+                entry_id=target_id,
+                system_id=SYSTEM_ID,
+                kind="job",
+                display_name="历史查询任务",
+                source_id="demo.HistoricalQueryJob",
+                source_path=str(source_file),
+            )
+        ],
+    )
+    latest_manifest = ScanManifest(
+        scan_id="scan-historical-detail-latest",
+        system_id=SYSTEM_ID,
+        baseline=baseline,
+        entries=[],
+    )
+    artifacts = SourceScanArtifactStore(application.knowledge_root)
+    artifacts.write_manifest(old_manifest)
+    artifacts.write_manifest(latest_manifest)
+    artifacts.publish_latest(SYSTEM_ID, latest_manifest.scan_id)
+
+    historical = application.get_knowledge_target_detail(
+        SYSTEM_ID,
+        target_id,
+        scan_id=old_manifest.scan_id,
+    )
+
+    assert historical.target.target_id == target_id
+    with pytest.raises(KnowledgeNotFoundError, match="target"):
+        application.get_knowledge_target_detail(SYSTEM_ID, target_id)
 
 
 def test_same_simple_enum_name_from_two_types_uses_qualified_code_defaults(tmp_path: Path) -> None:

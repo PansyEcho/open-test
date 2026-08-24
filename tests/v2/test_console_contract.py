@@ -54,8 +54,28 @@ def test_console_static_client_uses_only_v2_routes_and_safe_rendering() -> None:
     assert "knowledgeGenerationTargets" not in script
     assert 'id="knowledge-agent-stream-panel"' in html
     assert "new EventSource" in script
+    assert "source.onerror = async" in script
+    assert "const taskPayload = await api(`/tasks/${encodeURIComponent(task.task_id)}`)" in script
+    assert "activeKnowledgeEventSource !== source" in script
+    assert "terminalStatuses.includes(latestTask.status)" in script
+    assert "if (!taskRunning)" in script
+    assert "stopKnowledgeAgentEventStream(true)" in script
+    assert "if (taskRunning) {\n    // 只有仍在运行的任务需要累计耗时" in script
+    assert "if (taskRunning) {\n    activeKnowledgeStreamStartedAt" in script
     assert 'id="cancel-knowledge-agent"' in html
+    assert 'cancelButton.dataset.taskId = task.task_id' in script
+    assert 'cancelButton.dataset.attemptId = handoff.attempt_id || ""' in script
+    assert 'selectedTask?.client_handoff?.attempt_id !== attemptId' in script
+    assert 'cancelButton.dataset.taskId !== taskId' in script
     assert 'id="continue-knowledge-agent"' in html
+    assert 'id="view-agent-diagnostics"' in html
+    assert 'id="knowledge-agent-prompt"' in html
+    assert 'id="knowledge-agent-source-access"' in html
+    assert 'id="knowledge-agent-resume-command"' in html
+    assert "/agent-diagnostics" in script
+    assert "公开推理摘要" in html
+    assert "隐藏思维链" in html
+    assert "diagnostics.final_output_truncated" in script
     continuation = script[
         script.index("async function continueKnowledgeAgent") : script.index("function refreshKnowledgeGenerationActions")
     ]
@@ -68,6 +88,55 @@ def test_console_static_client_uses_only_v2_routes_and_safe_rendering() -> None:
     assert "confirmKnowledgeGeneration" in script
     assert "finishKnowledgeGeneration(payload.task, requestScope)" in script
     assert 'finalProgress.status === "superseded"' in script
+    assert 'generation_blocked_reason: "running"' in script
+    assert 'blockedReason === "running"' in script
+    assert 'blockedReason === "waiting_for_input"' in script
+    assert '"completed", "partial", "failed"' in script
+    assert "部分完成 · 仅代码事实" in script
+    assert "error_summary" in script
+    assert "当前知识已有效" in script
+    assert "await Promise.all([loadKnowledgeWorkflow(), loadScanCatalog()])" in script
+    # 目标切换必须立即替换旧正文、主动取消旧GET并仅恢复当前目标/attempt的任务卡。
+    assert "let activeKnowledgeTargetController = null" in script
+    assert "activeKnowledgeTargetController.abort()" in script
+    assert 'textNode("p", `正在读取 ${target.display_name}…`, "loading-skeleton")' in script
+    assert "signal: activeKnowledgeTargetController.signal" in script
+    assert "knowledgeTargetDetailCache" in script
+    invalidation = script[
+        script.index("function invalidateKnowledgeReadCaches") : script.index("function knowledgeGenerationAttemptTargetId")
+    ]
+    assert "knowledgeTargetRequestGeneration += 1" in invalidation
+    assert "activeKnowledgeTargetController" in invalidation
+    assert "&scan_id=${encodeURIComponent(scanId)}`" in script
+    assert "generation_attempts" in script
+    assert "attempt.target_id === selectedTargetId" in script
+    assert 'let selectedKnowledgeDiagnosticsTaskId = ""' in script
+    diagnostics = script[
+        script.index("async function viewKnowledgeAgentDiagnostics") : script.index("async function copyKnowledgeAgentResumeCommand")
+    ]
+    assert "selectedKnowledgeDiagnosticsTaskId" in diagnostics
+    assert "selectedKnowledgeDiagnosticsTaskId !== taskId" in diagnostics
+    assert 'dataset.targetId !== targetId' in diagnostics
+    assert "active_generation_task_id" not in diagnostics
+    assert "latest_agent_task" not in diagnostics
+    assert 'interaction_mode: agent === "codex" ? "codex_client" : "opentest_stream"' in script
+    codex_confirmation = script[
+        script.index("function confirmKnowledgeGeneration") : script.index("function confirmKnowledgeAgentOperation")
+    ]
+    # 点击Codex生成本身就是单聊天授权，不再追加容易打断多轮客户端交互的费用确认框。
+    assert 'if (agent === "codex")' in codex_confirmation
+    assert "return true" in codex_confirmation
+    assert "window.confirm" not in codex_confirmation
+    # 失败/部分/过期attempt以及仍有有效旧知识的目标都必须明确走重新生成语义。
+    assert 'const regenerateTarget = retryableTerminal || ["STALE", "FAILED"].includes(selectedKnowledgeStatus)' in script
+    assert 'intent: regenerateTarget ? "regenerate" : "initial"' in script
+    generation_actions = script[
+        script.index("function refreshKnowledgeGenerationActions") : script.index("async function finishKnowledgeGeneration")
+    ]
+    assert "else if (selectedCategory && regenerateTarget)" in generation_actions
+    assert "open-codex-client-thread" in script
+    assert "codex://threads/" in script
+    assert "使用 Codex 重新生成当前对象知识" in script
     assert "最低底线知识当前没有新缺口，可进入测试场景准备" not in script
     assert 'id="generate-case-matrix"' in html
     assert 'id="run-natural-language"' in html
@@ -367,6 +436,67 @@ def test_knowledge_target_loading_ignores_out_of_order_detail_responses() -> Non
     assert "knowledgeTargetRequestGeneration += 1" in detail_loader
     assert detail_loader.count("isCurrentKnowledgeTargetRequestScope(requestScope)") >= 3
     assert "isCurrentSystemScope(requestScope)" not in detail_loader
+    # 中栏聊天也属于当前详情；发请求前必须先绑定新目标，不能继续显示上一个接口的作用域。
+    immediate_scope = detail_loader.index(
+        'bindKnowledgeConversationScope({ kind: "TARGET", scope_id: target.target_id }, target.display_name)'
+    )
+    assert immediate_scope < detail_loader.index("try {")
+    scope_check = detail_loader.index("if (!isCurrentKnowledgeTargetRequestScope(requestScope))")
+    cache_write = detail_loader.index("knowledgeTargetDetailCache.set(cacheKey, detail)")
+    assert scope_check < cache_write
+    assert "const scanId = scanCatalog?.scan_id || \"latest\"" in detail_loader
+    assert "scan_id=${encodeURIComponent(scanId)}" in detail_loader
+
+
+def test_codex_handoff_monitor_rejects_stale_same_target_attempt_responses() -> None:
+    """同一目标切换到新attempt后，旧轮询响应不得重绘任务卡或Toast。
+
+    Returns:
+        None；轮询在GET后及终态刷新后都复核当前monitor task ID时通过。
+    """
+
+    script_path = Path(__file__).parents[2] / "opentest" / "web" / "app.js"
+    script = script_path.read_text(encoding="utf-8")
+    monitor = script[
+        script.index("async function monitorCodexClientHandoff") : script.index("function openCodexClientThread")
+    ]
+
+    assert "activeCodexHandoffMonitorTaskId === initialTask.task_id" in monitor
+    assert monitor.count("if (!monitorIsCurrent())") >= 2
+    task_get = monitor.index("const payload = await api")
+    first_guard = monitor.index("if (!monitorIsCurrent())", task_get)
+    attempt_write = monitor.index("currentKnowledgeWorkflow =", first_guard)
+    assert task_get < first_guard < attempt_write
+    terminal_reload = monitor.index("await Promise.all")
+    terminal_guard = monitor.index("if (!monitorIsCurrent())", terminal_reload)
+    toast = monitor.index('showToast("Codex 候选已确认并写入当前对象知识")')
+    assert terminal_reload < terminal_guard < toast
+
+
+def test_scan_catalog_rejects_invalidated_and_out_of_order_scan_responses() -> None:
+    """目录失效或历史扫描快速切换时，迟到响应不得写缓存或重绘页面。
+
+    Returns:
+        None；目录拥有独立代次、AbortController且缓存写入位于scope校验之后时通过。
+    """
+
+    script_path = Path(__file__).parents[2] / "opentest" / "web" / "app.js"
+    script = script_path.read_text(encoding="utf-8")
+    invalidation = script[
+        script.index("function invalidateKnowledgeReadCaches") : script.index("function knowledgeGenerationAttemptTargetId")
+    ]
+    loader = script[script.index("async function loadScanCatalog") : script.index("async function loadDsfOperationCatalog")]
+
+    assert "knowledgeScanCatalogRequestGeneration += 1" in invalidation
+    assert "activeKnowledgeScanCatalogController.abort()" in invalidation
+    assert "const scanId = element(\"scan-history\").value || \"latest\"" in loader
+    assert "catalogGeneration === knowledgeScanCatalogRequestGeneration" in loader
+    assert '(element("scan-history").value || "latest") === scanId' in loader
+    request = loader.index("payload = await api")
+    scope_guard = loader.index("if (!catalogRequestIsCurrent())", request)
+    cache_write = loader.index("knowledgeScanCatalogCache.set(catalogCacheKey, payload)")
+    assert request < scope_guard < cache_write
+    assert "signal: requestController.signal" in loader
 
 
 def test_console_scan_failure_stops_manifest_loading_and_success_feedback() -> None:
