@@ -1,0 +1,241 @@
+tests/v2/test_knowledge_interview_frontier.py
+  s_94ea90289fc01a::t_0fd58eda110e31 2846-2850
+  s_049228588b6648::t_f45190e94636b5 2629
+  s_049228588b6648::t_857e4f9d1daa9a 2615
+  s_049228588b6648::t_bcc46f4fd82469 2612-2614
+  s_049228588b6648::t_9cbd71930913ef 2616-2618,2626-2628
+  s_94ea90289fc01a::t_18b03ea045ef34 2851-2853
+  s_da48fb995d55be::t_beb6cd9e251f9e 7,18-26,28-29,44-46,48,68,70,147-160,162-170,172,175,177-185,194-346,359,402-409,414,429-430,439-443,445,447-455,1113-2611,2619-2625,2630-2845,2854-3112,3114-3116,3118-3120,3123-3134,3136-3139,3141-3169,3171-3177,3179-3183,3185-3189,3192,3194-3195,3200-3204,3206,3208,3211-3220,3227-3234,3237-3241,3243-3244,3246-3278,3281,3284-3334,3339-3341,3345,3347,3352,3355-3358,3366-3377,3379-3399,3401-3411,3497-3499,3534-3536,3573-3574,3640-3658,3690-3691,4845-4897
+opentest/application/knowledge.py
+  s_94ea90289fc01a::t_d55aeef59ee85e 423,427,493,664,723,794,852,1145
+  s_94ea90289fc01a::t_a6264ce3d7047c 2542-2566
+  s_94ea90289fc01a::t_419321775223a9 422
+  s_94ea90289fc01a::t_5a9d5fbdca47bf 441,481,591,776,1061,1131
+  s_94ea90289fc01a::t_729e3cdef8f91d 392,463,613
+  s_94ea90289fc01a::t_7590b6776d826d 390-391,393-417,442-462,464-479,486,490,496,576,579,586,592-594,596-598,600-602,604-612,614-626,632,635,637,645,648,650,658,661,666,708,713,717,725,743,748,757,764,767,769,782,787,796,818,828,836,842,846,854,880,883,885,904,908,910,919,927,931,933,961,965,967,983,986,988,1004,1009,1011,1025,1039,1045,1048,1050,1067,1072,1077,1096,1115,1124,1137,1142,1202
+  s_94ea90289fc01a::t_64ae93de9ee782 480,590,775,955,997,1060,1130
+  s_94ea90289fc01a::t_1767326d75888e 418-421,424-426,428-440,589
+  s_94ea90289fc01a::t_924ecf3f20fec2 482-485
+  s_94ea90289fc01a::t_8ba8a54bbae12a 487-489
+  s_94ea90289fc01a::t_1f3673d7f5c93b 491-492
+  s_94ea90289fc01a::t_a2c09f8577861f 494-495
+  s_94ea90289fc01a::t_c6f8717742071e 497-499,573-575
+  s_94ea90289fc01a::t_004b3736041a57 577-578
+  s_94ea90289fc01a::t_c39248b104ec74 580-585
+  s_94ea90289fc01a::t_48d04df03049f1 587-588
+  s_94ea90289fc01a::t_7434620231ec30 595
+  s_94ea90289fc01a::t_fd243758e7f36a 599
+  s_94ea90289fc01a::t_fb68333d99a839 603
+  s_94ea90289fc01a::t_f4ad3df39e83d9 627-631
+  s_94ea90289fc01a::t_e009900ae24d44 633-634
+  s_94ea90289fc01a::t_f6816949a67492 636
+  s_94ea90289fc01a::t_631bf4c19967e2 638-640,642-644
+  s_94ea90289fc01a::t_cc32c53557a205 646-647
+  s_94ea90289fc01a::t_386e4cc6e70154 649
+  s_94ea90289fc01a::t_3cc626ee0e2e36 651-653,655-657
+  s_94ea90289fc01a::t_f131d110d46127 659-660
+  s_94ea90289fc01a::t_d32df9811b8d74 662-663
+  s_94ea90289fc01a::t_2de931fd4a76f6 665
+  s_94ea90289fc01a::t_3ba463ca8ad6ad 667-669,705-707
+  s_94ea90289fc01a::t_54fed5850bb4b4 709-712
+  s_94ea90289fc01a::t_6938b7531e822a 714-716
+  s_94ea90289fc01a::t_8fa001727e0cb5 718-722
+  s_94ea90289fc01a::t_5d7127efae097b 724
+  s_94ea90289fc01a::t_f343b734a8ded7 726-728,740-742
+  s_94ea90289fc01a::t_3be20947cb96f6 744-747
+  s_94ea90289fc01a::t_ac87356bfca3ba 749-751,754-756
+  s_94ea90289fc01a::t_ffef915abab4e3 758-763
+  s_94ea90289fc01a::t_11dace46423f9b 765-766
+  s_94ea90289fc01a::t_f76e852400de01 768
+  s_94ea90289fc01a::t_206f587360a8fd 770-774
+  s_94ea90289fc01a::t_02942f7430e65c 777-781
+  s_94ea90289fc01a::t_4b736df1e6bd0e 783-786
+  s_94ea90289fc01a::t_0542be2352ea8c 788-793
+  s_94ea90289fc01a::t_e6dc6661355235 795
+  s_94ea90289fc01a::t_b790c7c52f7ba1 797-799,815-817
+  s_94ea90289fc01a::t_b253b6db045d8f 819-821,825-827
+  s_94ea90289fc01a::t_a6f40b983ab9e8 829-831,833-835
+  s_94ea90289fc01a::t_63dbdf7bf2c599 837-841
+  s_94ea90289fc01a::t_3e19ddd1c11351 843-845
+  s_94ea90289fc01a::t_921966160838e8 847-851
+  s_94ea90289fc01a::t_4456503cfd7ece 853
+  s_94ea90289fc01a::t_284f60e89e5d0f 855-857,877-879
+  s_94ea90289fc01a::t_5cbf0c806aa8d0 881-882
+  s_94ea90289fc01a::t_7bd6b0527870ff 884
+  s_94ea90289fc01a::t_f1115293e7f972 886-888,901-903
+  s_94ea90289fc01a::t_e146cce19ea681 905-907
+  s_94ea90289fc01a::t_582894a48d9226 909
+  s_94ea90289fc01a::t_9932e0e9b807ea 911-913,916-918
+  s_94ea90289fc01a::t_58c33fb6d344a2 920-922,924-926
+  s_94ea90289fc01a::t_39d1287f32c74e 928-930
+  s_94ea90289fc01a::t_9de4d0987e4dca 932
+  s_94ea90289fc01a::t_b52a7638e48144 934-936,952-954
+  s_94ea90289fc01a::t_ef19dda185d216 956-960
+  s_94ea90289fc01a::t_772c133dbe07c1 962-964
+  s_94ea90289fc01a::t_dfecf5c1e200f7 966
+  s_94ea90289fc01a::t_d55a556af49b6f 968-970,980-982
+  s_94ea90289fc01a::t_fff31ef9b85320 984-985
+  s_94ea90289fc01a::t_3039edcacbde76 987
+  s_94ea90289fc01a::t_5bdc8a0419ad1b 989-991,994-996
+  s_94ea90289fc01a::t_fb8659b4cbdb20 998-1003
+  s_94ea90289fc01a::t_9ac875bcb09ec4 1005-1008
+  s_94ea90289fc01a::t_e7663aec4c9047 1010
+  s_94ea90289fc01a::t_a3eb20d1c28d91 1012-1014,1022-1024
+  s_94ea90289fc01a::t_d412df8701741a 1026-1028,1036-1038
+  s_94ea90289fc01a::t_6095e50e92a9a2 1040-1044
+  s_94ea90289fc01a::t_2a89a5b6c6266e 1046-1047
+  s_94ea90289fc01a::t_9b274113567657 1049
+  s_94ea90289fc01a::t_e758345b0af13c 1051-1053,1057-1059
+  s_94ea90289fc01a::t_5e12c5be53014a 1062-1066
+  s_94ea90289fc01a::t_cec8294734cc1b 1068-1071
+  s_94ea90289fc01a::t_657abca43bedc5 1073-1076
+  s_94ea90289fc01a::t_19f81ec9390cd4 1078-1080,1093-1095
+  s_94ea90289fc01a::t_fc63a1f6fa147f 1097-1099,1112-1114
+  s_94ea90289fc01a::t_5d2ed4687f46dc 1116-1118,1121-1123
+  s_94ea90289fc01a::t_6d199044f8052d 1125-1129
+  s_94ea90289fc01a::t_b5aee8bf3b7fd1 1132-1136
+  s_94ea90289fc01a::t_46dcab1bb0546d 1138-1141
+  s_94ea90289fc01a::t_c004e65ece476b 1143-1144
+  s_94ea90289fc01a::t_6f2b8acd0e7bee 1146
+  s_94ea90289fc01a::t_1f6ae1fa093628 1201
+  s_94ea90289fc01a::t_4fd3e6a95ac335 1203-1205
+  s_94ea90289fc01a::t_fd44460d81724d 2567-2569
+  s_da48fb995d55be::t_e70e9cb017c91f 9-10,13-15,23-28,44,47-50,56-58,69,283,500-572,641,654,670-704,729-739,752-753,800-814,822-824,832,858-876,889-900,914-915,923,937-951,971-979,992-993,1015-1021,1029-1035,1054-1056,1081-1092,1100-1111,1119-1120,1185-1191,1207,1213-1223,1227,2236,2269-2278,2281,2284-2291,2301-2305,2452-2458,2464,2466,2470-2473,2479,2492,2495,2500-2511,2513-2535,2538-2539,2570-3453,3457,3460,3491-3508,3602-3607,3609-3611,3882-3889,3895,3910,4007,4014,4033-4041,4064-4838,4898-4901,4909-4921
+opentest/application/foundation.py
+  s_94ea90289fc01a::t_989311f137e7fc 2679
+  s_94ea90289fc01a::t_41633dacff68b0 2676-2678
+  s_94ea90289fc01a::t_d84e776b8b77f6 2680-2682
+  s_da48fb995d55be::t_88e3af391f285a 9,20,57,61-63,67,72-75,91-92,101,103,177,187,207,313,573-660,697-699,703-711,725-739,2374,2383,2389-2390,2475,2480-2485,2487-2495,2500-2504,2510-2512,2534-2580,2593-2600,2670,2726-2730,2735,2747-2798,2821,2824-2840,2846,2849,2852,2855-2856,2859-2862,2870-3527,3579,3724-3761,3763,3769,3772,3775,3779-3839,3871-3878,3886-3888,3896-3913
+open-test-knowledge/systems/ifightchainsaas.java.refund.core/references/facades/entry-com.ly.flight.chainsaas.refund.facade.RefundFacade-createOrder-5b2594fdac65.md
+  s_52c6fd2a21c529::t_654262f89ebc82 18,27,30,56-59
+open-test-knowledge/systems/ifightchainsaas.java.refund.core/references/facades/entry-com.ly.flight.chainsaas.refund.facade.RefundFacade-queryDetailByRefundNo-8d48e9c05ba4.md
+  s_2dda0e44eda70c::t_8c7399fa699b3e 27,30
+openspec/changes/semantic-knowledge-workspace/design.md
+  s_da48fb995d55be::t_42a66022fbce55 37,41,45-51,55-57
+openspec/changes/semantic-knowledge-workspace/proposal.md
+  s_da48fb995d55be::t_bc4125d8dda54f 18-20
+openspec/changes/semantic-knowledge-workspace/specs/java-semantic-knowledge/spec.md
+  s_da48fb995d55be::t_9c767ff57dcfb2 89-117
+openspec/changes/semantic-knowledge-workspace/specs/three-pane-knowledge-workspace/spec.md
+  s_da48fb995d55be::t_d9c89c62a805eb 26,36-47,66-67,70-76,83,86-103,170-185
+opentest-plugin-marketplace/.agents/plugins/marketplace.json
+  s_35abf01c678722::t_0e70b75c8b3524 1-20
+opentest-plugin-marketplace/plugins/open-test-knowledge/.codex-plugin/plugin.json
+  s_da48fb995d55be::t_174225d8b7369e 1-25
+opentest-plugin-marketplace/plugins/open-test-knowledge/.gitignore
+  s_da48fb995d55be::t_8778a9e2816b77 1-2
+opentest-plugin-marketplace/plugins/open-test-knowledge/.mcp.json
+  s_35abf01c678722::t_fe2f9a83cb3911 1-13
+opentest-plugin-marketplace/plugins/open-test-knowledge/scripts/opentest_handoff_mcp.py
+  s_da48fb995d55be::t_c0205ecc2dbf03 1-464
+opentest-plugin-marketplace/plugins/open-test-knowledge/skills/knowledge-handoff/SKILL.md
+  s_da48fb995d55be::t_00f5079ddc166c 1-27
+opentest/adapters/agent_runner.py
+  s_35abf01c678722::t_d9d67738c59042 8,27-34,136-138,155,173-174,194,223-294,442-487,571-572,574-578,585-586,589,592-596,598-600,612-614,647-659,664,666-667,670,673-674,696-759
+opentest/adapters/agent_stream_worker.py
+  s_383b537ff9653e::t_c958c825517c05 344,593
+opentest/adapters/codex_app_server.py
+  s_da48fb995d55be::t_e486778554bf5f 1-558
+opentest/adapters/knowledge_store.py
+  s_da48fb995d55be::t_0f13a9fe26b4a2 58-60,81-92,99-169,173
+opentest/adapters/registered_source_mcp.py
+  s_35abf01c678722::t_1110d61e2cc7ff 1-801
+opentest/adapters/sqlite_index.py
+  s_da48fb995d55be::t_bc7fcebee51671 32-48,115-138,232-268,374-382,388
+opentest/adapters/system_archive.py
+  s_da48fb995d55be::t_a2c84d520bd39e 17-22,192-194,218-270
+opentest/api.py
+  s_da48fb995d55be::t_3c4dfd75e2a696 36,42-44,59-60,323,331-371,622-623,630-728,1057,1059,1061-1072,1079,1518,1522-1524,1578-1593
+opentest/application/knowledge_conversation.py
+  s_da48fb995d55be::t_c43093710110d7 446-447
+opentest/application/knowledge_discovery.py
+  s_da48fb995d55be::t_f0cd74fb940da6 1059,1064-1066,1133
+opentest/application/tasks.py
+  s_da48fb995d55be::t_52cbe22401fd2b 26-27,32-33,233,242,261,333-454,574,578-580,613-614,638,641-668,746-783,867-927,1050-1054,1059,1066,1075-1141
+opentest/domain/errors.py
+  s_383b537ff9653e::t_2d26ab328030ce 54-85
+opentest/domain/models.py
+  s_da48fb995d55be::t_bfa4ea3fd917a4 16-32,91,95-97,729,733-812,1155,1180,1445-1446,1448-1498,1526,1529-1539,1555-1594,1615,1628-1631,1642-1719,1800-1835,1845,2627,2640,2644-2646,2676,2678-2697,2711
+opentest/web/app.js
+  s_da48fb995d55be::t_0ce28093e76a70 40-41,58-62,68-69,109-172,397,417,648,652-654,673-675,690-725,803-885,887-952,955-969,1233-1245,1247-1256,1259-1261,1267-1272,1293-1295,1298-1301,1311-1314,2344-2348,2365-2368,2375-2384,2388-2392,2398-2400,2404-2406,2417,2530-2539,2798-2799,3145-3174,3179,3193-3198,3200-3205,3209,3218-3223,3230-3256,3282,3287,3290-3293,3358-3363,3385-3386,3415-3418,3493,3495-3499,3511-3514,3516-3517,3536,3540-3542,3546-3548,3550-3582,3584-3587,3591-3674,3682-3687,3690-3700,3704-3708,3794-3833,3837-3839,3906-3909,3926,3930,5110,5144,5162,5165,5172-5179,5193-5196,5198-5205,5228-5229,5248,5251-5252
+opentest/web/index.html
+  s_da48fb995d55be::t_5c662a0468d503 81,160,163-172
+opentest/web/styles.css
+  s_383b537ff9653e::t_3a0c63949070ee 207-211
+tests/v2/test_api_cli.py
+  s_35abf01c678722::t_e995de7abcfac3 5,14,119-122,147,153-229,366-510
+tests/v2/test_console_contract.py
+  s_da48fb995d55be::t_32955b7f366dda 57-64,66-69,71-78,91-139,439-499
+tests/v2/test_knowledge_tracing.py
+  s_da48fb995d55be::t_e84deee3c1cd4e 7-8,16-21,24-25,33-36,41-42,44-45,58-94,665,669-674,743,746,749,753,756-757,760,763-764,770-772,774,776,778-1031,1033-2958
+tests/v2/test_multi_system_reliability.py
+  s_da48fb995d55be::t_ba30c8106d997b 19,22,118-120,160-250
+tests/v2/test_opentest_plugin.py
+  s_da48fb995d55be::t_f8f6f84a67bce9 1-195
+tests/v2/test_system_specific_knowledge_progress.py
+  s_383b537ff9653e::t_11451fc8224660 750,753,756,780-782
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.18",
+  "base_commit_sha": "81f46ca49f06add93b3bac6f7b48cbf6b36743be",
+  "prompts": {},
+  "sessions": {
+    "s_049228588b6648": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a01dd1-5a61-7350-b52e-62d9973e645d",
+        "model": "gpt-5.6-sol"
+      },
+      "human_author": "shizhen <yuuu.shizhen@gmail.com>"
+    },
+    "s_2dda0e44eda70c": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a02f57-af67-7323-a529-a7123d098a04",
+        "model": "unknown"
+      },
+      "human_author": "shizhen <yuuu.shizhen@gmail.com>"
+    },
+    "s_35abf01c678722": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a02f61-55cd-7091-b17f-a46910bc1587",
+        "model": "unknown"
+      },
+      "human_author": "shizhen <yuuu.shizhen@gmail.com>"
+    },
+    "s_383b537ff9653e": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a02ab9-d9b9-7371-bf35-28605dbafad2",
+        "model": "unknown"
+      },
+      "human_author": "shizhen <yuuu.shizhen@gmail.com>"
+    },
+    "s_52c6fd2a21c529": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a02e7d-ea4c-7a90-881a-e468e8979f31",
+        "model": "unknown"
+      },
+      "human_author": "shizhen <yuuu.shizhen@gmail.com>"
+    },
+    "s_94ea90289fc01a": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a02297-e0a7-7af1-b468-6bdf6ab81dbc",
+        "model": "gpt-5.6-sol"
+      },
+      "human_author": "shizhen <yuuu.shizhen@gmail.com>"
+    },
+    "s_da48fb995d55be": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a031a1-89ba-7652-818d-2531a5dd2611",
+        "model": "unknown"
+      },
+      "human_author": "shizhen <yuuu.shizhen@gmail.com>"
+    }
+  }
+}
