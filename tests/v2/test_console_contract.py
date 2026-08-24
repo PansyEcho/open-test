@@ -44,7 +44,7 @@ def test_console_static_client_uses_only_v2_routes_and_safe_rendering() -> None:
     assert "场景矩阵 → 人工确认 → Case → 执行步骤" in html
     assert "QA 数据模板" not in html
     assert "/knowledge/generations" in script
-    assert "/knowledge/generation-batches/" in script
+    assert "/knowledge/generation-batches/" not in script
     assert "/case-generations" in script
     assert "/natural-language-tests/previews" in script
     assert "preview-natural-language\" disabled" not in html
@@ -79,14 +79,14 @@ def test_console_static_client_uses_only_v2_routes_and_safe_rendering() -> None:
     continuation = script[
         script.index("async function continueKnowledgeAgent") : script.index("function refreshKnowledgeGenerationActions")
     ]
-    assert "waitingQuestionSetDigest" in continuation
-    assert "currentKnowledgeWorkflow?.waiting_question_set_digest" in continuation
+    assert "renderCodexTaskPane" in continuation
+    assert "/continuations" not in continuation
     assert "backgroundKnowledgeReady" in script
     assert "use_agent" not in script
     assert "agent," in script
     assert "requireKnowledgeAgentSelection" in script
     assert "confirmKnowledgeGeneration" in script
-    assert "finishKnowledgeGeneration(payload.task, requestScope)" in script
+    assert 'interaction_mode: "codex_client"' in script
     assert 'finalProgress.status === "superseded"' in script
     assert 'generation_blocked_reason: "running"' in script
     assert 'blockedReason === "running"' in script
@@ -94,7 +94,7 @@ def test_console_static_client_uses_only_v2_routes_and_safe_rendering() -> None:
     assert '"completed", "partial", "failed"' in script
     assert "部分完成 · 仅代码事实" in script
     assert "error_summary" in script
-    assert "当前知识已有效" in script
+    assert 'intent: regenerateTarget ? "regenerate" : "initial"' in script
     assert "await Promise.all([loadKnowledgeWorkflow(), loadScanCatalog()])" in script
     # 目标切换必须立即替换旧正文、主动取消旧GET并仅恢复当前目标/attempt的任务卡。
     assert "let activeKnowledgeTargetController = null" in script
@@ -119,7 +119,7 @@ def test_console_static_client_uses_only_v2_routes_and_safe_rendering() -> None:
     assert 'dataset.targetId !== targetId' in diagnostics
     assert "active_generation_task_id" not in diagnostics
     assert "latest_agent_task" not in diagnostics
-    assert 'interaction_mode: agent === "codex" ? "codex_client" : "opentest_stream"' in script
+    assert 'interaction_mode: agent === "codex" ? "codex_client" : "opentest_stream"' not in script
     codex_confirmation = script[
         script.index("function confirmKnowledgeGeneration") : script.index("function confirmKnowledgeAgentOperation")
     ]
@@ -152,22 +152,13 @@ def test_console_static_client_uses_only_v2_routes_and_safe_rendering() -> None:
     assert 'id="knowledge-agent-select"' in html
     assert 'id="show-all-knowledge-questions"' in html
     assert 'id="knowledge-question-pane"' in html
-    assert 'role="tablist"' in html
-    assert 'id="question-tab-unanswered"' in html
-    assert 'id="question-tab-answered"' in html
-    assert 'id="question-tab-all"' in html
-    assert 'id="question-scope-filter"' in html
-    assert 'id="question-priority-filter"' in html
-    assert 'id="question-category-filter"' in html
-    assert 'id="complete-question-cycle"' in html
-    assert 'id="question-cycle-analysis-progress"' in html
-    assert "/knowledge/question-cycle" in script
-    assert "/knowledge/question-cycles/" in script
-    assert "renderKnowledgeQuestions" in script
-    question_renderer = script[script.index("function renderKnowledgeQuestions") : script.index("function knowledgeQuestionCategoryLabel")]
-    assert "missingQuestions = openQuestions.filter" in question_renderer
-    assert "visibleQuestions.filter" not in question_renderer
-    assert '["OPEN", "BLOCKED"].includes(cycleStatus)' in question_renderer
+    assert 'id="codex-task-filter"' in html
+    assert 'id="codex-task-list"' in html
+    assert "renderCodexTaskPane" in script
+    assert "打开 Codex 聊天记录" in script
+    assert "在 Codex 中继续" in script
+    assert "/knowledge/question-cycle" not in script
+    assert "/knowledge/question-cycles/" not in script
     target_renderer = script[script.index("function renderKnowledgeTargetDetail") : script.index("async function loadKnowledgeInterview")]
     assert "detail.questions" not in target_renderer
     assert "detail.latest_drafts" not in target_renderer
@@ -186,7 +177,7 @@ def test_console_static_client_uses_only_v2_routes_and_safe_rendering() -> None:
     assert "createTargetKnowledgeRevision" not in script
     assert "source_refs || []" in script
     assert "/knowledge/revisions" not in script
-    assert "/knowledge/conversation-turns" in script
+    assert "/knowledge/conversation-turns" not in script
     assert "/create-order-mvp/fixture" in script
     assert 'bindShortAction("load-mvp-fixture-summary", loadMvpFixtureSummary)' in script
     assert "loadMvpFixtureSummary(scope)" not in script
@@ -313,8 +304,8 @@ def test_console_ignores_late_failures_from_previous_system_scope() -> None:
     assert "catch (error) {\n    if (!isCurrentSystemScope(requestScope))" in curl_preview
 
 
-def test_question_cycle_writes_ignore_responses_from_previous_system_scope() -> None:
-    """逐题暂存和整轮完成的迟到响应不得污染切换后的系统或问题周期。"""
+def test_question_cycle_writes_are_retired_from_the_page() -> None:
+    """历史逐题暂存和整轮完成函数不得再调用后端写接口。"""
 
     script_path = Path(__file__).parents[2] / "opentest" / "web" / "app.js"
     script = script_path.read_text(encoding="utf-8")
@@ -325,18 +316,14 @@ def test_question_cycle_writes_ignore_responses_from_previous_system_scope() -> 
         script.index("async function completeQuestionCycle") : script.index("async function handleCompleteQuestionCycleClick")
     ]
 
-    # 两个写入口必须固定系统和周期；响应仅在作用域仍匹配时才允许更新页面缓存。
-    assert "const requestScope = captureSystemScope();" in stage_answer
-    assert "const cycleId = knowledgeQuestionCycle.cycle_id;" in stage_answer
-    assert stage_answer.count("if (!isCurrentQuestionCycleScope(requestScope, cycleId))") >= 2
-    assert "requestScope.systemId" in stage_answer
-    assert "const cycleSnapshot = knowledgeQuestionCycle;" in complete_cycle
-    assert "cycleSnapshot.question_set_digest" in complete_cycle
-    assert complete_cycle.count("if (!isCurrentQuestionCycleScope(requestScope, cycleId))") >= 3
-    assert "loadKnowledgeInterview(requestScope)" in complete_cycle
-    assert "loadQuestionsBadge(requestScope)" in complete_cycle
-    assert "loadScanCatalog(requestScope)" in complete_cycle
-    assert '"正在重新分析知识缺口",\n    requestScope,' in complete_cycle
+    # 兼容函数只提示回到原Codex任务，不读取周期、不提交答案也不启动重新分析。
+    assert "void question;" in stage_answer
+    assert "void answer;" in stage_answer
+    assert "历史问题周期只读保留" in stage_answer
+    assert "api(" not in stage_answer
+    assert "return false;" in complete_cycle
+    assert "api(" not in complete_cycle
+    assert "showTaskProgress" not in complete_cycle
 
 
 def test_archive_restore_uses_full_system_switch_and_clears_previous_knowledge_state() -> None:
@@ -374,11 +361,11 @@ def test_same_system_list_refresh_rebases_knowledge_return_navigation() -> None:
     assert "source.generation = requestGeneration;" in load_system
 
 
-def test_conversation_requests_ignore_late_responses_and_advanced_output_hides_questions() -> None:
-    """聊天发送、重试和轮询不得跨系统/对象回写，中栏高级区不得复制问题正文。
+def test_page_conversation_is_retired_and_task_polling_stays_scoped() -> None:
+    """页面聊天不再发请求，现有长任务轮询仍不得跨系统或对象回写。
 
     Returns:
-        None；三个异步入口固定作用域，且问题只在右栏展示即通过。
+        None；旧聊天入口无网络写入，且通用任务轮询仍固定作用域即通过。
     """
 
     script_path = Path(__file__).parents[2] / "opentest" / "web" / "app.js"
@@ -395,19 +382,11 @@ def test_conversation_requests_ignore_late_responses_and_advanced_output_hides_q
     task_progress = script[
         script.index("async function showTaskProgress") : script.index("async function resumeConsoleActivity")
     ]
-    question_renderer = script[
-        script.index("function renderKnowledgeQuestions") : script.index("function selectKnowledgeQuestionTab")
-    ]
-
-    # 消息、输入清理、轮询、刷新和Toast前后均由同一系统+知识对象作用域保护。
-    assert "captureKnowledgeConversationRequestScope" in send_turn
-    assert send_turn.count("isCurrentKnowledgeConversationRequestScope(requestScope)") >= 5
-    assert "requestScope.systemId" in send_turn
-    assert "requestScope.conversationScopeId" in send_turn
-    assert "captureKnowledgeConversationRequestScope" in retry_turn
-    assert retry_turn.count("isCurrentKnowledgeConversationRequestScope(requestScope)") >= 3
-    assert "confirmKnowledgeAgentOperation" in send_turn
-    assert "confirmKnowledgeAgentOperation" in retry_turn
+    # 旧聊天入口只能提示迁移，不得保留conversation-turns读取、写入或重试路径。
+    assert "renderCodexTaskPane" in send_turn
+    assert "api(" not in send_turn
+    assert "api(" not in retry_turn
+    assert "return false;" in retry_turn
     assert "requestScope" in task_progress
     assert "isCurrentTaskRequestScope(requestScope)" in task_progress
     assert "if (activeLongTaskId === taskId)" in task_progress
@@ -415,9 +394,9 @@ def test_conversation_requests_ignore_late_responses_and_advanced_output_hides_q
     assert "scopedKnowledgeTask" in task_progress
     assert "375" not in task_progress
 
-    # 中栏高级摘要只保留周期身份和计数，精确差异使用右栏pre卡片展示。
-    assert "questions: knowledgeQuestions" not in load_questions
-    assert 'textNode("pre", question.detail, "question-diff")' in question_renderer
+    # 兼容loadQuestions不再发question-cycle请求，只刷新现有工作流里的Codex任务。
+    assert "renderCodexTaskPane(currentKnowledgeWorkflow)" in load_questions
+    assert "api(" not in load_questions
 
 
 def test_knowledge_target_loading_ignores_out_of_order_detail_responses() -> None:

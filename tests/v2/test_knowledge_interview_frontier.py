@@ -1074,14 +1074,14 @@ def test_blocked_question_cycle_becomes_stale_after_new_scan(tmp_path: Path) -> 
     assert refreshed.staged_answers[first_question.question_id] == "可继承答案"
 
 
-def test_question_cycle_http_routes_stage_without_confirmation_and_return_stale_conflict(tmp_path: Path) -> None:
-    """三个周期HTTP接口应共享系统范围，并以稳定409拒绝旧问题集合。
+def test_question_cycle_http_get_is_compatible_and_writes_are_retired(tmp_path: Path) -> None:
+    """历史周期GET保持可读，PUT和完成POST统一返回退休响应。
 
     Args:
         tmp_path: pytest隔离的FastAPI应用、周期与知识目录。
 
     Returns:
-        None；通过GET、PUT和POST响应断言验证HTTP契约。
+        None；通过只读兼容与410写响应断言验证HTTP契约。
     """
 
     application = _application(tmp_path)
@@ -1096,23 +1096,19 @@ def test_question_cycle_http_routes_stage_without_confirmation_and_return_stale_
                 f"/answers/{question['question_id']}",
                 json={"question_id": question["question_id"], "answer": "HTTP暂存答案"},
             )
-            assert staged.status_code == 200
+            assert staged.status_code == 410
+            assert staged.json()["error"]["code"] == "knowledge_question_flow_retired"
         assert application.get_knowledge_context(SYSTEM_ID).interview_answers == {}
 
-        # 兼容旧接口模拟其他页面确认，使固定周期摘要在完成前变旧。
-        first_question = cycle["questions"][0]
-        application.answer_unified_knowledge_question(
-            SYSTEM_ID,
-            KnowledgeConfirmation(question_id=first_question["question_id"], answer="其他页面确认"),
-        )
-        stale = client.post(
+        # 完成接口同样不能重算或改写已经保留的历史周期。
+        retired = client.post(
             f"/api/v2/systems/{SYSTEM_ID}/knowledge/question-cycles/{cycle['cycle_id']}/complete",
             json={"question_set_digest": cycle["question_set_digest"]},
         )
 
-    assert stale.status_code == 409
-    assert stale.json()["error"]["code"] == "knowledge_question_cycle_stale"
-    assert application.store.read_active_question_cycle(SYSTEM_ID).staged_answers
+    assert retired.status_code == 410
+    assert retired.json()["error"]["code"] == "knowledge_question_flow_retired"
+    assert application.store.read_active_question_cycle(SYSTEM_ID).staged_answers == {}
 
 
 def test_object_draft_generation_requires_background_interview_gate(tmp_path: Path) -> None:
@@ -1376,6 +1372,38 @@ def _register_additional_codex_client_target(
     application.store.update_source_baseline(system_id, manifest.baseline)
     application.skip_background_interview(system_id)
     return manifest, target_id
+
+
+def test_codex_client_handoff_ignores_retired_claude_global_selection(tmp_path: Path) -> None:
+    """旧设置残留Claude时，新页面仍应创建唯一Codex客户端任务。
+
+    Args:
+        tmp_path: Pytest隔离的源码、Manifest、任务和设置目录。
+
+    Returns:
+        None；请求不受隐藏旧选择阻断且只创建一个无模型线程时通过。
+    """
+
+    application, manifest, target_id, _source_file, app_server = _prepare_codex_client_handoff_system(tmp_path)
+    application.runtime_settings.write(RuntimeToolSettings(knowledge_agent="claude"))
+
+    task = application.submit_knowledge_target_generation(
+        KnowledgeTargetGenerationRequest(
+            system_id=SYSTEM_ID,
+            target_id=target_id,
+            scan_id=manifest.scan_id,
+            agent="codex",
+            confirmed=True,
+            interaction_mode="codex_client",
+            intent="initial",
+            attempt_id="attempt-client-retired-claude-0001",
+        )
+    )
+
+    assert task.status == TaskStatus.WAITING_FOR_CLIENT
+    assert task.client_handoff is not None
+    assert task.client_handoff.deep_link.startswith("codex://threads/")
+    assert app_server.call_count == 1
 
 
 def test_codex_client_handoff_is_idempotent_and_does_not_publish_or_run_agent(

@@ -1334,14 +1334,14 @@ def test_unknown_conversation_answer_does_not_publish_knowledge(tmp_path: Path) 
     assert resolved_turn.proposals[0].status.value == "UNKNOWN"
 
 
-def test_conversation_http_routes_return_task_and_restore_history(tmp_path: Path) -> None:
-    """GET、POST和后台任务应形成可由页面恢复的完整HTTP契约。
+def test_conversation_http_write_is_retired_while_history_remains_readable(tmp_path: Path) -> None:
+    """旧聊天POST应返回410，历史GET仍保持一个兼容周期可读。
 
     Args:
         tmp_path: pytest隔离FastAPI应用、Manifest和会话证据。
 
     Returns:
-        None；消息提交、任务完成和历史读取均成功即通过。
+        None；写入口不再启动任务且历史读取仍成功即通过。
     """
 
     application, manifest = _application(tmp_path)
@@ -1358,17 +1358,9 @@ def test_conversation_http_routes_return_task_and_restore_history(tmp_path: Path
                 "agent": "codex",
             },
         )
-        assert created.status_code == 202
-        task_id = created.json()["task"]["task_id"]
-        for _ in range(200):
-            # HTTP轮询验证页面实际依赖的任务契约，而不是直接调用线程内部状态。
-            task = client.get(f"/api/v2/tasks/{task_id}").json()["task"]
-            if task["status"] in {"completed", "failed", "interrupted"}:
-                break
-            time.sleep(0.01)
-        assert task["status"] == "completed"
+        assert created.status_code == 410
+        assert created.json()["error"]["code"] == "knowledge_question_flow_retired"
         history = client.get(f"/api/v2/systems/{SYSTEM_ID}/knowledge/conversation-turns")
 
     assert history.status_code == 200
-    assert history.json()["turns"][0]["status"] == "NEEDS_CONFIRMATION"
-    assert len(history.json()["turns"][0]["question_ids"]) == 1
+    assert history.json()["turns"] == []
