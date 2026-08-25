@@ -1,0 +1,115 @@
+opentest/application/knowledge.py
+  s_df4afede12bf06::t_fb00f36c1b2eeb 4588-4589
+  s_7aa0d29474d3d1::t_47e3ed20e58dfe 2943-2950,2968-2986
+  s_7aa0d29474d3d1::t_c132e00925033c 2987
+opentest/api.py
+  s_df4afede12bf06::t_fb00f36c1b2eeb 950-954,956-969
+  s_7aa0d29474d3d1::t_ff71a109c3cfb3 119-120,346,348-352,759-760,955
+  s_df4afede12bf06::t_75cc65285ed654 949
+opentest/application/catalogs.py
+  s_df4afede12bf06::t_4420d7e9de3269 54,390,433-466,986
+  s_df4afede12bf06::t_f7c8fac17bcd29 55,391-393,987-989
+tests/v2/test_codex_native_workspace.py
+  s_df4afede12bf06::t_f7c8fac17bcd29 56,58,716-734
+  s_df4afede12bf06::t_4420d7e9de3269 33,55,59-60,678-715,735-744
+  s_df4afede12bf06::t_ffa558e9371b8e 745-746
+opentest/adapters/codex_app_server.py
+  s_df4afede12bf06::t_fb00f36c1b2eeb 6,19-21,295-317,319-332,343-346,348,358-361,363-368,370-466
+  s_df4afede12bf06::t_ef447b7570c881 318,333-342,347,349-357,362,369
+  s_7aa0d29474d3d1::t_5c4310a76dd252 203
+  s_df4afede12bf06::t_e7508e32761dd2 467-468
+AGENTS.md
+  s_df4afede12bf06::t_4fc26b8847ff5d 71-78
+tests/v2/test_knowledge_tracing.py
+  s_7aa0d29474d3d1::t_21f06b93651cc0 1563-1572,1581-1582,1588,1594
+  s_7aa0d29474d3d1::t_d357be55c811bf 2584-2611
+  s_df4afede12bf06::t_6158ebb89424f9 2748,2750-2751,2782,2800,2806,2820,2838
+  s_df4afede12bf06::t_ee03766975064b 2724-2747,2749,2752-2781,2783-2799,2801-2805,2807-2819,2821-2837
+  s_7aa0d29474d3d1::t_ad816078c6432a 1542-1562,1573-1580,1583-1587,1589-1593,1595-1632
+  s_df4afede12bf06::t_de9c0ded5c6737 2839-2840
+opentest/domain/models.py
+  s_7aa0d29474d3d1::t_487d5467dda8c9 32-33,864,1715,1759,1776,1804
+openspec/changes/semantic-knowledge-workspace/design.md
+  s_df4afede12bf06::t_fb00f36c1b2eeb 49
+opentest/web/app.js
+  s_7aa0d29474d3d1::t_72ebbe96a9a1ae 3898-3899
+  s_7aa0d29474d3d1::t_30a4fd1be1d993 282-291,5149,5178,5242
+  s_7aa0d29474d3d1::t_58dc520c55265c 635-640,644-646
+  s_7aa0d29474d3d1::t_b7c01438cea208 1026,1078,1093
+  s_7aa0d29474d3d1::t_3d7168813a1e5c 3298-3299,3326,3340-3341,3367
+  s_7aa0d29474d3d1::t_451d47f786a97c 4-5,42-43,228-281,292-299,304-307
+  s_7aa0d29474d3d1::t_ea35e0b51be54c 733-756,765-772
+  s_df4afede12bf06::t_fb00f36c1b2eeb 308,954,957-960,962,967-983,1039-1041,1061-1062,1090-1091,1206,1208-1209,1211-1215
+  s_df4afede12bf06::t_6b45bbb85b9a66 1092,1094-1098
+opentest/web/index.html
+  s_7aa0d29474d3d1::t_f1f180f8aca782 40
+  s_7aa0d29474d3d1::t_8cb0632e87ce14 6,83,146,290
+opentest/application/foundation.py
+  s_7aa0d29474d3d1::t_eadf2056d17b02 191,318-320,340-342,376,5418-5420
+  s_7aa0d29474d3d1::t_65c75bba01c345 370
+  s_7aa0d29474d3d1::t_43cf1d1b27b3d0 332-336,369
+  s_df4afede12bf06::t_fb00f36c1b2eeb 2899,3739-3782
+  s_7aa0d29474d3d1::t_313eda3b4d7274 3351,3364-3365,3541,3543-3547
+  s_df4afede12bf06::t_15984761003728 3783-3790
+  s_7aa0d29474d3d1::t_56d942fa2104d8 5417,5423,5426-5428
+  s_7aa0d29474d3d1::t_4d097bf7cc94d7 5429-5430
+  s_7aa0d29474d3d1::t_0624ab78288903 3188
+  s_7aa0d29474d3d1::t_2786cffefe91a6 177,202-206,307-317,321-331,337-339,343-368,371-375,377-392
+  s_df4afede12bf06::t_15d6298b781923 3791
+tests/v2/test_api_cli.py
+  s_7aa0d29474d3d1::t_ce943dabaffdcd 19,24-26,76-83
+  s_7aa0d29474d3d1::t_8f73c8cbc4f47e 45-47,92-93
+openspec/changes/semantic-knowledge-workspace/specs/three-pane-knowledge-workspace/spec.md
+  s_df4afede12bf06::t_fb00f36c1b2eeb 40-41
+  s_df4afede12bf06::t_bcfca1019ec0cd 56-61
+opentest/application/tasks.py
+  s_df4afede12bf06::t_fb00f36c1b2eeb 1116,1123
+tests/v2/test_knowledge_interview_frontier.py
+  s_7aa0d29474d3d1::t_6b44dfed693176 1512-1513,1519,1537-1540,1548,1553-1593,1595,1597-1600
+  s_df4afede12bf06::t_e2c49357632895 1514-1518,1520-1536,1541-1547,1549-1552,1594,1596,1602-1603
+  s_7aa0d29474d3d1::t_73fbf6e904dbd5 204,267-269,276-278
+  s_7aa0d29474d3d1::t_bcbbb5cef659c1 1699-1737
+  s_df4afede12bf06::t_ee03766975064b 202-203,256-266,270-272,279-282
+  s_7aa0d29474d3d1::t_56e82a84724a8c 1601
+  s_7aa0d29474d3d1::t_15292085ae7240 1604-1648
+  s_7aa0d29474d3d1::t_4caa4c0a720148 205,273-275
+  s_df4afede12bf06::t_b1acea77f73e56 283
+tests/v2/test_console_contract.py
+  s_7aa0d29474d3d1::t_bc9086e0cf5765 24
+  s_df4afede12bf06::t_ee03766975064b 467-485
+  s_7aa0d29474d3d1::t_1aaa2c329c8d03 21-23,25-26,146-151
+open-test-knowledge/systems/ifightchainsaas.java.refund.core/references/facades/entry-com.ly.flight.chainsaas.refund.facade.RefundFacade-createOrder-5b2594fdac65.md
+  s_6e2f2160ad9868::t_645e5a104dd41b 16-184,190,195-196,228-278
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.24",
+  "base_commit_sha": "973bd59e563e748c5dbdb31d65cab5a7b60f9823",
+  "prompts": {},
+  "sessions": {
+    "s_6e2f2160ad9868": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a03829-9984-7be0-8593-4154f796eee8",
+        "model": "unknown"
+      },
+      "human_author": "shizhen <yuuu.shizhen@gmail.com>"
+    },
+    "s_7aa0d29474d3d1": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a038da-9ae8-77d0-98e7-31b7f6da1c78",
+        "model": "gpt-5.6-sol"
+      },
+      "human_author": "shizhen <yuuu.shizhen@gmail.com>"
+    },
+    "s_df4afede12bf06": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a03762-a99f-7b43-9a13-07c2c656cdea",
+        "model": "gpt-5.6-sol"
+      },
+      "human_author": "shizhen <yuuu.shizhen@gmail.com>"
+    }
+  }
+}
