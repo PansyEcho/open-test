@@ -1,0 +1,419 @@
+open-test-knowledge/systems/ifightchainsaas.java.refund.core/references/terms/MsgOrderTypeEnum-ec599b7ef5812e06.yaml
+  s_df4afede12bf06::t_29e8dd59179900 121
+  s_df4afede12bf06::t_fecf95e35a08a6 69
+open-test-knowledge/systems/ifightchainsaas.java.refund.core/references/terms/OrderLockEnum-3980f38308da1dcb.yaml
+  s_df4afede12bf06::t_29e8dd59179900 83
+  s_df4afede12bf06::t_a3460282497e95 45
+open-test-knowledge/systems/ifightchainsaas.java.refund.core/references/terms/RefundOperateTypeEnum-7cde921ba5973054.yaml
+  s_df4afede12bf06::t_29e8dd59179900 159
+  s_df4afede12bf06::t_d298a5053e6fa5 93
+open-test-knowledge/systems/ifightchainsaas.java.refund.core/references/external-applications/LockClient-840a9781b2509dbe.yaml
+  s_df4afede12bf06::t_29e8dd59179900 64
+  s_df4afede12bf06::t_0effc884734f40 21,27
+open-test-knowledge/systems/ifightchainsaas.java.refund.core/references/terms/EmailSceneEnum-5294d092c7cc34d1.yaml
+  s_df4afede12bf06::t_29e8dd59179900 38
+opentest/adapters/resource_inventory.py
+  s_df4afede12bf06::t_6926f4df83454e 201,212-213,294-295,300-303,313-316,380-392,514,522-525
+  s_df4afede12bf06::t_cc65b2a6f5edc2 202-203,214-216,515-520
+open-test-knowledge/systems/ifightchainsaas.java.refund.core/references/terms/AutoPricingEnum-faf1982fb161222e.yaml
+  s_df4afede12bf06::t_29e8dd59179900 38
+open-test-knowledge/systems/ifightchainsaas.java.refund.core/references/terms/UTF-c2db2330824484e7.yaml
+  s_df4afede12bf06::t_29e8dd59179900 126
+opentest-plugin-marketplace/plugins/open-test-knowledge/scripts/opentest_handoff_mcp.py
+  s_df4afede12bf06::t_f98b8c9217296f 112,388
+open-test-knowledge/systems/ifightchainsaas.java.refund.core/references/terms/CreditTypeEnum-151ab13ac8fd6c2e.yaml
+  s_df4afede12bf06::t_29e8dd59179900 38
+open-test-knowledge/systems/ifightchainsaas.java.refund.core/cases/coverage-targets.yaml
+  s_df4afede12bf06::t_e1beac5dabfd58 1-8
+opentest-plugin-marketplace/plugins/open-test-knowledge/skills/open-test-ifightchainsaas-java-refund-core/SKILL.md
+  s_df4afede12bf06::t_9a5d7663fd150a 3,6,8,10,12,14-32
+open-test-knowledge/systems/ifightchainsaas.java.refund.core/references/external-applications/BusinessLogFacadeProxy-34e629143f8db5f6.yaml
+  s_df4afede12bf06::t_29e8dd59179900 31
+  s_df4afede12bf06::t_07837b72ac45e6 21
+open-test-knowledge/systems/ifightchainsaas.java.refund.core/references/terms/LogEnum-6ac01ead9e1e066b.yaml
+  s_df4afede12bf06::t_29e8dd59179900 838
+  s_df4afede12bf06::t_5e364aed1a51f0 765
+open-test-knowledge/systems/ifightchainsaas.java.refund.core/references/terms/RefundOrderTaskStateEnum-0946c36e4305b486.yaml
+  s_df4afede12bf06::t_29e8dd59179900 101
+  s_df4afede12bf06::t_78d23264b99f46 57
+open-test-knowledge/systems/ifightchainsaas.java.refund.core/references/terms/OrderAutoEnum-73ec120f9357322e.yaml
+  s_df4afede12bf06::t_29e8dd59179900 103
+  s_df4afede12bf06::t_f74c83cdc6b80f 57
+open-test-knowledge/systems/ifightchainsaas.java.refund.core/references/terms/RefundOrderStateEnum-7eda536df67e3114.yaml
+  s_df4afede12bf06::t_29e8dd59179900 240
+  s_df4afede12bf06::t_eb250a6879d4a4 141
+open-test-knowledge/systems/ifightchainsaas.java.refund.core/references/terms/ResponseResultEnum-4afd44ca02f8ab37.yaml
+  s_df4afede12bf06::t_29e8dd59179900 64
+  s_df4afede12bf06::t_a84e3fbdad3b8a 45
+open-test-knowledge/systems/ifightchainsaas.java.refund.core/cases/variants/variant-9f5d4ff552bf768513b5-2f90f7fe5653.yaml
+  s_df4afede12bf06::t_e1beac5dabfd58 1-5,9-10,12-18,31-35,37
+  s_df4afede12bf06::t_23fc47cca1c918 6-8,11,19-30,36,38-39
+open-test-knowledge/systems/ifightchainsaas.java.refund.core/context.yaml
+  s_df4afede12bf06::t_29e8dd59179900 40,43
+open-test-knowledge/systems/ifightchainsaas.java.refund.core/references/terms/InvoluntaryRefundTypeEnum-c5929198d1e3de47.yaml
+  s_df4afede12bf06::t_29e8dd59179900 123
+  s_df4afede12bf06::t_e2779604677a8e 69
+workers/qa-oracle-worker/src/test/java/com/opentest/qaoracle/active/ActiveOperationServiceTest.java
+  s_df4afede12bf06::t_479e2fb69fcbf0 1-17,19-37,39-56,60,82
+  s_df4afede12bf06::t_d25eb7095fda20 79
+  s_df4afede12bf06::t_05bd374b83004f 18,38,57-59
+  s_df4afede12bf06::t_d339d655f8b29f 61-72
+  s_df4afede12bf06::t_a65d42802933cc 73-78,80-81
+open-test-knowledge/systems/ifightchainsaas.java.refund.core/references/terms/OrderRefundTypeEnum-b81826e253d58f34.yaml
+  s_df4afede12bf06::t_29e8dd59179900 112
+  s_df4afede12bf06::t_44ced8443e9a40 57
+workers/qa-dsf-worker/src/main/java/com/opentest/dsfworker/DsfProxyInvoker.java
+  s_df4afede12bf06::t_28f3b268ed2abf 26
+  s_df4afede12bf06::t_ef7a98b9c17455 7-8,10,14-18,48,53-78
+open-test-knowledge/systems/ifightchainsaas.java.refund.core/references/external-applications/ResourcesClient-8182daf6ed758949.yaml
+  s_df4afede12bf06::t_29e8dd59179900 74
+  s_df4afede12bf06::t_93493f88a9b999 22,28,34,40,46
+docs/status.md
+  s_df4afede12bf06::t_b5db54eb0b1c6b 5,11
+tests/v2/test_resources.py
+  s_df4afede12bf06::t_cc65b2a6f5edc2 44-45,49-50,54-55,59-60,157-158
+  s_df4afede12bf06::t_02c9cf82a931d6 169-175
+open-test-knowledge/systems/ifightchainsaas.java.refund.core/references/terms/OrderSourceEnum-61bf25f14ef069f9.yaml
+  s_df4afede12bf06::t_29e8dd59179900 114
+  s_df4afede12bf06::t_9add5395831192 57
+open-test-knowledge/systems/ifightchainsaas.java.refund.core/references/terms/RefundOrderServiceEnum-e08ee17215dde0e9.yaml
+  s_df4afede12bf06::t_29e8dd59179900 534
+  s_df4afede12bf06::t_79beda0267f598 429
+opentest/domain/errors.py
+  s_df4afede12bf06::t_b6923f33fe4675 45,47-48,53,59
+opentest/domain/models.py
+  s_df4afede12bf06::t_cc65b2a6f5edc2 585-586
+  s_df4afede12bf06::t_6926f4df83454e 584,588-591
+  s_df4afede12bf06::t_bc834e7e14e127 305,312,317,321-323,340-342,404,416,2088,2094,2110,2112,2116,2121-2125
+opentest/application/dsf_operations.py
+  s_df4afede12bf06::t_9d3bde6de42300 363-364,366
+  s_df4afede12bf06::t_c980811ada31e0 345,395-448,452
+  s_df4afede12bf06::t_2a29d3a223dff6 449-451,453-454
+open-test-knowledge/systems/ifightchainsaas.java.refund.core/references/external-applications/ChangeFacadeProxy-bf56b6560941321c.yaml
+  s_df4afede12bf06::t_29e8dd59179900 55
+  s_df4afede12bf06::t_7c57a4e4a0d2ba 21,27
+open-test-knowledge/systems/ifightchainsaas.java.refund.core/references/external-applications/PlatformFeeClient-dd074bf8255dc06c.yaml
+  s_df4afede12bf06::t_29e8dd59179900 32
+openspec/changes/codex-first-system-workflows-and-qa-tools/specs/unified-qa-operations/spec.md
+  s_df4afede12bf06::t_9ceb29ca1ff010 1-46
+opentest/api.py
+  s_df4afede12bf06::t_ce9e47f131bf06 828-843
+  s_df4afede12bf06::t_e3265015c28c25 208-218,767-827
+  s_df4afede12bf06::t_1975994dce703f 8,219-244,750,759-766
+  s_df4afede12bf06::t_f01ee3f3210ca4 656,671,690,704,712,729
+opentest/application/operations.py
+  s_df4afede12bf06::t_03fd212a8fa638 19,39,50-51,140-144,147-208,211-238,786-807,833,897-959,1294-1297
+  s_df4afede12bf06::t_bc68004b9841ac 962-964
+  s_df4afede12bf06::t_46fc61ca86092b 1263,1304,1313-1334,1338
+  s_df4afede12bf06::t_c980811ada31e0 1,103,136-139,239-285,774-785,867-894,1149,1273,1279,1283-1284,1291-1293,1298-1299,1308
+  s_df4afede12bf06::t_cc65b2a6f5edc2 209-210
+  s_df4afede12bf06::t_1320a30ac0fdf7 1076,1158,1376,1386,1402
+  s_df4afede12bf06::t_9d3bde6de42300 326-330
+  s_df4afede12bf06::t_db45aec3c68f9c 819,827,960-961
+  s_df4afede12bf06::t_b6923f33fe4675 996-998,1005-1026,1390,1394,1400
+  s_df4afede12bf06::t_05bd374b83004f 1089,1109,1127
+  s_df4afede12bf06::t_122c2c60c31666 808,1336-1337,1340-1341,1344,1347,1350,1356-1368
+  s_df4afede12bf06::t_683de8e7105a09 8,1335,1342-1343,1345-1346,1348-1349,1351-1355,1369-1374,1389,1393
+  s_df4afede12bf06::t_6abbe7f522d67f 286,809,895-896,965,1339
+openspec/changes/codex-first-system-workflows-and-qa-tools/specs/interface-case-generation/spec.md
+  s_df4afede12bf06::t_9ceb29ca1ff010 1-21
+workers/qa-dsf-worker/src/test/java/com/opentest/dsfworker/WorkerProtocolTest.java
+  s_df4afede12bf06::t_5adcbadb0bb38a 95-98,101,104,109-112,115
+open-test-knowledge/systems/ifightchainsaas.java.refund.core/references/terms/EventStateEnum-00972134af499ca3.yaml
+  s_df4afede12bf06::t_29e8dd59179900 38
+open-test-knowledge/systems/ifightchainsaas.java.refund.core/references/external-applications/PayInfoSender-5204619151dfe5a4.yaml
+  s_df4afede12bf06::t_29e8dd59179900 26
+open-test-knowledge/systems/ifightchainsaas.java.refund.core/references/terms/GenderEnum-3df53133de790130.yaml
+  s_df4afede12bf06::t_29e8dd59179900 38
+open-test-knowledge/systems/ifightchainsaas.java.refund.core/references/terms/AutoVoidEnum-1dafdb288f41c6d4.yaml
+  s_df4afede12bf06::t_29e8dd59179900 38
+open-test-knowledge/systems/ifightchainsaas.java.refund.core/references/terms/RefundNodeEnum-d5f8bf4d9a2b91e9.yaml
+  s_df4afede12bf06::t_29e8dd59179900 177
+  s_df4afede12bf06::t_5346086daab0ba 105
+open-test-knowledge/systems/ifightchainsaas.java.refund.core/references/external-applications/ReverseCommonFacadeProxy-7504c0063c3047cf.yaml
+  s_df4afede12bf06::t_29e8dd59179900 26
+open-test-knowledge/systems/ifightchainsaas.java.refund.core/references/terms/BuyerTypeEnum-0d7507e1d9c6fbb6.yaml
+  s_df4afede12bf06::t_29e8dd59179900 96
+  s_df4afede12bf06::t_709ae0e7542253 45
+tests/v2/test_generalized_workflows.py
+  s_df4afede12bf06::t_de7f38c6001803 609
+  s_df4afede12bf06::t_f25523b64dfdfa 16,592-593,611-615
+openspec/changes/codex-first-system-workflows-and-qa-tools/design.md
+  s_df4afede12bf06::t_6586344599edf6 17
+  s_df4afede12bf06::t_9ceb29ca1ff010 1-16
+workers/qa-oracle-worker/src/main/java/com/opentest/qaoracle/active/ActiveOperationService.java
+  s_df4afede12bf06::t_e8d41920035dec 34,171
+  s_df4afede12bf06::t_479e2fb69fcbf0 199
+  s_df4afede12bf06::t_d25eb7095fda20 230,239-240
+  s_df4afede12bf06::t_05bd374b83004f 112-113,213-217
+  s_df4afede12bf06::t_0ea762f8dea6d2 1-33,35-57,59-60,62-66,68-69,71-79,81-87,89-95,98,100-111,114-145,147-152,154-161,170,172-198,200-212,218-223,241-319,321,323,325-328,330-334,337-339,344,347-366,368,370-372,376-377,379-425
+  s_df4afede12bf06::t_f01ee3f3210ca4 58,67
+  s_df4afede12bf06::t_db45aec3c68f9c 322
+  s_df4afede12bf06::t_bc68004b9841ac 61,80,88,96-97,99,146,162,320,324,329,367,369,373-375,378
+  s_df4afede12bf06::t_cc65b2a6f5edc2 70,153,163-168,335-336,340-343,345-346
+  s_df4afede12bf06::t_a65d42802933cc 169,224-229,231-238
+tests/v2/test_codex_native_workspace.py
+  s_df4afede12bf06::t_d339d655f8b29f 8,27,1448-1455,1466-1480,1482-1483,1485-1495,1497-1531
+  s_df4afede12bf06::t_59fe50ddcb5ff9 136,787-790
+  s_df4afede12bf06::t_122c2c60c31666 161,791
+  s_df4afede12bf06::t_cc65b2a6f5edc2 850-851
+  s_df4afede12bf06::t_209687ddfa8fef 132,175-178,183-185,1081-1127,1214-1259
+  s_df4afede12bf06::t_21492ebb3d7857 1314,1316-1320,1322-1323,1350-1355,1367-1381,1383-1386,1391-1392,1413-1415,1420
+  s_df4afede12bf06::t_673f55d5985b5f 1315,1321,1356-1366,1382,1387-1390,1393-1412,1416-1419,1421
+  s_df4afede12bf06::t_abafe9042ee57c 52,58-60,128-130,188-228
+  s_df4afede12bf06::t_bc68004b9841ac 1456-1465,1484,1532
+  s_df4afede12bf06::t_26c136cefe9f8d 1481
+  s_df4afede12bf06::t_2bddcb2d5b1e3a 1496
+  s_df4afede12bf06::t_d93a7c3c80bed5 786,1334-1345,1439-1444
+  s_df4afede12bf06::t_ac697f3cb7a78a 804-849,852-900
+  s_df4afede12bf06::t_689b80b9f53f7a 229,1260-1261,1533-1534
+workers/qa-dsf-worker/src/main/java/com/opentest/dsfworker/WorkerMain.java
+  s_df4afede12bf06::t_ef7a98b9c17455 43
+  s_df4afede12bf06::t_28f3b268ed2abf 14
+  s_df4afede12bf06::t_11be9591ee1b85 52
+open-test-knowledge/systems/ifightchainsaas.java.refund.core/references/terms/VoucherFlagEnum-f7e6079540bf0083.yaml
+  s_df4afede12bf06::t_29e8dd59179900 94
+  s_df4afede12bf06::t_17a21c5e3a64c1 45
+openspec/changes/codex-first-system-workflows-and-qa-tools/proposal.md
+  s_df4afede12bf06::t_9ceb29ca1ff010 1-17
+open-test-knowledge/systems/ifightchainsaas.java.refund.core/cases/scenarios/scenario-9f5d4ff552bf768513b5-f6e522105a5a.yaml
+  s_df4afede12bf06::t_e1beac5dabfd58 1-20
+open-test-knowledge/systems/ifightchainsaas.java.refund.core/references/terms/AutoPricingResultEnum-da5fd352d4df873e.yaml
+  s_df4afede12bf06::t_29e8dd59179900 38
+opentest/application/foundation.py
+  s_df4afede12bf06::t_ffe727fbe4a4dd 10-11,1385-1430
+  s_df4afede12bf06::t_b879f53b1f404f 3180-3184,3216,3218-3253
+  s_df4afede12bf06::t_05bd374b83004f 1270,1288,1301,1308,1323
+  s_df4afede12bf06::t_5ceb07d71576cb 3166-3167
+  s_df4afede12bf06::t_98f30c416d779e 3365,3370-3379
+  s_df4afede12bf06::t_b0ce14040150a3 30,1341-1384
+  s_df4afede12bf06::t_f2190917ae4508 3113-3165,3168-3179,3185-3215,3217,3254
+  s_df4afede12bf06::t_03fd212a8fa638 27,247-249
+  s_df4afede12bf06::t_27f81da27a7578 291-292
+  s_df4afede12bf06::t_8ac4a98f27e7d7 1431
+open-test-knowledge/systems/ifightchainsaas.java.refund.core/references/external-applications/WalletFacadeProxy-4fa2c3eb8b110f91.yaml
+  s_df4afede12bf06::t_29e8dd59179900 32
+open-test-knowledge/systems/ifightchainsaas.java.refund.core/references/terms/TravelTypeEnum-f8d66fc24174850a.yaml
+  s_df4afede12bf06::t_29e8dd59179900 103
+  s_df4afede12bf06::t_d7d5dfaa849156 57
+AGENTS.md
+  s_e4095a1cb5fd57::t_4313f6993a58d6 69-75
+openspec/changes/codex-first-system-workflows-and-qa-tools/specs/codex-system-workflow/spec.md
+  s_df4afede12bf06::t_9ceb29ca1ff010 1-27
+openspec/changes/codex-first-system-workflows-and-qa-tools/tasks.md
+  s_df4afede12bf06::t_9ceb29ca1ff010 1-21
+  s_df4afede12bf06::t_b5db54eb0b1c6b 22-25
+opentest-plugin-marketplace/plugins/open-test-knowledge/skills/open-test/agents/openai.yaml
+  s_df4afede12bf06::t_6c5efc91ee3498 1-6
+open-test-knowledge/systems/ifightchainsaas.java.refund.core/references/terms/CommonStateEnum-364adf1a391a06b5.yaml
+  s_df4afede12bf06::t_29e8dd59179900 85
+  s_df4afede12bf06::t_4f5d427d870c0e 45
+open-test-knowledge/systems/ifightchainsaas.java.refund.core/references/terms/RefundSourceEnum-3296dee0efb6ec9e.yaml
+  s_df4afede12bf06::t_29e8dd59179900 67
+  s_df4afede12bf06::t_f0001cebc1efbf 33
+open-test-knowledge/systems/ifightchainsaas.java.refund.core/references/terms/WalletRefundStatusEnum-3e6277eb8378428a.yaml
+  s_df4afede12bf06::t_29e8dd59179900 101
+  s_df4afede12bf06::t_6450975b479954 57
+opentest/application/scenarios.py
+  s_df4afede12bf06::t_0fc62929cead7b 371-375
+  s_df4afede12bf06::t_f27338d67f4668 31,1162
+  s_df4afede12bf06::t_467ee689ee5163 210-213,228,230,241,244,249-250,252,262,316-320,322-325,358-370,376-448,1170,1178-1183,1187,1189
+  s_df4afede12bf06::t_a56cc9e2e0eee2 449
+opentest/adapters/qa_active_worker.py
+  s_df4afede12bf06::t_bc68004b9841ac 14,40,49,77-78,98,120-144,148-151
+  s_df4afede12bf06::t_78e502523ca49d 1-13,15-39,41-48,50-63,70-73,84,86-97,100-103,105-107,118,152-176,179-209,211-252
+  s_df4afede12bf06::t_cc65b2a6f5edc2 145-147
+  s_df4afede12bf06::t_2810d6a3846e36 79-82
+  s_df4afede12bf06::t_b05e2da8aabb12 64-69,99
+  s_df4afede12bf06::t_122c2c60c31666 85,210
+  s_df4afede12bf06::t_d339d655f8b29f 76,83,104,108-117,119,177-178
+  s_df4afede12bf06::t_2bddcb2d5b1e3a 74-75
+open-test-knowledge/systems/ifightchainsaas.java.refund.core/references/terms/BitOperareTypeEnum-523787b6ec7a8d2d.yaml
+  s_df4afede12bf06::t_29e8dd59179900 38
+open-test-knowledge/systems/ifightchainsaas.java.refund.core/references/terms/MonitorCategoryEnum-9d36d7680bb79514.yaml
+  s_df4afede12bf06::t_29e8dd59179900 38
+open-test-knowledge/systems/ifightchainsaas.java.refund.core/references/terms/RefundFeeTypeEnum-838ff1a5818df5c8.yaml
+  s_df4afede12bf06::t_29e8dd59179900 94
+  s_df4afede12bf06::t_9603d32cbdc311 45
+open-test-knowledge/systems/ifightchainsaas.java.refund.core/references/terms/LogModuleEnum-dcc9905efdedf6da.yaml
+  s_df4afede12bf06::t_29e8dd59179900 38
+open-test-knowledge/systems/ifightchainsaas.java.refund.core/references/terms/EventType-a9f82981867d69e3.yaml
+  s_df4afede12bf06::t_29e8dd59179900 38
+workers/qa-oracle-worker/src/main/java/com/opentest/qaoracle/active/ActiveWorkerMain.java
+  s_df4afede12bf06::t_d339d655f8b29f 58,61,130,133-134,144-164
+  s_df4afede12bf06::t_0ea762f8dea6d2 1-29,31-38,40-55,57,59-60,64-70,73-129,131-132,135-143,165-199
+  s_df4afede12bf06::t_f01ee3f3210ca4 56
+  s_df4afede12bf06::t_3c70b5ccd5d47b 39,62-63,71-72
+  s_df4afede12bf06::t_b05e2da8aabb12 30
+open-test-knowledge/systems/ifightchainsaas.java.refund.core/references/terms/ApplicationEnum-c3ad1e4b51dfa3a9.yaml
+  s_df4afede12bf06::t_29e8dd59179900 49
+  s_df4afede12bf06::t_8494bbc173d2fb 33
+opentest-plugin-marketplace/plugins/open-test-knowledge/skills/open-test-ifightchainsaas-java-refund-core/agents/openai.yaml
+  s_df4afede12bf06::t_9a5d7663fd150a 3-4
+openspec/changes/codex-first-system-workflows-and-qa-tools/.openspec.yaml
+  s_df4afede12bf06::t_9ceb29ca1ff010 1-2
+opentest-plugin-marketplace/plugins/open-test-knowledge/scripts/sync_system_skills.py
+  s_df4afede12bf06::t_6c5efc91ee3498 102,114-115,117,123-150,166,170
+tests/v2/test_execution.py
+  s_df4afede12bf06::t_122c2c60c31666 1178-1179,1196
+  s_df4afede12bf06::t_d93a7c3c80bed5 422,1169-1170,1193-1195
+  s_df4afede12bf06::t_77118812f7fb33 86-109
+  s_df4afede12bf06::t_0fc62929cead7b 428-435
+open-test-knowledge/systems/ifightchainsaas.java.refund.core/cases/generated/generations/case-generation-acf27ab8c46741347cb6-551bf3cb4ddf.yaml
+  s_df4afede12bf06::t_21ce05192f18f4 1-4,6-22,25,90-91
+  s_df4afede12bf06::t_e1beac5dabfd58 5,23-24,26-89,92
+opentest/adapters/dsf_proxy_worker.py
+  s_df4afede12bf06::t_28f3b268ed2abf 195
+  s_df4afede12bf06::t_4c90f80ad46505 70-71,73-74
+opentest-plugin-marketplace/plugins/open-test-knowledge/scripts/opentest_operations_mcp.py
+  s_df4afede12bf06::t_122c2c60c31666 139,165
+  s_df4afede12bf06::t_6a0c20f2070e5a 372,376,409-411,422-429,432-437,443-446,448-466,469-535,540
+  s_df4afede12bf06::t_608b960c505794 120,123,126,135,172,202-209,211-216,218-219,221-227,229-236,238-269,277-364
+  s_df4afede12bf06::t_673f55d5985b5f 414,439
+  s_df4afede12bf06::t_99d9c76731ec82 76,88,91,111
+  s_df4afede12bf06::t_743e77b1b85b54 210,217,220,228,237,412-413,415-421,430-431,438,440-442,447
+  s_df4afede12bf06::t_ce9e47f131bf06 1,270-276,467-468,568-569
+opentest-plugin-marketplace/plugins/open-test-knowledge/skills/open-test/SKILL.md
+  s_df4afede12bf06::t_6c5efc91ee3498 1-12,14-17
+  s_df4afede12bf06::t_743e77b1b85b54 13
+open-test-knowledge/systems/ifightchainsaas.java.refund.core/references/external-applications/BookOrderClient-b6b509254eaee3de.yaml
+  s_df4afede12bf06::t_29e8dd59179900 124
+  s_df4afede12bf06::t_f67fb169b04859 21,27,33,39,45,51,57,63,69,75,81,87
+open-test-knowledge/systems/ifightchainsaas.java.refund.core/references/terms/ActorType-c65d93f9f5b39f95.yaml
+  s_df4afede12bf06::t_29e8dd59179900 38
+open-test-knowledge/systems/ifightchainsaas.java.refund.core/references/terms/DefaultState-ec38ec7d04cc0816.yaml
+  s_df4afede12bf06::t_29e8dd59179900 38
+open-test-knowledge/systems/ifightchainsaas.java.refund.core/references/terms/FeeTypeEnum-ff55b037cd227360.yaml
+  s_df4afede12bf06::t_29e8dd59179900 94
+  s_df4afede12bf06::t_1be69f8c50ee35 45
+open-test-knowledge/systems/ifightchainsaas.java.refund.core/references/terms/PassengerTypeEnum-c5831f0be41e49f3.yaml
+  s_df4afede12bf06::t_29e8dd59179900 208
+  s_df4afede12bf06::t_b9470c2ec7608f 117,123
+open-test-knowledge/systems/ifightchainsaas.java.refund.core/references/terms/ForceUnlockEnum-3615b79c055749d3.yaml
+  s_df4afede12bf06::t_29e8dd59179900 83
+  s_df4afede12bf06::t_1cd134a6878c21 45
+open-test-knowledge/systems/ifightchainsaas.java.refund.core/references/terms/RefundChannelEnum-cbc72f196a0f25be.yaml
+  s_df4afede12bf06::t_29e8dd59179900 177
+  s_df4afede12bf06::t_4d514799fe89fa 105
+opentest/adapters/environment_config.py
+  s_df4afede12bf06::t_77118812f7fb33 125-133,136
+open-test-knowledge/systems/ifightchainsaas.java.refund.core/references/external-applications/RedisClient-eb3b37e45e8f1b98.yaml
+  s_df4afede12bf06::t_29e8dd59179900 32
+open-test-knowledge/systems/ifightchainsaas.java.refund.core/references/terms/AutoRefundEnum-9f53fce1a5edeae2.yaml
+  s_df4afede12bf06::t_29e8dd59179900 38
+open-test-knowledge/systems/ifightchainsaas.java.refund.core/references/terms/CallbackErrorCodeEnum-b57337869a2a576a.yaml
+  s_df4afede12bf06::t_29e8dd59179900 190
+  s_df4afede12bf06::t_d899d9fd03fc7c 129
+tests/v2/test_scenarios.py
+  s_df4afede12bf06::t_0fc62929cead7b 12-13,197-218
+  s_df4afede12bf06::t_4353e932c62107 219-220
+open-test-knowledge/systems/ifightchainsaas.java.refund.core/references/terms/AutoVoidResultEnum-9ea2ec02947a0efb.yaml
+  s_df4afede12bf06::t_29e8dd59179900 38
+open-test-knowledge/systems/ifightchainsaas.java.refund.core/references/terms/POST-506f201e68c7e3e2.yaml
+  s_df4afede12bf06::t_29e8dd59179900 126
+open-test-knowledge/systems/ifightchainsaas.java.refund.core/references/terms/PayNotifyEnum-9d8c32435aa96353.yaml
+  s_df4afede12bf06::t_29e8dd59179900 38
+open-test-knowledge/systems/ifightchainsaas.java.refund.core/references/terms/RefundCheckTypeEnum-982db5c763198366.yaml
+  s_df4afede12bf06::t_29e8dd59179900 83
+  s_df4afede12bf06::t_efc8f975433f5b 45
+open-test-knowledge/systems/ifightchainsaas.java.refund.core/references/terms/FareTypeEnum-ef91d8ede0a4bb5a.yaml
+  s_df4afede12bf06::t_29e8dd59179900 83
+  s_df4afede12bf06::t_d3047b0a0aeb18 45
+open-test-knowledge/systems/ifightchainsaas.java.refund.core/references/terms/RefundSearchEnum-65b1eebd52174f3a.yaml
+  s_df4afede12bf06::t_29e8dd59179900 94
+  s_df4afede12bf06::t_46d48e833bda94 45
+workers/qa-dsf-worker/src/main/java/com/opentest/dsfworker/WorkerException.java
+  s_df4afede12bf06::t_ef7a98b9c17455 6,14-24,26,37-45
+open-test-knowledge/systems/ifightchainsaas.java.refund.core/references/external-applications/SupplementCallbackFacadeProxy-501ca688b0083d0a.yaml
+  s_df4afede12bf06::t_29e8dd59179900 26
+open-test-knowledge/systems/ifightchainsaas.java.refund.core/references/terms/ApplyToAirlineEnum-4aefea677cfacfc7.yaml
+  s_df4afede12bf06::t_29e8dd59179900 83
+  s_df4afede12bf06::t_85f9cd4a27528f 45
+open-test-knowledge/systems/ifightchainsaas.java.refund.core/references/terms/RefundMonitorSourceEnum-32caccc9111eac62.yaml
+  s_df4afede12bf06::t_29e8dd59179900 105
+  s_df4afede12bf06::t_f3e1ce021d559b 57
+open-test-knowledge/systems/ifightchainsaas.java.refund.core/references/external-applications/BaseDataClient-ae0bcb7a5e5702b6.yaml
+  s_df4afede12bf06::t_29e8dd59179900 32
+tests/v2/test_knowledge_interview_frontier.py
+  s_df4afede12bf06::t_98f30c416d779e 2573-2639,2641-2642,2647-2650,2653-2676
+  s_df4afede12bf06::t_cbbd9b9aae0987 2640,2643-2646,2651-2652
+  s_df4afede12bf06::t_0ad063d1c53adc 2677-2809
+opentest/adapters/operation_execution_store.py
+  s_df4afede12bf06::t_f01ee3f3210ca4 27,214,232
+open-test-knowledge/systems/ifightchainsaas.java.refund.core/references/external-applications/OrderFacadeProxy-678accf6fdd0eb1c.yaml
+  s_df4afede12bf06::t_29e8dd59179900 91
+  s_df4afede12bf06::t_c588f817a51ec0 21,27,33,39,45,51,57,63
+open-test-knowledge/systems/ifightchainsaas.java.refund.core/references/terms/RefundTaskTypeEnum-6f1b9d8b2add1391.yaml
+  s_df4afede12bf06::t_29e8dd59179900 227
+  s_df4afede12bf06::t_c794a149a16dce 141
+opentest/adapters/dsf_operations.py
+  s_df4afede12bf06::t_07b9c2a7fcd906 34-38,203-208,213,215,517-611
+  s_df4afede12bf06::t_bc68004b9841ac 290-324
+  s_df4afede12bf06::t_3094f9a128c996 612
+open-test-knowledge/systems/ifightchainsaas.java.refund.core/references/terms/AutoRefundResultEnum-2c99cddbdd0da87a.yaml
+  s_df4afede12bf06::t_29e8dd59179900 38
+open-test-knowledge/systems/ifightchainsaas.java.refund.core/references/terms/CallbackStatusEnum-a3f8e7c9ed6c6c65.yaml
+  s_df4afede12bf06::t_29e8dd59179900 64
+  s_df4afede12bf06::t_a413bcb8980976 45
+open-test-knowledge/systems/ifightchainsaas.java.refund.core/references/external-applications/DmsClient-f4d92311b841056a.yaml
+  s_df4afede12bf06::t_29e8dd59179900 26
+opentest/application/execution.py
+  s_df4afede12bf06::t_3f0fc64f5d1d19 8,12,35-37,52-61,73-74,107-119,179-180,338,349-350,389-419,421-425,427-445,447-449
+  s_df4afede12bf06::t_46fc61ca86092b 189,353-356,375,380,446,511-513,519,523-546,550
+  s_df4afede12bf06::t_03778702c4729b 387-388,522
+  s_df4afede12bf06::t_16b6677518dfff 5,420,426
+  s_df4afede12bf06::t_683de8e7105a09 547,551,554-555,557-558,560-561,563-567,581-584
+  s_df4afede12bf06::t_122c2c60c31666 548-549,552-553,556,559,562,568-580
+open-test-knowledge/systems/ifightchainsaas.java.refund.core/references/external-applications/RefundResourcesFacadeProxy-5a5eccf27c296849.yaml
+  s_df4afede12bf06::t_29e8dd59179900 26
+open-test-knowledge/systems/ifightchainsaas.java.refund.core/references/terms/ErrorMessageEnum-55b2bcb707757803.yaml
+  s_df4afede12bf06::t_29e8dd59179900 400
+  s_df4afede12bf06::t_4ca326b9b4c596 297,303
+workers/qa-dsf-worker/src/main/java/com/opentest/dsfworker/WorkerResponse.java
+  s_df4afede12bf06::t_ef7a98b9c17455 5,41,45-46,50-55,62
+open-test-knowledge/systems/ifightchainsaas.java.refund.core/references/external-applications/PlatformFeePolicyFacadeProxy-282a1c58df7c4a73.yaml
+  s_df4afede12bf06::t_29e8dd59179900 26
+open-test-knowledge/systems/ifightchainsaas.java.refund.core/references/terms/ProductTypeEnum-f24d1dc9bc8ce51e.yaml
+  s_df4afede12bf06::t_29e8dd59179900 46
+  s_df4afede12bf06::t_fb2dad4ed454d7 33
+opentest-plugin-marketplace/plugins/open-test-knowledge/.codex-plugin/plugin.json
+  s_df4afede12bf06::t_6c5efc91ee3498 3-4,10-12,19-20
+tests/v2/test_dsf_operations.py
+  s_df4afede12bf06::t_2e74cae641f744 658
+  s_df4afede12bf06::t_edd6feb5bf990c 138-170
+  s_df4afede12bf06::t_9d3bde6de42300 63,130,490,500,543,561
+  s_df4afede12bf06::t_4c90f80ad46505 449,455,457-458,463,598,681
+open-test-knowledge/systems/ifightchainsaas.java.refund.core/references/terms/CacheEnum-d4a17b26f2f8688f.yaml
+  s_df4afede12bf06::t_29e8dd59179900 38
+open-test-knowledge/systems/ifightchainsaas.java.refund.core/references/terms/IntegrationErrorCodeEnum-81e7ee475d17ffb1.yaml
+  s_df4afede12bf06::t_29e8dd59179900 38
+open-test-knowledge/systems/ifightchainsaas.java.refund.core/references/terms/LogTypeEnum-ddc262638100286d.yaml
+  s_df4afede12bf06::t_29e8dd59179900 586
+  s_df4afede12bf06::t_b0877798ccf612 490
+open-test-knowledge/systems/ifightchainsaas.java.refund.core/source.yaml
+  s_df4afede12bf06::t_d07b4babd31f58 8-9,13
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.24",
+  "base_commit_sha": "76877621b6c42d5b3b6dae4b660a5b59bd7ea2cf",
+  "prompts": {},
+  "sessions": {
+    "s_df4afede12bf06": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a03762-a99f-7b43-9a13-07c2c656cdea",
+        "model": "gpt-5.6-sol"
+      },
+      "human_author": "shizhen <yuuu.shizhen@gmail.com>"
+    },
+    "s_e4095a1cb5fd57": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a03825-748d-71a1-8747-ce1fc3d93fa4",
+        "model": "gpt-5.6-terra"
+      },
+      "human_author": "shizhen <yuuu.shizhen@gmail.com>"
+    }
+  }
+}
