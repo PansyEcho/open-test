@@ -60,7 +60,7 @@ def _write_dsf_project(source_root: Path) -> None:
                 "dsf.service.config.registryhost=qa-registry.invalid",
                 "dsf.service.config.name=demo-client",
                 "dsf.service.config.env=qa",
-                "dsf.service.config.targetenv=qa",
+                "dsf.service.config.targetenv=test",
                 "provider.gs.name=dsf.demo.booking",
                 "provider.version=1.2.3",
             )
@@ -127,12 +127,45 @@ def test_dsf_source_discovery_builds_profile_and_fixed_operations(tmp_path: Path
     assert profile.registry_host == "qa-registry.invalid"
     assert profile.client_name == "demo-client"
     assert profile.routing_environment == "qa"
-    assert profile.target_environment == "qa"
+    assert profile.target_environment == "test"
     assert warnings == []
     by_action = {operation.action: operation for operation in operations}
     assert by_action["orderDetail"].mutability == DsfOperationMutability.READ_ONLY
     assert by_action["createOrder"].mutability == DsfOperationMutability.WRITE
     assert by_action["orderDetail"].operation_id == f"dsf:{SYSTEM_ID}:order:orderDetail"
+
+
+def test_dsf_source_discovery_builds_fixed_external_reference_operations(tmp_path: Path) -> None:
+    """调用方sof:reference应按XML方法白名单生成外部DSF操作和源码证据。"""
+
+    source_root = tmp_path / "project"
+    _write_dsf_project(source_root)
+    filter_path = source_root / "conf/filter/application.qa"
+    filter_path.write_text(
+        filter_path.read_text(encoding="utf-8")
+        + "\nbooking.gs=dsf.iflightchainsaas.booking.core\nbooking.version=latest\n",
+        encoding="utf-8",
+    )
+    reference_path = source_root / "app/src/main/resources/external.xml"
+    reference_path.write_text(
+        """<beans xmlns:sof="urn:test">
+        <sof:reference id="tradeFacade" serviceName="trade" gsName="${booking.gs}"
+            interface="com.ly.flight.chainsaas.booking.facade.TradeFacade"
+            version="${booking.version}">
+          <sof:method name="queryList" paramType="bodyParam"/>
+        </sof:reference>
+        </beans>""",
+        encoding="utf-8",
+    )
+
+    _, operations, warnings = DsfSourceDiscoverer().discover(SYSTEM_ID, source_root)
+
+    external = next(operation for operation in operations if operation.action == "queryList")
+    assert external.operation_id == "dsf:iflightchainsaas.booking.core:trade:queryList"
+    assert external.provider_system_id == "iflightchainsaas.booking.core"
+    assert external.mutability == DsfOperationMutability.READ_ONLY
+    assert external.source_refs[0].symbol == "com.ly.flight.chainsaas.booking.facade.TradeFacade#queryList"
+    assert not any("外部引用" in warning for warning in warnings)
 
 
 def test_dsf_revision_materialization_rejects_parent_path(tmp_path: Path) -> None:
@@ -413,21 +446,21 @@ def test_worker_launcher_rejects_request_operation_identity_mismatch(tmp_path: P
 
 
 def test_worker_launcher_rejects_non_qa_profile_before_process_start(tmp_path: Path) -> None:
-    """即使绕过应用层，Worker启动器也必须在启动Java前拒绝生产环境Profile。"""
+    """即使绕过应用层，Worker启动器也必须在启动Java前拒绝非qa/test固定组合。"""
 
     worker_jar = tmp_path / "worker.jar"
     worker_jar.write_bytes(b"test-placeholder")
     profile = DsfClientProfile(
         system_id=SYSTEM_ID,
-        registry_host="prod-registry.invalid",
+        registry_host="qa-registry.invalid",
         client_name="demo-client",
-        routing_environment="prod",
-        target_environment="prod",
+        routing_environment="qa",
+        target_environment="qa",
     )
     operation = _operation()
     request = DsfExecutionRequest(operation_id=operation.operation_id, payload={})
 
-    with pytest.raises(ScopeViolationError, match="not approved for QA"):
+    with pytest.raises(ScopeViolationError, match="env=qa and targetenv=test"):
         SuccessfulProtocolLauncher(worker_jar).execute(SYSTEM_ID, profile, operation, request)
 
 
@@ -454,7 +487,7 @@ def test_indexed_execution_derives_legacy_routing_environment_without_rewriting_
             system_id=SYSTEM_ID,
             registry_host="qa-registry.invalid",
             client_name="demo-client",
-            target_environment="qa",
+            target_environment="test",
         ),
         dsf_operations=[_operation()],
     )
@@ -464,7 +497,7 @@ def test_indexed_execution_derives_legacy_routing_environment_without_rewriting_
     original_bytes = manifest_path.read_bytes()
     worker_jar = tmp_path / "worker.jar"
     worker_jar.write_bytes(b"test-placeholder")
-    application.dsf_operations.launcher = SuccessfulProtocolLauncher(worker_jar)
+    application.dsf_operations.launcher = SuccessfulProtocolLauncher(worker_jar, "test")
 
     response = application.dsf_operations.execute_indexed(
         SYSTEM_ID,
@@ -507,7 +540,7 @@ def test_indexed_execution_reads_clean_legacy_profile_from_recorded_commit(tmp_p
             system_id=SYSTEM_ID,
             registry_host="qa-registry.invalid",
             client_name="demo-client",
-            target_environment="qa",
+            target_environment="test",
         ),
         dsf_operations=[_operation()],
     )
@@ -525,7 +558,7 @@ def test_indexed_execution_reads_clean_legacy_profile_from_recorded_commit(tmp_p
     )
     worker_jar = tmp_path / "worker.jar"
     worker_jar.write_bytes(b"test-placeholder")
-    application.dsf_operations.launcher = SuccessfulProtocolLauncher(worker_jar)
+    application.dsf_operations.launcher = SuccessfulProtocolLauncher(worker_jar, "test")
 
     # 假Worker要求env=qa；若错误读取当前工作树的test值，本次调用会立即失败。
     response = application.dsf_operations.execute_indexed(
@@ -562,7 +595,7 @@ def test_indexed_execution_rejects_changed_dirty_legacy_profile(tmp_path: Path) 
             system_id=SYSTEM_ID,
             registry_host="qa-registry.invalid",
             client_name="demo-client",
-            target_environment="qa",
+            target_environment="test",
         ),
         dsf_operations=[_operation()],
     )
@@ -622,7 +655,7 @@ def test_application_fixture_execution_uses_confirmed_operation_and_consumer_evi
             registry_host="qa-registry.invalid",
             client_name="demo-client",
             routing_environment="qa",
-            target_environment="qa",
+            target_environment="test",
         ),
         dsf_operations=[operation],
         semantic_analysis=SemanticAnalysisResult(
@@ -645,7 +678,7 @@ def test_application_fixture_execution_uses_confirmed_operation_and_consumer_evi
     artifacts.publish_latest(SYSTEM_ID, manifest.scan_id)
     worker_jar = tmp_path / "worker.jar"
     worker_jar.write_bytes(b"test-placeholder")
-    application.dsf_operations.launcher = SuccessfulProtocolLauncher(worker_jar)
+    application.dsf_operations.launcher = SuccessfulProtocolLauncher(worker_jar, "test")
 
     catalog = application.get_dsf_operation_catalog(SYSTEM_ID)
     assert catalog.consumer_source_refs_by_operation_id[operation.operation_id] == [caller_ref]

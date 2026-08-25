@@ -54,7 +54,7 @@ source_refs:
   path: app/model/src/main/java/com/ly/flight/chainsaas/refund/enums/OrderAutoEnum.java
   symbol: com.ly.flight.chainsaas.refund.enums.OrderAutoEnum
   line: 7
-  commit: 4da983bfd4d9de362fc5323412e35c1bdbd08236
+  commit: eba0fc72ec39a6883a6ceb1a70c38040ec5ea0bb
   content_digest: a928a0371ddf6b303380b2cb23c3fda9eddbb0b7e157ef4290d4538373516ffd
 - repository: ''
   path: app/model/src/main/java/com/ly/flight/chainsaas/refund/enums/OrderAutoEnum.java
@@ -100,4 +100,4 @@ affected_target_ids:
 - facade:com.ly.flight.chainsaas.refund.facade.RefundFacade#walletRefundRetry
 evidence_digest: fa3a67043ba4889f50fb5511f03cb2e4b56c7cfc3dfc6ba03e36fb3b1f8939f7
 discovered_at: '2026-08-13T10:23:54.669400Z'
-updated_at: '2026-08-22T13:36:34.106812Z'
+updated_at: '2026-08-25T07:56:26.982329Z'

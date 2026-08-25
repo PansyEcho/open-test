@@ -5,6 +5,7 @@ from __future__ import annotations
 import gc
 import importlib.util
 import json
+import subprocess
 import threading
 import time
 import weakref
@@ -23,6 +24,7 @@ from opentest.adapters.codex_app_server import CodexAppServerClient
 from opentest.adapters.knowledge_interview import KnowledgeInterviewStore
 from opentest.adapters.knowledge_store import GitKnowledgeStore
 from opentest.adapters.operation_execution_store import OperationExecutionStore
+from opentest.adapters.qa_active_worker import QaActiveWorkerLauncher
 from opentest.adapters.source_analysis import SourceScanArtifactStore
 from opentest.adapters.sqlite_index import SqliteKnowledgeIndex
 from opentest.application.catalogs import ScanCatalogService
@@ -47,11 +49,15 @@ from opentest.domain.models import (
     DsfOperationMutability,
     DsfProfileStatus,
     DsfExecutionResponse,
+    DiscoveredResource,
     EntryPoint,
     KnowledgeNodeKind,
     OperationCapability,
     OperationExecutionRequest,
     OperationExecutionStatus,
+    OperationKind,
+    ResourceKind,
+    ResourceRole,
     ScanManifest,
     SemanticAnalysisResult,
     SemanticFieldDefinition,
@@ -119,11 +125,15 @@ class FakeOperationProvider:
 
         self.facade_calls = 0
         self.job_calls = 0
+        self.external_dsf_calls = 0
+        self.mq_calls = 0
+        self.database_calls = 0
         self.facade_arguments: list[dict[str, Any]] = []
+        self.job_failure: OperationProviderFailure | None = None
         self._lock = threading.Lock()
 
     def execute_facade(self, capability: OperationCapability, request: OperationExecutionRequest) -> Any:
-        """返回包含脱敏验证字段的假Facade结果。
+        """返回同时包含业务字段和凭据字段的假Facade结果。
 
         Args:
             capability: 已索引Facade操作。
@@ -148,6 +158,7 @@ class FakeOperationProvider:
             "merchantId": "must-not-persist",
             "orderNo": "must-not-persist",
             "ht": "must-not-persist",
+            "businessUrl": "https://qa-business.example/result/QA-ORDER-1",
         }
 
     def execute_job(self, capability: OperationCapability, request: OperationExecutionRequest) -> Any:
@@ -161,12 +172,60 @@ class FakeOperationProvider:
             不访问QA的接受摘要。
 
         Side Effects:
-            只增加一次内存调用计数。
+            增加一次内存调用计数；测试指定失败时抛出结构化provider异常。
+
+        Raises:
+            OperationProviderFailure: 当前测试显式配置了Job失败。
         """
 
         with self._lock:
             self.job_calls += 1
+        if self.job_failure is not None:
+            # 失败桩复现Worker已有结构化业务输出但以非零状态结束的真实边界。
+            raise self.job_failure
         return {"accepted": True}
+
+    def execute_external_dsf(self, capability: OperationCapability, request: OperationExecutionRequest) -> Any:
+        """返回外部DSF调用的完整假业务行。
+
+        Args:
+            capability: 已索引外部DSF操作。
+            request: 通过Schema校验的QA请求。
+
+        Returns:
+            不访问QA的出票单查询结果。
+        """
+
+        self.external_dsf_calls += 1
+        return {"orders": [{"orderNo": "QA-ORDER-1", "status": 4}]}
+
+    def execute_mq(self, capability: OperationCapability, request: OperationExecutionRequest) -> Any:
+        """返回Broker ACK形态的假MQ结果。
+
+        Args:
+            capability: 已索引消费者资源。
+            request: 消息正文和可选Key。
+
+        Returns:
+            固定SEND_OK和message ID。
+        """
+
+        self.mq_calls += 1
+        return {"send_status": "SEND_OK", "message_id": "MSG-1"}
+
+    def execute_database(self, capability: OperationCapability, request: OperationExecutionRequest) -> Any:
+        """返回参数化查询形态的假数据库结果。
+
+        Args:
+            capability: 已索引数据库资源。
+            request: SQL、参数和允许原因。
+
+        Returns:
+            包含完整业务字段的单行结果。
+        """
+
+        self.database_calls += 1
+        return {"rows": [{"refund_serial_no": "OPENTEST_DB_1", "is_delete": 1}], "row_count": 1}
 
 
 class FailingFacadeProvider(FakeOperationProvider):
@@ -724,11 +783,12 @@ def test_operation_search_required_fields_idempotency_and_redaction(tmp_path: Pa
         assert first.status == OperationExecutionStatus.COMPLETED
         assert provider.facade_calls == 1
         assert first.result["token"] == "<redacted>"
-        assert first.result["contact"]["phone"] == "<redacted>"
-        assert first.result["passengerName"] == "<redacted>"
-        assert first.result["merchantId"] == "<redacted>"
-        assert first.result["orderNo"] == "<redacted>"
-        assert first.result["ht"] == "<redacted>"
+        assert first.result["contact"]["phone"] == "13800000000"
+        assert first.result["passengerName"] == "must-not-persist"
+        assert first.result["merchantId"] == "must-not-persist"
+        assert first.result["orderNo"] == "must-not-persist"
+        assert first.result["ht"] == "must-not-persist"
+        assert first.result["businessUrl"] == "https://qa-business.example/result/QA-ORDER-1"
         assert current_log_context().trace_id == ""
         assert current_log_context().filter1 == ""
         assert current_log_context().filter2 == ""
@@ -737,6 +797,103 @@ def test_operation_search_required_fields_idempotency_and_redaction(tmp_path: Pa
         with pytest.raises(ScopeViolationError, match="reused"):
             service.execute(SYSTEM_ID, conflicting)
         assert provider.facade_calls == 1
+    finally:
+        tasks.close()
+
+
+def test_unified_catalog_executes_external_dsf_mq_and_database_operations(tmp_path: Path) -> None:
+    """统一目录应从同一扫描生成外部DSF、消费者MQ和数据库操作并持久化完整业务结果。"""
+
+    store, source_root = _registered_workspace(tmp_path)
+    artifacts = SourceScanArtifactStore(store.root)
+    base = _manifest(source_root, "scan-unified-qa-operations")
+    external_ref = SourceReference(
+        path="app/integration/src/main/resources/external.xml",
+        symbol="com.example.booking.TradeFacade#queryList",
+        line=20,
+    )
+    manifest = base.model_copy(
+        update={
+            "dsf_profile": base.dsf_profile.model_copy(update={"client_name": "refund-qa-client"}),
+            "dsf_operations": [
+                *base.dsf_operations,
+                DsfOperationDefinition(
+                    operation_id="dsf:booking.core:trade:queryList",
+                    provider_system_id="booking.core",
+                    gs_name="dsf.booking.core",
+                    service_name="trade",
+                    version="latest",
+                    action="queryList",
+                    mutability=DsfOperationMutability.READ_ONLY,
+                    source_refs=[external_ref],
+                ),
+            ],
+            "resources": [
+                DiscoveredResource(
+                    resource_id=f"resource:{SYSTEM_ID}:mq:consumer:refundconsumer",
+                    system_id=SYSTEM_ID,
+                    kind=ResourceKind.MQ,
+                    role=ResourceRole.CONSUMER,
+                    logical_name="refundConsumer",
+                    listener_ref="refundListener",
+                    nameserver_config_key="mq.nameSrvAddress",
+                    topic_config_key="mq.refund.topic",
+                    source_refs=[external_ref],
+                ),
+                DiscoveredResource(
+                    resource_id=f"resource:{SYSTEM_ID}:mysql:database:refunddatasource",
+                    system_id=SYSTEM_ID,
+                    kind=ResourceKind.MYSQL,
+                    role=ResourceRole.DATABASE,
+                    logical_name="refundDatasource",
+                    database_config_key="uniform.dbName.refund",
+                    database_project_config_key="uniform.skyCode",
+                    database_environment_config_key="uniform.env",
+                    source_refs=[external_ref],
+                ),
+            ],
+        }
+    )
+    _publish_manifest(artifacts, manifest)
+    provider = FakeOperationProvider()
+    service, tasks = _operation_service(store, artifacts, provider)
+    try:
+        capabilities = {item.kind: item for item in service.search(SYSTEM_ID, "", 100)}
+        assert {OperationKind.EXTERNAL_DSF, OperationKind.MQ, OperationKind.DATABASE} <= set(capabilities)
+
+        external = service.execute(
+            SYSTEM_ID,
+            OperationExecutionRequest(
+                operation_id=capabilities[OperationKind.EXTERNAL_DSF].operation_id,
+                arguments={"status": 4},
+                request_id="request-external-dsf-001",
+            ),
+        )
+        mq = service.execute(
+            SYSTEM_ID,
+            OperationExecutionRequest(
+                operation_id=capabilities[OperationKind.MQ].operation_id,
+                arguments={"message": {"refundSerialNo": "QA-1"}, "keys": "QA-1"},
+                request_id="request-mq-send-0001",
+            ),
+        )
+        database = service.execute(
+            SYSTEM_ID,
+            OperationExecutionRequest(
+                operation_id=capabilities[OperationKind.DATABASE].operation_id,
+                arguments={
+                    "statement": "SELECT refund_serial_no, is_delete FROM saas_refund_order_psi WHERE refund_serial_no = ?",
+                    "parameters": ["OPENTEST_DB_1"],
+                    "purpose": "user_requested",
+                },
+                request_id="request-database-read-001",
+            ),
+        )
+
+        assert external.result["orders"][0]["orderNo"] == "QA-ORDER-1"
+        assert mq.result["send_status"] == "SEND_OK" and mq.result["message_id"] == "MSG-1"
+        assert database.result["rows"][0]["refund_serial_no"] == "OPENTEST_DB_1"
+        assert (provider.external_dsf_calls, provider.mq_calls, provider.database_calls) == (1, 1, 1)
     finally:
         tasks.close()
 
@@ -921,6 +1078,53 @@ def test_local_facade_provider_raises_stable_failure_for_failed_worker_response(
     dsf_operations.execute_indexed.assert_called_once()
 
 
+def test_local_job_provider_keeps_nonzero_business_error_and_output(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Job工具非零退出时应抛出真实业务原因并携带已解析输出。
+
+    Args:
+        tmp_path: Pytest隔离知识、扫描和生成工具根。
+        monkeypatch: 用不访问进程的执行器替身返回结构化失败。
+
+    Returns:
+        None；provider异常同时保留业务message和完整输出时通过。
+    """
+
+    store, source_root = _registered_workspace(tmp_path)
+    artifacts = SourceScanArtifactStore(store.root)
+    _publish_manifest(artifacts, _manifest(source_root))
+    capability = next(
+        item for item in OperationCapabilityCatalog(store, artifacts).derive(SYSTEM_ID)
+        if item.operation_id == JOB_OPERATION_ID
+    )
+    tool_execution = MagicMock(
+        exit_code=7,
+        output={"message": "job business rejected", "orderNo": "QA-ORDER-1"},
+        stderr="",
+        elapsed_seconds=0.1,
+    )
+    executor = MagicMock()
+    executor.execute.return_value = tool_execution
+    monkeypatch.setattr("opentest.application.operations.DsfExecutor", MagicMock(return_value=executor))
+    environment_loader = MagicMock()
+    environment_loader.load.return_value.values = {"tool_environment": {}}
+    provider = LocalQaOperationProvider(MagicMock(), artifacts, environment_loader)
+    request = OperationExecutionRequest(
+        operation_id=JOB_OPERATION_ID,
+        arguments={"reason": "manual QA verification"},
+        request_id="request-job-provider-failure-001",
+    )
+
+    with pytest.raises(OperationProviderFailure) as captured:
+        provider.execute_job(capability, request)
+
+    assert captured.value.error_code == "JOB_TRIGGER_FAILED"
+    assert captured.value.safe_message == "job business rejected"
+    assert captured.value.business_result == tool_execution.output
+
+
 def test_operation_request_reservation_repairs_without_a_second_execution_id(
     tmp_path: Path,
     monkeypatch: pytest.MonkeyPatch,
@@ -1007,6 +1211,54 @@ def test_operation_job_is_async_once_and_unknown_or_non_qa_is_rejected(tmp_path:
         tasks.close()
 
 
+def test_operation_job_failure_persists_real_reason_and_structured_business_result(tmp_path: Path) -> None:
+    """异步Job失败记录应保留真实原因和业务输出，只清理明确凭据字段。
+
+    Args:
+        tmp_path: Pytest隔离的操作记录与任务目录。
+
+    Returns:
+        None；最终FAILED记录可供Codex诊断且凭据未持久化时通过。
+    """
+
+    store, source_root = _registered_workspace(tmp_path)
+    artifacts = SourceScanArtifactStore(store.root)
+    _publish_manifest(artifacts, _manifest(source_root))
+    provider = FakeOperationProvider()
+    provider.job_failure = OperationProviderFailure(
+        "JOB_TRIGGER_FAILED",
+        "job business rejected",
+        {
+            "message": "job business rejected",
+            "orderNo": "QA-ORDER-1",
+            "token": "local-secret",
+            "businessUrl": "https://qa-business.example/jobs/QA-ORDER-1",
+        },
+    )
+    service, tasks = _operation_service(store, artifacts, provider)
+    request = OperationExecutionRequest(
+        operation_id=JOB_OPERATION_ID,
+        arguments={"reason": "manual QA verification"},
+        request_id="request-refund-job-failure-001",
+    )
+
+    try:
+        running = service.execute(SYSTEM_ID, request)
+        tasks.close()
+        failed = service.get_execution(running.execution_id)
+    finally:
+        tasks.close()
+
+    assert failed.status == OperationExecutionStatus.FAILED
+    assert failed.error_code == "JOB_TRIGGER_FAILED"
+    assert failed.message == "job business rejected"
+    assert failed.result["message"] == "job business rejected"
+    assert failed.result["orderNo"] == "QA-ORDER-1"
+    assert failed.result["token"] == "<redacted>"
+    assert failed.result["businessUrl"] == "https://qa-business.example/jobs/QA-ORDER-1"
+    assert provider.job_calls == 1
+
+
 def test_operation_http_api_searches_and_executes_through_loopback(tmp_path: Path) -> None:
     """四个本地API应返回统一能力并通过回环幂等执行一次假Facade。"""
 
@@ -1059,8 +1311,16 @@ def test_operation_http_api_searches_and_executes_through_loopback(tmp_path: Pat
     assert provider.facade_calls == 1
 
 
-def test_operation_plugin_and_generated_skill_are_explicit_and_fixed(tmp_path: Path) -> None:
-    """operations MCP只能暴露四个工具，系统Skill名称稳定且禁止隐式调用。"""
+def test_operation_plugin_and_generated_skill_are_explicit_and_fixed(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """MCP应暴露完整工作流，凭据不进入工具参数且系统Skill禁止隐式调用。
+
+    Args:
+        tmp_path: Pytest隔离的真实FastAPI本机设置存储。
+        monkeypatch: 拦截回环API，证明凭据仅从本机安全设置内部转交。
+    """
 
     plugin_root = Path(__file__).parents[2] / "opentest-plugin-marketplace/plugins/open-test-knowledge"
     operations = _load_script_module(plugin_root / "scripts/opentest_operations_mcp.py", "operations_mcp_test")
@@ -1071,10 +1331,94 @@ def test_operation_plugin_and_generated_skill_are_explicit_and_fixed(tmp_path: P
         "get_operation",
         "execute_operation",
         "get_operation_execution",
+        "list_systems",
+        "register_system",
+        "update_system",
+        "start_system_scan",
+        "get_task",
+        "sync_system_skills",
+        "list_system_source",
+        "search_system_source",
+        "read_system_source",
+        "prepare_knowledge_target",
+        "generate_interface_cases",
+        "execute_case",
     }
     execute_tool = next(tool for tool in tools if tool["name"] == "execute_operation")
     assert execute_tool["annotations"]["destructiveHint"] is True
     assert execute_tool["annotations"]["idempotentHint"] is True
+    register_tool = next(tool for tool in tools if tool["name"] == "register_system")
+    update_tool = next(tool for tool in tools if tool["name"] == "update_system")
+    forbidden_secret_fields = {"qa_labrador_token", "qa_gateway_prefix"}
+    assert forbidden_secret_fields.isdisjoint(register_tool["inputSchema"]["properties"])
+    assert forbidden_secret_fields.isdisjoint(update_tool["inputSchema"]["properties"])
+
+    source_root = tmp_path / "source"
+    source_root.mkdir()
+    application = OpenTestApplication(tmp_path / "knowledge")
+    application.register_system(
+        SystemDefinition(system_id=SYSTEM_ID, name="SaaS退票核心", source_path=str(source_root))
+    )
+    application.save_local_settings(
+        SYSTEM_ID,
+        "fake-local-token",
+        "https://qa-gateway.invalid",
+    )
+    api_calls: list[tuple[str, str, dict[str, Any] | None]] = []
+
+    def fake_api_request(
+        method: str,
+        path: str,
+        payload: dict[str, Any] | None = None,
+    ) -> dict[str, Any]:
+        """记录MCP回环请求并只在本机设置读取时提供假凭据。
+
+        Args:
+            method: 固定HTTP方法。
+            path: V2回环路由。
+            payload: 可选的严格请求体。
+
+        Returns:
+            真实FastAPI本机设置响应，或不启动扫描的注册成功假响应。
+        """
+
+        api_calls.append((method, path, payload))
+        if path.endswith("/local-settings"):
+            # 直接读取真实路由形状，防止MCP与FastAPI再次发生字段名漂移。
+            response = client.request(method, f"/api/v2{path}")
+            assert response.status_code == 200
+            return response.json()
+        return {"system": {"system_id": "new-system"}}
+
+    with TestClient(create_app(application), client=("127.0.0.1", 50000)) as client:
+        monkeypatch.setattr(operations, "_api_request", fake_api_request)
+        registration = operations._call_tool(
+            "register_system",
+            {
+                "system_id": "new-system",
+                "name": "新系统",
+                "source_path": "/registered/source",
+                "settings_source_system_id": SYSTEM_ID,
+            },
+        )
+        update = operations._call_tool(
+            "update_system",
+            {
+                "system_id": SYSTEM_ID,
+                "name": "SaaS退票核心",
+                "source_path": str(source_root),
+            },
+        )
+
+    assert api_calls[0][0:2] == ("GET", f"/systems/{SYSTEM_ID}/local-settings")
+    assert api_calls[1][2] is not None
+    assert api_calls[1][2]["qa_labrador_token"] == "fake-local-token"
+    assert api_calls[2][0:2] == ("GET", f"/systems/{SYSTEM_ID}/local-settings")
+    assert api_calls[3][2] is not None
+    assert "qa_labrador_token" not in api_calls[3][2]
+    assert api_calls[3][2]["qa_gateway_prefix"] == "https://qa-gateway.invalid"
+    assert "fake-local-token" not in registration["content"][0]["text"]
+    assert "fake-local-token" not in update["content"][0]["text"]
 
     names = generator.skill_names(
         [
@@ -1092,13 +1436,100 @@ def test_operation_plugin_and_generated_skill_are_explicit_and_fixed(tmp_path: P
     skill = (skill_root / "SKILL.md").read_text(encoding="utf-8")
     metadata = (skill_root / "agents/openai.yaml").read_text(encoding="utf-8")
     assert f"`{SYSTEM_ID}`" in skill
-    assert "execute_operation` exactly once" in skill
-    assert "do not ask for a second confirmation" in skill
-    assert "do not ask the user to choose between equivalent technical Facades" in skill
-    assert "required_fields` contains only runtime validation constraints" in skill
-    assert "Choose or omit pagination, sorting" in skill
-    assert "A `declared_initializer` is source evidence" in skill
+    assert "严格按用户给出的顺序逐个处理" in skill
+    assert "有效知识已存在" in skill
+    assert "知识不完整不阻止生成" in skill
+    assert "同系统对外Facade优先，外部DSF次之" in skill
+    assert "env=qa" in skill and "targetenv=test" in skill
+    assert "DELETE和DDL" in skill
     assert "allow_implicit_invocation: false" in metadata
+
+
+def test_active_worker_preserves_structured_failure_after_nonzero_exit(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Worker非零退出但已写响应时应返回真实错误，不改写为通用启动失败。"""
+
+    worker_jar = tmp_path / "worker.jar"
+    worker_jar.write_bytes(b"test-worker")
+    source_root = tmp_path / "source"
+    filter_root = source_root / "conf/filter"
+    filter_root.mkdir(parents=True)
+    # 测试配置只包含当前MQ操作引用的三个键，证明启动器不会传递无关配置。
+    (filter_root / "dubbo.properties.test").write_text(
+        "mq.nameSrvAddress=qa-mq.example.test:9876\n"
+        "refund.topic=refund-test-topic\n"
+        "refund.tag=refund-test-tag\n",
+        encoding="utf-8",
+    )
+    launcher = QaActiveWorkerLauncher(worker_jar)
+    profile = DsfClientProfile(
+        system_id=SYSTEM_ID,
+        environment="qa",
+        client_name=f"dsf.{SYSTEM_ID}",
+        routing_environment="qa",
+        target_environment="test",
+        status=DsfProfileStatus.CANDIDATE,
+    )
+    resource = DiscoveredResource(
+        resource_id=f"resource:{SYSTEM_ID}:mq:consumer:test",
+        system_id=SYSTEM_ID,
+        kind=ResourceKind.MQ,
+        role=ResourceRole.CONSUMER,
+        logical_name="testConsumer",
+        source_refs=[SourceReference(path="src/main/resources/mq.xml", symbol="testConsumer")],
+        nameserver_config_key="mq.nameSrvAddress",
+        topic_config_key="refund.topic",
+        tag_config_key="refund.tag",
+    )
+
+    def fake_run_worker(
+        application_name: str,
+        request_path: Path,
+        response_path: Path,
+        timeout_seconds: int,
+    ) -> subprocess.CompletedProcess[str]:
+        """写入安全失败响应并模拟Worker非零退出。
+
+        Args:
+            application_name: 扫描资源绑定的配置应用名。
+            request_path: 启动器创建的请求文件。
+            response_path: 假Worker响应目标。
+            timeout_seconds: 调用超时。
+
+        Returns:
+            返回码为3的假进程结果。
+        """
+
+        assert application_name == SYSTEM_ID
+        assert request_path.is_file()
+        assert timeout_seconds == 60
+        request_payload = json.loads(request_path.read_text(encoding="utf-8"))
+        # 响应只回显随机协议身份和已安全处理的真实业务原因。
+        response_path.write_text(
+            json.dumps(
+                {
+                    "request_id": request_payload["request_id"],
+                    "status": "failed",
+                    "error_code": "QA_ACTIVE_OPERATION_FAILED",
+                    "message": "current QA topic configuration is missing",
+                }
+            ),
+            encoding="utf-8",
+        )
+        response_path.chmod(0o600)
+        return subprocess.CompletedProcess(args=["java"], returncode=3, stdout="", stderr="")
+
+    monkeypatch.setattr(launcher, "_run_worker", fake_run_worker)
+    request = OperationExecutionRequest(
+        operation_id=f"mq:{SYSTEM_ID}:test",
+        arguments={"message": {"refundSerialNo": "OPENTEST_MQ_TEST"}},
+        request_id="request-active-worker-test",
+    )
+
+    with pytest.raises(OperationProviderFailure, match="current QA topic configuration is missing"):
+        launcher.execute(profile, OperationKind.MQ, resource, request, source_root)
 
 
 def test_codex_thread_recovery_uses_read_without_resume_or_new_thread(monkeypatch: pytest.MonkeyPatch) -> None:

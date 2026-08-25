@@ -9,6 +9,8 @@ from opentest.adapters.knowledge_store import GitKnowledgeStore
 from opentest.adapters.source_analysis import SourceScanArtifactStore
 from opentest.application.scenarios import CREATE_ORDER_ENTRY, PairwiseVariantSelector, ScenarioGenerationService
 from opentest.domain.models import (
+    CaseGenerationCreateRequest,
+    CaseGenerationStatus,
     KnowledgeConfirmation,
     KnowledgeNode,
     KnowledgeNodeKind,
@@ -190,6 +192,30 @@ def test_regression_generation_persists_targets_and_stable_variants(tmp_path: Pa
             assert variant.replay["data_preconditions"]["hk_quote_status"]["expected"] == expected_quote
         else:
             assert variant.replay["data_preconditions"] == {}
+
+
+def test_interface_case_is_saved_with_blocked_variant_before_knowledge_is_complete(tmp_path: Path) -> None:
+    """接口知识未人工确认时仍应保存矩阵和operation步骤，只阻塞缺数据与oracle的变体。"""
+
+    service, case_store = _scenario_service(tmp_path)
+    record = service.create_case_generation(
+        "train-booking-core",
+        CaseGenerationCreateRequest(entry_node_id="facade:test.TradeFacade#createOrder"),
+    )
+
+    assert record.status == CaseGenerationStatus.MATRIX_DRAFT
+    assert any(item.key.startswith("knowledge_gap") for item in record.missing_conditions)
+
+    completed = service.confirm_case_generation("train-booking-core", record.generation_id)
+
+    assert completed.status == CaseGenerationStatus.CASES_GENERATED
+    assert completed.batch is not None
+    assert len(completed.batch.variants) == 1
+    variant = completed.batch.variants[0]
+    assert variant.lifecycle == "blocked"
+    assert variant.steps[0].operation_id == "facade:test.TradeFacade#createOrder"
+    assert variant.steps[0].tool_id == ""
+    assert case_store.get_variant("train-booking-core", variant.variant_id) == variant
 
 
 def test_natural_language_reports_missing_qa_conditions_without_guessing(tmp_path: Path) -> None:

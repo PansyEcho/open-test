@@ -2570,6 +2570,243 @@ def test_codex_client_task_write_failure_is_frozen_without_creating_thread(
     assert next_attempt.task_id != failed.task_id
 
 
+def test_codex_client_prepare_failure_before_batch_preserves_original_error(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """草稿落盘前的知识准备失败必须原样返回，不能被缺失batch错误覆盖。
+
+    Args:
+        tmp_path: pytest隔离的源码、草稿和任务目录。
+        monkeypatch: 在现有prepare入口模拟确定性准备失败。
+
+    Returns:
+        None；调用方收到原异常且没有创建batch、任务或Codex线程时通过。
+    """
+
+    application, manifest, target_id, _source_file, app_server = _prepare_codex_client_handoff_system(tmp_path)
+
+    def fail_before_batch(*_: object, **__: object) -> object:
+        """在任何草稿写入前模拟可直接定位的准备异常。
+
+        Raises:
+            KnowledgeValidationError: 固定原始错误供异常传播断言。
+        """
+
+        raise KnowledgeValidationError("simulated source trace preparation failure")
+
+    monkeypatch.setattr(application.knowledge, "prepare_client_handoff", fail_before_batch)
+    request = KnowledgeTargetGenerationRequest(
+        system_id=SYSTEM_ID,
+        target_id=target_id,
+        scan_id=manifest.scan_id,
+        agent="codex",
+        confirmed=True,
+        interaction_mode="codex_client",
+        intent="initial",
+        attempt_id="attempt-client-prepare-failed-0001",
+    )
+
+    with pytest.raises(KnowledgeValidationError, match="simulated source trace preparation failure"):
+        application.submit_knowledge_target_generation(request)
+
+    attempt_digest = hashlib.sha256(
+        f"{SYSTEM_ID}|{target_id}|{manifest.scan_id}|{request.attempt_id}".encode("utf-8")
+    ).hexdigest()
+    batch_id = f"knowledge-client-{attempt_digest[:16]}"
+    with pytest.raises(KnowledgeNotFoundError, match=batch_id):
+        application.store.read_draft_batch(SYSTEM_ID, batch_id)
+    with pytest.raises(KnowledgeNotFoundError):
+        application.tasks.get(f"task-{attempt_digest[16:32]}")
+    assert app_server.call_count == 0
+
+
+def test_codex_client_prepare_failure_after_batch_uses_existing_recovery(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """草稿落盘后的私有运行初始化失败应继续复用既有半成品恢复。
+
+    Args:
+        tmp_path: pytest隔离的源码、草稿和任务目录。
+        monkeypatch: 在真实prepare写入batch后阻断私有运行初始化。
+
+    Returns:
+        None；同attempt固化为唯一FAILED任务且没有创建Codex线程时通过。
+    """
+
+    application, manifest, target_id, _source_file, app_server = _prepare_codex_client_handoff_system(tmp_path)
+
+    def fail_run_initialization(handoff: object, _prompt: str) -> None:
+        """在batch已经写入后模拟私有运行目录初始化失败。
+
+        Args:
+            handoff: prepare已经写入batch的客户端接管身份。
+            _prompt: 本测试不需要读取的完整客户端Prompt。
+
+        Raises:
+            OSError: 固定本地初始化故障供半成品恢复验证。
+        """
+
+        # 保留真实初始化已经创建运行目录后的故障形态，使既有恢复可以固化同一失败attempt。
+        application.knowledge._client_run_root(handoff, create=True)
+        raise OSError("simulated client run initialization failure")
+
+    monkeypatch.setattr(application.knowledge, "_initialize_client_run", fail_run_initialization)
+    request = KnowledgeTargetGenerationRequest(
+        system_id=SYSTEM_ID,
+        target_id=target_id,
+        scan_id=manifest.scan_id,
+        agent="codex",
+        confirmed=True,
+        interaction_mode="codex_client",
+        intent="initial",
+        attempt_id="attempt-client-run-init-failed-0001",
+    )
+
+    failed = application.submit_knowledge_target_generation(request)
+    repeated = application.submit_knowledge_target_generation(request)
+
+    assert failed.status == TaskStatus.FAILED
+    assert repeated.task_id == failed.task_id
+    assert failed.client_handoff is not None
+    assert application.store.read_draft_batch(SYSTEM_ID, failed.client_handoff.batch_id).drafts
+    assert app_server.call_count == 0
+
+
+def test_skill_knowledge_prepare_recovers_same_batch_when_task_write_initially_fails(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Skill草稿已落盘但任务写入失败时，重试应补齐同一task而不重建batch。
+
+    Args:
+        tmp_path: pytest隔离的源码、草稿和任务目录。
+        monkeypatch: 只让第一次等待任务写入失败。
+
+    Returns:
+        None；重试复用同一batch和预分配task且未创建Codex线程时通过。
+    """
+
+    application, manifest, target_id, _source_file, app_server = _prepare_codex_client_handoff_system(tmp_path)
+    original_create_waiting_task = application.tasks.create_waiting_task
+    create_calls = 0
+
+    def fail_first_task_write(*args: object, **kwargs: object) -> TaskRecord:
+        """第一次模拟本地任务文件写入失败，之后调用真实任务存储。
+
+        Args:
+            args: 原create_waiting_task位置参数。
+            kwargs: 原create_waiting_task命名参数。
+
+        Returns:
+            第二次及以后真实持久化的等待任务。
+
+        Raises:
+            OSError: 第一次调用固定模拟任务存储故障。
+        """
+
+        nonlocal create_calls
+        create_calls += 1
+        if create_calls == 1:
+            # 故障发生在prepare已经原子写入batch之后，复现审查指出的幂等缺口。
+            raise OSError("simulated skill task write failure")
+        return original_create_waiting_task(*args, **kwargs)
+
+    monkeypatch.setattr(application.tasks, "create_waiting_task", fail_first_task_write)
+
+    with pytest.raises(OSError, match="simulated skill task write failure"):
+        application.prepare_skill_knowledge_target(
+            SYSTEM_ID,
+            target_id,
+            manifest.scan_id,
+            "initial",
+            "skill-request-task-recovery-0001",
+        )
+
+    batches_after_failure = application.store.list_draft_batches(SYSTEM_ID)
+    assert len(batches_after_failure) == 1
+    failed_handoff = batches_after_failure[0].client_handoff
+    assert failed_handoff is not None
+
+    recovered = application.prepare_skill_knowledge_target(
+        SYSTEM_ID,
+        target_id,
+        manifest.scan_id,
+        "initial",
+        "skill-request-task-recovery-0001",
+    )
+    repeated = application.prepare_skill_knowledge_target(
+        SYSTEM_ID,
+        target_id,
+        manifest.scan_id,
+        "initial",
+        "skill-request-task-recovery-0001",
+    )
+
+    assert recovered["task"].task_id == failed_handoff.task_id
+    assert repeated["task"].task_id == recovered["task"].task_id
+    assert recovered["handoff"].batch_id == batches_after_failure[0].batch_id
+    assert len(application.store.list_draft_batches(SYSTEM_ID)) == 1
+    assert create_calls == 2
+    assert app_server.call_count == 0
+
+
+def test_knowledge_generation_http_returns_safe_original_unknown_prepare_error(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """页面知识入口应返回未知准备异常的真实类型和原因，同时移除连接凭据。
+
+    Args:
+        tmp_path: pytest隔离的应用和源码目录。
+        monkeypatch: 在应用提交边界模拟未归类本地异常。
+
+    Returns:
+        None；HTTP 400包含可定位原因且不含Token、地址或线程创建时通过。
+    """
+
+    application, manifest, target_id, _source_file, app_server = _prepare_codex_client_handoff_system(tmp_path)
+
+    def fail_unknown_prepare(_request: KnowledgeTargetGenerationRequest) -> TaskRecord:
+        """模拟携带凭据与连接地址的未归类Prompt准备故障。
+
+        Args:
+            _request: 页面提交的单目标知识生成请求。
+
+        Raises:
+            OSError: 固定异常用于验证API安全转换。
+        """
+
+        raise OSError("prompt write failed token=local-secret at http://10.0.0.1:8080/internal")
+
+    monkeypatch.setattr(application, "submit_knowledge_target_generation", fail_unknown_prepare)
+    request = KnowledgeTargetGenerationRequest(
+        system_id=SYSTEM_ID,
+        target_id=target_id,
+        scan_id=manifest.scan_id,
+        agent="codex",
+        confirmed=True,
+        interaction_mode="codex_client",
+        intent="initial",
+        attempt_id="attempt-http-unknown-prepare-0001",
+    )
+
+    with TestClient(create_app(application), client=("127.0.0.1", 50000)) as client:
+        response = client.post(
+            f"/api/v2/systems/{SYSTEM_ID}/knowledge/generations",
+            json=request.model_dump(mode="json"),
+        )
+
+    assert response.status_code == 400
+    error_message = response.json()["error"]["message"]
+    assert "OSError" in error_message
+    assert "prompt write failed" in error_message
+    assert "local-secret" not in error_message
+    assert "10.0.0.1" not in error_message
+    assert app_server.call_count == 0
+
+
 def test_codex_client_batch_bind_failure_replays_local_writes_without_second_thread(
     tmp_path: Path,
     monkeypatch: pytest.MonkeyPatch,

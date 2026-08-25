@@ -13,7 +13,7 @@ from opentest.adapters.knowledge_tracing import JavaKnowledgeTracer
 from opentest.adapters.source_analysis import SourceScanArtifactStore
 from opentest.api import create_app
 from opentest.application.foundation import OpenTestApplication
-from opentest.domain.errors import KnowledgeValidationError
+from opentest.domain.errors import KnowledgeNotFoundError, KnowledgeValidationError
 from opentest.domain.models import (
     EntryPoint,
     KnowledgeDraftConfirmation,
@@ -589,8 +589,8 @@ def test_custom_case_digest_is_unchanged_by_generation_records(tmp_path: Path) -
     assert hashlib.sha256(custom.read_bytes()).hexdigest() == before
 
 
-def test_non_create_order_matrix_stays_blocked_before_specialized_generator(tmp_path: Path) -> None:
-    """通用入口可展示保守矩阵，但缺少自包含步骤生成能力时不得误调用createOrder生成器。"""
+def test_non_create_order_matrix_requires_current_scan_contract(tmp_path: Path) -> None:
+    """接口级Case可以不依赖完整知识，但不得在缺少当前扫描契约时猜测操作绑定。"""
 
     source = tmp_path / "source"
     source.mkdir()
@@ -606,16 +606,13 @@ def test_non_create_order_matrix_stays_blocked_before_specialized_generator(tmp_
         confidence=1,
     )
     application.store.write_node(node, "## 业务结论\n\n查询自定义内容")
-    from opentest.domain.models import CaseGenerationCreateRequest, CaseGenerationStatus
+    from opentest.domain.models import CaseGenerationCreateRequest
 
-    record = application.create_case_generation(
-        "demo-system",
-        CaseGenerationCreateRequest(entry_node_id=node.node_id),
-    )
-
-    assert record.status == CaseGenerationStatus.BLOCKED
-    assert record.matrix_items
-    assert any(item.key == "entry_case_generator" for item in record.missing_conditions)
+    with pytest.raises(KnowledgeNotFoundError, match="scan manifest not found"):
+        application.create_case_generation(
+            "demo-system",
+            CaseGenerationCreateRequest(entry_node_id=node.node_id),
+        )
     application.close()
 
 

@@ -42,7 +42,7 @@ source_refs:
   path: app/model/src/main/java/com/ly/flight/chainsaas/refund/enums/RefundFeeTypeEnum.java
   symbol: com.ly.flight.chainsaas.refund.enums.RefundFeeTypeEnum
   line: 8
-  commit: 4da983bfd4d9de362fc5323412e35c1bdbd08236
+  commit: eba0fc72ec39a6883a6ceb1a70c38040ec5ea0bb
   content_digest: 9b0a8b6766c5d1ca38c23067208da61f4fb744a71aadd134ed9b3c48758ff02e
 - repository: ''
   path: app/model/src/main/java/com/ly/flight/chainsaas/refund/enums/RefundFeeTypeEnum.java
@@ -91,4 +91,4 @@ affected_target_ids:
 - facade:com.ly.flight.chainsaas.refund.facade.ToolFacade#syncOrder
 evidence_digest: 6d696a7fe79940a1d653dbc1fc3b2f4e61b92480c0ae80761284b900d5e8d2ef
 discovered_at: '2026-08-13T11:09:41.120129Z'
-updated_at: '2026-08-22T13:36:34.106846Z'
+updated_at: '2026-08-25T07:56:26.982560Z'

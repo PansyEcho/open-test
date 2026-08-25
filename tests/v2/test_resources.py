@@ -41,15 +41,23 @@ def _write_resource_fixture(source_root: Path) -> None:
         """<?xml version="1.0" encoding="UTF-8"?>
 <beans xmlns="http://www.springframework.org/schema/beans">
   <bean id="bookingCoreDatasource" class="com.ly.dal.datasource.RoutableDataSource">
+    <property name="env" value="${uniform.env}"/>
+    <property name="projectId" value="${uniform.skyCode}"/>
     <property name="dbName" value="TETravelTrainSupplychainOrder"/>
   </bean>
   <bean id="bookingCoreTidbDatasource" class="com.ly.dal.datasource.RoutableDataSource">
+    <property name="env" value="${uniform.env}"/>
+    <property name="projectId" value="${uniform.skyCode}"/>
     <property name="dbName" value="TETravelTrainSupplychainOrder_tidb"/>
   </bean>
   <bean id="tempOrderDatasource" class="com.ly.dal.datasource.RoutableDataSource">
+    <property name="env" value="${uniform.env}"/>
+    <property name="projectId" value="${uniform.skyCode}"/>
     <property name="dbName" value="TETravelTrainScTempOrder"/>
   </bean>
   <bean id="bookingCoreTidbAnalyDatasource" class="com.ly.dal.datasource.RoutableDataSource">
+    <property name="env" value="${uniform.env}"/>
+    <property name="projectId" value="${uniform.skyCode}"/>
     <property name="dbName" value="TETravelTrainSupplychainOrder_tidb_analy"/>
   </bean>
 </beans>
@@ -146,6 +154,8 @@ def test_discovers_booking_core_resource_shapes_with_source_evidence(tmp_path: P
         "TETravelTrainScTempOrder",
         "TETravelTrainSupplychainOrder_tidb_analy",
     }
+    assert {resource.database_project_config_key for resource in databases} == {"uniform.skyCode"}
+    assert {resource.database_environment_config_key for resource in databases} == {"uniform.env"}
 
     redis = next(resource for resource in discovery.resources if resource.kind == ResourceKind.REDIS)
     assert redis.config_keys == ["redis.groupName"]
@@ -156,6 +166,13 @@ def test_discovers_booking_core_resource_shapes_with_source_evidence(tmp_path: P
     job_consumer = next(resource for resource in consumers if resource.logical_name == "jobMessageListener")
     assert job_consumer.listener_ref == "jobListener"
     assert job_consumer.config_keys == ["mq.job.group", "mq.job.topic", "mq.nameSrvAddress"]
+    assert job_consumer.nameserver_config_key == "mq.nameSrvAddress"
+    assert job_consumer.topic_config_key == "mq.job.topic"
+    assert job_consumer.group_config_key == "mq.job.group"
+    tagged_consumer = next(
+        resource for resource in consumers if resource.logical_name == "serviceFeeChangeListenerConsumer"
+    )
+    assert tagged_consumer.tag_config_key == "mq.servicefee.change.tag"
 
     producers = [resource for resource in discovery.resources if resource.role == ResourceRole.PRODUCER]
     producer_keys = {key for resource in producers for key in resource.config_keys}

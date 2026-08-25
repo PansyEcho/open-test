@@ -1,0 +1,8 @@
+coverage_targets:
+- target_id: coverage:9f5d4ff552bf768513b5
+  system_id: ifightchainsaas.java.refund.core
+  node_id: facade:com.ly.flight.chainsaas.refund.facade.RefundFacade#queryList
+  kind: boundary
+  title: RefundFacade#queryList接口契约
+  condition: 使用当前扫描声明的请求结构调用接口
+  expected_outcome: 获得可核查的业务结果，并按补充oracle判断业务正确性

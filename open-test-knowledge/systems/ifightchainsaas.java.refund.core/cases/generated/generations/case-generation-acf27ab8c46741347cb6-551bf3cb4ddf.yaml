@@ -1,0 +1,92 @@
+generation_id: case-generation:acf27ab8c46741347cb6
+system_id: ifightchainsaas.java.refund.core
+entry_node_id: facade:com.ly.flight.chainsaas.refund.facade.RefundFacade#queryList
+mode: regression
+status: CASES_GENERATED
+matrix_items:
+- matrix_item_id: matrix-item:25fa36cd92a135c0f301
+  title: RefundFacade#queryList主流程与边界
+  priority: P1
+  coverage_target_ids: []
+  business_preconditions:
+  - 入口知识可后续补齐，不阻塞当前接口Case
+  entity_expectations:
+  - 接口或任务返回稳定业务结果
+  aggregate_expectations:
+  - 相关状态和外部副作用与知识结论一致
+  validation_capability_ids: []
+  missing_conditions:
+  - key: fixture
+    reason: 该入口的业务Fixture和校验项尚未建立
+    expected_type: string
+missing_conditions:
+- key: variant:variant:9f5d4ff552bf768513b5
+  reason: 缺少可执行业务数据或稳定结果oracle；补齐该变体后即可执行
+  expected_type: string
+batch:
+  batch_id: case-batch:9f5d4ff552bf768513b5
+  system_id: ifightchainsaas.java.refund.core
+  entry_node_id: facade:com.ly.flight.chainsaas.refund.facade.RefundFacade#queryList
+  coverage_targets:
+  - target_id: coverage:9f5d4ff552bf768513b5
+    system_id: ifightchainsaas.java.refund.core
+    node_id: facade:com.ly.flight.chainsaas.refund.facade.RefundFacade#queryList
+    kind: boundary
+    title: RefundFacade#queryList接口契约
+    condition: 使用当前扫描声明的请求结构调用接口
+    expected_outcome: 获得可核查的业务结果，并按补充oracle判断业务正确性
+  scenarios:
+  - scenario_id: scenario:9f5d4ff552bf768513b5
+    system_id: ifightchainsaas.java.refund.core
+    entry_node_id: facade:com.ly.flight.chainsaas.refund.facade.RefundFacade#queryList
+    title: RefundFacade#queryList接口级Case
+    coverage_target_ids:
+    - coverage:9f5d4ff552bf768513b5
+    dimensions: {}
+    constraints: []
+    steps:
+    - step_id: execute-interface-operation
+      name: 执行当前接口统一operation
+      action: execute
+      tool_id: ''
+      operation_id: facade:com.ly.flight.chainsaas.refund.facade.RefundFacade#queryList
+      params:
+        arguments: ${inputs.arguments}
+      assertions: {}
+      oracle: null
+    cleanup_steps: []
+    source_scan_id: scan-20260825075610-a0f437c374-8132c1a1
+  variants:
+  - variant_id: variant:9f5d4ff552bf768513b5
+    scenario_id: scenario:9f5d4ff552bf768513b5
+    system_id: ifightchainsaas.java.refund.core
+    seed: 0
+    inputs:
+      arguments: {}
+    steps:
+    - step_id: execute-interface-operation
+      name: 执行当前接口统一operation
+      action: execute
+      tool_id: ''
+      operation_id: facade:com.ly.flight.chainsaas.refund.facade.RefundFacade#queryList
+      params:
+        arguments: ${inputs.arguments}
+      assertions: {}
+      oracle: null
+    coverage_target_ids:
+    - coverage:9f5d4ff552bf768513b5
+    cleanup_steps: []
+    replay:
+      source_scan_id: scan-20260825075610-a0f437c374-8132c1a1
+      blocked_reason: 缺少可执行业务数据或稳定结果oracle；补齐该变体后即可执行
+      knowledge_gaps:
+      - 入口知识尚未生成，Case先按扫描接口契约保存
+    expected_outcome: success
+    lifecycle: blocked
+    updated_at: '2026-08-25T08:05:05.297195Z'
+  warnings:
+  - 缺少可执行业务数据或稳定结果oracle；补齐该变体后即可执行
+  generated_at: '2026-08-25T08:05:05.297504Z'
+custom_case_count: 0
+created_at: '2026-08-25T08:04:46.402632Z'
+updated_at: '2026-08-25T08:05:05.310329Z'

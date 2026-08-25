@@ -67,3 +67,9 @@ Do not add retries or fallbacks to hide an unknown root cause. First establish t
 - Do not continue polishing, generalizing, documenting, refactoring, or future-proofing after the task is complete.
 - Do not invent follow-up work in order to keep working.
 - If completion genuinely requires a wider architecture, persistence, migration, or compatibility change, state the concrete blocker and the smallest viable option before implementing the wider change.
+
+### Development service lifecycle
+
+- After completing development work, stop every service process started for that work before handing off to the user.
+- In particular, ensure port `8788` is no longer listening so the user can start the service from PyCharm without an "address already in use" error.
+- Before reporting completion, verify the service was stopped with `lsof -nP -iTCP:8788 -sTCP:LISTEN`; if it reports a process started for the task, stop that exact PID and recheck the port.

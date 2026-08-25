@@ -1,0 +1,39 @@
+variant_id: variant:9f5d4ff552bf768513b5
+scenario_id: scenario:9f5d4ff552bf768513b5
+system_id: ifightchainsaas.java.refund.core
+seed: 0
+inputs:
+  arguments:
+    page: 1
+    pageSize: 20
+steps:
+- step_id: execute-interface-operation
+  name: 执行RefundFacade#queryList只读查询
+  action: execute
+  tool_id: ''
+  operation_id: facade:com.ly.flight.chainsaas.refund.facade.RefundFacade#queryList
+  params:
+    arguments: ${inputs.arguments}
+  assertions: {}
+  oracle: null
+- step_id: assert-query-success
+  name: 校验查询成功并返回分页列表
+  action: assert
+  tool_id: ''
+  operation_id: ''
+  params: {}
+  assertions:
+    status: success
+    output.success: true
+    output.list.pageList:
+      op: not_null
+  oracle: null
+coverage_target_ids:
+- coverage:9f5d4ff552bf768513b5
+cleanup_steps: []
+replay:
+  source_scan_id: scan-20260825075610-a0f437c374-8132c1a1
+  qa_acceptance: current interface contract
+expected_outcome: success
+lifecycle: user_edited
+updated_at: '2026-08-25T08:06:25.795769Z'

@@ -83,6 +83,30 @@ class FakeClock:
         self.value += seconds
 
 
+def test_local_environment_loader_ignores_page_only_settings(tmp_path: Path) -> None:
+    """执行加载器应保留共享文件中的页面网关设置但只校验执行字段。"""
+
+    environment_root = tmp_path / "environments"
+    environment_path = environment_root / "train-booking-core/qa.yaml"
+    environment_path.parent.mkdir(parents=True)
+    # 页面设置与执行变量共用qa.yaml，额外字段不能让真实Case在调用QA前失败。
+    environment_path.write_text(
+        "system_id: train-booking-core\n"
+        "environment: qa\n"
+        "qa_gateway_prefix: https://servicegw.qa.example/gateway\n"
+        "values:\n  tool_environment: {}\n"
+        "connections: {}\n",
+        encoding="utf-8",
+    )
+
+    definition = LocalEnvironmentLoader(environment_root).load("train-booking-core", "qa")
+
+    assert definition.system_id == "train-booking-core"
+    assert definition.environment == "qa"
+    assert definition.values == {"tool_environment": {}}
+    assert "qa_gateway_prefix" in environment_path.read_text(encoding="utf-8")
+
+
 def _execution_fixture(tmp_path: Path) -> tuple[ScenarioExecutionService, ScenarioVariant, SnapshotService]:
     """创建同时绑定工具、DSF目录和语义摘要的Snapshot执行夹具。
 
@@ -395,11 +419,19 @@ def test_scenario_step_rejects_action_fields_that_would_be_ignored() -> None:
             tool_id="facade.trade.create_order",
             assertions={"$.success": True},
         )
-    with pytest.raises(ValueError, match="requires a logical tool ID"):
+    with pytest.raises(ValueError, match="logical tool ID or operation ID"):
         ScenarioStep(
             step_id="execute-empty",
             name="没有真实工具的执行步骤",
             action="execute",
+        )
+    with pytest.raises(ValueError, match="cannot define both"):
+        ScenarioStep(
+            step_id="execute-ambiguous",
+            name="同时声明两种执行身份",
+            action="execute",
+            tool_id="facade.trade.create_order",
+            operation_id="facade:test.TradeFacade#createOrder",
         )
 
 
@@ -1134,8 +1166,8 @@ def test_invalid_assertion_contract_produces_failed_run_record(tmp_path: Path) -
     assert service.get_run(record.run_id) == record
 
 
-def test_run_record_redacts_sensitive_business_response_fields(tmp_path: Path) -> None:
-    """工具原始业务响应中的姓名和手机号不得原样写入RunRecord。"""
+def test_run_record_preserves_business_fields_and_redacts_credentials(tmp_path: Path) -> None:
+    """RunRecord应保留姓名手机号等QA业务结果，但继续移除配置Token。"""
 
     service, variant, snapshots = _execution_fixture(tmp_path)
     manifest = service.artifacts.read("train-booking-core")
@@ -1143,7 +1175,8 @@ def test_run_record_redacts_sensitive_business_response_fields(tmp_path: Path) -
     script.write_text(
         "#!/bin/sh\nprintf '%s\\n' "
         "'{\"success\":true,\"response\":{\"orderSerialNo\":\"QA-ORDER-1\","
-        "\"name\":\"ALICE\",\"phone\":\"13800000000\"}}'\n",
+        "\"name\":\"ALICE\",\"phone\":\"13800000000\",\"token\":\"secret\","
+        "\"businessUrl\":\"https://qa-business.example/result/QA-ORDER-1\"}}'\n",
         encoding="utf-8",
     )
     snapshot = snapshots.create("train-booking-core")
@@ -1157,5 +1190,7 @@ def test_run_record_redacts_sensitive_business_response_fields(tmp_path: Path) -
     )
 
     persisted_output = record.step_results[0].output["response"]
-    assert persisted_output["name"] == "<redacted>"
-    assert persisted_output["phone"] == "<redacted>"
+    assert persisted_output["name"] == "ALICE"
+    assert persisted_output["phone"] == "13800000000"
+    assert persisted_output["token"] == "<redacted>"
+    assert persisted_output["businessUrl"] == "https://qa-business.example/result/QA-ORDER-1"
