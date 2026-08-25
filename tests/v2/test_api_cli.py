@@ -16,11 +16,14 @@ from opentest.domain.models import AgentRunEvent, TaskProgressUpdate, TaskStatus
 
 
 def test_fastapi_registers_multiple_systems_without_overwrite(tmp_path: Path, monkeypatch) -> None:
-    """HTTP接口应注册两个隔离系统，且第二次注册不覆盖首个系统。
+    """HTTP接口应返回页面版本并注册两个互不覆盖的隔离系统。
 
     Args:
         tmp_path: Pytest提供的隔离源码和知识目录。
         monkeypatch: 替换扫描提交与运行诊断，避免契约测试启动外部工具。
+
+    Returns:
+        None；健康版本正确且两个系统均保留时通过。
     """
 
     first_source = tmp_path / "first"
@@ -39,7 +42,9 @@ def test_fastapi_registers_multiple_systems_without_overwrite(tmp_path: Path, mo
     monkeypatch.setattr(application, "submit_prepared_source_scan", submit_scan_without_execution)
 
     with TestClient(create_app(application), client=("127.0.0.1", 50000)) as client:
-        assert client.get("/api/v2/health").json()["status"] == "ok"
+        health = client.get("/api/v2/health").json()
+        assert health["status"] == "ok"
+        assert health["page_version"] == "20260825-01"
         first_response = client.post(
             "/api/v2/systems",
             json={
@@ -68,7 +73,14 @@ def test_fastapi_registers_multiple_systems_without_overwrite(tmp_path: Path, mo
 
 
 def test_v2_console_is_served_and_only_references_v2_api(tmp_path: Path) -> None:
-    """FastAPI应托管V2控制台，静态客户端不得回退调用legacy项目路由。"""
+    """FastAPI应托管版本化V2控制台，静态客户端不得回退调用legacy项目路由。
+
+    Args:
+        tmp_path: Pytest提供的隔离知识目录。
+
+    Returns:
+        None；HTML、版本化脚本和V2 API根契约均正确时通过。
+    """
 
     application = OpenTestApplication(tmp_path / "knowledge")
     with TestClient(create_app(application)) as client:
@@ -77,6 +89,8 @@ def test_v2_console_is_served_and_only_references_v2_api(tmp_path: Path) -> None
 
     assert console_response.status_code == 200
     assert "OpenTest V2 Console" in console_response.text
+    assert '<meta name="opentest-page-version" content="20260825-01">' in console_response.text
+    assert '/assets/app.js?v=20260825-01' in console_response.text
     assert script_response.status_code == 200
     assert 'const API_ROOT = "/api/v2"' in script_response.text
     assert "/api/projects" not in script_response.text

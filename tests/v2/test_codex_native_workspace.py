@@ -30,6 +30,7 @@ from opentest.adapters.sqlite_index import SqliteKnowledgeIndex
 from opentest.application.catalogs import ScanCatalogService
 from opentest.application.foundation import OpenTestApplication
 from opentest.application.knowledge_discovery import KnowledgeDiscoveryService
+from opentest.application.knowledge_context import knowledge_context_digest
 from opentest.application.log_context import current_log_context
 from opentest.application.operations import (
     LocalQaOperationProvider,
@@ -51,7 +52,12 @@ from opentest.domain.models import (
     DsfExecutionResponse,
     DiscoveredResource,
     EntryPoint,
+    KnowledgeGenerationWorkflowBatch,
+    KnowledgeNode,
     KnowledgeNodeKind,
+    KnowledgeStatus,
+    KnowledgeTargetGenerationOutcome,
+    KnowledgeTargetStatus,
     OperationCapability,
     OperationExecutionRequest,
     OperationExecutionStatus,
@@ -667,6 +673,75 @@ def test_catalog_prewarm_singleflight_revision_and_bounded_eviction(
     assert stats["evictions"] >= 1
     assert first_reference() is not None
     assert second_reference() is None
+
+
+def test_catalog_keeps_same_source_rescan_knowledge_and_stales_changed_source(tmp_path: Path) -> None:
+    """重复扫描同一源码基线不应误伤知识，真实源码变化仍必须标记过期。
+
+    Args:
+        tmp_path: pytest隔离的注册系统、扫描历史和知识批次。
+
+    Returns:
+        None；同基线新scan显示GENERATED，dirty摘要变化后显示STALE时通过。
+    """
+
+    store, source_root = _registered_workspace(tmp_path)
+    artifacts = SourceScanArtifactStore(store.root)
+    original_manifest = _manifest(source_root, "scan-compatible-original")
+    _publish_manifest(artifacts, original_manifest)
+    store.write_draft_batch(
+        KnowledgeGenerationWorkflowBatch(
+            batch_id="knowledge-workflow-compatible-rescan",
+            system_id=SYSTEM_ID,
+            scan_id=original_manifest.scan_id,
+            target_ids=[FACADE_OPERATION_ID],
+            status="PUBLISHED",
+            context_digest=knowledge_context_digest(store.read_context(SYSTEM_ID)),
+            outcomes=[
+                KnowledgeTargetGenerationOutcome(
+                    target_id=FACADE_OPERATION_ID,
+                    status="AGENT_ENRICHED",
+                    agent="codex",
+                )
+            ],
+        )
+    )
+
+    # 新扫描ID沿用完全相同源码基线，只代表重新分析，不应使已完成目标立即过期。
+    compatible_manifest = original_manifest.model_copy(update={"scan_id": "scan-compatible-latest"})
+    _publish_manifest(artifacts, compatible_manifest)
+    compatible_catalog = ScanCatalogService(store, artifacts).build_catalog(SYSTEM_ID)
+    compatible_target = next(target for target in compatible_catalog.targets if target.target_id == FACADE_OPERATION_ID)
+    assert compatible_target.knowledge_status == KnowledgeTargetStatus.GENERATED
+
+    # 人工或审计流程显式撤销节点可信状态时，同基线规则不能把它恢复为已生成。
+    store.write_node(
+        KnowledgeNode(
+            node_id="entry:com.example.refund.RefundFacade#createOrder",
+            system_id=SYSTEM_ID,
+            kind=KnowledgeNodeKind.FACADE,
+            title="RefundFacade#createOrder",
+            aliases=[FACADE_OPERATION_ID, "com.example.refund.RefundFacade#createOrder"],
+            status=KnowledgeStatus.STALE,
+            metadata={"scan_id": original_manifest.scan_id},
+        ),
+        "显式过期的测试知识。",
+    )
+    explicitly_stale_catalog = ScanCatalogService(store, artifacts).build_catalog(SYSTEM_ID)
+    explicitly_stale_target = next(
+        target for target in explicitly_stale_catalog.targets if target.target_id == FACADE_OPERATION_ID
+    )
+    assert explicitly_stale_target.knowledge_status == KnowledgeTargetStatus.STALE
+
+    # dirty摘要变化代表源码内容真实变化，即使入口稳定也必须要求重新生成知识。
+    changed_baseline = compatible_manifest.baseline.model_copy(update={"dirty_digest": "source-changed"})
+    changed_manifest = compatible_manifest.model_copy(
+        update={"scan_id": "scan-source-changed", "baseline": changed_baseline}
+    )
+    _publish_manifest(artifacts, changed_manifest)
+    changed_catalog = ScanCatalogService(store, artifacts).build_catalog(SYSTEM_ID)
+    changed_target = next(target for target in changed_catalog.targets if target.target_id == FACADE_OPERATION_ID)
+    assert changed_target.knowledge_status == KnowledgeTargetStatus.STALE
 
 
 def test_catalog_failure_and_oversize_fallback_do_not_leak_entries(

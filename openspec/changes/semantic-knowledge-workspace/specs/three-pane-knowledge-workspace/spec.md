@@ -37,7 +37,8 @@
 
 - **WHEN** 用户选择Codex并点击初次生成或重新生成当前唯一目标
 - **THEN** 请求携带`interaction_mode=codex_client`、`intent`和稳定`attempt_id`，创建同一知识实体下的handoff、草稿批次、等待任务和持久Codex thread
-- **AND** App Server只创建、命名和注入任务历史，不调用`turn/start`；页面通过`codex://threads/<id>`打开同一聊天，创建、跳转和刷新本身不得调用模型
+- **AND** App Server先创建、命名和注入任务历史；用户点击“启动并打开Codex”时，页面在同一thread中显式调用一次`$knowledge-handoff`的`turn/start`，成功后再通过`codex://threads/<id>`打开同一聊天
+- **AND** 同一thread已有任意turn时，重复点击只打开原聊天，不得调用第二次`turn/start`、创建第二个handoff/thread或产生重复模型费用
 - **AND** 点击本身授权同一handoff/thread连续分析、补读、修正和重提候选，不得为每次校验错误再次询问；不得创建第二handoff/thread、扩展目标或切换Agent
 - **AND** 全仓库任一时刻最多存在一个可继续交流或等待确认的Codex知识聊天；同一attempt重复提交返回同一任务与thread，其他系统或目标的并发创建必须被拒绝
 - **AND** 已生成、失败、部分完成和过期目标都提供重新生成；新候选确认前旧知识继续有效，拒绝、放弃或发布失败不得覆盖旧知识
@@ -51,6 +52,12 @@
 - **THEN** 步骤1继续保持已完成并显示首次完成时间，不自动调用Agent或产生费用
 - **AND** 旧知识仍可浏览，受影响目标标记为已过期，步骤2显示需要更新的数量和唯一下一步操作
 - **AND** 系统级背景变化默认影响全部知识，术语变化优先只影响`affected_target_ids`，无法定位时影响全部
+
+#### Scenario: 重复扫描与源码变化
+
+- **WHEN** 新扫描与知识批次扫描的源码路径、commit、分支、dirty状态、dirty摘要和分析器版本完全一致
+- **THEN** 已生成知识不得仅因`scan_id`变化而标记过期
+- **AND** 任一源码基线字段变化、历史扫描无法验证、知识节点显式STALE或背景影响目标时，相关知识仍标记过期
 
 #### Scenario: 查看全部问题与当前对象问题
 

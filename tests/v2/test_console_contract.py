@@ -18,6 +18,12 @@ def test_console_static_client_uses_only_v2_routes_and_safe_rendering() -> None:
 
     assert "OpenTest V2 Console" in html
     assert 'const API_ROOT = "/api/v2"' in script
+    assert '<meta name="opentest-page-version" content="20260825-01">' in html
+    assert '/assets/app.js?v=20260825-01' in html
+    assert 'id="stale-page-warning"' in html
+    assert html.index('id="stale-page-warning"') < html.index('id="workspace-workbench"')
+    assert "verifyCurrentPageVersion" in script
+    assert 'await verifyCurrentPageVersion()' in script
     assert "/api/projects" not in script
     assert "/resource-probes" in script
     assert "/validation-capabilities" in script
@@ -137,6 +143,12 @@ def test_console_static_client_uses_only_v2_routes_and_safe_rendering() -> None:
     assert "open-codex-client-thread" in script
     assert "codex://threads/" in script
     assert "使用 Codex 重新生成当前对象知识" in script
+    assert 'id="knowledge-generation-profile"' in html
+    assert 'value="gpt-5.6-luna|medium"' in html
+    assert 'value="gpt-5.6-luna|low"' in html
+    assert "selectedKnowledgeGenerationProfile" in script
+    assert "codex_model: generationProfile.codexModel" in script
+    assert "reasoning_effort: generationProfile.reasoningEffort" in script
     assert "最低底线知识当前没有新缺口，可进入测试场景准备" not in script
     assert 'id="generate-case-matrix"' in html
     assert 'id="run-natural-language"' in html
@@ -450,6 +462,25 @@ def test_codex_handoff_monitor_rejects_stale_same_target_attempt_responses() -> 
     terminal_guard = monitor.index("if (!monitorIsCurrent())", terminal_reload)
     toast = monitor.index('showToast("Codex 候选已确认并写入当前对象知识")')
     assert terminal_reload < terminal_guard < toast
+
+
+def test_codex_thread_button_starts_handoff_before_opening_deep_link() -> None:
+    """等待任务按钮必须先幂等启动原turn，成功后才能打开持久深链。
+
+    Returns:
+        None；静态客户端包含范围化turn路由，且跳转语句位于启动请求之后时通过。
+    """
+
+    script_path = Path(__file__).parents[2] / "opentest" / "web" / "app.js"
+    script = script_path.read_text(encoding="utf-8")
+    opener = script[
+        script.index("async function openPersistedCodexTask") : script.index("function renderCodexTaskPane")
+    ]
+
+    start_request = opener.index("/knowledge/client-handoffs/${encodeURIComponent(handoffId)}/turns")
+    deep_link_open = opener.index("window.location.href = deepLink")
+    assert start_request < deep_link_open
+    assert 'task.status === "waiting_for_client"' in script
 
 
 def test_scan_catalog_rejects_invalidated_and_out_of_order_scan_responses() -> None:

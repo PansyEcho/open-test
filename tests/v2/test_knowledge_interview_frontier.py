@@ -199,6 +199,10 @@ class _FakeCodexAppServer:
 
         self.call_count = 0
         self.requests: list[dict[str, str]] = []
+        self.turn_start_checks = 0
+        self.started_thread_ids: set[str] = set()
+        self.turn_start_failures_remaining = 0
+        self.turn_start_gate: threading.Event | None = None
 
     def require_knowledge_plugin(self) -> None:
         """模拟已经由用户一次性安装并启用OpenTest插件。
@@ -248,6 +252,34 @@ class _FakeCodexAppServer:
         )
         thread_id = f"01a-client-thread-{self.call_count}"
         return SimpleNamespace(thread_id=thread_id, deep_link=f"codex://threads/{thread_id}")
+
+    def start_thread_turn(self, thread_id: str) -> bool:
+        """模拟真实App Server以已有turn作为首次执行幂等门。
+
+        Args:
+            thread_id: 应用已持久化的同一Codex线程ID。
+
+        Returns:
+            首次检查该线程时为True，后续重复检查为False。
+
+        Side Effects:
+            记录检查次数和已经启动过的线程，不调用任何模型。
+
+        Raises:
+            ExecutionFailure: 测试显式配置临时失败次数时模拟App Server启动边界故障。
+        """
+
+        self.turn_start_checks += 1
+        if self.turn_start_gate is not None:
+            # 测试可暂停App Server边界，证明应用关闭会等待当前自动启动检查完整退出。
+            self.turn_start_gate.wait(timeout=2)
+        if self.turn_start_failures_remaining > 0:
+            self.turn_start_failures_remaining -= 1
+            raise ExecutionFailure("simulated transient turn start failure")
+        if thread_id in self.started_thread_ids:
+            return False
+        self.started_thread_ids.add(thread_id)
+        return True
 
 
 class _FailingKnowledgeAgentRunner(_KnowledgeAgentRunner):
@@ -1477,6 +1509,143 @@ def test_codex_client_handoff_is_idempotent_and_does_not_publish_or_run_agent(
     assert diagnostics.resume_command == ""
 
 
+def test_codex_client_page_reuses_auto_started_thread_via_loopback_api(tmp_path: Path) -> None:
+    """后台自动启动后页面入口应复用原handoff、task和thread而不追加turn。
+
+    Args:
+        tmp_path: pytest隔离的源码、OpenTest状态与假App Server。
+
+    Returns:
+        None；后台只启动一次，两次页面POST均只读恢复且没有创建第二线程或任务时通过。
+    """
+
+    application, manifest, target_id, _source_file, app_server = _prepare_codex_client_handoff_system(tmp_path)
+    task = application.submit_knowledge_target_generation(
+        KnowledgeTargetGenerationRequest(
+            system_id=SYSTEM_ID,
+            target_id=target_id,
+            scan_id=manifest.scan_id,
+            agent="codex",
+            confirmed=True,
+            interaction_mode="codex_client",
+            intent="initial",
+            attempt_id="attempt-client-turn-start-0001",
+        )
+    )
+    assert task.client_handoff is not None
+    handoff_id = task.client_handoff.handoff_id
+    # 新handoff持久化后后台应立即唤醒，测试有界等待它完成首次幂等启动检查。
+    deadline = time.monotonic() + 2
+    while task.client_handoff.thread_id not in app_server.started_thread_ids and time.monotonic() < deadline:
+        time.sleep(0.01)
+
+    with TestClient(create_app(application), client=("127.0.0.1", 50000)) as client:
+        first = client.post(f"/api/v2/knowledge/client-handoffs/{handoff_id}/turns", json={})
+        repeated = client.post(f"/api/v2/knowledge/client-handoffs/{handoff_id}/turns", json={})
+
+    assert first.status_code == 202
+    assert repeated.status_code == 202
+    assert first.json()["started"] is False
+    assert repeated.json()["started"] is False
+    assert first.json()["task"]["task_id"] == task.task_id
+    assert repeated.json()["task"]["client_handoff"]["thread_id"] == task.client_handoff.thread_id
+    assert app_server.call_count == 1
+    assert app_server.turn_start_checks == 3
+    assert app_server.started_thread_ids == {task.client_handoff.thread_id}
+
+
+def test_codex_client_auto_start_retries_transient_failure_without_new_identity(tmp_path: Path) -> None:
+    """首turn临时失败后应重试同一线程且不创建第二套知识身份。
+
+    Args:
+        tmp_path: Pytest隔离的源码、任务和假App Server状态目录。
+
+    Returns:
+        None；第二次自动检查启动原线程且task、handoff、batch均保持不变时通过。
+    """
+
+    application, manifest, target_id, _source_file, app_server = _prepare_codex_client_handoff_system(tmp_path)
+    app_server.turn_start_failures_remaining = 1
+    task = application.submit_knowledge_target_generation(
+        KnowledgeTargetGenerationRequest(
+            system_id=SYSTEM_ID,
+            target_id=target_id,
+            scan_id=manifest.scan_id,
+            agent="codex",
+            confirmed=True,
+            interaction_mode="codex_client",
+            intent="initial",
+            attempt_id="attempt-client-turn-retry-0001",
+        )
+    )
+    assert task.client_handoff is not None
+
+    # 首轮失败不改变持久身份；显式唤醒模拟下一次15秒巡检，避免测试真实等待。
+    first_deadline = time.monotonic() + 2
+    while app_server.turn_start_checks < 1 and time.monotonic() < first_deadline:
+        time.sleep(0.01)
+    application._client_turn_start_wakeup.set()
+    second_deadline = time.monotonic() + 2
+    while task.client_handoff.thread_id not in app_server.started_thread_ids and time.monotonic() < second_deadline:
+        time.sleep(0.01)
+
+    settled = application.tasks.get(task.task_id)
+    workflow = application.store.read_draft_batch(SYSTEM_ID, task.client_handoff.batch_id)
+    assert app_server.turn_start_checks == 2
+    assert app_server.call_count == 1
+    assert app_server.started_thread_ids == {task.client_handoff.thread_id}
+    assert settled.task_id == task.task_id
+    assert settled.client_handoff == task.client_handoff
+    assert workflow.client_handoff == task.client_handoff
+    application.close()
+    assert application._client_turn_start_thread.is_alive() is False
+
+
+def test_codex_client_close_waits_for_active_turn_start_worker(tmp_path: Path) -> None:
+    """应用关闭必须等待正在执行首turn请求的后台线程完整退出。
+
+    Args:
+        tmp_path: Pytest隔离的源码、任务和假App Server状态目录。
+
+    Returns:
+        None；关闭过程在请求释放前保持等待，并在原线程启动后彻底结束后台线程时通过。
+    """
+
+    application, manifest, target_id, _source_file, app_server = _prepare_codex_client_handoff_system(tmp_path)
+    app_server.turn_start_gate = threading.Event()
+    task = application.submit_knowledge_target_generation(
+        KnowledgeTargetGenerationRequest(
+            system_id=SYSTEM_ID,
+            target_id=target_id,
+            scan_id=manifest.scan_id,
+            agent="codex",
+            confirmed=True,
+            interaction_mode="codex_client",
+            intent="initial",
+            attempt_id="attempt-client-close-worker-0001",
+        )
+    )
+    assert task.client_handoff is not None
+
+    # 等待后台线程进入被门闩阻塞的App Server请求，确保关闭测试覆盖真实竞态窗口。
+    start_deadline = time.monotonic() + 2
+    while app_server.turn_start_checks < 1 and time.monotonic() < start_deadline:
+        time.sleep(0.01)
+    assert app_server.turn_start_checks == 1
+
+    # 独立关闭线程验证close不会在活动请求结束前提前返回或关闭任务存储。
+    close_thread = threading.Thread(target=application.close, name="test-application-close")
+    close_thread.start()
+    time.sleep(0.05)
+    assert close_thread.is_alive() is True
+
+    app_server.turn_start_gate.set()
+    close_thread.join(timeout=2)
+    assert close_thread.is_alive() is False
+    assert application._client_turn_start_thread.is_alive() is False
+    assert app_server.started_thread_ids == {task.client_handoff.thread_id}
+
+
 def test_codex_client_snapshots_low_effort_and_prompt_template_per_attempt(tmp_path: Path) -> None:
     """活动聊天必须固定Low档位与创建时模板，后续设置修改只影响新任务。
 
@@ -1525,6 +1694,45 @@ def test_codex_client_snapshots_low_effort_and_prompt_template_per_attempt(tmp_p
     assert "后来修改的模板" not in app_server.requests[0]["prompt"]
     assert first.client_handoff is not None
     assert first.client_handoff.prompt_template_version
+
+
+@pytest.mark.parametrize("reasoning_effort", ["medium", "low"])
+def test_codex_client_snapshots_luna_generation_profiles(
+    tmp_path: Path,
+    reasoning_effort: str,
+) -> None:
+    """Luna的Medium和Low选择都应精确固化到线程请求与handoff。
+
+    Args:
+        tmp_path: Pytest为每个推理档位提供的隔离知识目录。
+        reasoning_effort: 页面允许的Luna推理档位。
+
+    Returns:
+        None；本次请求、线程参数和持久handoff使用同一组合时通过。
+    """
+
+    application, manifest, target_id, _source_file, app_server = _prepare_codex_client_handoff_system(tmp_path)
+    task = application.submit_knowledge_target_generation(
+        KnowledgeTargetGenerationRequest(
+            system_id=SYSTEM_ID,
+            target_id=target_id,
+            scan_id=manifest.scan_id,
+            agent="codex",
+            confirmed=True,
+            interaction_mode="codex_client",
+            intent="initial",
+            attempt_id=f"attempt-client-luna-{reasoning_effort}-0001",
+            codex_model="gpt-5.6-luna",
+            reasoning_effort=reasoning_effort,
+        )
+    )
+
+    assert task.client_handoff is not None
+    assert task.client_handoff.codex_model == "gpt-5.6-luna"
+    assert task.client_handoff.reasoning_effort == reasoning_effort
+    assert app_server.requests[0]["model"] == "gpt-5.6-luna"
+    assert app_server.requests[0]["reasoning_effort"] == reasoning_effort
+    application.close()
 
 
 def test_codex_client_completion_gaps_reuse_one_thread_then_wait_safely(tmp_path: Path) -> None:

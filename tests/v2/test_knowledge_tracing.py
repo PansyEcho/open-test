@@ -1539,6 +1539,97 @@ def test_agent_java_reference_binds_declared_type_line_and_overload(tmp_path: Pa
     assert "return input" not in reference_block
 
 
+def test_agent_trace_accepts_single_word_qualified_route_and_rejects_other_enum(tmp_path: Path) -> None:
+    """动态分发应接受同枚举的CANCEL路由并拒绝其他枚举下的同名常量。
+
+    Args:
+        tmp_path: Pytest提供的隔离知识存储目录。
+
+    Returns:
+        None；精确枚举身份连接成功且同名跨枚举连接被拒绝时通过。
+    """
+
+    service, _, _ = _knowledge_service(tmp_path)
+    entry_reference = SourceReference(
+        path="RefundFacadeImpl.java",
+        symbol="RefundFacadeImpl#cancel",
+        line=1,
+    )
+    invoker_reference = SourceReference(
+        path="RefundCancelServiceInvoker.java",
+        symbol="RefundCancelServiceInvoker#invoke",
+        line=2,
+    )
+    entry_agent_reference = {
+        "path": entry_reference.path,
+        "symbol": entry_reference.symbol,
+        "line": entry_reference.line,
+    }
+    invoker_agent_reference = {
+        "path": invoker_reference.path,
+        "symbol": invoker_reference.symbol,
+        "line": invoker_reference.line,
+    }
+    envelope = AgentKnowledgeEnvelope.model_validate(
+        {
+            "status": "completed",
+            "system_id": "demo-system",
+            "target_ids": ["facade:demo.RefundFacade#cancel"],
+            "summaries": [],
+            "questions": [],
+            "source_refs": [
+                entry_agent_reference,
+                invoker_agent_reference,
+            ],
+            "trace_steps": [
+                {
+                    "sequence": 1,
+                    "role": "entry",
+                    "source_ref": entry_agent_reference,
+                    "summary": "取消入口按退款服务枚举选择动态处理器。",
+                },
+                {
+                    "sequence": 2,
+                    "role": "invoker",
+                    "source_ref": invoker_agent_reference,
+                    "summary": "取消处理器声明相同的退款服务路由。",
+                },
+            ],
+        }
+    )
+    caller_lines = [
+        "class RefundFacadeImpl { Object cancel(Object request) { "
+        "return execute(request, RefundOrderServiceEnum.CANCEL); } }"
+    ]
+    matching_invoker_lines = [
+        "@TradeService(name = RefundOrderServiceEnum.CANCEL)",
+        "class RefundCancelServiceInvoker { Object invoke(Object request) { return request; } }",
+    ]
+
+    # 相同枚举类型和单词常量共同证明Facade到Invoker的动态分发边。
+    service._validate_agent_trace_links(
+        envelope,
+        {
+            entry_reference.path: caller_lines,
+            invoker_reference.path: matching_invoker_lines,
+        },
+    )
+
+    # 常量名称相同但枚举类型不同不能建立路由，避免COMMON、CANCEL等短值误连。
+    mismatched_invoker_lines = [
+        "@TradeService(name = OtherServiceEnum.CANCEL)",
+        "class RefundCancelServiceInvoker { Object invoke(Object request) { return request; } }",
+    ]
+    with pytest.raises(KnowledgeValidationError, match="not connected"):
+        service._validate_agent_trace_links(
+            envelope,
+            {
+                entry_reference.path: caller_lines,
+                invoker_reference.path: mismatched_invoker_lines,
+            },
+        )
+
+
 def test_agent_trace_accepts_proven_inheritance_and_interface_dispatch(tmp_path: Path) -> None:
     """相邻链应接受源码明确证明的继承重载与接口字段到实现类分派。
 
@@ -2490,6 +2581,34 @@ def test_codex_app_server_prefers_desktop_bundled_executable(tmp_path: Path) -> 
     assert _resolve_codex_app_server_executable((tmp_path / "missing-codex",)) == "codex"
 
 
+@pytest.mark.parametrize("reasoning_effort", ["medium", "low"])
+def test_codex_app_server_accepts_luna_only_when_local_catalog_lists_effort(
+    reasoning_effort: str,
+) -> None:
+    """Luna只能在本机模型目录明确列出目标档位时通过启动前门禁。
+
+    Args:
+        reasoning_effort: 页面允许选择的Medium或Low档位。
+
+    Returns:
+        None；两个合法档位通过，目录未声明的档位仍被明确拒绝时通过。
+    """
+
+    client = CodexAppServerClient()
+    payload = {
+        "data": [
+            {
+                "id": "gpt-5.6-luna",
+                "supportedReasoningEfforts": ["low", "medium"],
+            }
+        ]
+    }
+
+    client._require_model_effort(payload, "gpt-5.6-luna", reasoning_effort)
+    with pytest.raises(ExecutionFailure, match="does not support reasoning effort"):
+        client._require_model_effort(payload, "gpt-5.6-luna", "high")
+
+
 def test_codex_app_server_creates_and_injects_thread_without_starting_a_turn(
     tmp_path: Path,
 ) -> None:
@@ -2600,6 +2719,123 @@ def test_codex_app_server_creates_and_injects_thread_without_starting_a_turn(
     injected = next(request for request in requests if request.get("method") == "thread/inject_items")
     assert injected["params"]["items"][0]["role"] == "user"
     assert "OpenTest知识目标" in injected["params"]["items"][0]["content"][0]["text"]
+
+
+def test_codex_app_server_starts_first_persisted_turn_and_closes_after_completion(tmp_path: Path) -> None:
+    """等待线程首次点击应显式启动知识Skill，并在完成后回收App Server。
+
+    Args:
+        tmp_path: pytest隔离的假App Server、协议日志和线程状态文件。
+
+    Returns:
+        None；协议只出现一次turn/start、包含显式Skill且子进程正常退出时通过。
+    """
+
+    executable = tmp_path / "codex"
+    request_log = tmp_path / "turn-start-requests.jsonl"
+    process_closed = tmp_path / "turn-process-closed.txt"
+    executable.write_text(
+        "#!/usr/bin/env python3\n"
+        "import json, pathlib, sys\n"
+        f"request_log = pathlib.Path({str(request_log)!r})\n"
+        f"process_closed = pathlib.Path({str(process_closed)!r})\n"
+        "for raw in sys.stdin:\n"
+        "    request = json.loads(raw)\n"
+        "    request_log.open('a', encoding='utf-8').write(json.dumps(request) + '\\n')\n"
+        "    if 'id' not in request:\n"
+        "        continue\n"
+        "    method = request.get('method')\n"
+        "    if method == 'thread/read':\n"
+        "        result = {'thread':{'id':request['params']['threadId'],'turns':[]}}\n"
+        "    elif method == 'thread/resume':\n"
+        "        result = {'thread':{'id':request['params']['threadId'],'turns':[]}}\n"
+        "    elif method == 'mcpServerStatus/list':\n"
+        "        names = ['get_knowledge_handoff','list_source_files','search_source','read_source','submit_knowledge_candidate']\n"
+        "        result = {'data':[{'name':'opentest_knowledge','tools':{name:{'name':name} for name in names}}]}\n"
+        "    elif method == 'turn/start':\n"
+        "        result = {'turn':{'id':'turn-opentest-first','status':'inProgress','items':[]}}\n"
+        "    else:\n"
+        "        result = {}\n"
+        "    print(json.dumps({'id':request['id'],'result':result}), flush=True)\n"
+        "    if method == 'turn/start':\n"
+        "        completed = {'method':'turn/completed','params':{'threadId':request['params']['threadId'],'turn':{'id':'turn-opentest-first','status':'completed','items':[]}}}\n"
+        "        print(json.dumps(completed), flush=True)\n"
+        "process_closed.write_text('closed', encoding='utf-8')\n",
+        encoding="utf-8",
+    )
+    executable.chmod(0o755)
+    client = CodexAppServerClient(CodexAppServerConfig(executable=str(executable)))
+
+    started = client.start_thread_turn("01a-client-handoff-test")
+    # 完成通知由后台线程消费；有界等待只验证进程生命周期，不模拟模型耗时。
+    deadline = time.monotonic() + 2
+    while not process_closed.exists() and time.monotonic() < deadline:
+        time.sleep(0.01)
+    requests = [json.loads(line) for line in request_log.read_text(encoding="utf-8").splitlines()]
+    methods = [request.get("method") for request in requests]
+
+    assert started is True
+    assert process_closed.read_text(encoding="utf-8") == "closed"
+    assert methods == [
+        "initialize",
+        "initialized",
+        "thread/read",
+        "thread/resume",
+        "mcpServerStatus/list",
+        "turn/start",
+    ]
+    turn_start = next(request for request in requests if request.get("method") == "turn/start")
+    assert turn_start["params"] == {
+        "threadId": "01a-client-handoff-test",
+        "input": [
+            {
+                "type": "text",
+                "text": "$knowledge-handoff 请继续当前OpenTest知识接管任务，并在同一任务内完成自动校验和发布。",
+            }
+        ],
+    }
+
+
+def test_codex_app_server_does_not_start_second_turn_for_persisted_thread(tmp_path: Path) -> None:
+    """已有turn的持久线程再次点击只读识别即可，不得抢占writer或追加第二次调用。
+
+    Args:
+        tmp_path: pytest隔离的假App Server与协议日志。
+
+    Returns:
+        None；只读结果为False且协议未恢复线程、检查MCP或调用turn/start时通过。
+    """
+
+    executable = tmp_path / "codex"
+    request_log = tmp_path / "existing-turn-requests.jsonl"
+    executable.write_text(
+        "#!/usr/bin/env python3\n"
+        "import json, pathlib, sys\n"
+        f"request_log = pathlib.Path({str(request_log)!r})\n"
+        "for raw in sys.stdin:\n"
+        "    request = json.loads(raw)\n"
+        "    request_log.open('a', encoding='utf-8').write(json.dumps(request) + '\\n')\n"
+        "    if 'id' not in request:\n"
+        "        continue\n"
+        "    if request.get('method') == 'thread/read':\n"
+        "        result = {'thread':{'id':request['params']['threadId'],'turns':[{'id':'turn-existing'}]}}\n"
+        "    else:\n"
+        "        result = {}\n"
+        "    print(json.dumps({'id':request['id'],'result':result}), flush=True)\n",
+        encoding="utf-8",
+    )
+    executable.chmod(0o755)
+
+    started = CodexAppServerClient(CodexAppServerConfig(executable=str(executable))).start_thread_turn(
+        "01a-client-handoff-test"
+    )
+    methods = [
+        json.loads(line).get("method")
+        for line in request_log.read_text(encoding="utf-8").splitlines()
+    ]
+
+    assert started is False
+    assert methods == ["initialize", "initialized", "thread/read"]
 
 
 def test_codex_app_server_rejects_thread_without_ready_opentest_mcp_tools(tmp_path: Path) -> None:

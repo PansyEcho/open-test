@@ -68,6 +68,14 @@ Do not add retries or fallbacks to hide an unknown root cause. First establish t
 - Do not invent follow-up work in order to keep working.
 - If completion genuinely requires a wider architecture, persistence, migration, or compatibility change, state the concrete blocker and the smallest viable option before implementing the wider change.
 
+### Frontend static asset freshness
+
+- Every behavior-changing edit to a browser-loaded JavaScript or CSS asset must also change the asset URL referenced by the HTML. Prefer a human-readable version query such as `/assets/app.js?v=20260825-01`; renaming files is allowed when the existing build or packaging flow already owns the names. Do not rely on the browser noticing that the contents behind an unchanged URL changed.
+- Treat an already-open page as still running its previously loaded JavaScript even after the backend restarts. Before validating a frontend change, reopen the page or perform a hard reload, then confirm from the served HTML or browser network record that the new versioned asset URL was actually loaded.
+- When an OpenTest page is expected to remain open across backend restarts, a behavior-changing frontend update must include a lightweight page-version mismatch check. A stale page must block state-changing actions and ask the user to reload, or reload automatically when doing so cannot discard unsaved input.
+- Frontend completion evidence must exercise the application through the running HTTP service, not only inspect source files or run isolated JavaScript tests. For workflows that launch another application, verify the required API request occurred and succeeded before the external deep link was opened.
+- Do not report a frontend fix complete while testing in a tab that predates the asset change, and do not use manual cache deletion as the permanent solution.
+
 ### Development service lifecycle
 
 - After completing development work, stop every service process started for that work before handing off to the user.
