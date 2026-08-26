@@ -95,7 +95,7 @@ def _manifest(source: Path) -> ScanManifest:
     implementation = source / "OtherFacadeImpl.java"
     implementation.write_text(
         """package demo;
-class OtherFacadeImpl {
+class OtherFacadeImpl implements OtherFacade {
   Result query(Request request) {
     if (request.enabled()) { return customService.list(request.types()); }
     return Result.empty();
@@ -544,7 +544,7 @@ def test_tracer_cache_is_invalidated_between_scan_batches(tmp_path: Path) -> Non
     implementation = source / "OtherFacadeImpl.java"
     implementation.write_text(
         """package demo;
-class OtherFacadeImpl {
+class OtherFacadeImpl implements OtherFacade {
   Result query(Request request) {
     if (request.enabled()) { return secondService.load(request.types()); }
     return Result.empty();

@@ -27,6 +27,7 @@
 - [x] 3.14 修复Codex严格Schema、Agent失败partial终态、历史任务兼容投影和刷新防重复费用门禁
 - [x] 3.15 允许指定Agent通过OpenTest受控工具扫描注册源码根，并对动态Facade强制追踪至业务与数据或远程边界
 - [x] 3.16 增加Codex App Server客户端handoff、repo插件、本地回环候选提交、完整度自动补全和幂等自动发布状态
+- [x] 3.17 移除固定补全轮次上限，增加同turn身份检查点、连续无进展技术失败和`waiting_for_input`原任务闭环
 
 ## 4. 三栏工作台
 
@@ -45,6 +46,8 @@
 - [x] 4.13 刷新后恢复同一活动任务并按运行/等待状态禁用当前对象生成入口
 - [x] 4.14 增加Prompt、公开会话、源码访问轨迹、最终输出、会话ID和手动恢复命令诊断区
 - [x] 4.15 修复目标切换Loading、迟到响应、系统最新任务串线并为已有知识增加重新生成与Codex深链
+- [x] 4.16 将活动会话writer收敛到Codex桌面端，增加版本化本机IPC、手动启动降级、任务问题卡和历史状态原地恢复
+- [ ] 4.17 在Agent启动前由代码确定Facade公共业务依赖闭包，按知识状态扩展同一批次候选并原子发布，同时放宽入口与完整度非业务门禁并统一Luna Low默认值
 
 ## 5. 验证
 
@@ -62,3 +65,5 @@
 - [x] 5.12 使用无网络假CLI验证严格Schema预检、partial计数、历史投影、SSE终止与重复提交拒绝
 - [x] 5.13 验证受控源码MCP、完整路径完成门禁、诊断恢复、完整离线门禁和本轮OCR delegation
 - [x] 5.14 验证Sol Low/Medium、Prompt配置、隔离调用契约、同聊天补全、真实页面、完整门禁、OCR delegation及RefundFacade#queryList真实客户端生成
+- [x] 5.15 验证机器缺口自动闭环、人工问题原任务续接、桌面单写者幂等、两个报告会话夹具、前端资源版本、完整离线门禁、OpenSpec strict和OCR delegation
+- [ ] 5.16 验证确定性依赖扫描、状态跳过、Facade核心路径、简洁完整度、Luna Low默认值、RefundFacade#cancel真实页面闭环和本轮OCR delegation

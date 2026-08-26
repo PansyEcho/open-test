@@ -44,6 +44,7 @@ from opentest.domain.models import (
     KnowledgeClientCandidateConfirmation,
     KnowledgeClientCandidateSubmission,
     KnowledgeClientCandidateEnvelope,
+    KnowledgeClientHandoffStatus,
     KnowledgeTargetGenerationOutcome,
     KnowledgeTargetGenerationRequest,
     KnowledgeQuestion,
@@ -192,17 +193,21 @@ class _KnowledgeAgentRunner:
 
 
 class _FakeCodexAppServer:
-    """只创建持久线程身份、不发送模型消息的App Server测试替身。"""
+    """同时模拟只读App Server快照和Codex桌面follower启动。"""
 
     def __init__(self) -> None:
-        """初始化线程创建计数与最近一次可核对请求。"""
+        """初始化线程创建、只读快照和桌面启动的可核对状态。"""
 
         self.call_count = 0
         self.requests: list[dict[str, str]] = []
         self.turn_start_checks = 0
         self.started_thread_ids: set[str] = set()
+        self.started_profiles: list[tuple[str, str]] = []
         self.turn_start_failures_remaining = 0
         self.turn_start_gate: threading.Event | None = None
+        self.turn_count_by_thread: dict[str, int] = {}
+        self.turn_status_by_thread: dict[str, str] = {}
+        self.latest_turn_id_by_thread: dict[str, str] = {}
 
     def require_knowledge_plugin(self) -> None:
         """模拟已经由用户一次性安装并启用OpenTest插件。
@@ -253,33 +258,94 @@ class _FakeCodexAppServer:
         thread_id = f"01a-client-thread-{self.call_count}"
         return SimpleNamespace(thread_id=thread_id, deep_link=f"codex://threads/{thread_id}")
 
-    def start_thread_turn(self, thread_id: str) -> bool:
-        """模拟真实App Server以已有turn作为首次执行幂等门。
+    def inspect_thread(self, thread_id: str) -> object:
+        """模拟App Server只读返回当前线程最近turn。
 
         Args:
             thread_id: 应用已持久化的同一Codex线程ID。
 
         Returns:
-            首次检查该线程时为True，后续重复检查为False。
+            与生产只读快照字段一致的轻量对象。
 
         Side Effects:
-            记录检查次数和已经启动过的线程，不调用任何模型。
-
-        Raises:
-            ExecutionFailure: 测试显式配置临时失败次数时模拟App Server启动边界故障。
+            无；不会改变turn数量、状态或桌面owner。
         """
 
+        turn_count = self.turn_count_by_thread.get(thread_id, 0)
+        # 测试可覆盖只读投影中的turn身份，以复现桌面新turn尚未替换旧快照的短暂窗口。
+        latest_turn_id = self.latest_turn_id_by_thread.get(
+            thread_id,
+            f"turn-{thread_id}-{turn_count}" if turn_count else "",
+        )
+        return SimpleNamespace(
+            thread_id=thread_id,
+            deep_link=f"codex://threads/{thread_id}",
+            turn_count=turn_count,
+            latest_turn_id=latest_turn_id,
+            latest_turn_status=self.turn_status_by_thread.get(thread_id, ""),
+        )
+
+    def start_turn(
+        self,
+        thread_id: str,
+        prompt: str,
+        model: str,
+        reasoning_effort: str,
+    ) -> object:
+        """模拟Codex桌面owner接受一次follower turn请求。
+
+        Args:
+            thread_id: 应用已持久化的同一Codex线程ID。
+            prompt: 首次生成或自动补全的明确Skill消息。
+            model: handoff创建时固化的Codex模型。
+            reasoning_effort: handoff创建时固化的推理档位。
+
+        Returns:
+            started或manual_required桌面启动结果。
+
+        Side Effects:
+            记录请求次数和模拟turn状态；不调用任何模型。
+        """
+
+        assert prompt.startswith("$knowledge-handoff")
+        # 首轮没有可继承的线程设置，记录应用显式交给桌面owner的固化生成配置。
+        assert model in {"gpt-5.6-luna", "gpt-5.6-sol"}
+        assert reasoning_effort in {"low", "medium"}
+        self.started_profiles.append((model, reasoning_effort))
         self.turn_start_checks += 1
         if self.turn_start_gate is not None:
-            # 测试可暂停App Server边界，证明应用关闭会等待当前自动启动检查完整退出。
+            # 测试可暂停桌面IPC边界，证明应用关闭会等待当前协调请求完整退出。
             self.turn_start_gate.wait(timeout=2)
         if self.turn_start_failures_remaining > 0:
             self.turn_start_failures_remaining -= 1
-            raise ExecutionFailure("simulated transient turn start failure")
-        if thread_id in self.started_thread_ids:
-            return False
+            return SimpleNamespace(
+                state="manual_required",
+                turn_id="",
+                safe_message="simulated transient desktop failure",
+            )
+        next_turn_count = self.turn_count_by_thread.get(thread_id, 0) + 1
+        self.turn_count_by_thread[thread_id] = next_turn_count
+        self.turn_status_by_thread[thread_id] = "inProgress"
         self.started_thread_ids.add(thread_id)
-        return True
+        return SimpleNamespace(
+            state="started",
+            turn_id=f"turn-{thread_id}-{next_turn_count}",
+            safe_message="",
+        )
+
+    def complete_latest_turn(self, thread_id: str) -> None:
+        """把测试线程最近turn推进为已完成。
+
+        Args:
+            thread_id: 已由桌面替身启动过的线程ID。
+
+        Side Effects:
+            只更新内存快照，使协调器可验证自动续跑和无进展判定。
+        """
+
+        if self.turn_count_by_thread.get(thread_id, 0) <= 0:
+            raise AssertionError("cannot complete a thread without a turn")
+        self.turn_status_by_thread[thread_id] = "completed"
 
 
 class _FailingKnowledgeAgentRunner(_KnowledgeAgentRunner):
@@ -454,7 +520,7 @@ class _WaitingContinuationAgentRunner:
                         "why_asked": "该责任边界影响异常结果与测试判断。",
                         "answer_type": "single_choice",
                         "answer_options": ["本系统补偿", "上游补偿"],
-                        "source_refs": [],
+                        "source_refs": [self.source_refs[0]],
                         "impact": "high",
                     }
                 ],
@@ -1347,6 +1413,7 @@ def _prepare_codex_client_handoff_system(
     application.runtime_settings.write(RuntimeToolSettings(knowledge_agent="codex"))
     app_server = _FakeCodexAppServer()
     application.codex_app_server = app_server
+    application.codex_desktop = app_server
     # 如果客户端接管误走旧Runner，本桩会使测试立即失败而不是产生外部费用。
     application.agent_runner = _FailingKnowledgeAgentRunner()
     application.knowledge.runner = application.agent_runner
@@ -1417,6 +1484,10 @@ def test_codex_client_handoff_ignores_retired_claude_global_selection(tmp_path: 
     """
 
     application, manifest, target_id, _source_file, app_server = _prepare_codex_client_handoff_system(tmp_path)
+    # 本用例固定恢复和只读投影时点，周期协调行为由后续页面API测试单独覆盖。
+    application._client_coordination_stop.set()
+    application._client_coordination_wakeup.set()
+    application._client_coordination_thread.join(timeout=2)
     application.runtime_settings.write(RuntimeToolSettings(knowledge_agent="claude"))
 
     task = application.submit_knowledge_target_generation(
@@ -1480,6 +1551,9 @@ def test_codex_client_handoff_is_idempotent_and_does_not_publish_or_run_agent(
     )
 
     first = application.submit_knowledge_target_generation(request)
+    assert first.client_handoff is not None
+    started = application.start_knowledge_client_turn(first.client_handoff.handoff_id)
+    assert started["state"] == "started"
     repeated = application.submit_knowledge_target_generation(request)
     batch = application.store.read_draft_batch(SYSTEM_ID, first.client_handoff.batch_id)
 
@@ -1489,9 +1563,16 @@ def test_codex_client_handoff_is_idempotent_and_does_not_publish_or_run_agent(
     assert first.client_handoff.target_id == target_id
     assert first.client_handoff.attempt_id == request.attempt_id
     assert first.client_handoff.deep_link == f"codex://threads/{first.client_handoff.thread_id}"
+    assert repeated.result["start_state"] == "started"
+    # 同attempt恢复不能抹掉启动回执，否则thread/read投影延迟会导致第二个turn。
+    app_server.turn_count_by_thread[first.client_handoff.thread_id] = 0
+    app_server.turn_status_by_thread[first.client_handoff.thread_id] = ""
+    lagged_repeat = application.start_knowledge_client_turn(first.client_handoff.handoff_id)
+    assert lagged_repeat["state"] == "already_started"
     assert app_server.call_count == 1
-    assert app_server.requests[0]["model"] == "gpt-5.6-sol"
-    assert app_server.requests[0]["reasoning_effort"] == "medium"
+    assert app_server.turn_start_checks == 1
+    assert app_server.requests[0]["model"] == "gpt-5.6-luna"
+    assert app_server.requests[0]["reasoning_effort"] == "low"
     assert "退票查询系统" in app_server.requests[0]["prompt"]
     assert "自愿退" in app_server.requests[0]["prompt"]
     assert batch.client_handoff is not None
@@ -1550,18 +1631,18 @@ def test_codex_client_page_reuses_auto_started_thread_via_loopback_api(tmp_path:
     assert first.json()["task"]["task_id"] == task.task_id
     assert repeated.json()["task"]["client_handoff"]["thread_id"] == task.client_handoff.thread_id
     assert app_server.call_count == 1
-    assert app_server.turn_start_checks == 3
+    assert app_server.turn_start_checks == 1
     assert app_server.started_thread_ids == {task.client_handoff.thread_id}
 
 
-def test_codex_client_auto_start_retries_transient_failure_without_new_identity(tmp_path: Path) -> None:
-    """首turn临时失败后应重试同一线程且不创建第二套知识身份。
+def test_codex_client_manual_start_can_retry_same_identity_after_desktop_recovers(tmp_path: Path) -> None:
+    """桌面连接临时失败后应允许同一线程再次接管且不创建第二套知识身份。
 
     Args:
         tmp_path: Pytest隔离的源码、任务和假App Server状态目录。
 
     Returns:
-        None；第二次自动检查启动原线程且task、handoff、batch均保持不变时通过。
+        None；第二次协调检查启动原线程且task、handoff、batch身份均保持不变时通过。
     """
 
     application, manifest, target_id, _source_file, app_server = _prepare_codex_client_handoff_system(tmp_path)
@@ -1584,9 +1665,16 @@ def test_codex_client_auto_start_retries_transient_failure_without_new_identity(
     first_deadline = time.monotonic() + 2
     while app_server.turn_start_checks < 1 and time.monotonic() < first_deadline:
         time.sleep(0.01)
-    application._client_turn_start_wakeup.set()
+    application._client_coordination_wakeup.set()
     second_deadline = time.monotonic() + 2
-    while task.client_handoff.thread_id not in app_server.started_thread_ids and time.monotonic() < second_deadline:
+    while time.monotonic() < second_deadline:
+        # 桌面替身先记录接收，再由应用持久化启动回执；必须等待整个协调事务结束。
+        current = application.tasks.get(task.task_id)
+        if (
+            task.client_handoff.thread_id in app_server.started_thread_ids
+            and current.result.get("start_state") == "started"
+        ):
+            break
         time.sleep(0.01)
 
     settled = application.tasks.get(task.task_id)
@@ -1595,14 +1683,20 @@ def test_codex_client_auto_start_retries_transient_failure_without_new_identity(
     assert app_server.call_count == 1
     assert app_server.started_thread_ids == {task.client_handoff.thread_id}
     assert settled.task_id == task.task_id
-    assert settled.client_handoff == task.client_handoff
-    assert workflow.client_handoff == task.client_handoff
+    assert settled.client_handoff is not None
+    assert workflow.client_handoff is not None
+    assert settled.client_handoff.handoff_id == task.client_handoff.handoff_id
+    assert workflow.client_handoff.handoff_id == task.client_handoff.handoff_id
+    assert settled.client_handoff.thread_id == task.client_handoff.thread_id
+    assert workflow.client_handoff.thread_id == task.client_handoff.thread_id
+    assert settled.result["start_state"] == "started"
+    assert "manual_message" not in settled.result
     application.close()
-    assert application._client_turn_start_thread.is_alive() is False
+    assert application._client_coordination_thread.is_alive() is False
 
 
-def test_codex_client_close_waits_for_active_turn_start_worker(tmp_path: Path) -> None:
-    """应用关闭必须等待正在执行首turn请求的后台线程完整退出。
+def test_codex_client_close_waits_for_active_desktop_coordination(tmp_path: Path) -> None:
+    """应用关闭必须等待正在执行桌面接管请求的后台协调线程完整退出。
 
     Args:
         tmp_path: Pytest隔离的源码、任务和假App Server状态目录。
@@ -1642,7 +1736,7 @@ def test_codex_client_close_waits_for_active_turn_start_worker(tmp_path: Path) -
     app_server.turn_start_gate.set()
     close_thread.join(timeout=2)
     assert close_thread.is_alive() is False
-    assert application._client_turn_start_thread.is_alive() is False
+    assert application._client_coordination_thread.is_alive() is False
     assert app_server.started_thread_ids == {task.client_handoff.thread_id}
 
 
@@ -1733,16 +1827,17 @@ def test_codex_client_snapshots_luna_generation_profiles(
     assert app_server.requests[0]["model"] == "gpt-5.6-luna"
     assert app_server.requests[0]["reasoning_effort"] == reasoning_effort
     application.close()
+    assert app_server.started_profiles == [("gpt-5.6-luna", reasoning_effort)]
 
 
-def test_codex_client_completion_gaps_reuse_one_thread_then_wait_safely(tmp_path: Path) -> None:
-    """Facade候选连续不完整时只能复用原聊天补全两轮，随后安全等待。
+def test_codex_client_completion_gaps_reuse_one_thread_without_round_limit(tmp_path: Path) -> None:
+    """Facade候选持续改进时应始终复用原聊天且不受固定补全轮数限制。
 
     Args:
         tmp_path: Pytest隔离的源码、草稿、任务和假App Server目录。
 
     Returns:
-        None；三次不同缺口候选始终绑定同一任务和线程且未发布知识时通过。
+        None；三次不同候选始终处于机器补全并绑定同一任务和线程时通过。
     """
 
     application, manifest, _target_id, source_file, app_server = _prepare_codex_client_handoff_system(tmp_path)
@@ -1813,19 +1908,654 @@ def test_codex_client_completion_gaps_reuse_one_thread_then_wait_safely(tmp_path
     assert [item.status for item in observed] == [
         TaskStatus.WAITING_FOR_CLIENT,
         TaskStatus.WAITING_FOR_CLIENT,
-        TaskStatus.WAITING_FOR_COMPLETION,
+        TaskStatus.WAITING_FOR_CLIENT,
     ]
     assert all(item.task_id == task.task_id for item in observed)
     assert all(item.client_handoff and item.client_handoff.thread_id == thread_id for item in observed)
     assert observed[-1].client_handoff is not None
-    assert observed[-1].client_handoff.completion_round == 2
+    assert observed[-1].client_handoff.completion_round == 3
     assert observed[-1].client_handoff.completion_gaps
     assert app_server.call_count == 1
     assert application.store.list_nodes(SYSTEM_ID) == []
     refreshed_workflow = application.get_knowledge_workflow(SYSTEM_ID)
-    assert refreshed_workflow.active_generation_status == "waiting_for_completion"
-    assert refreshed_workflow.generation_blocked_reason == "waiting_for_completion"
-    assert refreshed_workflow.next_action == "在原Codex客户端任务中继续补读并补全当前候选"
+    assert refreshed_workflow.active_generation_status == "waiting_for_client"
+    assert refreshed_workflow.generation_blocked_reason == "waiting_for_client"
+    assert refreshed_workflow.next_action == "Codex正在原任务中生成或自动补全，无需人工确认"
+
+
+def test_codex_client_needs_input_waits_in_same_task_then_auto_publishes(tmp_path: Path) -> None:
+    """高影响业务疑点应展示在原任务，回答后的完整候选应自动发布。
+
+    Args:
+        tmp_path: pytest隔离的源码、问题、任务和知识目录。
+
+    Returns:
+        None；确定性事实先发布、问题保持开放且最终候选沿用原身份完成时通过。
+    """
+
+    application, manifest, target_id, source_file, app_server = _prepare_codex_client_handoff_system(tmp_path)
+    request = KnowledgeTargetGenerationRequest(
+        system_id=SYSTEM_ID,
+        target_id=target_id,
+        scan_id=manifest.scan_id,
+        agent="codex",
+        confirmed=True,
+        interaction_mode="codex_client",
+        intent="initial",
+        attempt_id="attempt-client-needs-input-0001",
+    )
+    task = application.submit_knowledge_target_generation(request)
+    assert task.client_handoff is not None
+    handoff_id = task.client_handoff.handoff_id
+    thread_id = task.client_handoff.thread_id
+    batch = application.store.read_draft_batch(SYSTEM_ID, task.client_handoff.batch_id)
+    node_id = batch.drafts[0].node.node_id
+    source_reference = {
+        "path": source_file.name,
+        "symbol": "ClientQueryJob#execute",
+        "line": 1,
+    }
+    application.call_knowledge_client_source_tool(
+        handoff_id,
+        "read_source",
+        {"path": source_file.name, "start_line": 1, "end_line": 1},
+    )
+    question_candidate = KnowledgeClientCandidateEnvelope(
+        status="needs_input",
+        system_id=SYSTEM_ID,
+        target_ids=[target_id],
+        summaries=[],
+        questions=[
+            {
+                "title": "查询为空时是否应重试",
+                "detail": "源码只显示一次仓储查询，无法确定空结果是否需要业务重试。",
+                "affected_node_ids": [node_id],
+                "affected_target_ids": [target_id],
+                "category": "failure_policy",
+                "why_asked": "不同选择会改变空结果用例的执行次数和最终断言。",
+                "answer_type": "single_choice",
+                "answer_options": ["直接返回空结果", "重试一次后返回"],
+                "source_refs": [source_reference],
+                "impact": "high",
+            }
+        ],
+        source_refs=[source_reference],
+        trace_steps=[
+            {
+                "sequence": 1,
+                "role": "no_downstream",
+                "source_ref": source_reference,
+                "summary": "源码能证明查询入口，但未声明空结果业务策略。",
+            }
+        ],
+    )
+
+    # 顶层trace不能替代问题自身的源码证据；空问题引用必须在进入人工等待前被拒绝。
+    question_without_source = question_candidate.model_copy(
+        update={
+            "questions": [
+                question_candidate.questions[0].model_copy(update={"source_refs": []})
+            ]
+        }
+    )
+    with pytest.raises(KnowledgeValidationError, match="question with source references"):
+        application.submit_knowledge_client_candidate(
+            handoff_id,
+            KnowledgeClientCandidateSubmission(candidate=question_without_source),
+        )
+
+    waiting = application.submit_knowledge_client_candidate(
+        handoff_id,
+        KnowledgeClientCandidateSubmission(candidate=question_candidate),
+    )
+
+    assert waiting.status == TaskStatus.WAITING_FOR_INPUT
+    assert waiting.task_id == task.task_id
+    assert waiting.client_handoff is not None
+    assert waiting.client_handoff.thread_id == thread_id
+    assert waiting.result["question_count"] == 1
+    assert waiting.result["pending_questions"][0]["title"] == "查询为空时是否应重试"
+    published_before_answer = application.store.list_nodes(SYSTEM_ID)
+    assert len(published_before_answer) == 1
+    assert published_before_answer[0][0].status == KnowledgeStatus.CODE_VERIFIED
+    handoff_payload = application.get_knowledge_client_handoff(handoff_id)
+    assert handoff_payload["pending_questions"][0].title == "查询为空时是否应重试"
+
+    # 刷新或重复生成使用同一attempt恢复任务时，必须保留问题卡和原线程身份。
+    recovered_waiting = application.submit_knowledge_target_generation(request)
+    assert recovered_waiting.task_id == task.task_id
+    assert recovered_waiting.client_handoff is not None
+    assert recovered_waiting.client_handoff.thread_id == thread_id
+    assert recovered_waiting.result["pending_questions"][0]["title"] == "查询为空时是否应重试"
+    workflow_snapshot = application.get_knowledge_workflow(SYSTEM_ID)
+    assert workflow_snapshot.next_action == "在原Codex任务中回答高影响业务问题后继续"
+
+    # 用户已在原Codex任务回答后，客户端只需提交不再含开放问题的完整候选。
+    completed_candidate = KnowledgeClientCandidateEnvelope(
+        status="completed",
+        system_id=SYSTEM_ID,
+        target_ids=[target_id],
+        summaries=[
+            {
+                "node_id": node_id,
+                "summary": "空查询结果按用户确认口径直接返回，不额外发起重试。",
+            }
+        ],
+        questions=[],
+        source_refs=[source_reference],
+        trace_steps=[
+            {
+                "sequence": 1,
+                "role": "no_downstream",
+                "source_ref": source_reference,
+                "summary": "任务入口的唯一仓储查询调用已被源码读取覆盖。",
+            }
+        ],
+        completeness=AgentKnowledgeCompleteness(
+            business_purpose="客户端查询任务用于读取当前业务结果并按确认口径返回空集合。"
+        ),
+    )
+    completed = application.submit_knowledge_client_candidate(
+        handoff_id,
+        KnowledgeClientCandidateSubmission(candidate=completed_candidate),
+    )
+
+    assert completed.status == TaskStatus.COMPLETED
+    assert completed.task_id == task.task_id
+    assert completed.client_handoff is not None
+    assert completed.client_handoff.thread_id == thread_id
+    assert completed.client_handoff.status.value == "published"
+    stored_questions = application.store.list_questions(SYSTEM_ID)
+    assert len(stored_questions) == 1
+    assert stored_questions[0].status == "dismissed"
+    assert app_server.call_count == 1
+
+
+def test_codex_client_machine_gaps_continue_then_publish_in_original_thread(tmp_path: Path) -> None:
+    """仅缺失败处理和测试断言的Facade候选应自动续跑并在原线程发布。
+
+    Args:
+        tmp_path: pytest隔离的Facade源码、任务和桌面协调快照。
+
+    Returns:
+        None；机器缺口触发同线程下一turn且补齐后自动发布时通过。
+    """
+
+    application, manifest, _target_id, source_file, app_server = _prepare_codex_client_handoff_system(tmp_path)
+    # 本用例逐步控制turn完成时点，先停止周期协调器以消除后台轮询竞态。
+    application._client_coordination_stop.set()
+    application._client_coordination_wakeup.set()
+    application._client_coordination_thread.join(timeout=2)
+    source_root = Path(application.store.get_system(SYSTEM_ID).source_path)
+    service_file = source_root / "ClientQueryService.java"
+    repository_file = source_root / "ClientQueryRepository.java"
+    source_file.write_text(
+        "package demo; class ClientQueryJob { ClientQueryService service; void execute() { service.query(); } }\n",
+        encoding="utf-8",
+    )
+    service_file.write_text(
+        "package demo; class ClientQueryService { ClientQueryRepository repository; void query() { repository.query(); } }\n",
+        encoding="utf-8",
+    )
+    repository_file.write_text(
+        "package demo; interface ClientQueryRepository { void query(); }\n",
+        encoding="utf-8",
+    )
+    target_id = "facade:demo.ClientQueryJob#execute"
+    facade_entry = EntryPoint(
+        entry_id=target_id,
+        system_id=SYSTEM_ID,
+        kind="facade",
+        display_name="客户端查询接口",
+        source_id="demo.ClientQueryJob#execute",
+        source_path=str(source_file),
+        request_type="ClientQueryRequest",
+        response_type="ClientQueryPage",
+        tool_id="client-query",
+    )
+    facade_manifest = manifest.model_copy(
+        update={
+            "entries": [facade_entry],
+            "baseline": application.knowledge.git_repository.capture(source_root),
+        }
+    )
+    artifacts = SourceScanArtifactStore(application.knowledge_root)
+    artifacts.write_manifest(facade_manifest)
+    artifacts.publish_latest(SYSTEM_ID, facade_manifest.scan_id)
+    application.store.update_source_baseline(SYSTEM_ID, facade_manifest.baseline)
+    task = application.submit_knowledge_target_generation(
+        KnowledgeTargetGenerationRequest(
+            system_id=SYSTEM_ID,
+            target_id=target_id,
+            scan_id=facade_manifest.scan_id,
+            agent="codex",
+            confirmed=True,
+            interaction_mode="codex_client",
+            intent="initial",
+            attempt_id="attempt-client-machine-closure-0001",
+        )
+    )
+    assert task.client_handoff is not None
+    handoff_id = task.client_handoff.handoff_id
+    thread_id = task.client_handoff.thread_id
+    initial_start = application.start_knowledge_client_turn(handoff_id)
+    assert initial_start["state"] == "started"
+    application.call_knowledge_client_source_tool(
+        handoff_id,
+        "read_source",
+        {"path": source_file.name, "start_line": 1, "end_line": 1},
+    )
+    application.call_knowledge_client_source_tool(
+        handoff_id,
+        "read_source",
+        {"path": service_file.name, "start_line": 1, "end_line": 1},
+    )
+    application.call_knowledge_client_source_tool(
+        handoff_id,
+        "read_source",
+        {"path": repository_file.name, "start_line": 1, "end_line": 1},
+    )
+    handoff_payload = application.get_knowledge_client_handoff(handoff_id)
+    node_id = handoff_payload["candidate_node_ids"][0]
+    fixed_contract = handoff_payload["deterministic_invocation_contract"]
+    reference = {"path": source_file.name, "symbol": "ClientQueryJob#execute", "line": 1}
+    service_reference = {"path": service_file.name, "symbol": "ClientQueryService#query", "line": 1}
+    repository_reference = {
+        "path": repository_file.name,
+        "symbol": "ClientQueryRepository#query",
+        "line": 1,
+    }
+    trace_steps = [
+        {"sequence": 1, "role": "entry", "source_ref": reference, "summary": "Facade入口接收查询请求。"},
+        {"sequence": 2, "role": "service", "source_ref": service_reference, "summary": "业务层执行查询流程。"},
+        {"sequence": 3, "role": "data_access", "source_ref": repository_reference, "summary": "仓储边界读取查询结果。"},
+    ]
+    base_completeness = {
+        "business_purpose": "该接口用于根据客户端查询条件读取业务结果并返回分页数据集合。",
+        "applicable_scenarios": "适用于调用方需要按稳定查询条件浏览当前可见业务记录的场景。",
+        "input_semantics": "请求包含业务筛选条件和分页参数，缺失必填条件时不得进入仓储查询。",
+        "output_semantics": "响应返回匹配记录、分页位置和总量，空结果使用空集合表达而不是异常。",
+        "business_flow": "入口校验请求后进入业务查询阶段，再访问仓储并组装分页响应返回调用方。",
+        "important_branches": "合法条件进入查询主流程，无匹配记录进入空集合分支并保留分页元数据。",
+        "failure_handling": "",
+        "test_oracles": "",
+    }
+    incomplete_candidate = KnowledgeClientCandidateEnvelope(
+        status="completed",
+        system_id=SYSTEM_ID,
+        target_ids=[target_id],
+        summaries=[{"node_id": node_id, "summary": "接口完成校验、仓储查询和分页响应组装。"}],
+        questions=[],
+        source_refs=[reference, service_reference, repository_reference],
+        trace_steps=trace_steps,
+        completeness=AgentKnowledgeCompleteness(**base_completeness),
+        invocation_contract=fixed_contract,
+    )
+
+    waiting = application.submit_knowledge_client_candidate(
+        handoff_id,
+        KnowledgeClientCandidateSubmission(candidate=incomplete_candidate),
+    )
+
+    assert waiting.status == TaskStatus.WAITING_FOR_CLIENT
+    assert waiting.client_handoff is not None
+    assert waiting.client_handoff.completion_gaps == [
+        "missing_or_shallow:failure_handling",
+        "missing_or_shallow:test_oracles",
+    ]
+    assert waiting.result["start_state"] == "started"
+    # App Server存储短暂尚未看见桌面已接受的turn时，持久启动回执仍要阻止第二次模型调用。
+    app_server.turn_count_by_thread[thread_id] = 0
+    app_server.turn_status_by_thread[thread_id] = ""
+    duplicate_during_projection_lag = application.start_knowledge_client_turn(handoff_id)
+    assert duplicate_during_projection_lag["state"] == "already_started"
+    assert app_server.turn_start_checks == 1
+    # 只读投影短暂返回旧turn的终态时，不得把桌面已经启动的新turn误写为失败。
+    app_server.turn_count_by_thread[thread_id] = 1
+    app_server.latest_turn_id_by_thread[thread_id] = "turn-stale-before-desktop-start"
+    app_server.turn_status_by_thread[thread_id] = "interrupted"
+    stale_projection = application.start_knowledge_client_turn(handoff_id)
+    stale_task = stale_projection["task"]
+    assert stale_projection["state"] == "already_started"
+    assert stale_task.status == TaskStatus.WAITING_FOR_CLIENT
+    assert stale_task.client_handoff is not None
+    assert stale_task.client_handoff.status == KnowledgeClientHandoffStatus.WAITING_FOR_CLIENT
+    assert app_server.turn_start_checks == 1
+    # 桌面owner仍在执行时，同一turn也可能短暂投影为interrupted，必须继续等待真实稳定状态。
+    app_server.latest_turn_id_by_thread[thread_id] = waiting.result["turn_id"]
+    app_server.turn_status_by_thread[thread_id] = "interrupted"
+    interrupted_projection = application.start_knowledge_client_turn(handoff_id)
+    assert interrupted_projection["state"] == "already_started"
+    assert interrupted_projection["task"].status == TaskStatus.WAITING_FOR_CLIENT
+    assert app_server.turn_start_checks == 1
+    # 真实目标turn投影为运行中后仍只等待；完成后才允许进入既有自动补全路径。
+    app_server.turn_status_by_thread[thread_id] = "inProgress"
+    active_projection = application.start_knowledge_client_turn(handoff_id)
+    assert active_projection["state"] == "already_started"
+    assert active_projection["task"].status == TaskStatus.WAITING_FOR_CLIENT
+    assert app_server.turn_start_checks == 1
+    app_server.complete_latest_turn(thread_id)
+    continuation = application.start_knowledge_client_turn(handoff_id)
+    assert continuation["state"] == "started"
+    assert app_server.turn_count_by_thread[thread_id] == 2
+    assert app_server.call_count == 1
+
+    completed_candidate = incomplete_candidate.model_copy(
+        update={
+            "completeness": AgentKnowledgeCompleteness(
+                **{
+                    **base_completeness,
+                    "failure_handling": "请求校验失败时返回明确参数错误，仓储访问失败时保留原异常边界且不伪造空结果。",
+                    "test_oracles": "测试应断言合法查询返回分页结构、空结果保持空集合、非法参数不访问仓储且失败可定位。",
+                }
+            )
+        }
+    )
+    completed = application.submit_knowledge_client_candidate(
+        handoff_id,
+        KnowledgeClientCandidateSubmission(candidate=completed_candidate),
+    )
+
+    assert completed.status == TaskStatus.COMPLETED
+    assert completed.task_id == task.task_id
+    assert completed.client_handoff is not None
+    assert completed.client_handoff.thread_id == thread_id
+    assert completed.client_handoff.status.value == "published"
+    assert app_server.call_count == 1
+
+
+def test_codex_client_matching_failed_turn_fails_handoff(tmp_path: Path) -> None:
+    """桌面回执对应的真实turn明确失败时才应终结handoff。
+
+    Args:
+        tmp_path: pytest隔离的持久任务、handoff和只读turn快照。
+
+    Returns:
+        None；仅匹配目标turn身份的明确failed终态写入handoff失败时通过。
+    """
+
+    application, manifest, target_id, _source_file, app_server = _prepare_codex_client_handoff_system(
+        tmp_path
+    )
+    # 停止周期协调器，确保本用例只由显式调用推进目标turn状态。
+    application._client_coordination_stop.set()
+    application._client_coordination_wakeup.set()
+    application._client_coordination_thread.join(timeout=2)
+    task = application.submit_knowledge_target_generation(
+        KnowledgeTargetGenerationRequest(
+            system_id=SYSTEM_ID,
+            target_id=target_id,
+            scan_id=manifest.scan_id,
+            agent="codex",
+            confirmed=True,
+            interaction_mode="codex_client",
+            intent="initial",
+            attempt_id="attempt-client-terminal-failed-0001",
+        )
+    )
+    assert task.client_handoff is not None
+    handoff_id = task.client_handoff.handoff_id
+    thread_id = task.client_handoff.thread_id
+    started = application.start_knowledge_client_turn(handoff_id)
+    requested_turn_id = started["task"].result["turn_id"]
+    # 终态只有与桌面启动回执中的turn身份一致时，才构成可确认的执行失败。
+    app_server.latest_turn_id_by_thread[thread_id] = requested_turn_id
+    app_server.turn_status_by_thread[thread_id] = "failed"
+
+    terminal = application.start_knowledge_client_turn(handoff_id)
+    failed_task = terminal["task"]
+
+    assert terminal["state"] == "already_started"
+    assert failed_task.status == TaskStatus.FAILED
+    assert failed_task.task_id == task.task_id
+    assert failed_task.client_handoff is not None
+    assert failed_task.client_handoff.handoff_id == handoff_id
+    assert failed_task.client_handoff.status == KnowledgeClientHandoffStatus.FAILED
+    assert "Codex任务未正常完成" in failed_task.error
+    assert app_server.turn_start_checks == 1
+    assert app_server.turn_count_by_thread[thread_id] == 1
+
+
+def test_codex_client_two_identical_completed_turns_fail_without_new_identity(tmp_path: Path) -> None:
+    """只有连续两个已结束turn的实际候选摘要和缺口均未变化才技术失败。
+
+    Args:
+        tmp_path: pytest隔离的Facade候选、任务和桌面turn快照。
+
+    Returns:
+        None；40x拒绝前已写入的改进候选会重置计数，随后两回合完全相同才停止时通过。
+    """
+
+    application, manifest, _target_id, source_file, app_server = _prepare_codex_client_handoff_system(tmp_path)
+    # 本用例需要精确控制连续完成turn，停止周期协调器后全部通过幂等入口手动推进。
+    application._client_coordination_stop.set()
+    application._client_coordination_wakeup.set()
+    application._client_coordination_thread.join(timeout=2)
+    target_id = "facade:demo.ClientQueryJob#execute"
+    facade_manifest = manifest.model_copy(
+        update={
+            "entries": [
+                EntryPoint(
+                    entry_id=target_id,
+                    system_id=SYSTEM_ID,
+                    kind="facade",
+                    display_name="客户端查询接口",
+                    source_id="demo.ClientQueryJob#execute",
+                    source_path=str(source_file),
+                    request_type="ClientQueryRequest",
+                    response_type="ClientQueryPage",
+                    tool_id="client-query",
+                )
+            ]
+        }
+    )
+    artifacts = SourceScanArtifactStore(application.knowledge_root)
+    artifacts.write_manifest(facade_manifest)
+    artifacts.publish_latest(SYSTEM_ID, facade_manifest.scan_id)
+    task = application.submit_knowledge_target_generation(
+        KnowledgeTargetGenerationRequest(
+            system_id=SYSTEM_ID,
+            target_id=target_id,
+            scan_id=facade_manifest.scan_id,
+            agent="codex",
+            confirmed=True,
+            interaction_mode="codex_client",
+            intent="initial",
+            attempt_id="attempt-client-no-progress-0001",
+        )
+    )
+    assert task.client_handoff is not None
+    handoff_id = task.client_handoff.handoff_id
+    thread_id = task.client_handoff.thread_id
+    initial_start = application.start_knowledge_client_turn(handoff_id)
+    assert initial_start["state"] == "started"
+    application.call_knowledge_client_source_tool(
+        handoff_id,
+        "read_source",
+        {"path": source_file.name, "start_line": 1, "end_line": 1},
+    )
+    handoff_payload = application.get_knowledge_client_handoff(handoff_id)
+    reference = {"path": source_file.name, "symbol": "ClientQueryJob#execute", "line": 1}
+    incomplete_candidate = KnowledgeClientCandidateEnvelope(
+        status="completed",
+        system_id=SYSTEM_ID,
+        target_ids=[target_id],
+        summaries=[],
+        questions=[],
+        source_refs=[reference],
+        trace_steps=[{"sequence": 1, "role": "entry", "source_ref": reference, "summary": "真实入口源码"}],
+        completeness=AgentKnowledgeCompleteness(business_purpose="查询接口用于读取当前客户端需要的业务数据列表。"),
+        invocation_contract=handoff_payload["deterministic_invocation_contract"],
+    )
+    waiting = application.submit_knowledge_client_candidate(
+        handoff_id,
+        KnowledgeClientCandidateSubmission(candidate=incomplete_candidate),
+    )
+    assert waiting.status == TaskStatus.WAITING_FOR_CLIENT
+
+    # 初始turn结束后在原任务发起第一次机器续跑。
+    app_server.complete_latest_turn(thread_id)
+    first_continuation = application.start_knowledge_client_turn(handoff_id)
+    assert first_continuation["state"] == "started"
+    assert first_continuation["task"].client_handoff is not None
+    run_root = application.knowledge._client_run_root(first_continuation["task"].client_handoff)
+    # 模拟候选在完整校验前被40x拒绝；handoff旧摘要未更新，但实际输出已发生改进。
+    application.knowledge._write_private_client_file(
+        run_root / "output.txt",
+        '{"candidate":"changed-before-validation"}',
+    )
+    app_server.complete_latest_turn(thread_id)
+    second_continuation = application.start_knowledge_client_turn(handoff_id)
+    assert second_continuation["state"] == "started"
+
+    # 只有下一个已结束turn仍保持完全相同的输出与缺口时才达到无进展上限。
+    app_server.complete_latest_turn(thread_id)
+    stopped = application.start_knowledge_client_turn(handoff_id)
+    failed = stopped["task"]
+
+    assert failed.status == TaskStatus.FAILED
+    assert failed.task_id == task.task_id
+    assert failed.client_handoff is not None
+    assert failed.client_handoff.handoff_id == handoff_id
+    assert failed.client_handoff.thread_id == thread_id
+    assert failed.client_handoff.no_progress_turns == 2
+    assert "连续两个回合" in failed.error
+    assert app_server.turn_count_by_thread[thread_id] == 3
+    assert app_server.call_count == 1
+
+
+def test_codex_client_recovers_reported_waiting_completion_session_in_place(tmp_path: Path) -> None:
+    """历史两轮停止会话应原地迁回机器补全并继续同一桌面任务。
+
+    Args:
+        tmp_path: pytest隔离的历史任务、handoff和只读线程快照。
+
+    Returns:
+        None；报告会话ID及task、batch、scan身份全部保持不变时通过。
+    """
+
+    application, manifest, target_id, _source_file, app_server = _prepare_codex_client_handoff_system(tmp_path)
+    application._client_coordination_stop.set()
+    application._client_coordination_wakeup.set()
+    application._client_coordination_thread.join(timeout=2)
+    task = application.submit_knowledge_target_generation(
+        KnowledgeTargetGenerationRequest(
+            system_id=SYSTEM_ID,
+            target_id=target_id,
+            scan_id=manifest.scan_id,
+            agent="codex",
+            confirmed=True,
+            interaction_mode="codex_client",
+            intent="initial",
+            attempt_id="attempt-reported-waiting-completion-0001",
+        )
+    )
+    assert task.client_handoff is not None
+    reported_thread_id = "01a03864-e624-7e12-ba88-ec822f07371d"
+    historical_handoff = task.client_handoff.model_copy(
+        update={
+            "thread_id": reported_thread_id,
+            "deep_link": f"codex://threads/{reported_thread_id}",
+            "status": KnowledgeClientHandoffStatus.WAITING_FOR_COMPLETION,
+            "completion_round": 2,
+            "completion_gaps": [
+                "missing_or_shallow:failure_handling",
+                "missing_or_shallow:test_oracles",
+            ],
+        }
+    )
+    application.knowledge.bind_client_handoff_thread(
+        SYSTEM_ID,
+        historical_handoff.batch_id,
+        historical_handoff,
+    )
+    application.tasks.transition_waiting_task(
+        task.task_id,
+        TaskStatus.WAITING_FOR_COMPLETION,
+        historical_handoff,
+        task.result,
+    )
+    app_server.turn_count_by_thread[reported_thread_id] = 1
+    app_server.turn_status_by_thread[reported_thread_id] = "completed"
+
+    recovered = application.start_knowledge_client_turn(historical_handoff.handoff_id)
+    recovered_task = recovered["task"]
+    recovered_batch = application.store.read_draft_batch(SYSTEM_ID, historical_handoff.batch_id)
+
+    assert recovered["state"] == "started"
+    assert recovered_task.task_id == task.task_id
+    assert recovered_task.status == TaskStatus.WAITING_FOR_CLIENT
+    assert recovered_task.client_handoff is not None
+    assert recovered_task.client_handoff.handoff_id == historical_handoff.handoff_id
+    assert recovered_task.client_handoff.thread_id == reported_thread_id
+    assert recovered_task.client_handoff.batch_id == historical_handoff.batch_id
+    assert recovered_task.client_handoff.scan_id == manifest.scan_id
+    assert recovered_batch.client_handoff is not None
+    assert recovered_batch.client_handoff.thread_id == reported_thread_id
+    assert app_server.turn_count_by_thread[reported_thread_id] == 2
+    assert app_server.call_count == 1
+
+
+def test_codex_client_reported_conflict_session_falls_back_to_original_task(tmp_path: Path) -> None:
+    """桌面IPC未接管报告冲突会话时应只提示原任务手动开始。
+
+    Args:
+        tmp_path: pytest隔离的持久任务、handoff和桌面降级状态。
+
+    Returns:
+        None；报告会话深链保留且OpenTest未创建第二线程或取得写入权时通过。
+    """
+
+    application, manifest, target_id, _source_file, app_server = _prepare_codex_client_handoff_system(tmp_path)
+    application._client_coordination_stop.set()
+    application._client_coordination_wakeup.set()
+    application._client_coordination_thread.join(timeout=2)
+    task = application.submit_knowledge_target_generation(
+        KnowledgeTargetGenerationRequest(
+            system_id=SYSTEM_ID,
+            target_id=target_id,
+            scan_id=manifest.scan_id,
+            agent="codex",
+            confirmed=True,
+            interaction_mode="codex_client",
+            intent="initial",
+            attempt_id="attempt-reported-owner-conflict-0001",
+        )
+    )
+    assert task.client_handoff is not None
+    reported_thread_id = "01a0394b-9bdf-7e42-bdc9-eed7c1ef8b40"
+    reported_handoff = task.client_handoff.model_copy(
+        update={
+            "thread_id": reported_thread_id,
+            "deep_link": f"codex://threads/{reported_thread_id}",
+        }
+    )
+    application.knowledge.bind_client_handoff_thread(
+        SYSTEM_ID,
+        reported_handoff.batch_id,
+        reported_handoff,
+    )
+    application.tasks.transition_waiting_task(
+        task.task_id,
+        TaskStatus.WAITING_FOR_CLIENT,
+        reported_handoff,
+        task.result,
+    )
+    app_server.turn_start_failures_remaining = 1
+
+    fallback = application.start_knowledge_client_turn(reported_handoff.handoff_id)
+    fallback_task = fallback["task"]
+
+    assert fallback["state"] == "manual_required"
+    assert fallback_task.task_id == task.task_id
+    assert fallback_task.status == TaskStatus.WAITING_FOR_CLIENT
+    assert fallback_task.client_handoff is not None
+    assert fallback_task.client_handoff.thread_id == reported_thread_id
+    assert fallback_task.client_handoff.deep_link == f"codex://threads/{reported_thread_id}"
+    assert fallback_task.result["start_state"] == "manual_required"
+    assert "desktop failure" in fallback_task.result["manual_message"]
+    assert app_server.call_count == 1
+    assert app_server.turn_count_by_thread.get(reported_thread_id, 0) == 0
 
 
 def test_codex_client_cancel_repairs_task_after_terminal_write_failure(
@@ -2179,6 +2909,10 @@ def test_codex_client_serializes_legacy_restore_and_new_chat_creation(tmp_path: 
     """
 
     application, manifest, target_id, _source_file, app_server = _prepare_codex_client_handoff_system(tmp_path)
+    # 本用例只验证归档恢复与新建互斥，停止桌面协调器避免它并发更新待归档草稿摘要。
+    application._client_coordination_stop.set()
+    application._client_coordination_wakeup.set()
+    application._client_coordination_thread.join(timeout=2)
     application.submit_knowledge_target_generation(
         KnowledgeTargetGenerationRequest(
             system_id=SYSTEM_ID,

@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import hashlib
 import json
 import os
 import subprocess
@@ -43,8 +44,13 @@ from opentest.domain.models import (
     KnowledgeNodeKind,
     KnowledgeClientCandidateEnvelope,
     KnowledgeInvocationContract,
+    KnowledgeQuestion,
     KnowledgeStatus,
     ScanManifest,
+    SemanticAnalysisResult,
+    SemanticCallEdge,
+    SemanticMethodDefinition,
+    SemanticResolutionStatus,
     SourceBaseline,
     SourceReference,
     StateMachineDefinition,
@@ -260,6 +266,1054 @@ def test_shallow_tracer_uses_source_symbol_instead_of_display_name(tmp_path: Pat
     assert batch.nodes[0].source_refs[0].symbol == source_id
 
 
+def _write_dependency_sources(source: Path) -> dict[str, Path]:
+    """写入可证明Facade路由、共享方法和两条取消流转的最小Java源码。
+
+    Args:
+        source: Pytest隔离的注册源码根。
+
+    Returns:
+        供Manifest证据和行号构造使用的命名源码路径。
+
+    Side Effects:
+        在隔离目录创建Java文件，不访问真实项目源码。
+    """
+
+    source.mkdir(parents=True)
+    files = {
+        "facade": source / "RefundFacade.java",
+        "implementation": source / "RefundFacadeImpl.java",
+        "validator": source / "RefundCancelValidator.java",
+        "invoker": source / "RefundCancelServiceInvoker.java",
+        "shared": source / "SharedRefundRules.java",
+        "cancel_actor": source / "RefundOrderCancelPostActor.java",
+        "manual_actor": source / "RefundOrderManualCancelPostActor.java",
+        "other_actor": source / "OtherCancelPostActor.java",
+    }
+    files["facade"].write_text(
+        "package demo; interface RefundFacade { Object cancel(Object request); }\n",
+        encoding="utf-8",
+    )
+    files["implementation"].write_text(
+        "package demo; class RefundFacadeImpl implements RefundFacade {\n"
+        "  Object cancel(Object request) { return execute(request, RefundOrderServiceEnum.CANCEL); }\n"
+        "}\n",
+        encoding="utf-8",
+    )
+    files["validator"].write_text(
+        "package demo; @TradeService(name = RefundOrderServiceEnum.CANCEL)\n"
+        "class RefundCancelValidator { void validate(Object request) { if (request == null) throw new Error(); } }\n",
+        encoding="utf-8",
+    )
+    files["invoker"].write_text(
+        "package demo; @TradeService(name = RefundOrderServiceEnum.CANCEL)\n"
+        "class RefundCancelServiceInvoker {\n"
+        "  Object invoke(Object request) { return doInvoke(request); }\n"
+        "  Object doInvoke(Object request) { sharedRefundRules.evaluate(request); orderStateDelegate.setState(request, RefundOrderStateEnum.REFUND_CANCEL); return request; }\n"
+        "  void unrelated(Object request) { orderStateDelegate.setState(request, OtherStateEnum.REFUND_CANCEL); }\n"
+        "}\n",
+        encoding="utf-8",
+    )
+    files["shared"].write_text(
+        "package demo; class SharedRefundRules { Object evaluate(Object request) { if (request == null) throw new Error(); return request; } }\n",
+        encoding="utf-8",
+    )
+    files["cancel_actor"].write_text(
+        "package demo; @State class RefundOrderCancelPostActor {\n"
+        "  void addTask() { if (enabled) addReason(); }\n"
+        "  void addReason() { refundRepository.update(); }\n"
+        "}\n",
+        encoding="utf-8",
+    )
+    files["manual_actor"].write_text(
+        "package demo; @State class RefundOrderManualCancelPostActor { void addTask() { noticeService.send(); } }\n",
+        encoding="utf-8",
+    )
+    files["other_actor"].write_text(
+        "package demo; @State class OtherCancelPostActor { void addTask() { noticeService.send(); } }\n",
+        encoding="utf-8",
+    )
+    return files
+
+
+def _dependency_source_ref(source: Path, path: Path, symbol: str, marker: str) -> SourceReference:
+    """构造指向隔离Java声明或调用行的相对源码引用。
+
+    Args:
+        source: 注册源码根。
+        path: 需要引用的Java文件。
+        symbol: 完整语义符号或类型身份。
+        marker: 必须唯一出现于证据行的源码文本。
+
+    Returns:
+        带精确一基行号的SourceReference。
+    """
+
+    lines = path.read_text(encoding="utf-8").splitlines()
+    line = next(index for index, content in enumerate(lines, start=1) if marker in content)
+    return SourceReference(path=path.relative_to(source).as_posix(), symbol=symbol, line=line)
+
+
+def _dependency_manifest(source: Path, files: dict[str, Path]) -> ScanManifest:
+    """构造包含可达语义图、精确状态枚举和不可达干扰项的Manifest。
+
+    Args:
+        source: 注册源码根。
+        files: `_write_dependency_sources`生成的源码路径。
+
+    Returns:
+        可供Tracer和客户端批次规划共同使用的稳定扫描结果。
+    """
+
+    entry_id = "facade:demo.RefundFacade#cancel"
+    implementation_symbol = "demo.RefundFacadeImpl#cancel(java.lang.Object)"
+    validator_symbol = "demo.RefundCancelValidator#validate(java.lang.Object)"
+    invoke_symbol = "demo.RefundCancelServiceInvoker#invoke(java.lang.Object)"
+    do_invoke_symbol = "demo.RefundCancelServiceInvoker#doInvoke(java.lang.Object)"
+    unrelated_symbol = "demo.RefundCancelServiceInvoker#unrelated(java.lang.Object)"
+    shared_symbol = "demo.SharedRefundRules#evaluate(java.lang.Object)"
+    methods = [
+        SemanticMethodDefinition(
+            symbol_id=implementation_symbol,
+            qualified_class_name="demo.RefundFacadeImpl",
+            method_name="cancel",
+            source_ref=_dependency_source_ref(source, files["implementation"], implementation_symbol, "Object cancel"),
+        ),
+        SemanticMethodDefinition(
+            symbol_id=validator_symbol,
+            qualified_class_name="demo.RefundCancelValidator",
+            method_name="validate",
+            source_ref=_dependency_source_ref(source, files["validator"], validator_symbol, "void validate"),
+        ),
+        SemanticMethodDefinition(
+            symbol_id=invoke_symbol,
+            qualified_class_name="demo.RefundCancelServiceInvoker",
+            method_name="invoke",
+            source_ref=_dependency_source_ref(source, files["invoker"], invoke_symbol, "Object invoke"),
+        ),
+        SemanticMethodDefinition(
+            symbol_id=do_invoke_symbol,
+            qualified_class_name="demo.RefundCancelServiceInvoker",
+            method_name="doInvoke",
+            source_ref=_dependency_source_ref(source, files["invoker"], do_invoke_symbol, "Object doInvoke"),
+        ),
+        SemanticMethodDefinition(
+            symbol_id=unrelated_symbol,
+            qualified_class_name="demo.RefundCancelServiceInvoker",
+            method_name="unrelated",
+            source_ref=_dependency_source_ref(source, files["invoker"], unrelated_symbol, "void unrelated"),
+        ),
+        SemanticMethodDefinition(
+            symbol_id=shared_symbol,
+            qualified_class_name="demo.SharedRefundRules",
+            method_name="evaluate",
+            reuse_entry_count=2,
+            entry_point_ids=[implementation_symbol, "demo.TimeoutCancelJob#process(java.lang.Object)"],
+            source_ref=_dependency_source_ref(source, files["shared"], shared_symbol, "Object evaluate"),
+        ),
+    ]
+    call_edges = [
+        SemanticCallEdge(
+            caller_symbol_id=invoke_symbol,
+            callee_symbol_id=do_invoke_symbol,
+            callee_expression="doInvoke",
+            source_ref=_dependency_source_ref(source, files["invoker"], invoke_symbol, "return doInvoke"),
+            resolution_status=SemanticResolutionStatus.RESOLVED,
+        ),
+        SemanticCallEdge(
+            caller_symbol_id=do_invoke_symbol,
+            callee_symbol_id=shared_symbol,
+            callee_expression="evaluate",
+            source_ref=_dependency_source_ref(source, files["invoker"], do_invoke_symbol, "sharedRefundRules.evaluate"),
+            resolution_status=SemanticResolutionStatus.RESOLVED,
+        ),
+        SemanticCallEdge(
+            caller_symbol_id=do_invoke_symbol,
+            callee_symbol_id="demo.StateDelegate#setState(java.lang.Object,java.lang.Object)",
+            callee_expression="setState",
+            source_ref=_dependency_source_ref(source, files["invoker"], do_invoke_symbol, "RefundOrderStateEnum.REFUND_CANCEL"),
+            resolution_status=SemanticResolutionStatus.RESOLVED,
+        ),
+        SemanticCallEdge(
+            caller_symbol_id=unrelated_symbol,
+            callee_symbol_id="demo.StateDelegate#setState(java.lang.Object,java.lang.Object)",
+            callee_expression="setState",
+            source_ref=_dependency_source_ref(source, files["invoker"], unrelated_symbol, "OtherStateEnum.REFUND_CANCEL"),
+            resolution_status=SemanticResolutionStatus.RESOLVED,
+        ),
+    ]
+    return ScanManifest(
+        scan_id="scan-deterministic-dependencies",
+        system_id="refund-core",
+        baseline=SourceBaseline(source_path=str(source), commit="abc123"),
+        entries=[
+            EntryPoint(
+                entry_id=entry_id,
+                system_id="refund-core",
+                kind=KnowledgeNodeKind.FACADE,
+                display_name="RefundFacade#cancel",
+                source_id="demo.RefundFacade#cancel",
+                source_path=str(files["facade"]),
+            )
+        ],
+        state_machines=[
+            StateMachineDefinition(
+                machine_id="state-machine:refund",
+                system_id="refund-core",
+                state_enum="RefundOrderStateEnum",
+                title="退款状态机",
+                transitions=[
+                    StateTransition(
+                        transition_id="transition:refund-cancel",
+                        actor="RefundOrderCancelPostActor",
+                        from_states=["PENDING_APPLY", "WAIT_REFUND", "RESHOPING", "REFUND_FAIL"],
+                        to_states=["REFUND_CANCEL"],
+                        source_ref=_dependency_source_ref(
+                            source,
+                            files["cancel_actor"],
+                            "RefundOrderCancelPostActor",
+                            "class RefundOrderCancelPostActor",
+                        ),
+                    ),
+                    StateTransition(
+                        transition_id="transition:refund-manual-cancel",
+                        actor="RefundOrderManualCancelPostActor",
+                        from_states=["AUDITED"],
+                        to_states=["REFUND_CANCEL"],
+                        source_ref=_dependency_source_ref(
+                            source,
+                            files["manual_actor"],
+                            "RefundOrderManualCancelPostActor",
+                            "class RefundOrderManualCancelPostActor",
+                        ),
+                    ),
+                ],
+            ),
+            StateMachineDefinition(
+                machine_id="state-machine:other",
+                system_id="refund-core",
+                state_enum="OtherStateEnum",
+                title="其他状态机",
+                transitions=[
+                    StateTransition(
+                        transition_id="transition:other-cancel",
+                        actor="OtherCancelPostActor",
+                        from_states=["INIT"],
+                        to_states=["REFUND_CANCEL"],
+                        source_ref=_dependency_source_ref(
+                            source,
+                            files["other_actor"],
+                            "OtherCancelPostActor",
+                            "class OtherCancelPostActor",
+                        ),
+                    )
+                ],
+            ),
+        ],
+        semantic_analysis=SemanticAnalysisResult(
+            system_id="refund-core",
+            methods=methods,
+            call_edges=call_edges,
+        ),
+    )
+
+
+def test_facade_business_dependencies_are_determined_by_code_scan(tmp_path: Path) -> None:
+    """Facade依赖必须由可达语义边和精确状态枚举稳定确定。
+
+    Args:
+        tmp_path: Pytest隔离的源码与Manifest目录。
+
+    Returns:
+        None；两条退款取消流转和复用业务方法被选中、不可达其他状态机被排除时通过。
+    """
+
+    source = tmp_path / "source"
+    files = _write_dependency_sources(source)
+    manifest = _dependency_manifest(source, files)
+    tracer = JavaKnowledgeTracer()
+
+    first = tracer.business_dependency_target_ids(manifest, manifest.entries[0].entry_id)
+    second = tracer.business_dependency_target_ids(manifest, manifest.entries[0].entry_id)
+    shared_symbol = "demo.SharedRefundRules#evaluate(java.lang.Object)"
+    shared_target = "semantic:" + hashlib.sha256(shared_symbol.encode("utf-8")).hexdigest()[:20]
+
+    assert first == ["transition:refund-cancel", "transition:refund-manual-cancel", shared_target]
+    assert second == first
+    assert "transition:other-cancel" not in first
+
+
+def test_facade_route_scan_uses_only_supported_dispatch_calls(tmp_path: Path) -> None:
+    """Facade路由扫描应忽略普通条件枚举并覆盖目标方法内的多个execute分支。
+
+    Args:
+        tmp_path: Pytest隔离的Facade和业务路由源码根。
+
+    Returns:
+        None；两个真实派发路由被关联而条件噪声路由未进入分析时通过。
+    """
+
+    source = tmp_path / "source"
+    source.mkdir()
+    facade = source / "RefundFacade.java"
+    implementation = source / "RefundFacadeImpl.java"
+    facade.write_text("package demo; interface RefundFacade { Object cancel(Object request); }\n", encoding="utf-8")
+    implementation.write_text(
+        "package demo; class RefundFacadeImpl implements RefundFacade { Object cancel(Object request) {\n"
+        " if (request == NoiseServiceEnum.IGNORE) return null;\n"
+        " auditExecutor.execute(request, AuditServiceEnum.LOG);\n"
+        " execute(request, helper(NestedServiceEnum.NOISE));\n"
+        " if (request != null) return execute(request, RefundServiceEnum.CANCEL);\n"
+        " return this.execute(request, RefundServiceEnum.MANUAL_CANCEL);\n"
+        "} }\n",
+        encoding="utf-8",
+    )
+    (source / "CancelValidator.java").write_text(
+        "package demo;\n"
+        "@TradeService(name = RefundServiceEnum.CANCEL)\n"
+        "class CancelValidator {\n"
+        "  void validate() {}\n"
+        "}\n",
+        encoding="utf-8",
+    )
+    (source / "ManualServiceInvoker.java").write_text(
+        "package demo;\n"
+        "@ApiService(name = RefundServiceEnum.MANUAL_CANCEL)\n"
+        "class ManualServiceInvoker {\n"
+        "  void invoke() {}\n"
+        "}\n",
+        encoding="utf-8",
+    )
+    (source / "NoiseValidator.java").write_text(
+        "package demo;\n"
+        "@TradeService(name = NoiseServiceEnum.IGNORE)\n"
+        "class NoiseValidator {\n"
+        "  void validate() {}\n"
+        "}\n",
+        encoding="utf-8",
+    )
+    (source / "AuditValidator.java").write_text(
+        "package demo;\n"
+        "@TradeService(name = AuditServiceEnum.LOG)\n"
+        "class AuditValidator { void validate() {} }\n",
+        encoding="utf-8",
+    )
+    (source / "NestedValidator.java").write_text(
+        "package demo;\n"
+        "@TradeService(name = NestedServiceEnum.NOISE)\n"
+        "class NestedValidator { void validate() {} }\n",
+        encoding="utf-8",
+    )
+    entry = EntryPoint(
+        entry_id="facade:demo.RefundFacade#cancel",
+        system_id="refund-core",
+        kind=KnowledgeNodeKind.FACADE,
+        display_name="RefundFacade#cancel",
+        source_id="demo.RefundFacade#cancel",
+        source_path=str(facade),
+    )
+
+    # 路由来源限定在execute参数后，目标分支的Validator与Invoker均应稳定成为种子。
+    symbols = {analysis.symbol for analysis in JavaKnowledgeTracer()._facade_analyses(entry, source)}
+
+    assert "demo.CancelValidator#validate" in symbols
+    assert "demo.ManualServiceInvoker#invoke" in symbols
+    assert "demo.NoiseValidator#validate" not in symbols
+    assert "demo.AuditValidator#validate" not in symbols
+    assert "demo.NestedValidator#validate" not in symbols
+
+
+def test_facade_scan_rejects_cross_package_same_name_implementation(tmp_path: Path) -> None:
+    """Facade扫描不得按文件名绑定另一个包的同名接口实现。
+
+    Args:
+        tmp_path: Pytest隔离的多包Java源码根。
+
+    Returns:
+        None；错误包Impl未成为入口分析且其路由未进入候选时通过。
+    """
+
+    source = tmp_path / "source"
+    interface = source / "demo" / "RefundFacade.java"
+    wrong_interface = source / "other" / "RefundFacade.java"
+    wrong_implementation = source / "other" / "RefundFacadeImpl.java"
+    interface.parent.mkdir(parents=True)
+    wrong_interface.parent.mkdir(parents=True)
+    interface.write_text(
+        "package demo; public interface RefundFacade { Object cancel(Object request); }\n",
+        encoding="utf-8",
+    )
+    wrong_interface.write_text(
+        "package other; interface RefundFacade { Object cancel(Object request); }\n",
+        encoding="utf-8",
+    )
+    wrong_implementation.write_text(
+        "package other; class RefundFacadeImpl implements RefundFacade {\n"
+        " Object cancel(Object request) { return execute(request, WrongServiceEnum.CANCEL); }\n"
+        "}\n",
+        encoding="utf-8",
+    )
+    entry = EntryPoint(
+        entry_id="facade:demo.RefundFacade#cancel",
+        system_id="refund-core",
+        kind=KnowledgeNodeKind.FACADE,
+        display_name="RefundFacade#cancel",
+        source_id="demo.RefundFacade#cancel",
+        source_path=str(interface),
+    )
+
+    # 文件名相同但implements解析为other.RefundFacade，扫描只能保留目标公开接口。
+    analyses = JavaKnowledgeTracer()._facade_analyses(entry, source)
+
+    assert len(analyses) == 1
+    assert analyses[0].path == interface
+    assert analyses[0].symbol == "demo.RefundFacade#cancel"
+
+
+def test_semantic_seed_requires_exact_source_path_and_high_confidence(tmp_path: Path) -> None:
+    """语义种子必须精确匹配模块路径并达到高置信解析门槛。
+
+    Args:
+        tmp_path: Pytest隔离的多模块同名Java源码根。
+
+    Returns:
+        None；后缀相同的另一模块和低置信方法均不会命中路由分析时通过。
+    """
+
+    source = tmp_path / "source"
+    route_path = source / "module-a" / "src" / "RefundService.java"
+    other_path = source / "src" / "RefundService.java"
+    route_path.parent.mkdir(parents=True)
+    other_path.parent.mkdir(parents=True)
+    route_path.write_text("class RefundService { void cancel() {} }\n", encoding="utf-8")
+    other_path.write_text("class RefundService { void cancel() {} }\n", encoding="utf-8")
+    tracer = JavaKnowledgeTracer()
+    route = tracer._analyze_java_file(route_path, "demo.RefundService#cancel", "cancel")
+    wrong_module = SemanticMethodDefinition(
+        symbol_id="other.RefundService#cancel()",
+        qualified_class_name="other.RefundService",
+        method_name="cancel",
+        source_ref=SourceReference(path="src/RefundService.java", symbol="other.RefundService#cancel", line=1),
+    )
+    low_confidence = wrong_module.model_copy(
+        update={
+            "symbol_id": "demo.RefundService#cancel()",
+            "qualified_class_name": "demo.RefundService",
+            "source_ref": SourceReference(
+                path="module-a/src/RefundService.java",
+                symbol="demo.RefundService#cancel",
+                line=1,
+            ),
+            "confidence": 0.5,
+        }
+    )
+
+    assert not tracer._semantic_method_matches_analysis(wrong_module, route, source)
+    assert not tracer._semantic_method_matches_analysis(low_confidence, route, source)
+
+
+def test_set_state_target_supports_multiline_receiver_location(tmp_path: Path) -> None:
+    """状态调用边落在跨行接收者时仍应从同一Java语句提取目标状态。
+
+    Args:
+        tmp_path: Pytest隔离的跨行setState源码根。
+
+    Returns:
+        None；调用边首行能够稳定映射到精确状态枚举与常量时通过。
+    """
+
+    source = tmp_path / "source"
+    source.mkdir()
+    invoker = source / "RefundInvoker.java"
+    invoker.write_text(
+        "class RefundInvoker { void cancel(Object request) {\n"
+        "  orderStateDelegate\n"
+        "    .setState(request,\n"
+        "      RefundOrderStateEnum.REFUND_CANCEL);\n"
+        "} }\n",
+        encoding="utf-8",
+    )
+    reference = SourceReference(
+        path="RefundInvoker.java",
+        symbol="demo.RefundInvoker#cancel",
+        line=2,
+    )
+
+    assert JavaKnowledgeTracer()._set_state_target(reference, source) == (
+        "RefundOrderStateEnum",
+        "REFUND_CANCEL",
+    )
+
+
+def test_low_confidence_semantic_dependencies_are_excluded(tmp_path: Path) -> None:
+    """依赖闭包不得使用低置信方法或调用边扩展Agent候选范围。
+
+    Args:
+        tmp_path: Pytest隔离的依赖源码和Manifest。
+
+    Returns:
+        None；低置信状态边和复用方法均不再形成公共依赖时通过。
+    """
+
+    source = tmp_path / "source"
+    files = _write_dependency_sources(source)
+    manifest = _dependency_manifest(source, files)
+    analysis = manifest.semantic_analysis
+    assert analysis is not None
+    low_methods = [
+        method.model_copy(update={"confidence": 0.5})
+        if method.qualified_class_name == "demo.SharedRefundRules"
+        else method
+        for method in analysis.methods
+    ]
+    low_edges = [
+        edge.model_copy(update={"confidence": 0.5})
+        if edge.callee_expression in {"evaluate", "setState"}
+        else edge
+        for edge in analysis.call_edges
+    ]
+    low_manifest = manifest.model_copy(
+        update={
+            "semantic_analysis": analysis.model_copy(
+                update={"methods": low_methods, "call_edges": low_edges}
+            )
+        }
+    )
+
+    assert JavaKnowledgeTracer().business_dependency_target_ids(
+        low_manifest,
+        low_manifest.entries[0].entry_id,
+    ) == []
+
+
+def test_client_dependency_plan_skips_only_complete_current_nodes(tmp_path: Path) -> None:
+    """客户端批次只跳过当前scan完整生成且没有开放问题的依赖闭包。
+
+    Args:
+        tmp_path: Pytest隔离的源码、知识真相和索引目录。
+
+    Returns:
+        None；完整依赖被引用但不重写，出现开放问题后同一闭包重新进入候选时通过。
+    """
+
+    source = tmp_path / "source"
+    files = _write_dependency_sources(source)
+    manifest = _dependency_manifest(source, files)
+    knowledge_root = tmp_path / "knowledge"
+    store = GitKnowledgeStore(knowledge_root)
+    store.register_system(SystemDefinition(system_id="refund-core", name="退款核心", source_path=str(source)))
+    artifacts = SourceScanArtifactStore(knowledge_root)
+    artifacts.write_manifest(manifest)
+    artifacts.publish_latest(manifest.system_id, manifest.scan_id)
+    service = KnowledgeGenerationService(
+        store,
+        SqliteKnowledgeIndex(knowledge_root / ".opentest" / "index.sqlite"),
+        artifacts,
+        git_repository=FixedBaselineRepository(manifest.baseline),
+    )
+
+    initial = service._plan_client_generation_batch(manifest, manifest.entries[0].entry_id)
+    cancel_batch = service.tracer.trace(manifest, "transition:refund-cancel")
+    for node in cancel_batch.nodes:
+        # 只有Agent推断或人工确认且绑定当前scan的全部子节点才构成可跳过的完整依赖。
+        store.write_node(node.model_copy(update={"status": KnowledgeStatus.INFERRED}), cancel_batch.content_by_node[node.node_id])
+
+    skipped = service._plan_client_generation_batch(manifest, manifest.entries[0].entry_id)
+    skipped_ids = {node.node_id for node in skipped.nodes}
+    assert cancel_batch.nodes[0].node_id in {edge.target_node_id for edge in skipped.edges}
+    assert skipped_ids.isdisjoint({node.node_id for node in cancel_batch.nodes})
+    assert len(initial.nodes) > len(skipped.nodes)
+
+    store.write_questions(
+        manifest.system_id,
+        [
+            KnowledgeQuestion(
+                question_id="question:refund-cancel",
+                system_id=manifest.system_id,
+                title="取消原因是否必填",
+                detail="源码无法确定产品口径。",
+                affected_node_ids=[cancel_batch.nodes[0].node_id],
+                status="open",
+            )
+        ],
+    )
+    reopened = service._plan_client_generation_batch(manifest, manifest.entries[0].entry_id)
+    reopened_ids = {node.node_id for node in reopened.nodes}
+    assert {node.node_id for node in cancel_batch.nodes}.issubset(reopened_ids)
+
+
+def test_facade_trace_accepts_interface_or_implementation_and_return_assembly(tmp_path: Path) -> None:
+    """Facade核心trace应接受接口/实现入口并忽略边界后的返回组装回退。
+
+    Args:
+        tmp_path: Pytest隔离的Java源码和知识服务目录。
+
+    Returns:
+        None；接口实现关系、实现直入和DAO后Service组装均通过，错误方法仍被拒绝时通过。
+    """
+
+    source = tmp_path / "source"
+    source.mkdir()
+    interface_path = source / "RefundFacade.java"
+    implementation_path = source / "RefundFacadeImpl.java"
+    invoker_path = source / "RefundCancelServiceInvoker.java"
+    service_path = source / "RefundService.java"
+    dao_path = source / "RefundDAO.java"
+    interface_path.write_text(
+        "package demo; public interface RefundFacade { Object cancel(Object request); Object refund(Object request); }\n",
+        encoding="utf-8",
+    )
+    implementation_path.write_text(
+        "package demo; public class RefundFacadeImpl implements RefundFacade {\n"
+        "  RefundService service;\n"
+        "  public Object cancel(Object request) { return service.cancel(request); }\n"
+        "  public Object refund(Object request) { return request; }\n"
+        "}\n",
+        encoding="utf-8",
+    )
+    invoker_path.write_text(
+        "package demo; public class RefundCancelServiceInvoker {\n"
+        "  RefundService service;\n"
+        "  public Object invoke(Object request) { return service.cancel(request); }\n"
+        "}\n",
+        encoding="utf-8",
+    )
+    service_path.write_text(
+        "package demo; public class RefundService {\n"
+        "  RefundDAO refundDAO;\n"
+        "  public Object cancel(Object request) { Object order = refundDAO.find(request); return assemble(order); }\n"
+        "}\n",
+        encoding="utf-8",
+    )
+    dao_path.write_text(
+        "package demo; public class RefundDAO { public Object find(Object request) { return null; } }\n",
+        encoding="utf-8",
+    )
+    refs = {
+        "interface": AgentKnowledgeSourceReference(path="RefundFacade.java", symbol="demo.RefundFacade#cancel", line=1),
+        "implementation": AgentKnowledgeSourceReference(path="RefundFacadeImpl.java", symbol="demo.RefundFacadeImpl#cancel", line=3),
+        "invoker": AgentKnowledgeSourceReference(path="RefundCancelServiceInvoker.java", symbol="demo.RefundCancelServiceInvoker#invoke", line=3),
+        "service": AgentKnowledgeSourceReference(path="RefundService.java", symbol="demo.RefundService#cancel", line=3),
+        "dao": AgentKnowledgeSourceReference(path="RefundDAO.java", symbol="demo.RefundDAO#find", line=1),
+    }
+    node = KnowledgeNode(
+        node_id="entry:demo.RefundFacade#cancel",
+        system_id="refund-core",
+        kind=KnowledgeNodeKind.FACADE,
+        title="RefundFacade#cancel",
+        source_refs=[SourceReference.model_validate(refs["implementation"].model_dump())],
+        status=KnowledgeStatus.CODE_VERIFIED,
+    )
+    request = KnowledgeGenerationBatchRequest(
+        system_id="refund-core",
+        target_ids=["facade:demo.RefundFacade#cancel"],
+        agent="codex",
+        confirmed=True,
+    )
+    steps = [
+        {"sequence": 1, "role": "entry", "source_ref": refs["interface"], "summary": "公开取消入口。"},
+        {"sequence": 2, "role": "entry", "source_ref": refs["implementation"], "summary": "进入取消实现。"},
+        {"sequence": 3, "role": "service", "source_ref": refs["service"], "summary": "执行取消业务。"},
+        {"sequence": 4, "role": "data_access", "source_ref": refs["dao"], "summary": "读取退票单。"},
+        {"sequence": 5, "role": "service", "source_ref": refs["service"], "summary": "组装取消结果。"},
+    ]
+    envelope = AgentKnowledgeEnvelope(
+        status="completed",
+        system_id="refund-core",
+        target_ids=request.target_ids,
+        summaries=[{"node_id": node.node_id, "summary": "取消退票单并返回结果。"}],
+        questions=[],
+        source_refs=list(refs.values()),
+        trace_steps=steps,
+    )
+    knowledge_root = tmp_path / "knowledge"
+    service = KnowledgeGenerationService(
+        GitKnowledgeStore(knowledge_root),
+        SqliteKnowledgeIndex(knowledge_root / ".opentest" / "index.sqlite"),
+        SourceScanArtifactStore(knowledge_root),
+    )
+    source_lines = {
+        path.name: path.read_text(encoding="utf-8").splitlines()
+        for path in (interface_path, implementation_path, invoker_path, service_path, dao_path)
+    }
+
+    service._validate_agent_trace(request, [node], envelope)
+    service._validate_agent_trace_links(envelope, source_lines)
+    implementation_envelope = envelope.model_copy(update={"trace_steps": envelope.trace_steps[1:]})
+    implementation_envelope = implementation_envelope.model_copy(
+        update={
+            "trace_steps": [
+                step.model_copy(update={"sequence": index})
+                for index, step in enumerate(implementation_envelope.trace_steps, start=1)
+            ]
+        }
+    )
+    service._validate_agent_trace(request, [node], implementation_envelope)
+    service._validate_agent_trace_links(implementation_envelope, source_lines)
+
+    route_node = KnowledgeNode(
+        node_id="logic:demo.RefundCancelServiceInvoker#invoke",
+        system_id="refund-core",
+        kind=KnowledgeNodeKind.COMMON_LOGIC,
+        title="RefundCancelServiceInvoker#invoke",
+        source_refs=[SourceReference.model_validate(refs["invoker"].model_dump())],
+        status=KnowledgeStatus.CODE_VERIFIED,
+    )
+    routed_steps = [
+        envelope.trace_steps[0],
+        envelope.trace_steps[0].model_copy(
+            update={"sequence": 2, "role": "invoker", "source_ref": refs["invoker"]}
+        ),
+        envelope.trace_steps[2].model_copy(update={"sequence": 3}),
+        envelope.trace_steps[3].model_copy(update={"sequence": 4}),
+    ]
+    routed_envelope = envelope.model_copy(update={"trace_steps": routed_steps})
+    # 公开接口到扫描固化的ServiceInvoker由execute路由证明，之后仍要求真实直接调用。
+    service._validate_agent_trace(request, [node, route_node], routed_envelope)
+    service._validate_agent_trace_links(routed_envelope, source_lines, [node, route_node])
+
+    wrong_reference = AgentKnowledgeSourceReference(
+        path="RefundFacade.java",
+        symbol="demo.RefundFacade#refund",
+        line=1,
+    )
+    wrong_envelope = envelope.model_copy(
+        update={
+            "source_refs": [wrong_reference, *list(refs.values())[1:]],
+            "trace_steps": [
+                envelope.trace_steps[0].model_copy(update={"source_ref": wrong_reference}),
+                *envelope.trace_steps[1:],
+            ],
+        }
+    )
+    with pytest.raises(KnowledgeValidationError, match="requested entry"):
+        service._validate_agent_trace(request, [node], wrong_envelope)
+
+    other_package_reference = AgentKnowledgeSourceReference(
+        path="other/RefundFacade.java",
+        symbol="other.RefundFacade#cancel",
+        line=1,
+    )
+    other_package_envelope = envelope.model_copy(
+        update={
+            "source_refs": [other_package_reference, *list(refs.values())[1:]],
+            "trace_steps": [
+                envelope.trace_steps[0].model_copy(update={"source_ref": other_package_reference}),
+                *envelope.trace_steps[1:],
+            ],
+        }
+    )
+    # 全限定请求不能由其他包的同名Facade满足，即使方法名和简单类名完全一致。
+    with pytest.raises(KnowledgeValidationError, match="requested entry"):
+        service._validate_agent_trace(request, [node], other_package_envelope)
+
+    unrelated_service_reference = AgentKnowledgeSourceReference(
+        path="OtherRefundService.java",
+        symbol="demo.OtherRefundService#assemble",
+        line=1,
+    )
+    unrelated_return_envelope = envelope.model_copy(
+        update={
+            "source_refs": [*list(refs.values()), unrelated_service_reference],
+            "trace_steps": [
+                *envelope.trace_steps[:4],
+                envelope.trace_steps[4].model_copy(
+                    update={"source_ref": unrelated_service_reference}
+                ),
+            ],
+        }
+    )
+    # 数据边界后的返回步骤只能回放核心路径已出现的Service或Invoker。
+    with pytest.raises(KnowledgeValidationError, match="unrelated return stage"):
+        service._validate_agent_trace(request, [node], unrelated_return_envelope)
+
+    false_boundary_envelope = envelope.model_copy(
+        update={
+            "trace_steps": [
+                *envelope.trace_steps[:3],
+                envelope.trace_steps[3].model_copy(
+                    update={"source_ref": refs["service"]}
+                ),
+            ]
+        }
+    )
+    # data_access标签不能把普通Service包装方法伪装为DAO/Mapper/Repository边界。
+    with pytest.raises(KnowledgeValidationError, match="real DAO/Mapper/Repository boundary"):
+        service._validate_agent_trace(request, [node], false_boundary_envelope)
+
+    wrong_impl_path = source / "other" / "RefundFacadeImpl.java"
+    wrong_impl_path.parent.mkdir()
+    wrong_impl_path.write_text(
+        "package other; interface RefundFacade { Object cancel(Object request); }\n"
+        "class RefundFacadeImpl implements RefundFacade { public Object cancel(Object request) { return request; } }\n",
+        encoding="utf-8",
+    )
+    wrong_impl_reference = AgentKnowledgeSourceReference(
+        path="other/RefundFacadeImpl.java",
+        symbol="RefundFacadeImpl#cancel",
+        line=2,
+    )
+    wrong_impl_envelope = envelope.model_copy(
+        update={
+            "source_refs": [refs["interface"], wrong_impl_reference, refs["service"], refs["dao"]],
+            "trace_steps": [
+                envelope.trace_steps[0],
+                envelope.trace_steps[1].model_copy(update={"source_ref": wrong_impl_reference}),
+                envelope.trace_steps[2],
+                envelope.trace_steps[3],
+            ],
+        }
+    )
+    source_lines[wrong_impl_reference.path] = wrong_impl_path.read_text(encoding="utf-8").splitlines()
+    # Agent使用简称时仍须按源码package解析接口身份，other包同名Impl不能冒充demo入口实现。
+    with pytest.raises(KnowledgeValidationError, match="not connected"):
+        service._validate_agent_trace_links(wrong_impl_envelope, source_lines)
+
+
+def test_facade_trace_accepts_service_interface_to_declared_implementation(tmp_path: Path) -> None:
+    """依赖注入调用可由Service接口连续过渡到其明确implements实现。
+
+    Args:
+        tmp_path: Pytest隔离的Facade、Service接口实现和DAO源码根。
+
+    Returns:
+        None；接口声明、实现关系和DAO调用形成连续核心trace时通过。
+    """
+
+    source = tmp_path / "source"
+    source.mkdir()
+    files = {
+        "facade": source / "RefundFacadeImpl.java",
+        "service_interface": source / "OrderService.java",
+        "service_implementation": source / "OrderServiceImpl.java",
+        "dao": source / "RefundOrderDAO.java",
+    }
+    files["facade"].write_text(
+        "package demo; class RefundFacadeImpl {\n"
+        " OrderService orderService; Object cancel(Object request) { return orderService.query(request); }\n"
+        "}\n",
+        encoding="utf-8",
+    )
+    files["service_interface"].write_text(
+        "package demo; interface OrderService { Object query(Object request); }\n",
+        encoding="utf-8",
+    )
+    files["service_implementation"].write_text(
+        "package demo; class OrderServiceImpl implements OrderService {\n"
+        " RefundOrderDAO dao; public Object query(Object request) { return dao.find(request); }\n"
+        "}\n",
+        encoding="utf-8",
+    )
+    files["dao"].write_text(
+        "package demo; class RefundOrderDAO { Object find(Object request) { return null; } }\n",
+        encoding="utf-8",
+    )
+    references = {
+        "facade": AgentKnowledgeSourceReference(
+            path="RefundFacadeImpl.java", symbol="demo.RefundFacadeImpl#cancel", line=2
+        ),
+        "service_interface": AgentKnowledgeSourceReference(
+            path="OrderService.java", symbol="demo.OrderService#query", line=1
+        ),
+        "service_implementation": AgentKnowledgeSourceReference(
+            path="OrderServiceImpl.java", symbol="demo.OrderServiceImpl#query", line=2
+        ),
+        "dao": AgentKnowledgeSourceReference(
+            path="RefundOrderDAO.java", symbol="demo.RefundOrderDAO#find", line=1
+        ),
+    }
+    node = KnowledgeNode(
+        node_id="entry:demo.RefundFacade#cancel",
+        system_id="refund-core",
+        kind=KnowledgeNodeKind.FACADE,
+        title="RefundFacade#cancel",
+        source_refs=[SourceReference.model_validate(references["facade"].model_dump())],
+        status=KnowledgeStatus.CODE_VERIFIED,
+    )
+    request = KnowledgeGenerationBatchRequest(
+        system_id="refund-core",
+        target_ids=["facade:demo.RefundFacade#cancel"],
+        agent="codex",
+        confirmed=True,
+    )
+    trace_steps = [
+        {"sequence": 1, "role": "entry", "source_ref": references["facade"], "summary": "取消入口。"},
+        {
+            "sequence": 2,
+            "role": "service",
+            "source_ref": references["service_interface"],
+            "summary": "订单查询接口。",
+        },
+        {
+            "sequence": 3,
+            "role": "service",
+            "source_ref": references["service_implementation"],
+            "summary": "订单查询实现。",
+        },
+        {"sequence": 4, "role": "data_access", "source_ref": references["dao"], "summary": "订单DAO。"},
+    ]
+    envelope = AgentKnowledgeEnvelope(
+        status="completed",
+        system_id="refund-core",
+        target_ids=request.target_ids,
+        summaries=[{"node_id": node.node_id, "summary": "取消前读取退票订单。"}],
+        questions=[],
+        source_refs=list(references.values()),
+        trace_steps=trace_steps,
+    )
+    service = KnowledgeGenerationService(
+        GitKnowledgeStore(tmp_path / "knowledge"),
+        SqliteKnowledgeIndex(tmp_path / "knowledge" / ".opentest" / "index.sqlite"),
+        SourceScanArtifactStore(tmp_path / "knowledge"),
+    )
+    source_lines = {
+        path.name: path.read_text(encoding="utf-8").splitlines()
+        for path in files.values()
+    }
+
+    service._validate_agent_trace(request, [node], envelope)
+    service._validate_agent_trace_links(envelope, source_lines)
+
+
+def test_dynamic_facade_route_requires_code_scanned_handler_even_when_skipped(tmp_path: Path) -> None:
+    """动态枚举路由只接受绑定scan确认的处理器，且已生成处理器仍保留在允许集合。
+
+    Args:
+        tmp_path: Pytest隔离的Facade路由、处理器、Service和DAO源码根。
+
+    Returns:
+        None；跳过生成的真实Invoker可通过，同注解伪Invoker被拒绝时通过。
+    """
+
+    source = tmp_path / "source"
+    source.mkdir()
+    facade_interface = source / "RefundFacade.java"
+    facade_implementation = source / "RefundFacadeImpl.java"
+    real_invoker = source / "RefundCancelServiceInvoker.java"
+    rogue_invoker = source / "RogueCancelService.java"
+    service_path = source / "RefundService.java"
+    dao_path = source / "RefundDAO.java"
+    facade_interface.write_text(
+        "package demo; interface RefundFacade { Object cancel(Object request); }\n",
+        encoding="utf-8",
+    )
+    facade_implementation.write_text(
+        "package demo; class RefundFacadeImpl implements RefundFacade {\n"
+        " Object cancel(Object request) { return execute(request, RefundServiceEnum.CANCEL); }\n"
+        "}\n",
+        encoding="utf-8",
+    )
+    real_invoker.write_text(
+        "package demo; @TradeService(name = RefundServiceEnum.CANCEL)\n"
+        "class RefundCancelServiceInvoker { RefundService service; Object invoke(Object request) { return service.cancel(request); } }\n",
+        encoding="utf-8",
+    )
+    rogue_invoker.write_text(
+        "package demo; @TradeService(name = RefundServiceEnum.CANCEL)\n"
+        "class RogueCancelService { RefundService service; Object invoke(Object request) { return service.cancel(request); } }\n",
+        encoding="utf-8",
+    )
+    service_path.write_text(
+        "package demo; class RefundService { RefundDAO dao; Object cancel(Object request) { return dao.find(request); } }\n",
+        encoding="utf-8",
+    )
+    dao_path.write_text(
+        "package demo; class RefundDAO { Object find(Object request) { return null; } }\n",
+        encoding="utf-8",
+    )
+    target_id = "facade:demo.RefundFacade#cancel"
+    manifest = ScanManifest(
+        scan_id="scan-route-allow-list",
+        system_id="refund-core",
+        baseline=SourceBaseline(source_path=str(source), commit="abc123"),
+        entries=[
+            EntryPoint(
+                entry_id=target_id,
+                system_id="refund-core",
+                kind=KnowledgeNodeKind.FACADE,
+                display_name="RefundFacade#cancel",
+                source_id="demo.RefundFacade#cancel",
+                source_path=str(facade_interface),
+            )
+        ],
+    )
+    knowledge_root = tmp_path / "knowledge"
+    generation_service = KnowledgeGenerationService(
+        GitKnowledgeStore(knowledge_root),
+        SqliteKnowledgeIndex(knowledge_root / ".opentest" / "index.sqlite"),
+        SourceScanArtifactStore(knowledge_root),
+    )
+    full_batch = generation_service.tracer.trace(manifest, target_id)
+    main_node = full_batch.nodes[0]
+    request = KnowledgeGenerationBatchRequest(
+        system_id="refund-core", target_ids=[target_id], agent="codex", confirmed=True
+    )
+    # candidate_nodes仅含主接口，模拟真实Invoker已完整发布而被本轮生成范围跳过。
+    validation_nodes = generation_service._agent_trace_validation_nodes(manifest, request, [main_node])
+    references = {
+        "entry": AgentKnowledgeSourceReference(
+            path="RefundFacadeImpl.java", symbol="demo.RefundFacadeImpl#cancel", line=2
+        ),
+        "real": AgentKnowledgeSourceReference(
+            path="RefundCancelServiceInvoker.java", symbol="demo.RefundCancelServiceInvoker#invoke", line=2
+        ),
+        "rogue": AgentKnowledgeSourceReference(
+            path="RogueCancelService.java", symbol="demo.RogueCancelService#invoke", line=2
+        ),
+        "service": AgentKnowledgeSourceReference(
+            path="RefundService.java", symbol="demo.RefundService#cancel", line=1
+        ),
+        "dao": AgentKnowledgeSourceReference(path="RefundDAO.java", symbol="demo.RefundDAO#find", line=1),
+    }
+    base_steps = [
+        {"sequence": 1, "role": "entry", "source_ref": references["entry"], "summary": "取消入口。"},
+        {"sequence": 2, "role": "invoker", "source_ref": references["real"], "summary": "取消路由。"},
+        {"sequence": 3, "role": "service", "source_ref": references["service"], "summary": "取消服务。"},
+        {"sequence": 4, "role": "data_access", "source_ref": references["dao"], "summary": "退票DAO。"},
+    ]
+    envelope = AgentKnowledgeEnvelope(
+        status="completed",
+        system_id="refund-core",
+        target_ids=[target_id],
+        summaries=[{"node_id": main_node.node_id, "summary": "取消退票单。"}],
+        questions=[],
+        source_refs=list(references.values()),
+        trace_steps=base_steps,
+    )
+    source_lines = {
+        path.name: path.read_text(encoding="utf-8").splitlines()
+        for path in (
+            facade_interface,
+            facade_implementation,
+            real_invoker,
+            rogue_invoker,
+            service_path,
+            dao_path,
+        )
+    }
+
+    assert any(node.node_id.endswith("RefundCancelServiceInvoker#invoke") for node in validation_nodes)
+    generation_service._validate_agent_trace(request, validation_nodes, envelope)
+    generation_service._validate_agent_trace_links(envelope, source_lines, validation_nodes)
+
+    rogue_envelope = envelope.model_copy(
+        update={
+            "trace_steps": [
+                envelope.trace_steps[0],
+                envelope.trace_steps[1].model_copy(update={"source_ref": references["rogue"]}),
+                *envelope.trace_steps[2:],
+            ]
+        }
+    )
+    # 相同枚举注解不能让Agent自选未被扫描纳入的普通Service作为动态路由目标。
+    with pytest.raises(KnowledgeValidationError, match="not connected"):
+        generation_service._validate_agent_trace_links(
+            rogue_envelope,
+            source_lines,
+            validation_nodes,
+        )
+
+
 def test_facade_method_annotation_braces_do_not_truncate_business_body(tmp_path: Path) -> None:
     """监控注解数组不得抢占同名Facade方法的方法体边界。
 
@@ -276,11 +1330,11 @@ def test_facade_method_annotation_braces_do_not_truncate_business_body(tmp_path:
     facade = source / "OuterRefundFacade.java"
     implementation = source / "OuterRefundFacadeImpl.java"
     facade.write_text(
-        "interface OuterRefundFacade { Object pageBusinessLog(Object request); }\n",
+        "package demo; interface OuterRefundFacade { Object pageBusinessLog(Object request); }\n",
         encoding="utf-8",
     )
     implementation.write_text(
-        "class OuterRefundFacadeImpl {\n"
+        "package demo; class OuterRefundFacadeImpl implements OuterRefundFacade {\n"
         " @Indicator(name = \"pageBusinessLog\", rtScopes = { @Scope(from = 0, to = 1) })\n"
         " public Object pageBusinessLog(Object request) {\n"
         "  try { return this.execute(request); } catch (RuntimeException error) { return failed(error); }\n"
@@ -329,11 +1383,11 @@ def test_method_locator_skips_earlier_call_and_parameter_annotation_array(tmp_pa
     facade = source / "OuterRefundFacade.java"
     implementation = source / "OuterRefundFacadeImpl.java"
     facade.write_text(
-        "interface OuterRefundFacade { Object pageBusinessLog(Object request); }\n",
+        "package demo; interface OuterRefundFacade { Object pageBusinessLog(Object request); }\n",
         encoding="utf-8",
     )
     implementation.write_text(
-        "class OuterRefundFacadeImpl {\n"
+        "package demo; class OuterRefundFacadeImpl implements OuterRefundFacade {\n"
         " Object wrapper() { return pageBusinessLog(null); }\n"
         " public Object pageBusinessLog(@Scope(values = {\"A\", \"B\"}) Object request) {\n"
         "  return actualBusinessLog(request);\n"
@@ -383,11 +1437,11 @@ def test_method_locator_rejects_lambda_comparison_and_explicit_generic_calls(tmp
     facade = source / "OuterRefundFacade.java"
     implementation = source / "OuterRefundFacadeImpl.java"
     facade.write_text(
-        "interface OuterRefundFacade { Object pageBusinessLog(Object request); }\n",
+        "package demo; interface OuterRefundFacade { Object pageBusinessLog(Object request); }\n",
         encoding="utf-8",
     )
     implementation.write_text(
-        "class OuterRefundFacadeImpl {\n"
+        "package demo; class OuterRefundFacadeImpl implements OuterRefundFacade {\n"
         " Object lambdaCall() { return stream.map(x -> pageBusinessLog(x)); }\n"
         " boolean comparisonCall() { return amount > pageBusinessLog(null); }\n"
         " Object genericCall() { return this.<Object>pageBusinessLog(null); }\n"
@@ -1605,39 +2659,62 @@ def test_agent_trace_accepts_single_word_qualified_route_and_rejects_other_enum(
         "@TradeService(name = RefundOrderServiceEnum.CANCEL)",
         "class RefundCancelServiceInvoker { Object invoke(Object request) { return request; } }",
     ]
+    route_node = KnowledgeNode(
+        node_id="logic:RefundCancelServiceInvoker#invoke",
+        system_id="demo-system",
+        kind=KnowledgeNodeKind.COMMON_LOGIC,
+        title="RefundCancelServiceInvoker#invoke",
+        source_refs=[invoker_reference],
+        status=KnowledgeStatus.CODE_VERIFIED,
+    )
 
-    # 相同枚举类型和单词常量共同证明Facade到Invoker的动态分发边。
+    # 相同枚举类型和代码扫描固化的处理器身份共同证明Facade到Invoker的动态分发边。
     service._validate_agent_trace_links(
         envelope,
         {
             entry_reference.path: caller_lines,
             invoker_reference.path: matching_invoker_lines,
         },
+        [route_node],
     )
 
     # 常量名称相同但枚举类型不同不能建立路由，避免COMMON、CANCEL等短值误连。
+    mismatched_reference = SourceReference(
+        path="OtherCancelServiceInvoker.java",
+        symbol="OtherCancelServiceInvoker#invoke",
+        line=2,
+    )
+    mismatched_envelope = envelope.model_copy(
+        update={
+            "trace_steps": [
+                envelope.trace_steps[0],
+                envelope.trace_steps[1].model_copy(update={"source_ref": mismatched_reference}),
+            ]
+        }
+    )
     mismatched_invoker_lines = [
         "@TradeService(name = OtherServiceEnum.CANCEL)",
-        "class RefundCancelServiceInvoker { Object invoke(Object request) { return request; } }",
+        "class OtherCancelServiceInvoker { Object invoke(Object request) { return request; } }",
     ]
     with pytest.raises(KnowledgeValidationError, match="not connected"):
         service._validate_agent_trace_links(
-            envelope,
+            mismatched_envelope,
             {
                 entry_reference.path: caller_lines,
-                invoker_reference.path: mismatched_invoker_lines,
+                mismatched_reference.path: mismatched_invoker_lines,
             },
+            [route_node],
         )
 
 
 def test_agent_trace_accepts_proven_inheritance_and_interface_dispatch(tmp_path: Path) -> None:
-    """相邻链应接受源码明确证明的继承重载与接口字段到实现类分派。
+    """相邻链应接受已证明的继承、接口分派和同类辅助方法压缩。
 
     Args:
         tmp_path: Pytest提供的隔离知识存储目录。
 
     Returns:
-        None；两类Java多态连接无需插入虚假接口步骤即可通过。
+        None；Java多态连接和真实可达的包装方法均无需插入虚假步骤即可通过。
     """
 
     service, _, _ = _knowledge_service(tmp_path)
@@ -1682,7 +2759,7 @@ def test_agent_trace_accepts_proven_inheritance_and_interface_dispatch(tmp_path:
         inherited_envelope,
         {
             inherited_entry.path: [
-                "class RefundFacadeImpl extends AbstractFacade { Object queryList(Object request) { return execute(request); } }"
+                "class RefundFacadeImpl extends AbstractFacade { Object queryList(Object request) { return this.execute(request); } }"
             ],
             inherited_target.path: ["class AbstractFacade { Object execute(Object request) { return request; } }"],
         },
@@ -1816,6 +2893,78 @@ def test_agent_trace_accepts_proven_inheritance_and_interface_dispatch(tmp_path:
             ],
             dao_target.path: [
                 "class SaasRefundOrderDAOProxy { Object listPage(Object request) { return request; } }"
+            ],
+        },
+    )
+
+    compressed_entry = SourceReference(
+        path="RefundCancelServiceInvoker.java",
+        symbol="RefundCancelServiceInvoker#invoke",
+        line=2,
+    )
+    compressed_target = SourceReference(
+        path="AbstractOrderServiceInvoker.java",
+        symbol="AbstractOrderServiceInvoker#queryOrderByRefundSerialNo",
+        line=2,
+    )
+    compressed_envelope = AgentKnowledgeEnvelope.model_validate(
+        {
+            "status": "completed",
+            "system_id": "demo-system",
+            "target_ids": ["facade:demo.RefundFacade#cancel"],
+            "summaries": [],
+            "questions": [],
+            "source_refs": [
+                {
+                    "path": compressed_entry.path,
+                    "symbol": compressed_entry.symbol,
+                    "line": compressed_entry.line,
+                },
+                {
+                    "path": compressed_target.path,
+                    "symbol": compressed_target.symbol,
+                    "line": compressed_target.line,
+                },
+            ],
+            "trace_steps": [
+                {
+                    "sequence": 1,
+                    "role": "invoker",
+                    "source_ref": {
+                        "path": compressed_entry.path,
+                        "symbol": compressed_entry.symbol,
+                        "line": compressed_entry.line,
+                    },
+                    "summary": "加锁入口经同类包装方法查询订单。",
+                },
+                {
+                    "sequence": 2,
+                    "role": "service",
+                    "source_ref": {
+                        "path": compressed_target.path,
+                        "symbol": compressed_target.symbol,
+                        "line": compressed_target.line,
+                    },
+                    "summary": "父类服务方法执行订单查询。",
+                },
+            ],
+        }
+    )
+    # invoke到父类查询间的innerInvoke/doInvoke只是同类转发，trace可压缩但仍由源码证明可达。
+    service._validate_agent_trace_links(
+        compressed_envelope,
+        {
+            compressed_entry.path: [
+                "class RefundCancelServiceInvoker extends AbstractOrderServiceInvoker {",
+                "  Object invoke(Object request) { return innerInvoke(request); }",
+                "  Object innerInvoke(Object request) { return doInvoke(request); }",
+                "  Object doInvoke(Object request) { return queryOrderByRefundSerialNo(request); }",
+                "}",
+            ],
+            compressed_target.path: [
+                "class AbstractOrderServiceInvoker {",
+                "  Object queryOrderByRefundSerialNo(Object request) { return request; }",
+                "}",
             ],
         },
     )
@@ -2721,19 +3870,19 @@ def test_codex_app_server_creates_and_injects_thread_without_starting_a_turn(
     assert "OpenTest知识目标" in injected["params"]["items"][0]["content"][0]["text"]
 
 
-def test_codex_app_server_starts_first_persisted_turn_and_closes_after_completion(tmp_path: Path) -> None:
-    """等待线程首次点击应显式启动知识Skill，并在完成后回收App Server。
+def test_codex_app_server_inspects_persisted_turn_without_resuming_thread(tmp_path: Path) -> None:
+    """协调器应只读检查已有turn并立即回收短生命周期App Server。
 
     Args:
-        tmp_path: pytest隔离的假App Server、协议日志和线程状态文件。
+        tmp_path: pytest隔离的假App Server、协议日志和进程关闭标记。
 
     Returns:
-        None；协议只出现一次turn/start、包含显式Skill且子进程正常退出时通过。
+        None；只调用thread/read并返回最新turn身份和状态时通过。
     """
 
     executable = tmp_path / "codex"
-    request_log = tmp_path / "turn-start-requests.jsonl"
-    process_closed = tmp_path / "turn-process-closed.txt"
+    request_log = tmp_path / "thread-inspect-requests.jsonl"
+    process_closed = tmp_path / "thread-inspect-process-closed.txt"
     executable.write_text(
         "#!/usr/bin/env python3\n"
         "import json, pathlib, sys\n"
@@ -2746,64 +3895,41 @@ def test_codex_app_server_starts_first_persisted_turn_and_closes_after_completio
         "        continue\n"
         "    method = request.get('method')\n"
         "    if method == 'thread/read':\n"
-        "        result = {'thread':{'id':request['params']['threadId'],'turns':[]}}\n"
-        "    elif method == 'thread/resume':\n"
-        "        result = {'thread':{'id':request['params']['threadId'],'turns':[]}}\n"
-        "    elif method == 'mcpServerStatus/list':\n"
-        "        names = ['get_knowledge_handoff','list_source_files','search_source','read_source','submit_knowledge_candidate']\n"
-        "        result = {'data':[{'name':'opentest_knowledge','tools':{name:{'name':name} for name in names}}]}\n"
-        "    elif method == 'turn/start':\n"
-        "        result = {'turn':{'id':'turn-opentest-first','status':'inProgress','items':[]}}\n"
+        "        turns = [{'id':'turn-finished','status':'completed'}, {'id':'turn-active','status':'inProgress'}]\n"
+        "        result = {'thread':{'id':request['params']['threadId'],'turns':turns}}\n"
         "    else:\n"
         "        result = {}\n"
         "    print(json.dumps({'id':request['id'],'result':result}), flush=True)\n"
-        "    if method == 'turn/start':\n"
-        "        completed = {'method':'turn/completed','params':{'threadId':request['params']['threadId'],'turn':{'id':'turn-opentest-first','status':'completed','items':[]}}}\n"
-        "        print(json.dumps(completed), flush=True)\n"
         "process_closed.write_text('closed', encoding='utf-8')\n",
         encoding="utf-8",
     )
     executable.chmod(0o755)
     client = CodexAppServerClient(CodexAppServerConfig(executable=str(executable)))
 
-    started = client.start_thread_turn("01a-client-handoff-test")
-    # 完成通知由后台线程消费；有界等待只验证进程生命周期，不模拟模型耗时。
-    deadline = time.monotonic() + 2
-    while not process_closed.exists() and time.monotonic() < deadline:
-        time.sleep(0.01)
+    snapshot = client.inspect_thread("01a-client-handoff-test")
     requests = [json.loads(line) for line in request_log.read_text(encoding="utf-8").splitlines()]
     methods = [request.get("method") for request in requests]
 
-    assert started is True
+    assert snapshot.turn_count == 2
+    assert snapshot.latest_turn_id == "turn-active"
+    assert snapshot.latest_turn_status == "inProgress"
     assert process_closed.read_text(encoding="utf-8") == "closed"
-    assert methods == [
-        "initialize",
-        "initialized",
-        "thread/read",
-        "thread/resume",
-        "mcpServerStatus/list",
-        "turn/start",
-    ]
-    turn_start = next(request for request in requests if request.get("method") == "turn/start")
-    assert turn_start["params"] == {
+    assert methods == ["initialize", "initialized", "thread/read"]
+    read_request = next(request for request in requests if request.get("method") == "thread/read")
+    assert read_request["params"] == {
         "threadId": "01a-client-handoff-test",
-        "input": [
-            {
-                "type": "text",
-                "text": "$knowledge-handoff 请继续当前OpenTest知识接管任务，并在同一任务内完成自动校验和发布。",
-            }
-        ],
+        "includeTurns": True,
     }
 
 
-def test_codex_app_server_does_not_start_second_turn_for_persisted_thread(tmp_path: Path) -> None:
-    """已有turn的持久线程再次点击只读识别即可，不得抢占writer或追加第二次调用。
+def test_codex_app_server_inspects_empty_thread_without_starting_turn(tmp_path: Path) -> None:
+    """尚无turn的持久线程只返回空快照，不得恢复线程或取得writer。
 
     Args:
         tmp_path: pytest隔离的假App Server与协议日志。
 
     Returns:
-        None；只读结果为False且协议未恢复线程、检查MCP或调用turn/start时通过。
+        None；快照数量为零且协议只有thread/read时通过。
     """
 
     executable = tmp_path / "codex"
@@ -2818,7 +3944,7 @@ def test_codex_app_server_does_not_start_second_turn_for_persisted_thread(tmp_pa
         "    if 'id' not in request:\n"
         "        continue\n"
         "    if request.get('method') == 'thread/read':\n"
-        "        result = {'thread':{'id':request['params']['threadId'],'turns':[{'id':'turn-existing'}]}}\n"
+        "        result = {'thread':{'id':request['params']['threadId'],'turns':[]}}\n"
         "    else:\n"
         "        result = {}\n"
         "    print(json.dumps({'id':request['id'],'result':result}), flush=True)\n",
@@ -2826,7 +3952,7 @@ def test_codex_app_server_does_not_start_second_turn_for_persisted_thread(tmp_pa
     )
     executable.chmod(0o755)
 
-    started = CodexAppServerClient(CodexAppServerConfig(executable=str(executable))).start_thread_turn(
+    snapshot = CodexAppServerClient(CodexAppServerConfig(executable=str(executable))).inspect_thread(
         "01a-client-handoff-test"
     )
     methods = [
@@ -2834,7 +3960,9 @@ def test_codex_app_server_does_not_start_second_turn_for_persisted_thread(tmp_pa
         for line in request_log.read_text(encoding="utf-8").splitlines()
     ]
 
-    assert started is False
+    assert snapshot.turn_count == 0
+    assert snapshot.latest_turn_id == ""
+    assert snapshot.latest_turn_status == ""
     assert methods == ["initialize", "initialized", "thread/read"]
 
 
@@ -3015,6 +4143,113 @@ def test_agent_knowledge_envelope_schema_is_fully_codex_strict() -> None:
     _assert_codex_strict_schema(schema)
 
 
+def test_client_candidate_keeps_inherited_field_as_evidence_not_trace_step(tmp_path: Path) -> None:
+    """客户端候选应自动把继承注入字段从执行trace降为连接证据。
+
+    Args:
+        tmp_path: Pytest提供的隔离源码与知识服务目录。
+
+    Returns:
+        None；字段仍保留在source_refs、trace只剩真实方法且直接调用链通过时成功。
+    """
+
+    service, _store, _index = _knowledge_service(tmp_path / "knowledge")
+    source_root = tmp_path / "source"
+    implementation_path = "demo/biz/impl/OrderServiceImpl.java"
+    parent_path = "demo/biz/service/AbstractOrderService.java"
+    dao_path = "demo/dal/SaasRefundOrderDAOProxy.java"
+    source_files = {
+        implementation_path: [
+            "package demo.biz.impl;",
+            "import demo.biz.service.AbstractOrderService;",
+            "class OrderServiceImpl extends AbstractOrderService {",
+            "  Object query(String serialNo) { return orderDAO.query(serialNo); }",
+            "}",
+        ],
+        parent_path: [
+            "package demo.biz.service;",
+            "import demo.dal.*;",
+            "abstract class AbstractOrderService {",
+            "  protected SaasRefundOrderDAOProxy orderDAO;",
+            "}",
+        ],
+        dao_path: [
+            "package demo.dal;",
+            "class SaasRefundOrderDAOProxy {",
+            "  Object query(String serialNo) { return serialNo; }",
+            "}",
+        ],
+    }
+    for relative_path, source_lines in source_files.items():
+        # 用三个真实Java文件复现子类方法经父类字段调用DAO的生产结构。
+        source_file = source_root / relative_path
+        source_file.parent.mkdir(parents=True, exist_ok=True)
+        source_file.write_text("\n".join(source_lines), encoding="utf-8")
+    implementation_reference = {
+        "path": implementation_path,
+        "symbol": "OrderServiceImpl#query",
+        "line": 4,
+    }
+    field_reference = {
+        "path": parent_path,
+        "symbol": "AbstractOrderService#orderDAO",
+        "line": 4,
+    }
+    dao_reference = {
+        "path": dao_path,
+        "symbol": "SaasRefundOrderDAOProxy#query",
+        "line": 3,
+    }
+    candidate = KnowledgeClientCandidateEnvelope.model_validate(
+        {
+            "status": "completed",
+            "system_id": "demo-system",
+            "target_ids": ["facade:demo.RefundFacade#cancel"],
+            "summaries": [],
+            "questions": [],
+            "source_refs": [implementation_reference, field_reference, dao_reference],
+            "trace_steps": [
+                {
+                    "sequence": 1,
+                    "role": "service",
+                    "source_ref": implementation_reference,
+                    "summary": "订单服务查询。",
+                },
+                {
+                    "sequence": 2,
+                    "role": "service",
+                    "source_ref": field_reference,
+                    "summary": "父类注入DAO字段。",
+                },
+                {
+                    "sequence": 3,
+                    "role": "data_access",
+                    "source_ref": dao_reference,
+                    "summary": "DAO执行查询。",
+                },
+            ],
+        }
+    )
+    accessed_ranges = {
+        path: [(1, len(source_lines))]
+        for path, source_lines in source_files.items()
+    }
+
+    normalized = service._normalize_client_candidate_references(
+        candidate,
+        source_root,
+        accessed_ranges,
+    )
+
+    assert [step.source_ref.symbol for step in normalized.trace_steps] == [
+        "OrderServiceImpl#query",
+        "SaasRefundOrderDAOProxy#query",
+    ]
+    assert [step.sequence for step in normalized.trace_steps] == [1, 2]
+    assert any(reference.symbol == "AbstractOrderService#orderDAO" for reference in normalized.source_refs)
+    service._validate_agent_trace_links(normalized, source_files)
+
+
 def test_facade_client_candidate_requires_complete_sections_and_immutable_contract(tmp_path: Path) -> None:
     """Facade候选缺少业务章节时不得发布，且模型不能改写确定性调用身份。
 
@@ -3088,6 +4323,31 @@ def test_facade_client_candidate_requires_complete_sections_and_immutable_contra
     )
 
     assert service._client_completion_gaps(entry, complete) == []
+    concise = complete.model_copy(
+        update={
+            "completeness": AgentKnowledgeCompleteness(
+                business_purpose="查询退票单",
+                applicable_scenarios="运营后台查询",
+                input_semantics="类型、日期和分页",
+                output_semantics="返回列表与总数",
+                business_flow="入口调用服务后查询DAO",
+                important_branches="按退票类型过滤",
+                failure_handling="无重试，异常直接上抛",
+                test_oracles="列表符合条件且总数一致",
+            )
+        }
+    )
+    concise_gaps = service._client_completion_gaps(entry, concise)
+    assert not any(gap.startswith("missing_or_shallow:") for gap in concise_gaps)
+    for placeholder_text in ("待补充", "待确认", "待分析", "待完善"):
+        placeholder = concise.model_copy(
+            update={
+                "completeness": concise.completeness.model_copy(
+                    update={"failure_handling": placeholder_text}
+                )
+            }
+        )
+        assert "missing_or_shallow:failure_handling" in service._client_completion_gaps(entry, placeholder)
     repeated = complete.model_copy(
         update={
             "completeness": AgentKnowledgeCompleteness(

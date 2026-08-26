@@ -1,17 +1,16 @@
 ---
-node_id: transition:RefundOrderStateEnum:RefundOrderCancelPostActor:25
+node_id: logic:com.ly.flight.chainsaas.refund.facade.validator.trade.RefundCancelValidator#validate
 system_id: ifightchainsaas.java.refund.core
-kind: state_transition
-title: PENDING_APPLY/WAIT_REFUND/RESHOPING/REFUND_FAIL → REFUND_CANCEL
-summary: 订单从PENDING_APPLY/WAIT_REFUND/RESHOPING/REFUND_FAIL流转到REFUND_CANCEL；包含1个可观察业务阶段，包含1个条件分支，产生1项状态或数据副作用。
+kind: common_logic
+title: RefundCancelValidator · validate
+summary: 当前源码仅能证明该入口或方法存在，未直接提取到条件、外部交互或状态副作用。
 aliases:
-- transition:RefundOrderStateEnum:RefundOrderCancelPostActor:25
-- RefundOrderCancelPostActor
+- com.ly.flight.chainsaas.refund.facade.validator.trade.RefundCancelValidator#validate
 source_refs:
 - repository: ''
-  path: app/biz/src/main/java/com/ly/flight/chainsaas/refund/biz/actor/post/RefundOrderCancelPostActor.java
-  symbol: RefundOrderCancelPostActor
-  line: 29
+  path: app/facade-impl/src/main/java/com/ly/flight/chainsaas/refund/facade/validator/trade/RefundCancelValidator.java
+  symbol: com.ly.flight.chainsaas.refund.facade.validator.trade.RefundCancelValidator#validate
+  line: 19
   commit: eba0fc72ec39a6883a6ceb1a70c38040ec5ea0bb
   content_digest: ''
 - repository: ''
@@ -121,24 +120,23 @@ confidence: 1.0
 tags: []
 metadata:
   scan_id: scan-20260825075610-a0f437c374-8132c1a1
-  phase: post
+  analysis_depth: business
 invocation_contract: null
-updated_at: '2026-08-26T01:52:09.394109Z'
+updated_at: '2026-08-26T01:52:09.389090Z'
 ---
-
 
 <!-- kb:auto-start -->
 ## 业务结论
 
-订单从PENDING_APPLY/WAIT_REFUND/RESHOPING/REFUND_FAIL流转到REFUND_CANCEL；包含1个可观察业务阶段，包含1个条件分支，产生1项状态或数据副作用。
+当前源码仅能证明该入口或方法存在，未直接提取到条件、外部交互或状态副作用。
 
 ## 业务阶段
 
-- `更新取消原因`
+- `未从当前方法直接证明`
 
 ## 条件与分支
 
-- `request == null`
+- `未从当前方法直接证明`
 
 ## 外部交互
 
@@ -146,15 +144,15 @@ updated_at: '2026-08-26T01:52:09.394109Z'
 
 ## 状态与副作用
 
-- `addCancelReasonUpdateTask`
+- `未从当前方法直接证明`
 
 ## 源码证据
 
-- `RefundOrderCancelPostActor.java RefundOrderCancelPostActor`
+- `RefundCancelValidator.java com.ly.flight.chainsaas.refund.facade.validator.trade.RefundCancelValidator#validate`
 
 ## Agent代码解释（INFERRED）
 
-PENDING_APPLY、WAIT_REFUND、RESHOPING、REFUND_FAIL 可转 REFUND_CANCEL，追加取消原因和日志任务。
+要求 traceId、refundSerialNo、cancelReason、cancelReasonId 非空。
 <!-- kb:auto-end -->
 
 ## 补充说明

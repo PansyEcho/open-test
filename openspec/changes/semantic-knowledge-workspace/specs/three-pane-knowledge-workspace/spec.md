@@ -19,6 +19,9 @@
 - **AND** 提交前确认摘要展示Agent、当前对象、目标数量1、注册源码根内只读边界和可能产生API费用，未确认不得创建任务
 - **AND** 请求必须携带明确Agent，后端不得自行选择或切换到另一个Agent
 - **AND** 当前目标依次执行确定性追踪、指定Agent只读解释、严格校验、按来源发布和检查点保存
+- **AND** Agent启动前必须由代码沿已解析调用边扫描当前接口可达的公共业务方法、精确状态流转及Actor公共逻辑，并按当前scan的知识状态确定需要生成的依赖节点
+- **AND** 公开`target_ids`只包含用户选择的接口，`candidate_node_ids`必须包含主接口及缺失、过期、失败、有开放问题或子节点不完整的确定性依赖；当前scan下完整的`INFERRED / USER_CONFIRMED`依赖只建立关系并跳过重写
+- **AND** Agent只能解释并覆盖系统给定的全部`candidate_node_ids`，不得自行扫描、新增、删除或替换公共依赖，主接口与依赖在同一task、handoff、thread、batch和scan中一次校验并原子发布
 - **AND** 代码可以证明的节点直接以`CODE_VERIFIED`发布，Agent代码解释以`INFERRED`发布，只有用户后续确认才标为`USER_CONFIRMED`
 - **AND** 监控注解中的同名字符串、更早调用点或参数注解数组不得截断真实方法体，方法/构造器声明不得冒充调用或副作用，源码引用指向真实声明行
 - **AND** 合法入口仅能证明方法存在时发布最小`CODE_VERIFIED`事实并标记“仅代码事实”，不得固定生成业务口径问题或生成伪共享节点
@@ -37,14 +40,21 @@
 
 - **WHEN** 用户选择Codex并点击初次生成或重新生成当前唯一目标
 - **THEN** 请求携带`interaction_mode=codex_client`、`intent`和稳定`attempt_id`，创建同一知识实体下的handoff、草稿批次、等待任务和持久Codex thread
-- **AND** App Server先创建、命名和注入任务历史；用户点击“启动并打开Codex”时，页面在同一thread中显式调用一次`$knowledge-handoff`的`turn/start`，成功后再通过`codex://threads/<id>`打开同一聊天
-- **AND** 同一thread已有任意turn时，重复点击只打开原聊天，不得调用第二次`turn/start`、创建第二个handoff/thread或产生重复模型费用
+- **AND** App Server只创建、命名和注入无turn持久历史；页面先通过`codex://threads/<id>`打开同一聊天，再由同用户本机桌面IPC向当前owner请求一次follower start-turn
+- **AND** OpenTest只使用`thread/read(includeTurns=true)`轮询，不得调用`thread/resume`、`turn/start`或保持后台生成进程；同一thread已有活动turn或已处理turn时重复请求返回`already_started`
+- **AND** `/knowledge/client-handoffs/{handoff_id}/turns`幂等返回`started / already_started / manual_required`，桌面IPC缺失、版本不兼容或未接管时只提示在原任务手动发送开始消息，不得退回OpenTest writer
 - **AND** 点击本身授权同一handoff/thread连续分析、补读、修正和重提候选，不得为每次校验错误再次询问；不得创建第二handoff/thread、扩展目标或切换Agent
-- **AND** 全仓库任一时刻最多存在一个可继续交流或等待确认的Codex知识聊天；同一attempt重复提交返回同一任务与thread，其他系统或目标的并发创建必须被拒绝
+- **AND** 全仓库任一时刻最多存在一个可继续交流、自动补全、等待回答或等待确认的Codex知识聊天；同一attempt重复提交返回同一任务与thread，其他系统或目标的并发创建必须被拒绝
 - **AND** 已生成、失败、部分完成和过期目标都提供重新生成；新候选确认前旧知识继续有效，拒绝、放弃或发布失败不得覆盖旧知识
-- **AND** 客户端插件只允许经回环接口读取handoff、调用三个受控源码工具、暂存候选和确认发布；OpenTest可以规范化真实已读区间内可唯一证明的Java方法简称和Mapper节点引用，但缺少真实`read_source`区间、目标入口不匹配或Facade主链不完整时不得回写
-- **AND** 候选提交后必须先在Codex完整展示，再由原生确认接受或拒绝；接受只授权写入，Agent解释保持`INFERRED`且不得标为`USER_CONFIRMED`
+- **AND** 客户端插件只允许经回环接口读取handoff、调用三个受控源码工具和提交候选；OpenTest可以规范化真实已读区间内可唯一证明的Java方法简称和Mapper节点引用，但缺少真实`read_source`区间、目标入口不匹配或Facade主链不完整时不得回写
+- **AND** 机器完整度缺口必须在原任务自动补全，完整候选通过全部门禁后直接发布；只有具有源码证据和明确影响范围的高影响业务问题才可使用`needs_input`
 - **AND** OpenTest页面只展示接管状态、源码轨迹、确认结果与最终知识，Codex增量聊天留在客户端；Claude Code仍在OpenTest页面流式展示
+
+#### Scenario: 历史客户端状态原地恢复
+
+- **WHEN** 服务读取历史`waiting_for_completion`，或页面打开已有活动Codex turn的旧任务
+- **THEN** 系统保留原task、handoff、thread、batch和scan，把历史补全状态原地迁回机器补全，并等待活动turn结束后只读协调
+- **AND** 不得取消已有生成内容、关闭非OpenTest进程、创建第二线程或取得会话writer
 
 #### Scenario: 四步流程与背景后续编辑
 
@@ -98,7 +108,8 @@
 - **THEN** Runner必须保持Shell、原生文件工具、网络、浏览器、用户MCP和写能力关闭，仅开放注册源码根内的列举、搜索与读取工具
 - **AND** 受控工具拒绝绝对路径、上级路径、逐级符号链接、QA、Fixture、测试和构建目录及其文件名/分隔符/驼峰/大写缩写变体，搜索使用线性字面量且疑似认证赋值只返回脱敏占位
 - **AND** Agent必须从入口继续定位Validator、Invoker或Provider，进入核心Service及DAO/Mapper或远程边界，并结合已保存业务背景解释请求转换、主流程、分支、副作用、返回组装与异常
-- **AND** 严格输出必须提供从1开始的`trace_steps`，将入口、可选Invoker、核心Service和最终数据访问或远程边界分别绑定到顶层源码引用
+- **AND** 严格输出必须提供从1开始的`trace_steps`，公开Facade接口或对应同名实现均可作为首个entry，并将可选Invoker、核心Service和首个数据访问或远程边界分别绑定到顶层源码引用
+- **AND** 核心路径到首个数据或远程边界为止必须前向连通；边界后的Service或Invoker返回组装可以继续展示，不得仅因角色回退或最后一步不是边界而拒绝
 - **AND** Facade只到接口、Invoker或Service，使用未经证明的`no_downstream`，或任意引用行不在本次`read_source`区间时不得标记完整生成；校验通过的完整路径引用必须追加到发布知识证据
 
 #### Scenario: 严格Agent输出Schema在本地预检
@@ -113,10 +124,9 @@
 
 - **WHEN** Agent只能在用户确认高影响业务疑点后完成当前对象分析
 - **THEN** 系统先发布`CODE_VERIFIED`事实、暂缓未完成推断、把任务标记`WAITING_FOR_INPUT`并在当前对象右栏实时显示问题
-- **AND** 文本、单选和多选答案都可暂存并通过现有问题周期统一确认
-- **AND** 用户完成周期后页面再次展示原Agent、原目标和可能费用，未确认不得续跑
-- **AND** 确认后只使用原thread/session ID续跑，不得使用当前全局选择切换Agent
-- **AND** 完成后的Agent解释标记`INFERRED`，人工答案单独保持`USER_CONFIRMED`
+- **AND** Codex客户端任务卡展示问题标题、说明、选项和“在Codex中回答”，用户在原thread直接回复后继续提交最终候选
+- **AND** 回答和最终提交复用原task、handoff、thread、batch和scan，不创建下一尝试或要求普通完整度确认
+- **AND** `completed`候选不得残留开放问题；通过全部门禁后自动发布，Agent解释保持`INFERRED`且不得伪装为`USER_CONFIRMED`
 
 #### Scenario: 按填写状态切换问题
 
@@ -177,7 +187,7 @@
 
 ### Requirement: 页面配置Codex速度与业务Prompt
 
-现有本机运行设置 SHALL 提供`gpt-5.6-sol`的Low/Medium选择且默认Medium，并 SHALL 提供一份全局业务Prompt模板、变量说明、默认恢复和当前目标完整Prompt预览。固定安全、工具、目标身份、输出Schema和补全协议 SHALL 不可编辑。
+现有本机运行设置 SHALL 提供Sol或Luna的Low/Medium选择，新配置、省略字段和无有效本机配置时 SHALL 默认`gpt-5.6-luna / low`，并 SHALL 提供一份全局业务Prompt模板、变量说明、默认恢复和当前目标完整Prompt预览。固定安全、工具、目标身份、输出Schema和补全协议 SHALL 不可编辑。
 
 #### Scenario: 新配置不改变活动任务
 

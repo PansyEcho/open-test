@@ -104,3 +104,31 @@ edges:
   kind: calls
   condition: ''
   source_refs: []
+- edge_id: edge:3220abfeee09d36a
+  system_id: ifightchainsaas.java.refund.core
+  source_node_id: entry:com.ly.flight.chainsaas.refund.facade.RefundFacade#cancel
+  target_node_id: logic:com.ly.flight.chainsaas.refund.biz.manager.refund.RefundCancelServiceInvoker#invoke
+  kind: calls
+  condition: ''
+  source_refs: []
+- edge_id: edge:c4188184898730a3
+  system_id: ifightchainsaas.java.refund.core
+  source_node_id: entry:com.ly.flight.chainsaas.refund.facade.RefundFacade#cancel
+  target_node_id: logic:com.ly.flight.chainsaas.refund.facade.validator.trade.RefundCancelValidator#validate
+  kind: calls
+  condition: ''
+  source_refs: []
+- edge_id: edge:b516f61abf149f27
+  system_id: ifightchainsaas.java.refund.core
+  source_node_id: entry:com.ly.flight.chainsaas.refund.facade.RefundFacade#cancel
+  target_node_id: transition:RefundOrderStateEnum:RefundOrderCancelPostActor:25
+  kind: transitions
+  condition: ''
+  source_refs: []
+- edge_id: edge:8abac585df9991c3
+  system_id: ifightchainsaas.java.refund.core
+  source_node_id: entry:com.ly.flight.chainsaas.refund.facade.RefundFacade#cancel
+  target_node_id: transition:RefundOrderStateEnum:RefundOrderManualCancelPostActor:20
+  kind: transitions
+  condition: ''
+  source_refs: []
