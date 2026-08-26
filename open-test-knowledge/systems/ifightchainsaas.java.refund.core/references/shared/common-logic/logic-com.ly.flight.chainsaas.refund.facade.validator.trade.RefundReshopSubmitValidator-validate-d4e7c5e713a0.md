@@ -1,17 +1,16 @@
 ---
-node_id: transition:RefundOrderStateEnum:RefundReshopSubmitPostActor:23
+node_id: logic:com.ly.flight.chainsaas.refund.facade.validator.trade.RefundReshopSubmitValidator#validate
 system_id: ifightchainsaas.java.refund.core
-kind: state_transition
-title: PENDING_APPLY/RESHOPING → AUDITED
-summary: 订单从PENDING_APPLY/RESHOPING流转到AUDITED；包含1个可观察业务阶段。
+kind: common_logic
+title: RefundReshopSubmitValidator · validate
+summary: 包含4个条件分支。
 aliases:
-- transition:RefundOrderStateEnum:RefundReshopSubmitPostActor:23
-- RefundReshopSubmitPostActor
+- com.ly.flight.chainsaas.refund.facade.validator.trade.RefundReshopSubmitValidator#validate
 source_refs:
 - repository: ''
-  path: app/biz/src/main/java/com/ly/flight/chainsaas/refund/biz/actor/post/RefundReshopSubmitPostActor.java
-  symbol: RefundReshopSubmitPostActor
-  line: 27
+  path: app/facade-impl/src/main/java/com/ly/flight/chainsaas/refund/facade/validator/trade/RefundReshopSubmitValidator.java
+  symbol: com.ly.flight.chainsaas.refund.facade.validator.trade.RefundReshopSubmitValidator#validate
+  line: 26
   commit: eba0fc72ec39a6883a6ceb1a70c38040ec5ea0bb
   content_digest: ''
 - repository: ''
@@ -85,24 +84,26 @@ confidence: 1.0
 tags: []
 metadata:
   scan_id: scan-20260825075610-a0f437c374-8132c1a1
-  phase: post
+  analysis_depth: business
 invocation_contract: null
-updated_at: '2026-08-26T02:44:11.891099Z'
+updated_at: '2026-08-26T02:44:11.880416Z'
 ---
-
 
 <!-- kb:auto-start -->
 ## 业务结论
 
-订单从PENDING_APPLY/RESHOPING流转到AUDITED；包含1个可观察业务阶段。
+包含4个条件分支。
 
 ## 业务阶段
 
-- `发送邮件`
+- `未从当前方法直接证明`
 
 ## 条件与分支
 
-- `未从当前方法直接证明`
+- `CollectionUtils.isNotEmpty(taxDetailList`
+- `CollectionUtils.isEmpty(taxItemList`
+- `taxItemList.size(`
+- `StringUtils.isNotBlank(waiverCode`
 
 ## 外部交互
 
@@ -114,11 +115,11 @@ updated_at: '2026-08-26T02:44:11.891099Z'
 
 ## 源码证据
 
-- `RefundReshopSubmitPostActor.java RefundReshopSubmitPostActor`
+- `RefundReshopSubmitValidator.java com.ly.flight.chainsaas.refund.facade.validator.trade.RefundReshopSubmitValidator#validate`
 
 ## Agent代码解释（INFERRED）
 
-转换完成后登记审核提交日志和AUDITED邮件任务。
+校验必填字段、税项明细和waiverCode长度。
 <!-- kb:auto-end -->
 
 ## 补充说明

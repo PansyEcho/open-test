@@ -81,3 +81,11 @@ Do not add retries or fallbacks to hide an unknown root cause. First establish t
 - After completing development work, stop every service process started for that work before handing off to the user.
 - In particular, ensure port `8788` is no longer listening so the user can start the service from PyCharm without an "address already in use" error.
 - Before reporting completion, verify the service was stopped with `lsof -nP -iTCP:8788 -sTCP:LISTEN`; if it reports a process started for the task, stop that exact PID and recheck the port.
+
+## OpenSpec context rules
+
+- Treat `openspec/specs/**` as the current source of truth.
+- For implementation, read only the explicitly selected active change.
+- Do not scan `openspec/changes/archive/**` by default.
+- Read archived changes only when investigating historical decisions,
+  regressions, migrations, or the reason behind an existing design.

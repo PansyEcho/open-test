@@ -132,3 +132,31 @@ edges:
   kind: transitions
   condition: ''
   source_refs: []
+- edge_id: edge:5d20dfc4e885e6c4
+  system_id: ifightchainsaas.java.refund.core
+  source_node_id: entry:com.ly.flight.chainsaas.refund.facade.RefundFacade#refundReshopSubmit
+  target_node_id: logic:com.ly.flight.chainsaas.refund.biz.manager.refund.RefundReshopSubmitServiceInvoker#invoke
+  kind: calls
+  condition: ''
+  source_refs: []
+- edge_id: edge:5907acc07ceacd64
+  system_id: ifightchainsaas.java.refund.core
+  source_node_id: entry:com.ly.flight.chainsaas.refund.facade.RefundFacade#refundReshopSubmit
+  target_node_id: logic:com.ly.flight.chainsaas.refund.facade.validator.trade.RefundReshopSubmitValidator#validate
+  kind: calls
+  condition: ''
+  source_refs: []
+- edge_id: edge:8d372a9fff83d8ce
+  system_id: ifightchainsaas.java.refund.core
+  source_node_id: entry:com.ly.flight.chainsaas.refund.facade.RefundFacade#refundReshopSubmit
+  target_node_id: transition:RefundOrderStateEnum:RefundReshopSubmitPostActor:23
+  kind: transitions
+  condition: ''
+  source_refs: []
+- edge_id: edge:f4ef62b37d23bfd4
+  system_id: ifightchainsaas.java.refund.core
+  source_node_id: entry:com.ly.flight.chainsaas.refund.facade.RefundFacade#refundReshopSubmit
+  target_node_id: transition:RefundOrderStateEnum:RefundReshopSubmitPreActor:35
+  kind: transitions
+  condition: ''
+  source_refs: []

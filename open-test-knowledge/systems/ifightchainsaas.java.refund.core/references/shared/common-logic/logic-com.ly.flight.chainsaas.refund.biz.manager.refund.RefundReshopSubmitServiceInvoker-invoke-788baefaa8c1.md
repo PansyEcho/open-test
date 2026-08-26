@@ -1,17 +1,16 @@
 ---
-node_id: transition:RefundOrderStateEnum:RefundReshopSubmitPostActor:23
+node_id: logic:com.ly.flight.chainsaas.refund.biz.manager.refund.RefundReshopSubmitServiceInvoker#invoke
 system_id: ifightchainsaas.java.refund.core
-kind: state_transition
-title: PENDING_APPLY/RESHOPING → AUDITED
-summary: 订单从PENDING_APPLY/RESHOPING流转到AUDITED；包含1个可观察业务阶段。
+kind: common_logic
+title: RefundReshopSubmitServiceInvoker · invoke
+summary: 包含3个可观察业务阶段，调用1个服务/仓储/缓存或消息协作者，产生2项状态或数据副作用。
 aliases:
-- transition:RefundOrderStateEnum:RefundReshopSubmitPostActor:23
-- RefundReshopSubmitPostActor
+- com.ly.flight.chainsaas.refund.biz.manager.refund.RefundReshopSubmitServiceInvoker#invoke
 source_refs:
 - repository: ''
-  path: app/biz/src/main/java/com/ly/flight/chainsaas/refund/biz/actor/post/RefundReshopSubmitPostActor.java
-  symbol: RefundReshopSubmitPostActor
-  line: 27
+  path: app/biz/src/main/java/com/ly/flight/chainsaas/refund/biz/manager/refund/RefundReshopSubmitServiceInvoker.java
+  symbol: com.ly.flight.chainsaas.refund.biz.manager.refund.RefundReshopSubmitServiceInvoker#invoke
+  line: 74
   commit: eba0fc72ec39a6883a6ceb1a70c38040ec5ea0bb
   content_digest: ''
 - repository: ''
@@ -85,20 +84,21 @@ confidence: 1.0
 tags: []
 metadata:
   scan_id: scan-20260825075610-a0f437c374-8132c1a1
-  phase: post
+  analysis_depth: business
 invocation_contract: null
-updated_at: '2026-08-26T02:44:11.891099Z'
+updated_at: '2026-08-26T02:44:11.870066Z'
 ---
-
 
 <!-- kb:auto-start -->
 ## 业务结论
 
-订单从PENDING_APPLY/RESHOPING流转到AUDITED；包含1个可观察业务阶段。
+包含3个可观察业务阶段，调用1个服务/仓储/缓存或消息协作者，产生2项状态或数据副作用。
 
 ## 业务阶段
 
-- `发送邮件`
+- `返回或结束分支：OrderConstants.ORDER_OPERATE_ + request.getRefundSerialNo()`
+- `返回或结束分支：request.getRefundSerialNo()`
+- `返回或结束分支：innerInvoke(request)`
 
 ## 条件与分支
 
@@ -106,19 +106,20 @@ updated_at: '2026-08-26T02:44:11.891099Z'
 
 ## 外部交互
 
-- `未从当前方法直接证明`
+- `serviceInvokerLockDelegate.invokeWithLock`
 
 ## 状态与副作用
 
-- `未从当前方法直接证明`
+- `serviceInvokerLockDelegate.invokeWithLock`
+- `lockKey`
 
 ## 源码证据
 
-- `RefundReshopSubmitPostActor.java RefundReshopSubmitPostActor`
+- `RefundReshopSubmitServiceInvoker.java com.ly.flight.chainsaas.refund.biz.manager.refund.RefundReshopSubmitServiceInvoker#invoke`
 
 ## Agent代码解释（INFERRED）
 
-转换完成后登记审核提交日志和AUDITED邮件任务。
+按refundSerialNo加订单操作锁，查询退票单、校验状态及代金券条件并驱动审核确认。
 <!-- kb:auto-end -->
 
 ## 补充说明
