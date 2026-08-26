@@ -1,0 +1,28 @@
+AGENTS.md
+  h_3484aac7699d62 84-91
+open-test-knowledge/systems/ifightchainsaas.java.refund.core/references/facades/entry-com.ly.flight.chainsaas.refund.facade.RefundFacade-refundReshopSubmit-4cff70bf7ea4.md
+  h_3484aac7699d62 12-23,28-76,78-84,88,93-94,97,122-160
+open-test-knowledge/systems/ifightchainsaas.java.refund.core/references/shared/common-logic/logic-RefundReshopSubmitPreActor-updateReshopAndSubmitInfo-bc73f0396552.md
+  h_3484aac7699d62 14,16-82,86,88-89,92,123-126
+open-test-knowledge/systems/ifightchainsaas.java.refund.core/references/shared/common-logic/logic-com.ly.flight.chainsaas.refund.biz.manager.refund.RefundReshopSubmitServiceInvoker-invoke-788baefaa8c1.md
+  h_3484aac7699d62 1-127
+open-test-knowledge/systems/ifightchainsaas.java.refund.core/references/shared/common-logic/logic-com.ly.flight.chainsaas.refund.facade.validator.trade.RefundReshopSubmitValidator-validate-d4e7c5e713a0.md
+  h_3484aac7699d62 1-127
+open-test-knowledge/systems/ifightchainsaas.java.refund.core/references/state-machine/transitions/transition-RefundOrderStateEnum-RefundReshopSubmitPostActor-23-45f138abe0f0.md
+  h_3484aac7699d62 15,17-83,87,89-90,93,118-121
+open-test-knowledge/systems/ifightchainsaas.java.refund.core/references/state-machine/transitions/transition-RefundOrderStateEnum-RefundReshopSubmitPreActor-35-1510f3a7ab78.md
+  h_3484aac7699d62 15,17-83,87,89-90,93,132-135
+open-test-knowledge/systems/ifightchainsaas.java.refund.core/relations.yaml
+  h_3484aac7699d62 135-162
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.24",
+  "base_commit_sha": "1302189c57a4d73677a300ef867964bd8943050d",
+  "prompts": {},
+  "humans": {
+    "h_3484aac7699d62": {
+      "author": "shizhen <yuuu.shizhen@gmail.com>"
+    }
+  }
+}
