@@ -4,10 +4,13 @@ from __future__ import annotations
 
 from pathlib import Path
 
+import pytest
+
 from opentest.adapters.case_store import GitCaseStore
 from opentest.adapters.knowledge_store import GitKnowledgeStore
 from opentest.adapters.source_analysis import SourceScanArtifactStore
 from opentest.application.scenarios import CREATE_ORDER_ENTRY, PairwiseVariantSelector, ScenarioGenerationService
+from opentest.domain.errors import KnowledgeValidationError
 from opentest.domain.models import (
     CaseGenerationCreateRequest,
     CaseGenerationStatus,
@@ -194,28 +197,26 @@ def test_regression_generation_persists_targets_and_stable_variants(tmp_path: Pa
             assert variant.replay["data_preconditions"] == {}
 
 
-def test_interface_case_is_saved_with_blocked_variant_before_knowledge_is_complete(tmp_path: Path) -> None:
-    """接口知识未人工确认时仍应保存矩阵和operation步骤，只阻塞缺数据与oracle的变体。"""
+def test_interface_case_rejects_an_unpublished_scan_entry(tmp_path: Path) -> None:
+    """验证最新扫描入口没有已发布知识时不得生成看似完整的Case。
 
-    service, case_store = _scenario_service(tmp_path)
-    record = service.create_case_generation(
-        "train-booking-core",
-        CaseGenerationCreateRequest(entry_node_id="facade:test.TradeFacade#createOrder"),
-    )
+    Args:
+        tmp_path: pytest隔离的知识库和Case目录。
 
-    assert record.status == CaseGenerationStatus.MATRIX_DRAFT
-    assert any(item.key.startswith("knowledge_gap") for item in record.missing_conditions)
+    Returns:
+        None；通过预期异常断言发布知识是生成Case的前置条件。
 
-    completed = service.confirm_case_generation("train-booking-core", record.generation_id)
+    Side Effects:
+        仅在隔离目录初始化场景服务，不发布Case资产。
+    """
 
-    assert completed.status == CaseGenerationStatus.CASES_GENERATED
-    assert completed.batch is not None
-    assert len(completed.batch.variants) == 1
-    variant = completed.batch.variants[0]
-    assert variant.lifecycle == "blocked"
-    assert variant.steps[0].operation_id == "facade:test.TradeFacade#createOrder"
-    assert variant.steps[0].tool_id == ""
-    assert case_store.get_variant("train-booking-core", variant.variant_id) == variant
+    service, _ = _scenario_service(tmp_path)
+
+    with pytest.raises(KnowledgeValidationError, match="published entry knowledge"):
+        service.create_case_generation(
+            "train-booking-core",
+            CaseGenerationCreateRequest(entry_node_id="facade:test.TradeFacade#createOrder"),
+        )
 
 
 def test_natural_language_reports_missing_qa_conditions_without_guessing(tmp_path: Path) -> None:

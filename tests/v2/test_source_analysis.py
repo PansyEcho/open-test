@@ -27,8 +27,15 @@ from opentest.domain.errors import KnowledgeNotFoundError, KnowledgeValidationEr
 from opentest.domain.models import (
     EntryPoint,
     KnowledgeNodeKind,
+    SemanticAnalysisResult,
+    SemanticCallEdge,
+    SemanticMethodDefinition,
+    SemanticResolutionStatus,
     SourceBaseline,
+    SourceReference,
     SourceScanRequest,
+    StateMachineDefinition,
+    StateTransition,
     SystemDefinition,
     ToolDefinition,
 )
@@ -520,6 +527,105 @@ def test_java_structure_scanner_maps_multiple_arbitrary_listener_methods(tmp_pat
     ]
     assert entries[0].metadata["destinations"] == ["created", "changed"]
     assert entries[1].metadata["destinations"] == ["refund"]
+
+
+def test_semantic_reuse_counts_distinct_state_transition_owners(tmp_path: Path) -> None:
+    """公共方法复用数应同时包含代码入口和独立状态流转所有者。
+
+    Args:
+        tmp_path: pytest隔离的知识根。
+
+    Returns:
+        None；公共方法所有者合并一个入口和两条流转时通过。
+    """
+
+    store = GitKnowledgeStore(tmp_path / "knowledge")
+    service = SourceAnalysisService(
+        store,
+        SourceScanArtifactStore(store.root),
+        FakeScriptgenScanner(),  # type: ignore[arg-type]
+    )
+    actor_reference = SourceReference(
+        path="src/RefundCancelActor.java",
+        symbol="demo.RefundCancelActor#execute(java.lang.Object)",
+        line=20,
+    )
+    shared_reference = SourceReference(
+        path="src/SharedRefundRules.java",
+        symbol="demo.SharedRefundRules#evaluate(java.lang.Object)",
+        line=12,
+    )
+    actor_method = SemanticMethodDefinition(
+        symbol_id=actor_reference.symbol,
+        qualified_class_name="demo.RefundCancelActor",
+        method_name="execute",
+        parameter_qualified_types=["java.lang.Object"],
+        source_ref=actor_reference,
+    )
+    helper_reference = SourceReference(
+        path="src/RefundCancelActor.java",
+        symbol="demo.RefundCancelActor#validate(java.lang.Object)",
+        line=5,
+    )
+    helper_method = SemanticMethodDefinition(
+        symbol_id=helper_reference.symbol,
+        qualified_class_name="demo.RefundCancelActor",
+        method_name="validate",
+        parameter_qualified_types=["java.lang.Object"],
+        source_ref=helper_reference,
+    )
+    shared_method = SemanticMethodDefinition(
+        symbol_id=shared_reference.symbol,
+        qualified_class_name="demo.SharedRefundRules",
+        method_name="evaluate",
+        parameter_qualified_types=["java.lang.Object"],
+        source_ref=shared_reference,
+        entry_point_ids=["demo.RefundFacadeImpl#cancel(java.lang.Object)"],
+        reuse_entry_count=1,
+    )
+    semantic = SemanticAnalysisResult(
+        system_id="refund-core",
+        methods=[helper_method, actor_method, shared_method],
+        call_edges=[
+            SemanticCallEdge(
+                caller_symbol_id=actor_method.symbol_id,
+                callee_symbol_id=shared_method.symbol_id,
+                callee_expression="evaluate",
+                source_ref=actor_reference,
+                resolution_status=SemanticResolutionStatus.RESOLVED,
+            )
+        ],
+    )
+    transitions = [
+        StateTransition(
+            transition_id=f"transition:refund-cancel:{index}",
+            actor="RefundCancelActor",
+            from_states=[from_state],
+            to_states=["REFUND_CANCEL"],
+            source_ref=actor_reference.model_copy(update={"symbol": "RefundCancelActor"}),
+        )
+        for index, from_state in enumerate(["WAIT_REFUND", "REFUND_FAIL"], start=1)
+    ]
+    enriched = service._enrich_semantic_knowledge_owners(
+        [
+            StateMachineDefinition(
+                machine_id="state-machine:refund",
+                system_id="refund-core",
+                state_enum="RefundState",
+                title="退票状态机",
+                transitions=transitions,
+            )
+        ],
+        semantic,
+    )
+    shared = next(method for method in enriched.methods if method.symbol_id == shared_method.symbol_id)
+
+    assert shared.reuse_entry_count == 3
+    assert shared.entry_point_ids == [
+        "demo.RefundFacadeImpl#cancel(java.lang.Object)",
+        "transition:refund-cancel:1",
+        "transition:refund-cancel:2",
+    ]
 
 
 def test_source_analysis_persists_manifest_and_updates_baseline(tmp_path: Path) -> None:

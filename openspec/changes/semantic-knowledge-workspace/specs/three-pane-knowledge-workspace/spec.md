@@ -200,3 +200,46 @@
 - **WHEN** 当前接口知识具有`invocation_contract`
 - **THEN** 中栏在业务知识正文之后以默认折叠的独立区域展示契约
 - **AND** 不改变原三栏知识阅读、问题或修订流程
+
+### Requirement: 活动任务与知识生成历史分离
+
+系统 SHALL 只在右栏任务区域展示仍在运行或等待处理的Codex知识任务，并 SHALL 把完成、失败、取消、中断和部分完成记录移入本地归档。归档记录 SHALL 继续按任务ID可读，并在对应知识详情中提供状态、时间、安全错误和Codex聊天跳转。
+
+#### Scenario: 终态任务离开右栏
+
+- **WHEN** Codex知识任务进入任一终态
+- **THEN** 任务记录移动到archive且不再出现在普通任务列表
+- **AND** 对应知识详情仍能展示历史并打开原Codex聊天
+
+#### Scenario: 服务启动清理既有终态记录
+
+- **WHEN** 服务启动时活动任务目录包含历史终态Codex handoff
+- **THEN** 系统原样归档这些JSON且不删除，不影响运行中或等待处理任务
+
+### Requirement: 已发布知识一键生成并执行回归Case
+
+系统 SHALL 按知识目录展示具有真实执行入口的已发布Facade、Job和MQ知识。用户点击生成后 SHALL 在一个任务中完成只读场景矩阵、多个Case和执行步骤，不要求人工确认矩阵。全量生成 SHALL 只替换同入口旧系统生成资产，并 SHALL 保留人工Case、用户Case、其他入口Case和Run。
+
+#### Scenario: 已生成知识直接产生多个Case
+
+- **WHEN** 当前扫描入口具有`GENERATED`或`CONFIRMED`知识及一个以上确定性覆盖点
+- **THEN** 系统规范化扫描入口ID，生成只读矩阵并立即编译全部Case和步骤
+- **AND** 不创建矩阵确认按钮、确认任务或等待确认状态
+
+#### Scenario: 同入口全量替换
+
+- **WHEN** 同一入口已有系统生成Case并成功完成新一轮全量生成
+- **THEN** 系统在新批次校验通过后替换该入口旧Generation、CoverageTarget、Scenario和Variant
+- **AND** 人工Case、用户Case、其他入口Case和历史Run保持不变
+
+#### Scenario: 缺少执行能力
+
+- **WHEN** 某覆盖点缺少本地Fixture、固定Oracle、业务断言或必要清理责任
+- **THEN** 系统仍保存对应Case但将其变体标为blocked并显示具体缺口
+- **AND** 不得访问QA或把空断言Case标记为可执行
+
+#### Scenario: 批量执行当前入口
+
+- **WHEN** 用户对生成记录显式确认QA执行
+- **THEN** 系统绑定当前Snapshot并以独立Run执行全部就绪变体，跳过并汇总blocked变体
+- **AND** 一个变体失败不得阻止后续变体执行，最终返回通过、失败和阻塞数量

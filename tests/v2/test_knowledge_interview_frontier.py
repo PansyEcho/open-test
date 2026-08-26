@@ -76,6 +76,23 @@ from opentest.domain.models import (
 SYSTEM_ID = "demo-interview-system"
 
 
+def _agent_test_points() -> list[dict[str, str]]:
+    """构造测试Agent完成候选必须携带的最小结构化测试点。
+
+    Returns:
+        覆盖一个可验证主流程的严格测试点数组。
+    """
+
+    return [
+        {
+            "kind": "main_flow",
+            "title": "完成入口主流程",
+            "condition": "请求满足当前入口的源码业务条件",
+            "expected_outcome": "入口按知识摘要完成业务处理并返回稳定结果",
+        }
+    ]
+
+
 def _application(tmp_path: Path) -> OpenTestApplication:
     """创建已初始化且注册一个本地源码系统的测试应用。
 
@@ -158,6 +175,7 @@ class _KnowledgeAgentRunner:
             {
                 "node_id": item["node_id"],
                 "summary": "基于给定源码证据解释该目标的业务目的、主流程、分支、依赖、副作用与异常边界。",
+                "test_points": _agent_test_points(),
             }
             for item in prompt_payload["evidence"]
         ]
@@ -538,6 +556,7 @@ class _WaitingContinuationAgentRunner:
                     {
                         "node_id": node_id,
                         "summary": "异常由本系统记录并执行补偿，人工答案作为确认口径单独保留。",
+                        "test_points": _agent_test_points(),
                     }
                     for node_id in self.node_ids
                 ],
@@ -2039,6 +2058,7 @@ def test_codex_client_needs_input_waits_in_same_task_then_auto_publishes(tmp_pat
             {
                 "node_id": node_id,
                 "summary": "空查询结果按用户确认口径直接返回，不额外发起重试。",
+                "test_points": _agent_test_points(),
             }
         ],
         questions=[],
@@ -2184,7 +2204,13 @@ def test_codex_client_machine_gaps_continue_then_publish_in_original_thread(tmp_
         status="completed",
         system_id=SYSTEM_ID,
         target_ids=[target_id],
-        summaries=[{"node_id": node_id, "summary": "接口完成校验、仓储查询和分页响应组装。"}],
+        summaries=[
+            {
+                "node_id": node_id,
+                "summary": "接口完成校验、仓储查询和分页响应组装。",
+                "test_points": _agent_test_points(),
+            }
+        ],
         questions=[],
         source_refs=[reference, service_reference, repository_reference],
         trace_steps=trace_steps,
@@ -3046,7 +3072,11 @@ def test_codex_client_normalizes_read_source_reference_shorthand_before_audit(
             "system_id": SYSTEM_ID,
             "target_ids": [target_id],
             "summaries": [
-                {"node_id": workflow.drafts[0].node.node_id, "summary": "查询任务读取Mapper边界。"}
+                {
+                    "node_id": workflow.drafts[0].node.node_id,
+                    "summary": "查询任务读取Mapper边界。",
+                    "test_points": _agent_test_points(),
+                }
             ],
             "questions": [],
             "source_refs": [java_reference, mapper_reference],
@@ -3176,7 +3206,11 @@ def test_codex_client_candidate_requires_real_read_audit_and_confirmation_before
             "system_id": SYSTEM_ID,
             "target_ids": [target_id],
             "summaries": [
-                {"node_id": node_id, "summary": "读取查询仓储并返回本次任务结果。"}
+                {
+                    "node_id": node_id,
+                    "summary": "读取查询仓储并返回本次任务结果。",
+                    "test_points": _agent_test_points(),
+                }
                 for node_id in node_ids
             ],
             "questions": [],
@@ -3357,7 +3391,13 @@ def test_codex_facade_complete_candidate_auto_publishes_with_isolated_contract(
         status="completed",
         system_id=SYSTEM_ID,
         target_ids=[target_id],
-        summaries=[{"node_id": workflow.drafts[0].node.node_id, "summary": complete_text}],
+        summaries=[
+            {
+                "node_id": workflow.drafts[0].node.node_id,
+                "summary": complete_text,
+                "test_points": _agent_test_points(),
+            }
+        ],
         questions=[],
         source_refs=references,
         trace_steps=[
@@ -3876,7 +3916,11 @@ def test_codex_client_regenerate_keeps_old_knowledge_until_new_candidate_is_acce
                 "system_id": SYSTEM_ID,
                 "target_ids": [target_id],
                 "summaries": [
-                    {"node_id": draft.node.node_id, "summary": summary}
+                    {
+                        "node_id": draft.node.node_id,
+                        "summary": summary,
+                        "test_points": _agent_test_points(),
+                    }
                     for draft in batch.drafts
                 ],
                 "questions": [],
@@ -3970,7 +4014,11 @@ def test_codex_client_publish_failure_preserves_candidate_and_records_exact_erro
             "system_id": SYSTEM_ID,
             "target_ids": [target_id],
             "summaries": [
-                {"node_id": draft.node.node_id, "summary": "已核对客户端查询任务。"}
+                {
+                    "node_id": draft.node.node_id,
+                    "summary": "已核对客户端查询任务。",
+                    "test_points": _agent_test_points(),
+                }
                 for draft in batch.drafts
             ],
             "questions": [],
@@ -4068,7 +4116,11 @@ def test_codex_client_publish_rolls_back_nodes_when_index_rebuild_fails(
             "system_id": SYSTEM_ID,
             "target_ids": [target_id],
             "summaries": [
-                {"node_id": draft.node.node_id, "summary": "已核对客户端查询任务。"}
+                {
+                    "node_id": draft.node.node_id,
+                    "summary": "已核对客户端查询任务。",
+                    "test_points": _agent_test_points(),
+                }
                 for draft in batch.drafts
             ],
             "questions": [],
@@ -4155,7 +4207,11 @@ def test_codex_client_reject_and_accept_are_serialized_across_application_instan
             "system_id": SYSTEM_ID,
             "target_ids": [target_id],
             "summaries": [
-                {"node_id": draft.node.node_id, "summary": "并发确认候选。"}
+                {
+                    "node_id": draft.node.node_id,
+                    "summary": "并发确认候选。",
+                    "test_points": _agent_test_points(),
+                }
                 for draft in batch.drafts
             ],
             "questions": [],
@@ -6244,14 +6300,17 @@ def test_core_object_background_hint_embeds_type_evidence_without_ownership_infe
     assert application.list_unified_knowledge_questions(SYSTEM_ID) == []
 
 
-def test_state_background_scope_maps_machine_transitions_and_semantic_pattern(tmp_path: Path) -> None:
-    """关键状态背景范围仍覆盖状态机、流转和语义公共逻辑，但不自动提问。
+def test_state_background_scope_maps_machine_and_transitions_without_duplicate_semantic_target(tmp_path: Path) -> None:
+    """关键状态背景范围覆盖状态机和流转，但单所有者模式不再复制成公共逻辑。
 
     Args:
         tmp_path: pytest隔离的源码、Manifest和上下文目录。
 
     Side Effects:
         只发布本地扫描Manifest，不生成知识或访问QA。
+
+    Returns:
+        None；通过断言验证背景问题范围和公共逻辑去重结果。
     """
 
     application = _application(tmp_path)
@@ -6302,11 +6361,8 @@ def test_state_background_scope_maps_machine_transitions_and_semantic_pattern(tm
     artifacts.publish_latest(SYSTEM_ID, manifest.scan_id)
 
     affected_target_ids = application.knowledge_discovery._interview_targets(SYSTEM_ID, "state_semantics")
-    semantic_target = "semantic:" + hashlib.sha256(method.symbol_id.encode("utf-8")).hexdigest()[:20]
-
     assert set(affected_target_ids) == {
         "state-machine:OrderState",
         transition.transition_id,
-        semantic_target,
     }
     assert application.list_unified_knowledge_questions(SYSTEM_ID) == []

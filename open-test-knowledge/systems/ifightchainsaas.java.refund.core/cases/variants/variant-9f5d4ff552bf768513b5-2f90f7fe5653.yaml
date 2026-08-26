@@ -14,20 +14,26 @@ steps:
   operation_id: facade:com.ly.flight.chainsaas.refund.facade.RefundFacade#queryList
   params:
     arguments: ${inputs.arguments}
+  params_from: ''
   assertions: {}
+  assertions_from: ''
   oracle: null
+  oracle_from: ''
 - step_id: assert-query-success
   name: 校验查询成功并返回分页列表
   action: assert
   tool_id: ''
   operation_id: ''
   params: {}
+  params_from: ''
   assertions:
     status: success
     output.success: true
     output.list.pageList:
       op: not_null
+  assertions_from: ''
   oracle: null
+  oracle_from: ''
 coverage_target_ids:
 - coverage:9f5d4ff552bf768513b5
 cleanup_steps: []

@@ -2200,8 +2200,30 @@ def test_dynamic_facade_agent_must_read_and_publish_downstream_source_refs(tmp_p
         "system_id": manifest.system_id,
         "target_ids": [target_id],
         "summaries": [
-            {"node_id": node.node_id, "summary": "沿动态分发进入退款单列表查询并返回查询结果。"},
-            {"node_id": invoker_node.node_id, "summary": "调用订单服务执行列表查询并组装Facade响应。"},
+            {
+                "node_id": node.node_id,
+                "summary": "沿动态分发进入退款单列表查询并返回查询结果。",
+                "test_points": [
+                    {
+                        "kind": "main_flow",
+                        "title": "查询退款单列表",
+                        "condition": "请求满足列表查询条件",
+                        "expected_outcome": "返回符合条件的退款单分页结果",
+                    }
+                ],
+            },
+            {
+                "node_id": invoker_node.node_id,
+                "summary": "调用订单服务执行列表查询并组装Facade响应。",
+                "test_points": [
+                    {
+                        "kind": "common_rule",
+                        "title": "列表查询调用规则",
+                        "condition": "动态路由命中列表查询Invoker",
+                        "expected_outcome": "调用订单服务并组装Facade响应",
+                    }
+                ],
+            },
         ],
         "questions": [],
         "source_refs": [],

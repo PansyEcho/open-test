@@ -1,4 +1,46 @@
 coverage_targets:
+- target_id: coverage:283278b31c8ad138b3d5
+  system_id: ifightchainsaas.java.refund.core
+  node_id: logic:com.ly.flight.chainsaas.refund.facade.validator.trade.RefundCancelValidator#validate
+  kind: dependency
+  title: 公共规则 · RefundCancelValidator · validate
+  condition: 通过当前入口触发该公共逻辑
+  expected_outcome: 当前源码仅能证明该入口或方法存在，未直接提取到条件、外部交互或状态副作用。；入口结果与该知识所有者的业务结论一致
+- target_id: coverage:3dd1f91a8923438f6693
+  system_id: ifightchainsaas.java.refund.core
+  node_id: logic:com.ly.flight.chainsaas.refund.biz.manager.refund.RefundCancelServiceInvoker#invoke
+  kind: dependency
+  title: 公共规则 · RefundCancelServiceInvoker · invoke
+  condition: 通过当前入口触发该公共逻辑
+  expected_outcome: 包含3个可观察业务阶段，调用1个服务/仓储/缓存或消息协作者，产生2项状态或数据副作用。；入口结果与该知识所有者的业务结论一致
+- target_id: coverage:52adbc6c92439d44ce61
+  system_id: ifightchainsaas.java.refund.core
+  node_id: entry:com.ly.flight.chainsaas.refund.facade.RefundFacade#cancel
+  kind: boundary
+  title: RefundFacade#cancel失败边界
+  condition: 使用触发入口校验或下游失败边界的请求
+  expected_outcome: 入口返回稳定业务失败且不产生未声明副作用；入口结果与该知识所有者的业务结论一致
+- target_id: coverage:5daa0336db8b6bcfb4eb
+  system_id: ifightchainsaas.java.refund.core
+  node_id: logic:RefundOrderCancelPostActor#addTask
+  kind: dependency
+  title: 公共规则 · RefundOrderCancelPostActor · addTask
+  condition: 通过当前入口触发该公共逻辑
+  expected_outcome: 包含1个可观察业务阶段，包含1个条件分支，产生1项状态或数据副作用。；入口结果与该知识所有者的业务结论一致
+- target_id: coverage:6a3a7f85ea37e0177d1c
+  system_id: ifightchainsaas.java.refund.core
+  node_id: logic:RefundOrderCancelPostActor#addCancelReasonUpdateTask
+  kind: dependency
+  title: 公共规则 · RefundOrderCancelPostActor · addCancelReasonUpdateTask
+  condition: 通过当前入口触发该公共逻辑
+  expected_outcome: 当前源码仅能证明该入口或方法存在，未直接提取到条件、外部交互或状态副作用。；入口结果与该知识所有者的业务结论一致
+- target_id: coverage:907dee146eb432205a43
+  system_id: ifightchainsaas.java.refund.core
+  node_id: transition:RefundOrderStateEnum:RefundOrderManualCancelPostActor:20
+  kind: transition
+  title: 状态流转 · AUDITED → REFUND_CANCEL
+  condition: 构造满足该状态流转前置状态的入口请求
+  expected_outcome: 订单从AUDITED流转到REFUND_CANCEL；当前源码仅能证明该入口或方法存在，未直接提取到条件、外部交互或状态副作用。；入口结果与该知识所有者的业务结论一致
 - target_id: coverage:9f5d4ff552bf768513b5
   system_id: ifightchainsaas.java.refund.core
   node_id: facade:com.ly.flight.chainsaas.refund.facade.RefundFacade#queryList
@@ -6,3 +48,17 @@ coverage_targets:
   title: RefundFacade#queryList接口契约
   condition: 使用当前扫描声明的请求结构调用接口
   expected_outcome: 获得可核查的业务结果，并按补充oracle判断业务正确性
+- target_id: coverage:b4f339806f0256343597
+  system_id: ifightchainsaas.java.refund.core
+  node_id: entry:com.ly.flight.chainsaas.refund.facade.RefundFacade#cancel
+  kind: decision
+  title: RefundFacade#cancel主流程
+  condition: 使用满足入口业务前置条件的有效请求
+  expected_outcome: 入口返回成功业务结果并完成其拥有的编排；入口结果与该知识所有者的业务结论一致
+- target_id: coverage:fc52e127eb38b62ce9af
+  system_id: ifightchainsaas.java.refund.core
+  node_id: transition:RefundOrderStateEnum:RefundOrderCancelPostActor:25
+  kind: transition
+  title: 状态流转 · PENDING_APPLY/WAIT_REFUND/RESHOPING/REFUND_FAIL → REFUND_CANCEL
+  condition: 构造满足该状态流转前置状态的入口请求
+  expected_outcome: 订单从PENDING_APPLY/WAIT_REFUND/RESHOPING/REFUND_FAIL流转到REFUND_CANCEL；包含1个可观察业务阶段，包含1个条件分支，产生1项状态或数据副作用。；入口结果与该知识所有者的业务结论一致

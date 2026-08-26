@@ -14,7 +14,10 @@ steps:
   operation_id: facade:com.ly.flight.chainsaas.refund.facade.RefundFacade#queryList
   params:
     arguments: ${inputs.arguments}
+  params_from: ''
   assertions: {}
+  assertions_from: ''
   oracle: null
+  oracle_from: ''
 cleanup_steps: []
 source_scan_id: scan-20260825075610-a0f437c374-8132c1a1

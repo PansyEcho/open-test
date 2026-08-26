@@ -18,8 +18,8 @@ def test_console_static_client_uses_only_v2_routes_and_safe_rendering() -> None:
 
     assert "OpenTest V2 Console" in html
     assert 'const API_ROOT = "/api/v2"' in script
-    assert '<meta name="opentest-page-version" content="20260826-02">' in html
-    assert '/assets/app.js?v=20260826-02' in html
+    assert '<meta name="opentest-page-version" content="20260826-03">' in html
+    assert '/assets/app.js?v=20260826-03' in html
     assert 'id="stale-page-warning"' in html
     assert html.index('id="stale-page-warning"') < html.index('id="workspace-workbench"')
     assert "verifyCurrentPageVersion" in script
@@ -47,7 +47,7 @@ def test_console_static_client_uses_only_v2_routes_and_safe_rendering() -> None:
     assert "systemRequestGeneration" in script
     assert "isCurrentSystemScope" in script
     assert 'id="detail-drawer"' in html
-    assert "场景矩阵 → 人工确认 → Case → 执行步骤" in html
+    assert "只读场景矩阵 → Case → 执行步骤；生成无需人工确认" in html
     assert "QA 数据模板" not in html
     assert "/knowledge/generations" in script
     assert "/knowledge/generation-batches/" not in script
