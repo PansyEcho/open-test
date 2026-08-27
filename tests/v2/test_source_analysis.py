@@ -448,8 +448,9 @@ def test_java_structure_scanner_finds_state_machine_and_mq_consumer(tmp_path: Pa
     """Java扫描应区分状态转换和可触发MQ Consumer入口。"""
 
     source = tmp_path / "source"
-    actor = source / "app" / "actor" / "pre" / "TicketingPreActor.java"
-    consumer = source / "app" / "mq" / "consumer" / "OrderConsumer.java"
+    java_root = source / "module" / "src" / "main" / "java"
+    actor = java_root / "app" / "actor" / "pre" / "TicketingPreActor.java"
+    consumer = java_root / "app" / "mq" / "consumer" / "OrderConsumer.java"
     actor.parent.mkdir(parents=True)
     consumer.parent.mkdir(parents=True)
     actor.write_text(
@@ -463,6 +464,7 @@ def test_java_structure_scanner_finds_state_machine_and_mq_consumer(tmp_path: Pa
     consumer.write_text(
         """
         package com.example.mq;
+        import org.apache.rocketmq.spring.annotation.RocketMQMessageListener;
         @RocketMQMessageListener(topic = "order-events", consumerGroup = "booking")
         public class OrderConsumer {
             public void onMessage(String payload) {}
@@ -485,8 +487,9 @@ def test_java_structure_scanner_ignores_state_text_in_exception_message(tmp_path
     """日志或异常字符串中的 `@State` 提示不得被误报为损坏注解。"""
 
     source = tmp_path / "source"
-    source.mkdir()
-    framework = source / "AbstractStateQueue.java"
+    java_root = source / "src" / "main" / "java"
+    java_root.mkdir(parents=True)
+    framework = java_root / "AbstractStateQueue.java"
     framework.write_text(
         'abstract class AbstractStateQueue { String hint = "place annotation @State on service"; }\n',
         encoding="utf-8",
@@ -502,11 +505,14 @@ def test_java_structure_scanner_maps_multiple_arbitrary_listener_methods(tmp_pat
     """方法级监听注解应按实际方法逐个建入口并忽略consumerGroup等非目的地值。"""
 
     source = tmp_path / "source"
-    source.mkdir()
-    consumer = source / "MultiConsumer.java"
+    java_root = source / "src" / "main" / "java"
+    java_root.mkdir(parents=True)
+    consumer = java_root / "MultiConsumer.java"
     consumer.write_text(
         """
         package com.example.mq;
+        import org.springframework.kafka.annotation.KafkaListener;
+        import org.springframework.amqp.rabbit.annotation.RabbitListener;
         public class MultiConsumer {
             @KafkaListener(topics = {"created", "changed"}, groupId = "booking")
             public void handleOrderEvent(String payload) {}

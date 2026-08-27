@@ -1,0 +1,8 @@
+bindings:
+- provider_system_id: ifightchainsaas.java.booking.core
+  role: UPSTREAM
+  purposes:
+  - SETUP
+  binding_id: dependency:ifightchainsaas.java.refund.core:ifightchainsaas.java.booking.core
+  consumer_system_id: ifightchainsaas.java.refund.core
+  created_at: '2026-08-26T19:56:50.596745Z'

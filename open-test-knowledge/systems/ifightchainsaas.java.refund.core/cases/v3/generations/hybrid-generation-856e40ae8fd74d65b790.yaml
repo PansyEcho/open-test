@@ -1,0 +1,147 @@
+contract_version: hybrid-case-generation/v3
+generation_id: hybrid-generation-856e40ae8fd74d65b790
+system_id: ifightchainsaas.java.refund.core
+entry_id: facade:com.ly.flight.chainsaas.refund.facade.RefundFacade#cancel
+source_scan_id: scan-20260826195608-a0f437c374-96281060
+source_baseline:
+  source_path: /Users/user/data/code/tc/ifightchainsaas.java.refund.core
+  commit: eba0fc72ec39a6883a6ceb1a70c38040ec5ea0bb
+  branch: feature_673598_20260806
+  dirty: false
+  dirty_digest: ''
+  analyzer_version: 0.2.0
+  captured_at: '2026-08-26T19:56:08.580587Z'
+analyzer_version: 3.26.2+case-evidence.2
+status: BLOCKED
+coverage_manifest:
+  system_id: ifightchainsaas.java.refund.core
+  entry_id: facade:com.ly.flight.chainsaas.refund.facade.RefundFacade#cancel
+  source_scan_id: scan-20260826195608-a0f437c374-96281060
+  analysis_artifact_id: program-analysis:scan-20260826195608-a0f437c374-96281060:0017
+  semantic_draft_id: ''
+  status: BLOCKED
+  matched_rules: []
+  obligations:
+  - obligation_id: obligation:program:0017:0001
+    system_id: ifightchainsaas.java.refund.core
+    entry_id: facade:com.ly.flight.chainsaas.refund.facade.RefundFacade#cancel
+    title: 程序影响待语义分区
+    origin: program
+    rule_id: ''
+    parent_requirement_id: ''
+    source_refs:
+    - repository: ''
+      path: app/facade-impl/src/main/java/com/ly/flight/chainsaas/refund/facade/impl/AbstractFacade.java
+      symbol: com.ly.flight.chainsaas.refund.facade.impl.AbstractFacade#createErrorResponse(Request,com.ly.flight.chainsaas.refund.facade.exception.APIException,java.lang.Class<Response>):field_influence
+      line: 185
+      commit: ''
+      content_digest: ''
+    status: FROZEN
+    kind: requirement
+    requirement_id: semantic-gap:program:0017:0001
+    statement: 代码证明 com.ly.flight.chainsaas.refund.facade.impl.AbstractFacade#createErrorResponse(Request,com.ly.flight.chainsaas.refund.facade.exception.APIException,java.lang.Class<Response>)
+      影响 downstream_call，需确定业务覆盖分区。
+    compile_target: null
+    compile_to: ''
+    compile_payload: {}
+  - obligation_id: obligation:program:0017:0002
+    system_id: ifightchainsaas.java.refund.core
+    entry_id: facade:com.ly.flight.chainsaas.refund.facade.RefundFacade#cancel
+    title: 程序影响待语义分区
+    origin: program
+    rule_id: ''
+    parent_requirement_id: ''
+    source_refs:
+    - repository: ''
+      path: app/facade-impl/src/main/java/com/ly/flight/chainsaas/refund/facade/impl/RefundFacadeImpl.java
+      symbol: com.ly.flight.chainsaas.refund.facade.impl.RefundFacadeImpl#cancel(com.ly.flight.chainsaas.refund.facade.model.request.RefundCancelRequest):field_influence
+      line: 294
+      commit: ''
+      content_digest: ''
+    status: FROZEN
+    kind: requirement
+    requirement_id: semantic-gap:program:0017:0002
+    statement: 代码证明 traceId 影响 downstream_call，需确定业务覆盖分区。
+    compile_target: null
+    compile_to: ''
+    compile_payload: {}
+  - obligation_id: obligation:program:0017:0003
+    system_id: ifightchainsaas.java.refund.core
+    entry_id: facade:com.ly.flight.chainsaas.refund.facade.RefundFacade#cancel
+    title: 程序影响待语义分区
+    origin: program
+    rule_id: ''
+    parent_requirement_id: ''
+    source_refs:
+    - repository: ''
+      path: app/facade-impl/src/main/java/com/ly/flight/chainsaas/refund/facade/impl/RefundFacadeImpl.java
+      symbol: com.ly.flight.chainsaas.refund.facade.impl.RefundFacadeImpl#cancel(com.ly.flight.chainsaas.refund.facade.model.request.RefundCancelRequest):field_influence
+      line: 295
+      commit: ''
+      content_digest: ''
+    status: FROZEN
+    kind: requirement
+    requirement_id: semantic-gap:program:0017:0003
+    statement: 代码证明 refundSerialNo 影响 downstream_call，需确定业务覆盖分区。
+    compile_target: null
+    compile_to: ''
+    compile_payload: {}
+  conflicts: []
+  blockers:
+  - code: BLOCKED_SEMANTIC_RESOLUTION_REQUIRED
+    message: 代码证明 com.ly.flight.chainsaas.refund.facade.impl.AbstractFacade#createErrorResponse(Request,com.ly.flight.chainsaas.refund.facade.exception.APIException,java.lang.Class<Response>)
+      影响 downstream_call，需确定业务覆盖分区。
+    subject_ids:
+    - semantic-gap:program:0017:0001
+    - com.ly.flight.chainsaas.refund.facade.impl.AbstractFacade#createErrorResponse(Request,com.ly.flight.chainsaas.refund.facade.exception.APIException,java.lang.Class<Response>):field_influence:185:13:1
+  - code: BLOCKED_SEMANTIC_RESOLUTION_REQUIRED
+    message: 代码证明 traceId 影响 downstream_call，需确定业务覆盖分区。
+    subject_ids:
+    - semantic-gap:program:0017:0002
+    - com.ly.flight.chainsaas.refund.facade.impl.RefundFacadeImpl#cancel(com.ly.flight.chainsaas.refund.facade.model.request.RefundCancelRequest):field_influence:294:13:1
+  - code: BLOCKED_SEMANTIC_RESOLUTION_REQUIRED
+    message: 代码证明 refundSerialNo 影响 downstream_call，需确定业务覆盖分区。
+    subject_ids:
+    - semantic-gap:program:0017:0003
+    - com.ly.flight.chainsaas.refund.facade.impl.RefundFacadeImpl#cancel(com.ly.flight.chainsaas.refund.facade.model.request.RefundCancelRequest):field_influence:295:20:1
+compilation_rule_revision_id: ''
+scenarios: []
+variants: []
+fault_plans: []
+expected_factor_value_goals: []
+expected_factor_pair_goals: []
+obligation_resolutions:
+- obligation_id: obligation:program:0017:0001
+  status: BLOCKED
+  variant_ids: []
+  blocker_code: BLOCKED_SEMANTIC_RESOLUTION_REQUIRED
+  proof: ''
+- obligation_id: obligation:program:0017:0002
+  status: BLOCKED
+  variant_ids: []
+  blocker_code: BLOCKED_SEMANTIC_RESOLUTION_REQUIRED
+  proof: ''
+- obligation_id: obligation:program:0017:0003
+  status: BLOCKED
+  variant_ids: []
+  blocker_code: BLOCKED_SEMANTIC_RESOLUTION_REQUIRED
+  proof: ''
+capability_proofs: []
+dependency_proofs: []
+blockers:
+- code: BLOCKED_SEMANTIC_RESOLUTION_REQUIRED
+  subject_id: ''
+  message: 代码证明 com.ly.flight.chainsaas.refund.facade.impl.AbstractFacade#createErrorResponse(Request,com.ly.flight.chainsaas.refund.facade.exception.APIException,java.lang.Class<Response>)
+    影响 downstream_call，需确定业务覆盖分区。
+- code: BLOCKED_SEMANTIC_RESOLUTION_REQUIRED
+  subject_id: ''
+  message: 代码证明 traceId 影响 downstream_call，需确定业务覆盖分区。
+- code: BLOCKED_SEMANTIC_RESOLUTION_REQUIRED
+  subject_id: ''
+  message: 代码证明 refundSerialNo 影响 downstream_call，需确定业务覆盖分区。
+- code: BLOCKED_ACTION_PROFILE_MISSING
+  subject_id: ''
+  message: 当前入口与scan没有唯一服务器Action Profile。
+handoff_id: ''
+legacy_assets: read_only
+generated_at: '2026-08-27T05:40:48.771230Z'

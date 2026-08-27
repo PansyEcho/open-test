@@ -1,0 +1,17 @@
+# Design
+
+`PublishedOperationCapability`不是新的provider抽象。AI只提交稳定`publication_request_id`、`CandidateRef`、`ProviderOperationRef`、业务用途和逻辑Schema/映射。`CandidateRef`固定Candidate所属系统、scan、baseline、完整签名和DTO结构；`ProviderOperationRef`只固定现有`OperationCapability`所属系统、operation ID和scan。Published不保存DSF service/action/version、工具路径、资源坐标或任意provider实现。
+
+发布路由必须同时等于两个引用的`source_system_id`。阶段2的`SystemDependencyBinding`只授予搜索provider Candidate的权限，不能让refund consumer写入Booking注册表；AI选择上游Candidate后必须以Booking系统路由发布，后续Recipe再以`PublishedCapabilityRef(system_id, capability_id)`跨系统引用。
+
+程序通过现有`OperationCapabilityCatalog`取得唯一Operation，不调用执行服务。现有Operation模型增加`source_entry_ids`、`source_symbol_refs`、独立的发布证明输入/输出Schema和程序派生的`required_local_bindings`；现有执行器消费的`input_schema`保持原契约，不得被发布阶段的语义DTO结构替换。Facade发布输出Schema必须描述真实`DsfExecutionResponse`包装，并把Java业务返回DTO放在`output`路径下；Job在尚无真实结果包装契约时保持不可发布。Candidate和Operation必须共享精确Entry及源码证据，Operation必须来自同一scan且为可执行原子业务操作；`DATABASE_RESOURCE`在本阶段明确阻塞。任何开放/缺失Schema、无输出契约、关系不唯一或DTO不完整均阻塞。
+
+完整DTO证明只接受Symbol Solver解析的精确FQN、显式继承关系和受控Java标量。只支持一维数组及`List/Set/Collection/Iterable`白名单容器；`Map`、`Page/Result`等任意业务泛型包装、嵌套泛型、原始集合、无法绑定具体类型实参的原始泛型（如基类字段`T`）、未解析集合元素和递归DTO均使Candidate及发布Schema保持阻塞，不能猜成数组、`string`或空对象。
+
+逻辑Schema只允许`type/properties/required/additionalProperties/items`形状关键字，禁止`default/const/examples/enum`等携带样本或QA值的关键字。每个输入映射目标必须存在于Operation输入Schema、类型兼容、无重复和父子冲突，且覆盖全部provider必填字段；每个输出映射必须存在于Operation输出Schema并与事实Schema类型兼容。
+
+本地绑定路径只能来自Operation执行契约，Draft不能声明或删减。发布服务只用Candidate/Operation所属系统的0600配置验证这些路径存在，Git只保存路径名。发布期间不得调用`OperationExecutionService.execute`或任何QA provider。
+
+V2注册表校验capability ID唯一、系统一致、引用系统/scan一致和contract完整。`publication_request_id`提供提交幂等性：同ID同草稿返回既有Published，同ID不同草稿阻塞；重新发布使用新ID并保留旧ID。旧V1资产由单独只读兼容读取返回，不能进入V2正式注册表、Recipe或执行路径。发布在Candidate所属系统事务中重新读取latest完整bundle、Candidate和Operation后append，避免验证后latest切换。
+
+真实退款与Booking验收先从正式registered/latest、Git知识和0600本地绑定构造原样隔离副本，再在副本中调用发布服务；正式知识仓库在测试中始终只读。当前两系统所有Entry Candidate均因真实DTO证据保持`PARTIAL`，因此本阶段的真实验收只证明fail-closed、具体本地绑定断点和零污染，不能表述成真实正向晋升已经完成。

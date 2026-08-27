@@ -1,0 +1,15 @@
+# Design
+
+Java Sidecar只负责记录语法和解析器可以直接证明的事实。入口方法必须通过类FQN、方法名和参数/请求类型唯一匹配；重载或partial歧义直接形成分析阻塞。只有resolved可达、明确来自入口参数且位于同一可执行控制流路径的证据，才能产生程序核心义务。源码行号顺序、命名启发式、内部临时集合和无法证明来源的getter传播只能形成带原因的语义缺口，不能靠置信度阈值升级。
+
+每次扫描生成独立`ProgramCaseAnalysisCatalog`。Catalog固定system、scan、baseline、analyzer版本；每个Artifact固定真实Entry、唯一入口method symbol、源码证据、程序核心义务和语义缺口。存储层通过单一bundle发布边界同时验证manifest与Catalog的schema、system、scan、baseline和Entry全集，再更新latest。analyzer不可用时也必须写入明确BLOCKED Catalog；旧scan没有Catalog时只返回`BLOCKED_PROGRAM_ANALYSIS_MISSING`。
+
+程序证据只按以下安全边界编译：可达if/switch决策生成Decision；入口参数集合在明确循环中使用时生成Boundary；同一控制流路径的resolved顺序关系生成Sequence；绑定已发现Resource、DSF operation或resolved外部操作的副作用生成Effect。计算或下游影响但无法确定业务取值的字段保留program-origin Requirement和去重的SemanticGap，不猜测Factor候选值。
+
+`CaseSemanticDraft`是版本化、scan-bound、entry-bound的可审计草稿。每个program gap必须恰好有一个Resolution；Resolution只能“追加语义义务”或“说明无需新增义务”，必须引用原Requirement且不能覆盖或删除它。客户端不得指定program/rule origin或最终义务ID，服务端生成semantic身份；缺失、重复、冲突、跨scan、跨Entry或悬空引用全部阻塞。本阶段不调用AI，也不为真实缺口自动构造Resolution。
+
+规则解析先按身份合并两层资产，再只使用Program Artifact中的字段、操作和副作用证据匹配。规则效果直接产生`origin=rule`的分型义务，不向Agent注入自由文本。固定target规则可以追加要求，但不能被解释成程序证据；后续无法绑定真实字段或能力时仍保持阻塞。程序核心义务和原始Requirement不能被规则或语义草稿删除。
+
+系统规则只有同ID覆盖或显式`supersedes`可以替换既有规则；无效替换和互斥精确要求进入blockers。Frozen Manifest状态统一为`FROZEN/BLOCKED`，blockers可并列记录分析缺失、语义不完整和规则冲突。规则预览保存分析Artifact、来源、匹配字段、产生义务和扫描身份，供后续编译器按服务端ID加载。
+
+全局删除`Entry.metadata.case_analysis`消费路径。阶段5和阶段8尚未重做前，typed compilation与Hybrid generation不得接受客户端提交的完整`FrozenCoverageManifest`或借旧metadata生成；只允许由服务端按analysis/frozen manifest ID重新加载，未具备该路径时失败关闭。

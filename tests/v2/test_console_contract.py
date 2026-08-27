@@ -5,8 +5,8 @@ from __future__ import annotations
 from pathlib import Path
 
 
-def test_console_static_client_uses_only_v2_routes_and_safe_rendering() -> None:
-    """静态客户端应集中使用V2前缀，并通过textContent展示业务响应。
+def test_console_static_client_uses_versioned_routes_and_safe_rendering() -> None:
+    """静态客户端应集中使用V2/V3前缀，并通过textContent展示业务响应。
 
     Returns:
         None；通过静态资源断言验证周期路由、右栏门禁和安全渲染。
@@ -18,8 +18,8 @@ def test_console_static_client_uses_only_v2_routes_and_safe_rendering() -> None:
 
     assert "OpenTest V2 Console" in html
     assert 'const API_ROOT = "/api/v2"' in script
-    assert '<meta name="opentest-page-version" content="20260826-03">' in html
-    assert '/assets/app.js?v=20260826-03' in html
+    assert '<meta name="opentest-page-version" content="20260827-04">' in html
+    assert '/assets/app.js?v=20260827-04' in html
     assert 'id="stale-page-warning"' in html
     assert html.index('id="stale-page-warning"') < html.index('id="workspace-workbench"')
     assert "verifyCurrentPageVersion" in script
@@ -47,7 +47,8 @@ def test_console_static_client_uses_only_v2_routes_and_safe_rendering() -> None:
     assert "systemRequestGeneration" in script
     assert "isCurrentSystemScope" in script
     assert 'id="detail-drawer"' in html
-    assert "只读场景矩阵 → Case → 执行步骤；生成无需人工确认" in html
+    assert "ScenarioDefinition → CaseVariant → ExecutionAttempt" in script
+    assert "不再确认矩阵" in html
     assert "QA 数据模板" not in html
     assert "/knowledge/generations" in script
     assert "/knowledge/generation-batches/" not in script
@@ -153,13 +154,29 @@ def test_console_static_client_uses_only_v2_routes_and_safe_rendering() -> None:
     assert "codex_model: generationProfile.codexModel" in script
     assert "reasoning_effort: generationProfile.reasoningEffort" in script
     assert "最低底线知识当前没有新缺口，可进入测试场景准备" not in script
-    assert 'id="generate-case-matrix"' in html
+    assert 'id="load-v3-case-workspace"' in html
+    assert 'const API_V3_ROOT = "/api/v3"' in script
+    assert "case-generation-tasks" not in script
+    assert "execution-tasks" not in script
+    assert "/case-workspace" in script
+    assert "refund-canaries" not in script
+    assert "const requestScope = captureSystemScope();" in script
+    assert "if (!isCurrentSystemScope(requestScope))" in script
+    assert "appendLegacyCaseDetails(detail, entry);" in script
+    assert 'generation.status === "READY" && entry?.can_execute === true' in script
+    assert "startHybridCaseGeneration" in script
+    assert "JSON.stringify({ entry_id: entryId })" in script
+    assert "entry.semantic_gaps" in script
+    assert "entry.pipeline_steps" in script
+    assert "evidence.operation_execution_id" in script
+    assert "attempt.generation_id === generation.generation_id && attempt.variant_id === variant.variant_id" in script
+    assert "旧V3记录只读展示并禁止访问QA" in script
     assert 'id="run-natural-language"' in html
     assert 'id="save-natural-language-case"' in html
     assert 'id="knowledge-task-progress"' in html
     assert "finishKnowledgeGeneration" in script
     assert "helpedAction" in script
-    assert "阻塞：${condition.reason}" in script
+    assert "阻塞 ${blocker.code}" in script
     assert "renderKnowledgeBackgroundEditor" in script
     assert "saveKnowledgeBackground" in script
     assert "renderBusinessTermEditor" in script

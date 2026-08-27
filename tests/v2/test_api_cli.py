@@ -44,7 +44,7 @@ def test_fastapi_registers_multiple_systems_without_overwrite(tmp_path: Path, mo
     with TestClient(create_app(application), client=("127.0.0.1", 50000)) as client:
         health = client.get("/api/v2/health").json()
         assert health["status"] == "ok"
-        assert health["page_version"] == "20260826-03"
+        assert health["page_version"] == "20260827-04"
         first_response = client.post(
             "/api/v2/systems",
             json={
@@ -72,8 +72,8 @@ def test_fastapi_registers_multiple_systems_without_overwrite(tmp_path: Path, mo
     assert [item.system_id for item in application.store.list_systems()] == ["settlement-core", "train-booking-core"]
 
 
-def test_v2_console_is_served_and_only_references_v2_api(tmp_path: Path) -> None:
-    """FastAPI应托管版本化V2控制台，静态客户端不得回退调用legacy项目路由。
+def test_console_is_served_and_references_only_versioned_api(tmp_path: Path) -> None:
+    """FastAPI应托管版本化控制台，静态客户端不得回退调用legacy项目路由。
 
     Args:
         tmp_path: Pytest提供的隔离知识目录。
@@ -89,10 +89,11 @@ def test_v2_console_is_served_and_only_references_v2_api(tmp_path: Path) -> None
 
     assert console_response.status_code == 200
     assert "OpenTest V2 Console" in console_response.text
-    assert '<meta name="opentest-page-version" content="20260826-03">' in console_response.text
-    assert '/assets/app.js?v=20260826-03' in console_response.text
+    assert '<meta name="opentest-page-version" content="20260827-04">' in console_response.text
+    assert '/assets/app.js?v=20260827-04' in console_response.text
     assert script_response.status_code == 200
     assert 'const API_ROOT = "/api/v2"' in script_response.text
+    assert 'const API_V3_ROOT = "/api/v3"' in script_response.text
     assert "/api/projects" not in script_response.text
 
 
@@ -141,6 +142,11 @@ def test_v2_openapi_contains_complete_single_system_workflow(tmp_path: Path) -> 
         "/api/v2/systems/{system_id}/case-generations/{generation_id}/confirmations",
         "/api/v2/systems/{system_id}/case-generations/{generation_id}/confirmation-tasks",
         "/api/v2/systems/{system_id}/case-generations/{generation_id}/execution-tasks",
+        "/api/v3/systems/{system_id}/case-generations",
+        "/api/v3/systems/{system_id}/case-generations/{generation_id}",
+        "/api/v3/systems/{system_id}/case-generations/{generation_id}/variants/{variant_id}/attempts",
+        "/api/v3/systems/{system_id}/case-attempts",
+            "/api/v3/systems/{system_id}/case-workspace",
         "/api/v2/systems/{system_id}/case-fixture-bindings",
         "/api/v2/systems/{system_id}/case-fixture-bindings/{entry_id}",
         "/api/v2/systems/{system_id}/cases/catalog",
