@@ -191,6 +191,7 @@ def _capability_submission(candidate: CandidateOperation) -> CapabilityDraftSubm
             request_dto_types=candidate.request_dto_types,
             response_dto_type=candidate.response_dto_type,
             dto_definitions=candidate.dto_definitions,
+            field_conversions=candidate.field_conversions,
         ),
         provider_operation_ref=ProviderOperationRef(
             source_system_id=candidate.system_id,

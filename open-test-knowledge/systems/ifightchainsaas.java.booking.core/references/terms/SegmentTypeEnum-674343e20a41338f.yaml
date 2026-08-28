@@ -1,0 +1,64 @@
+candidate_id: candidate:business_term:674343e20a41338f
+system_id: ifightchainsaas.java.booking.core
+kind: BUSINESS_TERM
+knowledge_form: BUSINESS_ENUM
+name: SegmentTypeEnum
+business_name: SegmentTypeEnum
+business_name_source: CODE_DEFAULT
+business_name_known_unknown: false
+enum_values:
+- code: BACK
+  business_meaning: 返程
+  source: CODE_VERIFIED
+  known_unknown: false
+  confidence: 1.0
+  source_refs:
+  - repository: ''
+    path: app/model/src/main/java/com/ly/flight/chainsaas/booking/enums/SegmentTypeEnum.java
+    symbol: com.ly.flight.chainsaas.booking.enums.SegmentTypeEnum#BACK
+    line: 13
+    commit: ''
+    content_digest: ''
+- code: GO
+  business_meaning: 去程
+  source: CODE_VERIFIED
+  known_unknown: false
+  confidence: 1.0
+  source_refs:
+  - repository: ''
+    path: app/model/src/main/java/com/ly/flight/chainsaas/booking/enums/SegmentTypeEnum.java
+    symbol: com.ly.flight.chainsaas.booking.enums.SegmentTypeEnum#GO
+    line: 12
+    commit: ''
+    content_digest: ''
+suggested_meaning: 枚举名称和值默认采用源码注释；缺少注释时回退代码标识，可再人工修订。
+code_meaning: 返程（BACK）；去程（GO）
+unresolved_codes: []
+business_meaning: ''
+status: CODE_VERIFIED
+merged_into_candidate_id: ''
+source_refs:
+- repository: ''
+  path: app/model/src/main/java/com/ly/flight/chainsaas/booking/enums/SegmentTypeEnum.java
+  symbol: com.ly.flight.chainsaas.booking.enums.SegmentTypeEnum
+  line: 10
+  commit: 004c50d90d152f1ef4892679f8b1b322cc7a7405
+  content_digest: 1038e8a557a818704c5dbbfcfe81bf9c2c73ef116b47ada1fc16d3039625ff61
+- repository: ''
+  path: app/model/src/main/java/com/ly/flight/chainsaas/booking/enums/SegmentTypeEnum.java
+  symbol: com.ly.flight.chainsaas.booking.enums.SegmentTypeEnum#BACK
+  line: 13
+  commit: ''
+  content_digest: ''
+- repository: ''
+  path: app/model/src/main/java/com/ly/flight/chainsaas/booking/enums/SegmentTypeEnum.java
+  symbol: com.ly.flight.chainsaas.booking.enums.SegmentTypeEnum#GO
+  line: 12
+  commit: ''
+  content_digest: ''
+affected_target_ids:
+- facade:com.ly.flight.chainsaas.booking.facade.FlightChangeOrderFacade#queryFlightChangeOrder
+- facade:com.ly.flight.chainsaas.booking.facade.FlightChangeOrderFacade#queryFlightChangeOrderSegments
+evidence_digest: d984f0b048dce3eebaf79691c95bc761d79e3f979894f2d7ed455223a825fcfd
+discovered_at: '2026-08-27T15:21:11.348822Z'
+updated_at: '2026-08-27T20:27:20.156209Z'

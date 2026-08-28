@@ -1,0 +1,1647 @@
+candidate_id: candidate:business_term:fe4b1da1dc26ab54
+system_id: ifightchainsaas.java.booking.core
+kind: BUSINESS_TERM
+knowledge_form: BUSINESS_ENUM
+name: LogEnum
+business_name: 日志枚举
+business_name_source: CODE_DEFAULT
+business_name_known_unknown: false
+enum_values:
+- code: AGENT_RELATION
+  business_meaning: 根据agentId查询代理商关系
+  source: CODE_DEFAULT
+  known_unknown: false
+  confidence: 0.95
+  source_refs:
+  - repository: ''
+    path: app/biz/src/main/java/com/ly/flight/chainsaas/booking/biz/constants/LogEnum.java
+    symbol: com.ly.flight.chainsaas.booking.biz.constants.LogEnum#AGENT_RELATION
+    line: 19
+    commit: ''
+    content_digest: ''
+- code: ARC_BSP_DATA_LISTENER
+  business_meaning: ARC_BSP_DATA_LISTENER
+  source: CODE_DEFAULT
+  known_unknown: false
+  confidence: 0.95
+  source_refs:
+  - repository: ''
+    path: app/biz/src/main/java/com/ly/flight/chainsaas/booking/biz/constants/LogEnum.java
+    symbol: com.ly.flight.chainsaas.booking.biz.constants.LogEnum#ARC_BSP_DATA_LISTENER
+    line: 255
+    commit: ''
+    content_digest: ''
+- code: ARC_BSP_REPORT_JOB
+  business_meaning: ARC_BSP_REPORT_JOB
+  source: CODE_DEFAULT
+  known_unknown: false
+  confidence: 0.5
+  source_refs:
+  - repository: ''
+    path: app/biz/src/main/java/com/ly/flight/chainsaas/booking/biz/constants/LogEnum.java
+    symbol: com.ly.flight.chainsaas.booking.biz.constants.LogEnum#ARC_BSP_REPORT_JOB
+    line: 187
+    commit: ''
+    content_digest: ''
+- code: ARC_BSP_REPORT_TICKET
+  business_meaning: ARC_BSP_REPORT_TICKET
+  source: CODE_DEFAULT
+  known_unknown: false
+  confidence: 0.95
+  source_refs:
+  - repository: ''
+    path: app/biz/src/main/java/com/ly/flight/chainsaas/booking/biz/constants/LogEnum.java
+    symbol: com.ly.flight.chainsaas.booking.biz.constants.LogEnum#ARC_BSP_REPORT_TICKET
+    line: 309
+    commit: ''
+    content_digest: ''
+- code: ARC_BSP_REPORT_TICKET_DONE
+  business_meaning: ARC_BSP_REPORT_TICKET_DONE
+  source: CODE_DEFAULT
+  known_unknown: false
+  confidence: 0.95
+  source_refs:
+  - repository: ''
+    path: app/biz/src/main/java/com/ly/flight/chainsaas/booking/biz/constants/LogEnum.java
+    symbol: com.ly.flight.chainsaas.booking.biz.constants.LogEnum#ARC_BSP_REPORT_TICKET_DONE
+    line: 313
+    commit: ''
+    content_digest: ''
+- code: ASYNC_BOOK_CALLBACK
+  business_meaning: 异步占编回调mq
+  source: CODE_DEFAULT
+  known_unknown: false
+  confidence: 0.95
+  source_refs:
+  - repository: ''
+    path: app/biz/src/main/java/com/ly/flight/chainsaas/booking/biz/constants/LogEnum.java
+    symbol: com.ly.flight.chainsaas.booking.biz.constants.LogEnum#ASYNC_BOOK_CALLBACK
+    line: 421
+    commit: ''
+    content_digest: ''
+- code: BATCH_QUERY_TICKET_INFO
+  business_meaning: 提取PNR
+  source: CODE_DEFAULT
+  known_unknown: false
+  confidence: 0.95
+  source_refs:
+  - repository: ''
+    path: app/biz/src/main/java/com/ly/flight/chainsaas/booking/biz/constants/LogEnum.java
+    symbol: com.ly.flight.chainsaas.booking.biz.constants.LogEnum#BATCH_QUERY_TICKET_INFO
+    line: 426
+    commit: ''
+    content_digest: ''
+- code: BOOK
+  business_meaning: 预定占编服务日志
+  source: CODE_DEFAULT
+  known_unknown: false
+  confidence: 0.95
+  source_refs:
+  - repository: ''
+    path: app/biz/src/main/java/com/ly/flight/chainsaas/booking/biz/constants/LogEnum.java
+    symbol: com.ly.flight.chainsaas.booking.biz.constants.LogEnum#BOOK
+    line: 39
+    commit: ''
+    content_digest: ''
+- code: BOOK_SYC_JOB
+  business_meaning: JOB
+  source: CODE_DEFAULT
+  known_unknown: false
+  confidence: 0.95
+  source_refs:
+  - repository: ''
+    path: app/biz/src/main/java/com/ly/flight/chainsaas/booking/biz/constants/LogEnum.java
+    symbol: com.ly.flight.chainsaas.booking.biz.constants.LogEnum#BOOK_SYC_JOB
+    line: 280
+    commit: ''
+    content_digest: ''
+- code: BOOK_TIMEOUT_CANCEL
+  business_meaning: 预定占编超时取消
+  source: CODE_DEFAULT
+  known_unknown: false
+  confidence: 0.95
+  source_refs:
+  - repository: ''
+    path: app/biz/src/main/java/com/ly/flight/chainsaas/booking/biz/constants/LogEnum.java
+    symbol: com.ly.flight.chainsaas.booking.biz.constants.LogEnum#BOOK_TIMEOUT_CANCEL
+    line: 51
+    commit: ''
+    content_digest: ''
+- code: CANCEL
+  business_meaning: 取消X编服务日志
+  source: CODE_DEFAULT
+  known_unknown: false
+  confidence: 0.95
+  source_refs:
+  - repository: ''
+    path: app/biz/src/main/java/com/ly/flight/chainsaas/booking/biz/constants/LogEnum.java
+    symbol: com.ly.flight.chainsaas.booking.biz.constants.LogEnum#CANCEL
+    line: 78
+    commit: ''
+    content_digest: ''
+- code: CANCEL_JOB
+  business_meaning: JOB
+  source: CODE_DEFAULT
+  known_unknown: false
+  confidence: 0.95
+  source_refs:
+  - repository: ''
+    path: app/biz/src/main/java/com/ly/flight/chainsaas/booking/biz/constants/LogEnum.java
+    symbol: com.ly.flight.chainsaas.booking.biz.constants.LogEnum#CANCEL_JOB
+    line: 259
+    commit: ''
+    content_digest: ''
+- code: CANCEL_JOB_LISTENER
+  business_meaning: MQ
+  source: CODE_DEFAULT
+  known_unknown: false
+  confidence: 0.95
+  source_refs:
+  - repository: ''
+    path: app/biz/src/main/java/com/ly/flight/chainsaas/booking/biz/constants/LogEnum.java
+    symbol: com.ly.flight.chainsaas.booking.biz.constants.LogEnum#CANCEL_JOB_LISTENER
+    line: 216
+    commit: ''
+    content_digest: ''
+- code: CANCEL_PNR_LIST
+  business_meaning: 取消订单列表
+  source: CODE_DEFAULT
+  known_unknown: false
+  confidence: 0.95
+  source_refs:
+  - repository: ''
+    path: app/biz/src/main/java/com/ly/flight/chainsaas/booking/biz/constants/LogEnum.java
+    symbol: com.ly.flight.chainsaas.booking.biz.constants.LogEnum#CANCEL_PNR_LIST
+    line: 47
+    commit: ''
+    content_digest: ''
+- code: CHECK_VCC
+  business_meaning: 检查
+  source: CODE_DEFAULT
+  known_unknown: false
+  confidence: 0.95
+  source_refs:
+  - repository: ''
+    path: app/biz/src/main/java/com/ly/flight/chainsaas/booking/biz/constants/LogEnum.java
+    symbol: com.ly.flight.chainsaas.booking.biz.constants.LogEnum#CHECK_VCC
+    line: 412
+    commit: ''
+    content_digest: ''
+- code: CLOSE_VCC
+  business_meaning: 注销
+  source: CODE_DEFAULT
+  known_unknown: false
+  confidence: 0.95
+  source_refs:
+  - repository: ''
+    path: app/biz/src/main/java/com/ly/flight/chainsaas/booking/biz/constants/LogEnum.java
+    symbol: com.ly.flight.chainsaas.booking.biz.constants.LogEnum#CLOSE_VCC
+    line: 404
+    commit: ''
+    content_digest: ''
+- code: CONFIRM_ORDER_TYPE
+  business_meaning: 确认退改单类型
+  source: CODE_DEFAULT
+  known_unknown: false
+  confidence: 0.95
+  source_refs:
+  - repository: ''
+    path: app/biz/src/main/java/com/ly/flight/chainsaas/booking/biz/constants/LogEnum.java
+    symbol: com.ly.flight.chainsaas.booking.biz.constants.LogEnum#CONFIRM_ORDER_TYPE
+    line: 499
+    commit: ''
+    content_digest: ''
+- code: CREATE_VCC
+  business_meaning: 生卡
+  source: CODE_DEFAULT
+  known_unknown: false
+  confidence: 0.95
+  source_refs:
+  - repository: ''
+    path: app/biz/src/main/java/com/ly/flight/chainsaas/booking/biz/constants/LogEnum.java
+    symbol: com.ly.flight.chainsaas.booking.biz.constants.LogEnum#CREATE_VCC
+    line: 399
+    commit: ''
+    content_digest: ''
+- code: CUSTOMER_API_BOOKING
+  business_meaning: CUSTOMER_API_BOOKING
+  source: CODE_DEFAULT
+  known_unknown: false
+  confidence: 0.5
+  source_refs:
+  - repository: ''
+    path: app/biz/src/main/java/com/ly/flight/chainsaas/booking/biz/constants/LogEnum.java
+    symbol: com.ly.flight.chainsaas.booking.biz.constants.LogEnum#CUSTOMER_API_BOOKING
+    line: 526
+    commit: ''
+    content_digest: ''
+- code: CUSTOMER_API_CONFIRM_PAYMENT
+  business_meaning: CUSTOMER_API_CONFIRM_PAYMENT
+  source: CODE_DEFAULT
+  known_unknown: false
+  confidence: 0.5
+  source_refs:
+  - repository: ''
+    path: app/biz/src/main/java/com/ly/flight/chainsaas/booking/biz/constants/LogEnum.java
+    symbol: com.ly.flight.chainsaas.booking.biz.constants.LogEnum#CUSTOMER_API_CONFIRM_PAYMENT
+    line: 532
+    commit: ''
+    content_digest: ''
+- code: CUSTOMER_API_NOTIFICATION
+  business_meaning: CUSTOMER_API_NOTIFICATION
+  source: CODE_DEFAULT
+  known_unknown: false
+  confidence: 0.5
+  source_refs:
+  - repository: ''
+    path: app/biz/src/main/java/com/ly/flight/chainsaas/booking/biz/constants/LogEnum.java
+    symbol: com.ly.flight.chainsaas.booking.biz.constants.LogEnum#CUSTOMER_API_NOTIFICATION
+    line: 528
+    commit: ''
+    content_digest: ''
+- code: CUSTOMER_API_PAYMENT
+  business_meaning: CUSTOMER_API_PAYMENT
+  source: CODE_DEFAULT
+  known_unknown: false
+  confidence: 0.5
+  source_refs:
+  - repository: ''
+    path: app/biz/src/main/java/com/ly/flight/chainsaas/booking/biz/constants/LogEnum.java
+    symbol: com.ly.flight.chainsaas.booking.biz.constants.LogEnum#CUSTOMER_API_PAYMENT
+    line: 530
+    commit: ''
+    content_digest: ''
+- code: CUSTOMER_API_VERIFY
+  business_meaning: CUSTOMER_API_VERIFY
+  source: CODE_DEFAULT
+  known_unknown: false
+  confidence: 0.5
+  source_refs:
+  - repository: ''
+    path: app/biz/src/main/java/com/ly/flight/chainsaas/booking/biz/constants/LogEnum.java
+    symbol: com.ly.flight.chainsaas.booking.biz.constants.LogEnum#CUSTOMER_API_VERIFY
+    line: 522
+    commit: ''
+    content_digest: ''
+- code: CUSTOMER_API_VERIFY_CACHE
+  business_meaning: CUSTOMER_API_VERIFY_CACHE
+  source: CODE_DEFAULT
+  known_unknown: false
+  confidence: 0.5
+  source_refs:
+  - repository: ''
+    path: app/biz/src/main/java/com/ly/flight/chainsaas/booking/biz/constants/LogEnum.java
+    symbol: com.ly.flight.chainsaas.booking.biz.constants.LogEnum#CUSTOMER_API_VERIFY_CACHE
+    line: 524
+    commit: ''
+    content_digest: ''
+- code: DISTRIBUTION_BOOK
+  business_meaning: 下单服务
+  source: CODE_DEFAULT
+  known_unknown: false
+  confidence: 0.95
+  source_refs:
+  - repository: ''
+    path: app/biz/src/main/java/com/ly/flight/chainsaas/booking/biz/constants/LogEnum.java
+    symbol: com.ly.flight.chainsaas.booking.biz.constants.LogEnum#DISTRIBUTION_BOOK
+    line: 86
+    commit: ''
+    content_digest: ''
+- code: DISTRIBUTION_CALLBACK_TICKET
+  business_meaning: 分销回调出票
+  source: CODE_DEFAULT
+  known_unknown: false
+  confidence: 0.95
+  source_refs:
+  - repository: ''
+    path: app/biz/src/main/java/com/ly/flight/chainsaas/booking/biz/constants/LogEnum.java
+    symbol: com.ly.flight.chainsaas.booking.biz.constants.LogEnum#DISTRIBUTION_CALLBACK_TICKET
+    line: 55
+    commit: ''
+    content_digest: ''
+- code: DISTRIBUTION_REPORT_CALLBACK_TICKET
+  business_meaning: 分销报表回调出票
+  source: CODE_DEFAULT
+  known_unknown: false
+  confidence: 0.95
+  source_refs:
+  - repository: ''
+    path: app/biz/src/main/java/com/ly/flight/chainsaas/booking/biz/constants/LogEnum.java
+    symbol: com.ly.flight.chainsaas.booking.biz.constants.LogEnum#DISTRIBUTION_REPORT_CALLBACK_TICKET
+    line: 59
+    commit: ''
+    content_digest: ''
+- code: DMS_SENDER
+  business_meaning: DMS_SENDER
+  source: CODE_DEFAULT
+  known_unknown: false
+  confidence: 0.95
+  source_refs:
+  - repository: ''
+    path: app/biz/src/main/java/com/ly/flight/chainsaas/booking/biz/constants/LogEnum.java
+    symbol: com.ly.flight.chainsaas.booking.biz.constants.LogEnum#DMS_SENDER
+    line: 328
+    commit: ''
+    content_digest: ''
+- code: ES_COMPARE_ALL_LISTENER
+  business_meaning: ES 全量对比 MQ
+  source: CODE_DEFAULT
+  known_unknown: false
+  confidence: 0.95
+  source_refs:
+  - repository: ''
+    path: app/biz/src/main/java/com/ly/flight/chainsaas/booking/biz/constants/LogEnum.java
+    symbol: com.ly.flight.chainsaas.booking.biz.constants.LogEnum#ES_COMPARE_ALL_LISTENER
+    line: 323
+    commit: ''
+    content_digest: ''
+- code: EXECUTE
+  business_meaning: 执行CMD
+  source: CODE_DEFAULT
+  known_unknown: false
+  confidence: 0.95
+  source_refs:
+  - repository: ''
+    path: app/biz/src/main/java/com/ly/flight/chainsaas/booking/biz/constants/LogEnum.java
+    symbol: com.ly.flight.chainsaas.booking.biz.constants.LogEnum#EXECUTE
+    line: 170
+    commit: ''
+    content_digest: ''
+- code: EXTERNAL_API_BOOKING
+  business_meaning: EXTERNAL_API_BOOKING
+  source: CODE_DEFAULT
+  known_unknown: false
+  confidence: 0.5
+  source_refs:
+  - repository: ''
+    path: app/biz/src/main/java/com/ly/flight/chainsaas/booking/biz/constants/LogEnum.java
+    symbol: com.ly.flight.chainsaas.booking.biz.constants.LogEnum#EXTERNAL_API_BOOKING
+    line: 538
+    commit: ''
+    content_digest: ''
+- code: EXTERNAL_API_DISTRIBUTION_ISSUE_TICKET
+  business_meaning: EXTERNAL_API_DISTRIBUTION_ISSUE_TICKET
+  source: CODE_DEFAULT
+  known_unknown: false
+  confidence: 0.5
+  source_refs:
+  - repository: ''
+    path: app/biz/src/main/java/com/ly/flight/chainsaas/booking/biz/constants/LogEnum.java
+    symbol: com.ly.flight.chainsaas.booking.biz.constants.LogEnum#EXTERNAL_API_DISTRIBUTION_ISSUE_TICKET
+    line: 542
+    commit: ''
+    content_digest: ''
+- code: EXTERNAL_API_DISTRIBUTION_QUERY_ORDER_DETAIL
+  business_meaning: EXTERNAL_API_DISTRIBUTION_QUERY_ORDER_DETAIL
+  source: CODE_DEFAULT
+  known_unknown: false
+  confidence: 0.5
+  source_refs:
+  - repository: ''
+    path: app/biz/src/main/java/com/ly/flight/chainsaas/booking/biz/constants/LogEnum.java
+    symbol: com.ly.flight.chainsaas.booking.biz.constants.LogEnum#EXTERNAL_API_DISTRIBUTION_QUERY_ORDER_DETAIL
+    line: 544
+    commit: ''
+    content_digest: ''
+- code: EXTERNAL_API_NOTIFICATION
+  business_meaning: EXTERNAL_API_NOTIFICATION
+  source: CODE_DEFAULT
+  known_unknown: false
+  confidence: 0.5
+  source_refs:
+  - repository: ''
+    path: app/biz/src/main/java/com/ly/flight/chainsaas/booking/biz/constants/LogEnum.java
+    symbol: com.ly.flight.chainsaas.booking.biz.constants.LogEnum#EXTERNAL_API_NOTIFICATION
+    line: 540
+    commit: ''
+    content_digest: ''
+- code: EXTERNAL_API_VERIFY
+  business_meaning: EXTERNAL_API_VERIFY
+  source: CODE_DEFAULT
+  known_unknown: false
+  confidence: 0.5
+  source_refs:
+  - repository: ''
+    path: app/biz/src/main/java/com/ly/flight/chainsaas/booking/biz/constants/LogEnum.java
+    symbol: com.ly.flight.chainsaas.booking.biz.constants.LogEnum#EXTERNAL_API_VERIFY
+    line: 536
+    commit: ''
+    content_digest: ''
+- code: FORBID_POOL_MQ
+  business_meaning: FORBID_POOL_MQ
+  source: CODE_DEFAULT
+  known_unknown: false
+  confidence: 0.95
+  source_refs:
+  - repository: ''
+    path: app/biz/src/main/java/com/ly/flight/chainsaas/booking/biz/constants/LogEnum.java
+    symbol: com.ly.flight.chainsaas.booking.biz.constants.LogEnum#FORBID_POOL_MQ
+    line: 354
+    commit: ''
+    content_digest: ''
+- code: HONGHU_API_BOOKING
+  business_meaning: HONGHU_API_BOOKING
+  source: CODE_DEFAULT
+  known_unknown: false
+  confidence: 0.5
+  source_refs:
+  - repository: ''
+    path: app/biz/src/main/java/com/ly/flight/chainsaas/booking/biz/constants/LogEnum.java
+    symbol: com.ly.flight.chainsaas.booking.biz.constants.LogEnum#HONGHU_API_BOOKING
+    line: 550
+    commit: ''
+    content_digest: ''
+- code: HONGHU_API_CANCEL
+  business_meaning: HONGHU_API_CANCEL
+  source: CODE_DEFAULT
+  known_unknown: false
+  confidence: 0.5
+  source_refs:
+  - repository: ''
+    path: app/biz/src/main/java/com/ly/flight/chainsaas/booking/biz/constants/LogEnum.java
+    symbol: com.ly.flight.chainsaas.booking.biz.constants.LogEnum#HONGHU_API_CANCEL
+    line: 554
+    commit: ''
+    content_digest: ''
+- code: HONGHU_API_PAYMENT
+  business_meaning: HONGHU_API_PAYMENT
+  source: CODE_DEFAULT
+  known_unknown: false
+  confidence: 0.5
+  source_refs:
+  - repository: ''
+    path: app/biz/src/main/java/com/ly/flight/chainsaas/booking/biz/constants/LogEnum.java
+    symbol: com.ly.flight.chainsaas.booking.biz.constants.LogEnum#HONGHU_API_PAYMENT
+    line: 552
+    commit: ''
+    content_digest: ''
+- code: HONGHU_API_TICKET
+  business_meaning: HONGHU_API_TICKET
+  source: CODE_DEFAULT
+  known_unknown: false
+  confidence: 0.5
+  source_refs:
+  - repository: ''
+    path: app/biz/src/main/java/com/ly/flight/chainsaas/booking/biz/constants/LogEnum.java
+    symbol: com.ly.flight.chainsaas.booking.biz.constants.LogEnum#HONGHU_API_TICKET
+    line: 556
+    commit: ''
+    content_digest: ''
+- code: HONGHU_API_VERIFY
+  business_meaning: HONGHU_API_VERIFY
+  source: CODE_DEFAULT
+  known_unknown: false
+  confidence: 0.5
+  source_refs:
+  - repository: ''
+    path: app/biz/src/main/java/com/ly/flight/chainsaas/booking/biz/constants/LogEnum.java
+    symbol: com.ly.flight.chainsaas.booking.biz.constants.LogEnum#HONGHU_API_VERIFY
+    line: 548
+    commit: ''
+    content_digest: ''
+- code: INSERT_REPORT_ORDER
+  business_meaning: 新增报表订单
+  source: CODE_DEFAULT
+  known_unknown: false
+  confidence: 0.95
+  source_refs:
+  - repository: ''
+    path: app/biz/src/main/java/com/ly/flight/chainsaas/booking/biz/constants/LogEnum.java
+    symbol: com.ly.flight.chainsaas.booking.biz.constants.LogEnum#INSERT_REPORT_ORDER
+    line: 503
+    commit: ''
+    content_digest: ''
+- code: ITEM_DATA_FIX
+  business_meaning: ITEM_DATA_FIX
+  source: CODE_DEFAULT
+  known_unknown: false
+  confidence: 0.95
+  source_refs:
+  - repository: ''
+    path: app/biz/src/main/java/com/ly/flight/chainsaas/booking/biz/constants/LogEnum.java
+    symbol: com.ly.flight.chainsaas.booking.biz.constants.LogEnum#ITEM_DATA_FIX
+    line: 267
+    commit: ''
+    content_digest: ''
+- code: JOB
+  business_meaning: JOB
+  source: CODE_DEFAULT
+  known_unknown: false
+  confidence: 0.95
+  source_refs:
+  - repository: ''
+    path: app/biz/src/main/java/com/ly/flight/chainsaas/booking/biz/constants/LogEnum.java
+    symbol: com.ly.flight.chainsaas.booking.biz.constants.LogEnum#JOB
+    line: 295
+    commit: ''
+    content_digest: ''
+- code: LOCK_ORDER
+  business_meaning: 锁单服务
+  source: CODE_DEFAULT
+  known_unknown: false
+  confidence: 0.95
+  source_refs:
+  - repository: ''
+    path: app/biz/src/main/java/com/ly/flight/chainsaas/booking/biz/constants/LogEnum.java
+    symbol: com.ly.flight.chainsaas.booking.biz.constants.LogEnum#LOCK_ORDER
+    line: 165
+    commit: ''
+    content_digest: ''
+- code: LOG
+  business_meaning: LOG
+  source: CODE_DEFAULT
+  known_unknown: false
+  confidence: 0.95
+  source_refs:
+  - repository: ''
+    path: app/biz/src/main/java/com/ly/flight/chainsaas/booking/biz/constants/LogEnum.java
+    symbol: com.ly.flight.chainsaas.booking.biz.constants.LogEnum#LOG
+    line: 300
+    commit: ''
+    content_digest: ''
+- code: MAPPING_TAX
+  business_meaning: 税费映射
+  source: CODE_DEFAULT
+  known_unknown: false
+  confidence: 0.95
+  source_refs:
+  - repository: ''
+    path: app/biz/src/main/java/com/ly/flight/chainsaas/booking/biz/constants/LogEnum.java
+    symbol: com.ly.flight.chainsaas.booking.biz.constants.LogEnum#MAPPING_TAX
+    line: 446
+    commit: ''
+    content_digest: ''
+- code: MARKETING_ORDER_LIST
+  business_meaning: 校验订单活动
+  source: CODE_DEFAULT
+  known_unknown: false
+  confidence: 0.95
+  source_refs:
+  - repository: ''
+    path: app/biz/src/main/java/com/ly/flight/chainsaas/booking/biz/constants/LogEnum.java
+    symbol: com.ly.flight.chainsaas.booking.biz.constants.LogEnum#MARKETING_ORDER_LIST
+    line: 130
+    commit: ''
+    content_digest: ''
+- code: ORDER_COMPENSATE_TASK
+  business_meaning: 订单后置补偿任务
+  source: CODE_DEFAULT
+  known_unknown: false
+  confidence: 0.95
+  source_refs:
+  - repository: ''
+    path: app/biz/src/main/java/com/ly/flight/chainsaas/booking/biz/constants/LogEnum.java
+    symbol: com.ly.flight.chainsaas.booking.biz.constants.LogEnum#ORDER_COMPENSATE_TASK
+    line: 480
+    commit: ''
+    content_digest: ''
+- code: ORDER_DETAIL
+  business_meaning: 订单详情服务日志
+  source: CODE_DEFAULT
+  known_unknown: false
+  confidence: 0.95
+  source_refs:
+  - repository: ''
+    path: app/biz/src/main/java/com/ly/flight/chainsaas/booking/biz/constants/LogEnum.java
+    symbol: com.ly.flight.chainsaas.booking.biz.constants.LogEnum#ORDER_DETAIL
+    line: 100
+    commit: ''
+    content_digest: ''
+- code: ORDER_FLIGHT_CHANGE
+  business_meaning: 航变日志
+  source: CODE_DEFAULT
+  known_unknown: false
+  confidence: 0.95
+  source_refs:
+  - repository: ''
+    path: app/biz/src/main/java/com/ly/flight/chainsaas/booking/biz/constants/LogEnum.java
+    symbol: com.ly.flight.chainsaas.booking.biz.constants.LogEnum#ORDER_FLIGHT_CHANGE
+    line: 105
+    commit: ''
+    content_digest: ''
+- code: ORDER_LIST
+  business_meaning: 订单列表服务日志
+  source: CODE_DEFAULT
+  known_unknown: false
+  confidence: 0.95
+  source_refs:
+  - repository: ''
+    path: app/biz/src/main/java/com/ly/flight/chainsaas/booking/biz/constants/LogEnum.java
+    symbol: com.ly.flight.chainsaas.booking.biz.constants.LogEnum#ORDER_LIST
+    line: 95
+    commit: ''
+    content_digest: ''
+- code: ORDER_PAYMENT_JOB_LISTENER
+  business_meaning: MQ
+  source: CODE_DEFAULT
+  known_unknown: false
+  confidence: 0.95
+  source_refs:
+  - repository: ''
+    path: app/biz/src/main/java/com/ly/flight/chainsaas/booking/biz/constants/LogEnum.java
+    symbol: com.ly.flight.chainsaas.booking.biz.constants.LogEnum#ORDER_PAYMENT_JOB_LISTENER
+    line: 244
+    commit: ''
+    content_digest: ''
+- code: ORDER_PNR_RESET
+  business_meaning: PNR重置
+  source: CODE_DEFAULT
+  known_unknown: false
+  confidence: 0.95
+  source_refs:
+  - repository: ''
+    path: app/biz/src/main/java/com/ly/flight/chainsaas/booking/biz/constants/LogEnum.java
+    symbol: com.ly.flight.chainsaas.booking.biz.constants.LogEnum#ORDER_PNR_RESET
+    line: 385
+    commit: ''
+    content_digest: ''
+- code: ORDER_REBUT
+  business_meaning: 订单驳回
+  source: CODE_DEFAULT
+  known_unknown: false
+  confidence: 0.95
+  source_refs:
+  - repository: ''
+    path: app/biz/src/main/java/com/ly/flight/chainsaas/booking/biz/constants/LogEnum.java
+    symbol: com.ly.flight.chainsaas.booking.biz.constants.LogEnum#ORDER_REBUT
+    line: 375
+    commit: ''
+    content_digest: ''
+- code: ORDER_REFUND
+  business_meaning: 退款
+  source: CODE_DEFAULT
+  known_unknown: false
+  confidence: 0.95
+  source_refs:
+  - repository: ''
+    path: app/biz/src/main/java/com/ly/flight/chainsaas/booking/biz/constants/LogEnum.java
+    symbol: com.ly.flight.chainsaas.booking.biz.constants.LogEnum#ORDER_REFUND
+    line: 150
+    commit: ''
+    content_digest: ''
+- code: ORDER_STATE_CHANGE_NOTIFY
+  business_meaning: ORDER_STATE_CHANGE_NOTIFY
+  source: CODE_DEFAULT
+  known_unknown: false
+  confidence: 0.95
+  source_refs:
+  - repository: ''
+    path: app/biz/src/main/java/com/ly/flight/chainsaas/booking/biz/constants/LogEnum.java
+    symbol: com.ly.flight.chainsaas.booking.biz.constants.LogEnum#ORDER_STATE_CHANGE_NOTIFY
+    line: 333
+    commit: ''
+    content_digest: ''
+- code: PAYMENT
+  business_meaning: 执行CMD
+  source: CODE_DEFAULT
+  known_unknown: false
+  confidence: 0.95
+  source_refs:
+  - repository: ''
+    path: app/biz/src/main/java/com/ly/flight/chainsaas/booking/biz/constants/LogEnum.java
+    symbol: com.ly.flight.chainsaas.booking.biz.constants.LogEnum#PAYMENT
+    line: 175
+    commit: ''
+    content_digest: ''
+- code: PAYMENT_VALIDATE
+  business_meaning: 支付前校验
+  source: CODE_DEFAULT
+  known_unknown: false
+  confidence: 0.95
+  source_refs:
+  - repository: ''
+    path: app/biz/src/main/java/com/ly/flight/chainsaas/booking/biz/constants/LogEnum.java
+    symbol: com.ly.flight.chainsaas.booking.biz.constants.LogEnum#PAYMENT_VALIDATE
+    line: 441
+    commit: ''
+    content_digest: ''
+- code: PAY_CALLBACK
+  business_meaning: 支付回调
+  source: CODE_DEFAULT
+  known_unknown: false
+  confidence: 0.95
+  source_refs:
+  - repository: ''
+    path: app/biz/src/main/java/com/ly/flight/chainsaas/booking/biz/constants/LogEnum.java
+    symbol: com.ly.flight.chainsaas.booking.biz.constants.LogEnum#PAY_CALLBACK
+    line: 140
+    commit: ''
+    content_digest: ''
+- code: PAY_CONFIRM_PAYMENT
+  business_meaning: 确认支付
+  source: CODE_DEFAULT
+  known_unknown: false
+  confidence: 0.95
+  source_refs:
+  - repository: ''
+    path: app/biz/src/main/java/com/ly/flight/chainsaas/booking/biz/constants/LogEnum.java
+    symbol: com.ly.flight.chainsaas.booking.biz.constants.LogEnum#PAY_CONFIRM_PAYMENT
+    line: 35
+    commit: ''
+    content_digest: ''
+- code: PAY_NOTIFY
+  business_meaning: PAY_NOTIFY
+  source: CODE_DEFAULT
+  known_unknown: false
+  confidence: 0.95
+  source_refs:
+  - repository: ''
+    path: app/biz/src/main/java/com/ly/flight/chainsaas/booking/biz/constants/LogEnum.java
+    symbol: com.ly.flight.chainsaas.booking.biz.constants.LogEnum#PAY_NOTIFY
+    line: 318
+    commit: ''
+    content_digest: ''
+- code: PAY_ORDERDETAIL
+  business_meaning: 支付订单详情
+  source: CODE_DEFAULT
+  known_unknown: false
+  confidence: 0.95
+  source_refs:
+  - repository: ''
+    path: app/biz/src/main/java/com/ly/flight/chainsaas/booking/biz/constants/LogEnum.java
+    symbol: com.ly.flight.chainsaas.booking.biz.constants.LogEnum#PAY_ORDERDETAIL
+    line: 145
+    commit: ''
+    content_digest: ''
+- code: PAY_PAYMENT
+  business_meaning: 支付
+  source: CODE_DEFAULT
+  known_unknown: false
+  confidence: 0.95
+  source_refs:
+  - repository: ''
+    path: app/biz/src/main/java/com/ly/flight/chainsaas/booking/biz/constants/LogEnum.java
+    symbol: com.ly.flight.chainsaas.booking.biz.constants.LogEnum#PAY_PAYMENT
+    line: 31
+    commit: ''
+    content_digest: ''
+- code: PAY_REFUND_DONE_LISTENER
+  business_meaning: MQ
+  source: CODE_DEFAULT
+  known_unknown: false
+  confidence: 0.95
+  source_refs:
+  - repository: ''
+    path: app/biz/src/main/java/com/ly/flight/chainsaas/booking/biz/constants/LogEnum.java
+    symbol: com.ly.flight.chainsaas.booking.biz.constants.LogEnum#PAY_REFUND_DONE_LISTENER
+    line: 231
+    commit: ''
+    content_digest: ''
+- code: PAY_RISK
+  business_meaning: 风控
+  source: CODE_DEFAULT
+  known_unknown: false
+  confidence: 0.95
+  source_refs:
+  - repository: ''
+    path: app/biz/src/main/java/com/ly/flight/chainsaas/booking/biz/constants/LogEnum.java
+    symbol: com.ly.flight.chainsaas.booking.biz.constants.LogEnum#PAY_RISK
+    line: 160
+    commit: ''
+    content_digest: ''
+- code: PAY_VALIDATE
+  business_meaning: 支付前校验
+  source: CODE_DEFAULT
+  known_unknown: false
+  confidence: 0.95
+  source_refs:
+  - repository: ''
+    path: app/biz/src/main/java/com/ly/flight/chainsaas/booking/biz/constants/LogEnum.java
+    symbol: com.ly.flight.chainsaas.booking.biz.constants.LogEnum#PAY_VALIDATE
+    line: 135
+    commit: ''
+    content_digest: ''
+- code: QUERY_DISTRIBUTION_ORDER_DETAIL
+  business_meaning: B端订单详情
+  source: CODE_DEFAULT
+  known_unknown: false
+  confidence: 0.95
+  source_refs:
+  - repository: ''
+    path: app/biz/src/main/java/com/ly/flight/chainsaas/booking/biz/constants/LogEnum.java
+    symbol: com.ly.flight.chainsaas.booking.biz.constants.LogEnum#QUERY_DISTRIBUTION_ORDER_DETAIL
+    line: 472
+    commit: ''
+    content_digest: ''
+- code: QUERY_DISTRIBUTION_ORDER_LIST
+  business_meaning: B端订单列表
+  source: CODE_DEFAULT
+  known_unknown: false
+  confidence: 0.95
+  source_refs:
+  - repository: ''
+    path: app/biz/src/main/java/com/ly/flight/chainsaas/booking/biz/constants/LogEnum.java
+    symbol: com.ly.flight.chainsaas.booking.biz.constants.LogEnum#QUERY_DISTRIBUTION_ORDER_LIST
+    line: 468
+    commit: ''
+    content_digest: ''
+- code: QUERY_REPORT_BY_UNIQUEKEY
+  business_meaning: 根据唯一标识查询报表订单
+  source: CODE_DEFAULT
+  known_unknown: false
+  confidence: 0.95
+  source_refs:
+  - repository: ''
+    path: app/biz/src/main/java/com/ly/flight/chainsaas/booking/biz/constants/LogEnum.java
+    symbol: com.ly.flight.chainsaas.booking.biz.constants.LogEnum#QUERY_REPORT_BY_UNIQUEKEY
+    line: 507
+    commit: ''
+    content_digest: ''
+- code: QUERY_UPLOAD_FILE
+  business_meaning: 文件查询
+  source: CODE_DEFAULT
+  known_unknown: false
+  confidence: 0.95
+  source_refs:
+  - repository: ''
+    path: app/biz/src/main/java/com/ly/flight/chainsaas/booking/biz/constants/LogEnum.java
+    symbol: com.ly.flight.chainsaas.booking.biz.constants.LogEnum#QUERY_UPLOAD_FILE
+    line: 82
+    commit: ''
+    content_digest: ''
+- code: QUERY_VCC_DETAIL
+  business_meaning: 查询VCC详情
+  source: CODE_DEFAULT
+  known_unknown: false
+  confidence: 0.95
+  source_refs:
+  - repository: ''
+    path: app/biz/src/main/java/com/ly/flight/chainsaas/booking/biz/constants/LogEnum.java
+    symbol: com.ly.flight.chainsaas.booking.biz.constants.LogEnum#QUERY_VCC_DETAIL
+    line: 390
+    commit: ''
+    content_digest: ''
+- code: QUERY_VCC_LIST
+  business_meaning: 查询VCC列表详情
+  source: CODE_DEFAULT
+  known_unknown: false
+  confidence: 0.95
+  source_refs:
+  - repository: ''
+    path: app/biz/src/main/java/com/ly/flight/chainsaas/booking/biz/constants/LogEnum.java
+    symbol: com.ly.flight.chainsaas.booking.biz.constants.LogEnum#QUERY_VCC_LIST
+    line: 394
+    commit: ''
+    content_digest: ''
+- code: Q_CALLBACK_TICKET
+  business_meaning: Q_CALLBACK_TICKET
+  source: CODE_DEFAULT
+  known_unknown: false
+  confidence: 0.95
+  source_refs:
+  - repository: ''
+    path: app/biz/src/main/java/com/ly/flight/chainsaas/booking/biz/constants/LogEnum.java
+    symbol: com.ly.flight.chainsaas.booking.biz.constants.LogEnum#Q_CALLBACK_TICKET
+    line: 305
+    commit: ''
+    content_digest: ''
+- code: Q_DISTRIBUTION_JOB_LISTENER
+  business_meaning: MQ
+  source: CODE_DEFAULT
+  known_unknown: false
+  confidence: 0.95
+  source_refs:
+  - repository: ''
+    path: app/biz/src/main/java/com/ly/flight/chainsaas/booking/biz/constants/LogEnum.java
+    symbol: com.ly.flight.chainsaas.booking.biz.constants.LogEnum#Q_DISTRIBUTION_JOB_LISTENER
+    line: 249
+    commit: ''
+    content_digest: ''
+- code: Q_REPORT_TICKET_JOB
+  business_meaning: JOB
+  source: CODE_DEFAULT
+  known_unknown: false
+  confidence: 0.95
+  source_refs:
+  - repository: ''
+    path: app/biz/src/main/java/com/ly/flight/chainsaas/booking/biz/constants/LogEnum.java
+    symbol: com.ly.flight.chainsaas.booking.biz.constants.LogEnum#Q_REPORT_TICKET_JOB
+    line: 196
+    commit: ''
+    content_digest: ''
+- code: Q_TICKET_JOB
+  business_meaning: JOB
+  source: CODE_DEFAULT
+  known_unknown: false
+  confidence: 0.95
+  source_refs:
+  - repository: ''
+    path: app/biz/src/main/java/com/ly/flight/chainsaas/booking/biz/constants/LogEnum.java
+    symbol: com.ly.flight.chainsaas.booking.biz.constants.LogEnum#Q_TICKET_JOB
+    line: 192
+    commit: ''
+    content_digest: ''
+- code: REAL_CANCEL
+  business_meaning: 手工真实取消
+  source: CODE_DEFAULT
+  known_unknown: false
+  confidence: 0.95
+  source_refs:
+  - repository: ''
+    path: app/biz/src/main/java/com/ly/flight/chainsaas/booking/biz/constants/LogEnum.java
+    symbol: com.ly.flight.chainsaas.booking.biz.constants.LogEnum#REAL_CANCEL
+    line: 27
+    commit: ''
+    content_digest: ''
+- code: REAL_CANCEL_JOB
+  business_meaning: JOB
+  source: CODE_DEFAULT
+  known_unknown: false
+  confidence: 0.95
+  source_refs:
+  - repository: ''
+    path: app/biz/src/main/java/com/ly/flight/chainsaas/booking/biz/constants/LogEnum.java
+    symbol: com.ly.flight.chainsaas.booking.biz.constants.LogEnum#REAL_CANCEL_JOB
+    line: 263
+    commit: ''
+    content_digest: ''
+- code: REFUND_JOB_LISTENER
+  business_meaning: MQ
+  source: CODE_DEFAULT
+  known_unknown: false
+  confidence: 0.95
+  source_refs:
+  - repository: ''
+    path: app/biz/src/main/java/com/ly/flight/chainsaas/booking/biz/constants/LogEnum.java
+    symbol: com.ly.flight.chainsaas.booking.biz.constants.LogEnum#REFUND_JOB_LISTENER
+    line: 239
+    commit: ''
+    content_digest: ''
+- code: REPORT_DATA_PROCESS
+  business_meaning: 报表数据处理
+  source: CODE_DEFAULT
+  known_unknown: false
+  confidence: 0.95
+  source_refs:
+  - repository: ''
+    path: app/biz/src/main/java/com/ly/flight/chainsaas/booking/biz/constants/LogEnum.java
+    symbol: com.ly.flight.chainsaas.booking.biz.constants.LogEnum#REPORT_DATA_PROCESS
+    line: 69
+    commit: ''
+    content_digest: ''
+- code: REPORT_DISTRIBUTION_JOB_LISTENER
+  business_meaning: REPORT_DISTRIBUTION_JOB_LISTENER
+  source: CODE_DEFAULT
+  known_unknown: false
+  confidence: 0.5
+  source_refs:
+  - repository: ''
+    path: app/biz/src/main/java/com/ly/flight/chainsaas/booking/biz/constants/LogEnum.java
+    symbol: com.ly.flight.chainsaas.booking.biz.constants.LogEnum#REPORT_DISTRIBUTION_JOB_LISTENER
+    line: 251
+    commit: ''
+    content_digest: ''
+- code: REPORT_QUERY_ORDER_LIST
+  business_meaning: 报表订单列表查询
+  source: CODE_DEFAULT
+  known_unknown: false
+  confidence: 0.95
+  source_refs:
+  - repository: ''
+    path: app/biz/src/main/java/com/ly/flight/chainsaas/booking/biz/constants/LogEnum.java
+    symbol: com.ly.flight.chainsaas.booking.biz.constants.LogEnum#REPORT_QUERY_ORDER_LIST
+    line: 464
+    commit: ''
+    content_digest: ''
+- code: REPORT_TICKET_CALLBACK
+  business_meaning: 报表出票回填服务日志
+  source: CODE_DEFAULT
+  known_unknown: false
+  confidence: 0.95
+  source_refs:
+  - repository: ''
+    path: app/biz/src/main/java/com/ly/flight/chainsaas/booking/biz/constants/LogEnum.java
+    symbol: com.ly.flight.chainsaas.booking.biz.constants.LogEnum#REPORT_TICKET_CALLBACK
+    line: 120
+    commit: ''
+    content_digest: ''
+- code: RESOURCES_PNR
+  business_meaning: 提取PNR
+  source: CODE_DEFAULT
+  known_unknown: false
+  confidence: 0.95
+  source_refs:
+  - repository: ''
+    path: app/biz/src/main/java/com/ly/flight/chainsaas/booking/biz/constants/LogEnum.java
+    symbol: com.ly.flight.chainsaas.booking.biz.constants.LogEnum#RESOURCES_PNR
+    line: 431
+    commit: ''
+    content_digest: ''
+- code: RPAID_JOB_LISTENER
+  business_meaning: MQ
+  source: CODE_DEFAULT
+  known_unknown: false
+  confidence: 0.95
+  source_refs:
+  - repository: ''
+    path: app/biz/src/main/java/com/ly/flight/chainsaas/booking/biz/constants/LogEnum.java
+    symbol: com.ly.flight.chainsaas.booking.biz.constants.LogEnum#RPAID_JOB_LISTENER
+    line: 201
+    commit: ''
+    content_digest: ''
+- code: SEARCH_BOOK
+  business_meaning: 交易页面搜索下单
+  source: CODE_DEFAULT
+  known_unknown: false
+  confidence: 0.95
+  source_refs:
+  - repository: ''
+    path: app/biz/src/main/java/com/ly/flight/chainsaas/booking/biz/constants/LogEnum.java
+    symbol: com.ly.flight.chainsaas.booking.biz.constants.LogEnum#SEARCH_BOOK
+    line: 43
+    commit: ''
+    content_digest: ''
+- code: SYNC_ORDER
+  business_meaning: C端订单同步
+  source: CODE_DEFAULT
+  known_unknown: false
+  confidence: 0.95
+  source_refs:
+  - repository: ''
+    path: app/biz/src/main/java/com/ly/flight/chainsaas/booking/biz/constants/LogEnum.java
+    symbol: com.ly.flight.chainsaas.booking.biz.constants.LogEnum#SYNC_ORDER
+    line: 476
+    commit: ''
+    content_digest: ''
+- code: TCPL_API_BOOK
+  business_meaning: tcpl生单
+  source: CODE_DEFAULT
+  known_unknown: false
+  confidence: 0.95
+  source_refs:
+  - repository: ''
+    path: app/biz/src/main/java/com/ly/flight/chainsaas/booking/biz/constants/LogEnum.java
+    symbol: com.ly.flight.chainsaas.booking.biz.constants.LogEnum#TCPL_API_BOOK
+    line: 514
+    commit: ''
+    content_digest: ''
+- code: TCPL_API_BOOK_PROCESSING
+  business_meaning: tcpl占编结果查询
+  source: CODE_DEFAULT
+  known_unknown: false
+  confidence: 0.95
+  source_refs:
+  - repository: ''
+    path: app/biz/src/main/java/com/ly/flight/chainsaas/booking/biz/constants/LogEnum.java
+    symbol: com.ly.flight.chainsaas.booking.biz.constants.LogEnum#TCPL_API_BOOK_PROCESSING
+    line: 510
+    commit: ''
+    content_digest: ''
+- code: TCPL_API_BOOK_VALIDATE
+  business_meaning: tcpl强校验
+  source: CODE_DEFAULT
+  known_unknown: false
+  confidence: 0.95
+  source_refs:
+  - repository: ''
+    path: app/biz/src/main/java/com/ly/flight/chainsaas/booking/biz/constants/LogEnum.java
+    symbol: com.ly.flight.chainsaas.booking.biz.constants.LogEnum#TCPL_API_BOOK_VALIDATE
+    line: 512
+    commit: ''
+    content_digest: ''
+- code: TCPL_API_FLIGHT_CHANGE
+  business_meaning: tcpl航变详情
+  source: CODE_DEFAULT
+  known_unknown: false
+  confidence: 0.95
+  source_refs:
+  - repository: ''
+    path: app/biz/src/main/java/com/ly/flight/chainsaas/booking/biz/constants/LogEnum.java
+    symbol: com.ly.flight.chainsaas.booking.biz.constants.LogEnum#TCPL_API_FLIGHT_CHANGE
+    line: 518
+    commit: ''
+    content_digest: ''
+- code: TCPL_API_TICKETING_OR_CANCEL
+  business_meaning: tcpl出票OR取消
+  source: CODE_DEFAULT
+  known_unknown: false
+  confidence: 0.95
+  source_refs:
+  - repository: ''
+    path: app/biz/src/main/java/com/ly/flight/chainsaas/booking/biz/constants/LogEnum.java
+    symbol: com.ly.flight.chainsaas.booking.biz.constants.LogEnum#TCPL_API_TICKETING_OR_CANCEL
+    line: 516
+    commit: ''
+    content_digest: ''
+- code: TCPL_CANCEL
+  business_meaning: 取消X编服务日志
+  source: CODE_DEFAULT
+  known_unknown: false
+  confidence: 0.95
+  source_refs:
+  - repository: ''
+    path: app/biz/src/main/java/com/ly/flight/chainsaas/booking/biz/constants/LogEnum.java
+    symbol: com.ly.flight.chainsaas.booking.biz.constants.LogEnum#TCPL_CANCEL
+    line: 73
+    commit: ''
+    content_digest: ''
+- code: THIRD_QUEYR_ORDER_DETAIL
+  business_meaning: 三方订单号查询
+  source: CODE_DEFAULT
+  known_unknown: false
+  confidence: 0.95
+  source_refs:
+  - repository: ''
+    path: app/biz/src/main/java/com/ly/flight/chainsaas/booking/biz/constants/LogEnum.java
+    symbol: com.ly.flight.chainsaas.booking.biz.constants.LogEnum#THIRD_QUEYR_ORDER_DETAIL
+    line: 380
+    commit: ''
+    content_digest: ''
+- code: TICKETED
+  business_meaning: TICKETED MQ
+  source: CODE_DEFAULT
+  known_unknown: false
+  confidence: 0.95
+  source_refs:
+  - repository: ''
+    path: app/biz/src/main/java/com/ly/flight/chainsaas/booking/biz/constants/LogEnum.java
+    symbol: com.ly.flight.chainsaas.booking.biz.constants.LogEnum#TICKETED
+    line: 349
+    commit: ''
+    content_digest: ''
+- code: TICKETING
+  business_meaning: 出票服务日志
+  source: CODE_DEFAULT
+  known_unknown: false
+  confidence: 0.95
+  source_refs:
+  - repository: ''
+    path: app/biz/src/main/java/com/ly/flight/chainsaas/booking/biz/constants/LogEnum.java
+    symbol: com.ly.flight.chainsaas.booking.biz.constants.LogEnum#TICKETING
+    line: 64
+    commit: ''
+    content_digest: ''
+- code: TICKETING_FAIL_JOB
+  business_meaning: JOB
+  source: CODE_DEFAULT
+  known_unknown: false
+  confidence: 0.95
+  source_refs:
+  - repository: ''
+    path: app/biz/src/main/java/com/ly/flight/chainsaas/booking/biz/constants/LogEnum.java
+    symbol: com.ly.flight.chainsaas.booking.biz.constants.LogEnum#TICKETING_FAIL_JOB
+    line: 290
+    commit: ''
+    content_digest: ''
+- code: TICKETING_SYC_JOB
+  business_meaning: JOB
+  source: CODE_DEFAULT
+  known_unknown: false
+  confidence: 0.95
+  source_refs:
+  - repository: ''
+    path: app/biz/src/main/java/com/ly/flight/chainsaas/booking/biz/constants/LogEnum.java
+    symbol: com.ly.flight.chainsaas.booking.biz.constants.LogEnum#TICKETING_SYC_JOB
+    line: 285
+    commit: ''
+    content_digest: ''
+- code: TICKET_CALLBACK
+  business_meaning: 出票回填服务日志
+  source: CODE_DEFAULT
+  known_unknown: false
+  confidence: 0.95
+  source_refs:
+  - repository: ''
+    path: app/biz/src/main/java/com/ly/flight/chainsaas/booking/biz/constants/LogEnum.java
+    symbol: com.ly.flight.chainsaas.booking.biz.constants.LogEnum#TICKET_CALLBACK
+    line: 115
+    commit: ''
+    content_digest: ''
+- code: TICKET_CALLBAK_JOB
+  business_meaning: JOB
+  source: CODE_DEFAULT
+  known_unknown: false
+  confidence: 0.95
+  source_refs:
+  - repository: ''
+    path: app/biz/src/main/java/com/ly/flight/chainsaas/booking/biz/constants/LogEnum.java
+    symbol: com.ly.flight.chainsaas.booking.biz.constants.LogEnum#TICKET_CALLBAK_JOB
+    line: 185
+    commit: ''
+    content_digest: ''
+- code: TICKET_NOTIFY
+  business_meaning: 出票通知MQ
+  source: CODE_DEFAULT
+  known_unknown: false
+  confidence: 0.95
+  source_refs:
+  - repository: ''
+    path: app/biz/src/main/java/com/ly/flight/chainsaas/booking/biz/constants/LogEnum.java
+    symbol: com.ly.flight.chainsaas.booking.biz.constants.LogEnum#TICKET_NOTIFY
+    line: 359
+    commit: ''
+    content_digest: ''
+- code: TICKET_UPDATE
+  business_meaning: 票号更新服务
+  source: CODE_DEFAULT
+  known_unknown: false
+  confidence: 0.95
+  source_refs:
+  - repository: ''
+    path: app/biz/src/main/java/com/ly/flight/chainsaas/booking/biz/constants/LogEnum.java
+    symbol: com.ly.flight.chainsaas.booking.biz.constants.LogEnum#TICKET_UPDATE
+    line: 125
+    commit: ''
+    content_digest: ''
+- code: TOOL_DB_REPAIR_LISTENER
+  business_meaning: TOOL_DB_REPAIR_LISTENER
+  source: CODE_DEFAULT
+  known_unknown: false
+  confidence: 0.5
+  source_refs:
+  - repository: ''
+    path: app/biz/src/main/java/com/ly/flight/chainsaas/booking/biz/constants/LogEnum.java
+    symbol: com.ly.flight.chainsaas.booking.biz.constants.LogEnum#TOOL_DB_REPAIR_LISTENER
+    line: 234
+    commit: ''
+    content_digest: ''
+- code: TRADE_ORDER
+  business_meaning: C端交易
+  source: CODE_DEFAULT
+  known_unknown: false
+  confidence: 0.95
+  source_refs:
+  - repository: ''
+    path: app/biz/src/main/java/com/ly/flight/chainsaas/booking/biz/constants/LogEnum.java
+    symbol: com.ly.flight.chainsaas.booking.biz.constants.LogEnum#TRADE_ORDER
+    line: 155
+    commit: ''
+    content_digest: ''
+- code: TRADE_ORDER_ISSUETICKET
+  business_meaning: C端出票
+  source: CODE_DEFAULT
+  known_unknown: false
+  confidence: 0.95
+  source_refs:
+  - repository: ''
+    path: app/biz/src/main/java/com/ly/flight/chainsaas/booking/biz/constants/LogEnum.java
+    symbol: com.ly.flight.chainsaas.booking.biz.constants.LogEnum#TRADE_ORDER_ISSUETICKET
+    line: 211
+    commit: ''
+    content_digest: ''
+- code: TRADE_ORDER_SYNC_LISTENER
+  business_meaning: MQ
+  source: CODE_DEFAULT
+  known_unknown: false
+  confidence: 0.95
+  source_refs:
+  - repository: ''
+    path: app/biz/src/main/java/com/ly/flight/chainsaas/booking/biz/constants/LogEnum.java
+    symbol: com.ly.flight.chainsaas.booking.biz.constants.LogEnum#TRADE_ORDER_SYNC_LISTENER
+    line: 206
+    commit: ''
+    content_digest: ''
+- code: UN_LOCK_ORDER
+  business_meaning: 锁单服务
+  source: CODE_DEFAULT
+  known_unknown: false
+  confidence: 0.95
+  source_refs:
+  - repository: ''
+    path: app/biz/src/main/java/com/ly/flight/chainsaas/booking/biz/constants/LogEnum.java
+    symbol: com.ly.flight.chainsaas.booking.biz.constants.LogEnum#UN_LOCK_ORDER
+    line: 180
+    commit: ''
+    content_digest: ''
+- code: UPDATE_REPORT_ORDER
+  business_meaning: 更新报表订单
+  source: CODE_DEFAULT
+  known_unknown: false
+  confidence: 0.95
+  source_refs:
+  - repository: ''
+    path: app/biz/src/main/java/com/ly/flight/chainsaas/booking/biz/constants/LogEnum.java
+    symbol: com.ly.flight.chainsaas.booking.biz.constants.LogEnum#UPDATE_REPORT_ORDER
+    line: 495
+    commit: ''
+    content_digest: ''
+- code: UPDATE_VCC
+  business_meaning: 更新
+  source: CODE_DEFAULT
+  known_unknown: false
+  confidence: 0.95
+  source_refs:
+  - repository: ''
+    path: app/biz/src/main/java/com/ly/flight/chainsaas/booking/biz/constants/LogEnum.java
+    symbol: com.ly.flight.chainsaas.booking.biz.constants.LogEnum#UPDATE_VCC
+    line: 408
+    commit: ''
+    content_digest: ''
+- code: UPLOAD_FILE
+  business_meaning: 文件上传
+  source: CODE_DEFAULT
+  known_unknown: false
+  confidence: 0.95
+  source_refs:
+  - repository: ''
+    path: app/biz/src/main/java/com/ly/flight/chainsaas/booking/biz/constants/LogEnum.java
+    symbol: com.ly.flight.chainsaas.booking.biz.constants.LogEnum#UPLOAD_FILE
+    line: 90
+    commit: ''
+    content_digest: ''
+- code: USER_COUPON
+  business_meaning: USER_COUPON
+  source: CODE_DEFAULT
+  known_unknown: false
+  confidence: 0.95
+  source_refs:
+  - repository: ''
+    path: app/biz/src/main/java/com/ly/flight/chainsaas/booking/biz/constants/LogEnum.java
+    symbol: com.ly.flight.chainsaas.booking.biz.constants.LogEnum#USER_COUPON
+    line: 275
+    commit: ''
+    content_digest: ''
+- code: VALIDATE
+  business_meaning: 验舱验价服务日志
+  source: CODE_DEFAULT
+  known_unknown: false
+  confidence: 0.95
+  source_refs:
+  - repository: ''
+    path: app/biz/src/main/java/com/ly/flight/chainsaas/booking/biz/constants/LogEnum.java
+    symbol: com.ly.flight.chainsaas.booking.biz.constants.LogEnum#VALIDATE
+    line: 17
+    commit: ''
+    content_digest: ''
+- code: VALIDATE_CACHE
+  business_meaning: 验舱验价缓存
+  source: CODE_DEFAULT
+  known_unknown: false
+  confidence: 0.95
+  source_refs:
+  - repository: ''
+    path: app/biz/src/main/java/com/ly/flight/chainsaas/booking/biz/constants/LogEnum.java
+    symbol: com.ly.flight.chainsaas.booking.biz.constants.LogEnum#VALIDATE_CACHE
+    line: 23
+    commit: ''
+    content_digest: ''
+- code: VCC_CLOSE_LISTENER
+  business_meaning: MQ
+  source: CODE_DEFAULT
+  known_unknown: false
+  confidence: 0.95
+  source_refs:
+  - repository: ''
+    path: app/biz/src/main/java/com/ly/flight/chainsaas/booking/biz/constants/LogEnum.java
+    symbol: com.ly.flight.chainsaas.booking.biz.constants.LogEnum#VCC_CLOSE_LISTENER
+    line: 221
+    commit: ''
+    content_digest: ''
+- code: VCC_DATA_STATE
+  business_meaning: VCC_DATA_STATE
+  source: CODE_DEFAULT
+  known_unknown: false
+  confidence: 0.95
+  source_refs:
+  - repository: ''
+    path: app/biz/src/main/java/com/ly/flight/chainsaas/booking/biz/constants/LogEnum.java
+    symbol: com.ly.flight.chainsaas.booking.biz.constants.LogEnum#VCC_DATA_STATE
+    line: 271
+    commit: ''
+    content_digest: ''
+- code: VCC_RECORD_ADD
+  business_meaning: vcc充值记录新增
+  source: CODE_DEFAULT
+  known_unknown: false
+  confidence: 0.95
+  source_refs:
+  - repository: ''
+    path: app/biz/src/main/java/com/ly/flight/chainsaas/booking/biz/constants/LogEnum.java
+    symbol: com.ly.flight.chainsaas.booking.biz.constants.LogEnum#VCC_RECORD_ADD
+    line: 489
+    commit: ''
+    content_digest: ''
+- code: VCC_RECORD_LIST
+  business_meaning: vcc充值记录列表查询
+  source: CODE_DEFAULT
+  known_unknown: false
+  confidence: 0.95
+  source_refs:
+  - repository: ''
+    path: app/biz/src/main/java/com/ly/flight/chainsaas/booking/biz/constants/LogEnum.java
+    symbol: com.ly.flight.chainsaas.booking.biz.constants.LogEnum#VCC_RECORD_LIST
+    line: 485
+    commit: ''
+    content_digest: ''
+- code: VCC_SWIPE_LISTENER
+  business_meaning: MQ
+  source: CODE_DEFAULT
+  known_unknown: false
+  confidence: 0.95
+  source_refs:
+  - repository: ''
+    path: app/biz/src/main/java/com/ly/flight/chainsaas/booking/biz/constants/LogEnum.java
+    symbol: com.ly.flight.chainsaas.booking.biz.constants.LogEnum#VCC_SWIPE_LISTENER
+    line: 226
+    commit: ''
+    content_digest: ''
+- code: VERIFY_CALCULATE
+  business_meaning: 价格计算
+  source: CODE_DEFAULT
+  known_unknown: false
+  confidence: 0.95
+  source_refs:
+  - repository: ''
+    path: app/biz/src/main/java/com/ly/flight/chainsaas/booking/biz/constants/LogEnum.java
+    symbol: com.ly.flight.chainsaas.booking.biz.constants.LogEnum#VERIFY_CALCULATE
+    line: 460
+    commit: ''
+    content_digest: ''
+- code: VERIFY_ORDER_PNR
+  business_meaning: PNR提取
+  source: CODE_DEFAULT
+  known_unknown: false
+  confidence: 0.95
+  source_refs:
+  - repository: ''
+    path: app/biz/src/main/java/com/ly/flight/chainsaas/booking/biz/constants/LogEnum.java
+    symbol: com.ly.flight.chainsaas.booking.biz.constants.LogEnum#VERIFY_ORDER_PNR
+    line: 110
+    commit: ''
+    content_digest: ''
+- code: VERIFY_PNR
+  business_meaning: 提取PNR
+  source: CODE_DEFAULT
+  known_unknown: false
+  confidence: 0.95
+  source_refs:
+  - repository: ''
+    path: app/biz/src/main/java/com/ly/flight/chainsaas/booking/biz/constants/LogEnum.java
+    symbol: com.ly.flight.chainsaas.booking.biz.constants.LogEnum#VERIFY_PNR
+    line: 436
+    commit: ''
+    content_digest: ''
+- code: VERIFY_PNR_JOB
+  business_meaning: 提取PNR
+  source: CODE_DEFAULT
+  known_unknown: false
+  confidence: 0.95
+  source_refs:
+  - repository: ''
+    path: app/biz/src/main/java/com/ly/flight/chainsaas/booking/biz/constants/LogEnum.java
+    symbol: com.ly.flight.chainsaas.booking.biz.constants.LogEnum#VERIFY_PNR_JOB
+    line: 417
+    commit: ''
+    content_digest: ''
+- code: VERIFY_PNR_MQ
+  business_meaning: 提取通知MQ
+  source: CODE_DEFAULT
+  known_unknown: false
+  confidence: 0.95
+  source_refs:
+  - repository: ''
+    path: app/biz/src/main/java/com/ly/flight/chainsaas/booking/biz/constants/LogEnum.java
+    symbol: com.ly.flight.chainsaas.booking.biz.constants.LogEnum#VERIFY_PNR_MQ
+    line: 364
+    commit: ''
+    content_digest: ''
+- code: VERIFY_PRICE
+  business_meaning: 验价格
+  source: CODE_DEFAULT
+  known_unknown: false
+  confidence: 0.95
+  source_refs:
+  - repository: ''
+    path: app/biz/src/main/java/com/ly/flight/chainsaas/booking/biz/constants/LogEnum.java
+    symbol: com.ly.flight.chainsaas.booking.biz.constants.LogEnum#VERIFY_PRICE
+    line: 451
+    commit: ''
+    content_digest: ''
+- code: VERIFY_PRICE_CABIN
+  business_meaning: 验价格验舱
+  source: CODE_DEFAULT
+  known_unknown: false
+  confidence: 0.95
+  source_refs:
+  - repository: ''
+    path: app/biz/src/main/java/com/ly/flight/chainsaas/booking/biz/constants/LogEnum.java
+    symbol: com.ly.flight.chainsaas.booking.biz.constants.LogEnum#VERIFY_PRICE_CABIN
+    line: 456
+    commit: ''
+    content_digest: ''
+- code: VIRTUAL_PAY_NOTIFY
+  business_meaning: VIRTUAL_PAY_NOTIFY
+  source: CODE_DEFAULT
+  known_unknown: false
+  confidence: 0.95
+  source_refs:
+  - repository: ''
+    path: app/biz/src/main/java/com/ly/flight/chainsaas/booking/biz/constants/LogEnum.java
+    symbol: com.ly.flight.chainsaas.booking.biz.constants.LogEnum#VIRTUAL_PAY_NOTIFY
+    line: 338
+    commit: ''
+    content_digest: ''
+- code: WALLET_CALLBACK_MQ
+  business_meaning: 钱包回调MQ
+  source: CODE_DEFAULT
+  known_unknown: false
+  confidence: 0.95
+  source_refs:
+  - repository: ''
+    path: app/biz/src/main/java/com/ly/flight/chainsaas/booking/biz/constants/LogEnum.java
+    symbol: com.ly.flight.chainsaas.booking.biz.constants.LogEnum#WALLET_CALLBACK_MQ
+    line: 370
+    commit: ''
+    content_digest: ''
+- code: WALLET_REVERSE_NOTIFY
+  business_meaning: WALLET_REVERSE_NOTIFY
+  source: CODE_DEFAULT
+  known_unknown: false
+  confidence: 0.95
+  source_refs:
+  - repository: ''
+    path: app/biz/src/main/java/com/ly/flight/chainsaas/booking/biz/constants/LogEnum.java
+    symbol: com.ly.flight.chainsaas.booking.biz.constants.LogEnum#WALLET_REVERSE_NOTIFY
+    line: 344
+    commit: ''
+    content_digest: ''
+suggested_meaning: 枚举名称和值默认采用源码注释；缺少注释时回退代码标识，可再人工修订。
+code_meaning: 根据agentId查询代理商关系（AGENT_RELATION）；ARC_BSP_DATA_LISTENER（ARC_BSP_DATA_LISTENER）；ARC_BSP_REPORT_JOB（ARC_BSP_REPORT_JOB）；ARC_BSP_REPORT_TICKET（ARC_BSP_REPORT_TICKET）；ARC_BSP_REPORT_TICKET_DONE（ARC_BSP_REPORT_TICKET_DONE）；异步占编回调mq（ASYNC_BOOK_CALLBACK）；提取PNR（BATCH_QUERY_TICKET_INFO）；预定占编服务日志（BOOK）；JOB（BOOK_SYC_JOB）；预定占编超时取消（BOOK_TIMEOUT_CANCEL）；取消X编服务日志（CANCEL）；JOB（CANCEL_JOB）；MQ（CANCEL_JOB_LISTENER）；取消订单列表（CANCEL_PNR_LIST）；检查（CHECK_VCC）；注销（CLOSE_VCC）；确认退改单类型（CONFIRM_ORDER_TYPE）；生卡（CREATE_VCC）；CUSTOMER_API_BOOKING（CUSTOMER_API_BOOKING）；CUSTOMER_API_CONFIRM_PAYMENT（CUSTOMER_API_CONFIRM_PAYMENT）；CUSTOMER_API_NOTIFICATION（CUSTOMER_API_NOTIFICATION）；CUSTOMER_API_PAYMENT（CUSTOMER_API_PAYMENT）；CUSTOMER_API_VERIFY（CUSTOMER_API_VERIFY）；CUSTOMER_API_VERIFY_CACHE（CUSTOMER_API_VERIFY_CACHE）；下单服务（DISTRIBUTION_BOOK）；分销回调出票（DISTRIBUTION_CALLBACK_TICKET）；分销报表回调出票（DISTRIBUTION_REPORT_CALLBACK_TICKET）；DMS_SENDER（DMS_SENDER）；ES
+  全量对比 MQ（ES_COMPARE_ALL_LISTENER）；执行CMD（EXECUTE）；EXTERNAL_API_BOOKING（EXTERNAL_API_BOOKING）；EXTERNAL_API_DISTRIBUTION_ISSUE_TICKET（EXTERNAL_API_DISTRIBUTION_ISSUE_TICKET）；EXTERNAL_API_DISTRIBUTION_QUERY_ORDER_DETAIL（EXTERNAL_API_DISTRIBUTION_QUERY_ORDER_DETAIL）；EXTERNAL_API_NOTIFICATION（EXTERNAL_API_NOTIFICATION）；EXTERNAL_API_VERIFY（EXTERNAL_API_VERIFY）；FORBID_POOL_MQ（FORBID_POOL_MQ）；HONGHU_API_BOOKING（HONGHU_API_BOOKING）；HONGHU_API_CANCEL（HONGHU_API_CANCEL）；HONGHU_API_PAYMENT（HONGHU_API_PAYMENT）；HONGHU_API_TICKET（HONGHU_API_TICKET）；HONGHU_API_VERIFY（HONGHU_API_VERIFY）；新增报表订单（INSERT_REPORT_ORDER）；ITEM_DATA_FIX（ITEM_DATA_FIX）；JOB（JOB）；锁单服务（LOCK_ORDER）；LOG（LOG）；税费映射（MAPPING_TAX）；校验订单活动（MARKETING_ORDER_LIST）；订单后置补偿任务（ORDER_COMPENSATE_TASK）；订单详情服务日志（ORDER_DETAIL）；航变日志（ORDER_FLIGHT_CHANGE）；订单列表服务日志（ORDER_LIST）；MQ（ORDER_PAYMENT_JOB_LISTENER）；PNR重置（ORDER_PNR_RESET）；订单驳回（ORDER_REBUT）；退款（ORDER_REFUND）；ORDER_STATE_CHANGE_NOTIFY（ORDER_STATE_CHANGE_NOTIFY）；执行CMD（PAYMENT）；支付前校验（PAYMENT_VALIDATE）；支付回调（PAY_CALLBACK）；确认支付（PAY_CONFIRM_PAYMENT）；PAY_NOTIFY（PAY_NOTIFY）；支付订单详情（PAY_ORDERDETAIL）；支付（PAY_PAYMENT）；MQ（PAY_REFUND_DONE_LISTENER）；风控（PAY_RISK）；支付前校验（PAY_VALIDATE）；B端订单详情（QUERY_DISTRIBUTION_ORDER_DETAIL）；B端订单列表（QUERY_DISTRIBUTION_ORDER_LIST）；根据唯一标识查询报表订单（QUERY_REPORT_BY_UNIQUEKEY）；文件查询（QUERY_UPLOAD_FILE）；查询VCC详情（QUERY_VCC_DETAIL）；查询VCC列表详情（QUERY_VCC_LIST）；Q_CALLBACK_TICKET（Q_CALLBACK_TICKET）；MQ（Q_DISTRIBUTION_JOB_LISTENER）；JOB（Q_REPORT_TICKET_JOB）；JOB（Q_TICKET_JOB）；手工真实取消（REAL_CANCEL）；JOB（REAL_CANCEL_JOB）；MQ（REFUND_JOB_LISTENER）；报表数据处理（REPORT_DATA_PROCESS）；REPORT_DISTRIBUTION_JOB_LISTENER（REPORT_DISTRIBUTION_JOB_LISTENER）；报表订单列表查询（REPORT_QUERY_ORDER_LIST）；报表出票回填服务日志（REPORT_TICKET_CALLBACK）；提取PNR（RESOURCES_PNR）；MQ（RPAID_JOB_LISTENER）；交易页面搜索下单（SEARCH_BOOK）；C端订单同步（SYNC_ORDER）；tcpl生单（TCPL_API_BOOK）；tcpl占编结果查询（TCPL_API_BOOK_PROCESSING）；tcpl强校验（TCPL_API_BOOK_VALIDATE）；tcpl航变详情（TCPL_API_FLIGHT_CHANGE）；tcpl出票OR取消（TCPL_API_TICKETING_OR_CANCEL）；取消X编服务日志（TCPL_CANCEL）；三方订单号查询（THIRD_QUEYR_ORDER_DETAIL）；TICKETED
+  MQ（TICKETED）；出票服务日志（TICKETING）；JOB（TICKETING_FAIL_JOB）；JOB（TICKETING_SYC_JOB）；出票回填服务日志（TICKET_CALLBACK）；JOB（TICKET_CALLBAK_JOB）；出票通知MQ（TICKET_NOTIFY）；票号更新服务（TICKET_UPDATE）；TOOL_DB_REPAIR_LISTENER（TOOL_DB_REPAIR_LISTENER）；C端交易（TRADE_ORDER）；C端出票（TRADE_ORDER_ISSUETICKET）；MQ（TRADE_ORDER_SYNC_LISTENER）；锁单服务（UN_LOCK_ORDER）；更新报表订单（UPDATE_REPORT_ORDER）；更新（UPDATE_VCC）；文件上传（UPLOAD_FILE）；USER_COUPON（USER_COUPON）；验舱验价服务日志（VALIDATE）；验舱验价缓存（VALIDATE_CACHE）；MQ（VCC_CLOSE_LISTENER）；VCC_DATA_STATE（VCC_DATA_STATE）；vcc充值记录新增（VCC_RECORD_ADD）；vcc充值记录列表查询（VCC_RECORD_LIST）；MQ（VCC_SWIPE_LISTENER）；价格计算（VERIFY_CALCULATE）；PNR提取（VERIFY_ORDER_PNR）；提取PNR（VERIFY_PNR）；提取PNR（VERIFY_PNR_JOB）；提取通知MQ（VERIFY_PNR_MQ）；验价格（VERIFY_PRICE）；验价格验舱（VERIFY_PRICE_CABIN）；VIRTUAL_PAY_NOTIFY（VIRTUAL_PAY_NOTIFY）；钱包回调MQ（WALLET_CALLBACK_MQ）；WALLET_REVERSE_NOTIFY（WALLET_REVERSE_NOTIFY）
+unresolved_codes: []
+business_meaning: ''
+status: CODE_VERIFIED
+merged_into_candidate_id: ''
+source_refs:
+- repository: ''
+  path: app/biz/src/main/java/com/ly/flight/chainsaas/booking/biz/constants/LogEnum.java
+  symbol: com.ly.flight.chainsaas.booking.biz.constants.LogEnum
+  line: 11
+  commit: 004c50d90d152f1ef4892679f8b1b322cc7a7405
+  content_digest: f15a4a91dfd103749f2b88be2cd2cf7f6526261d0053da9e355101a9f23139e0
+- repository: ''
+  path: app/biz/src/main/java/com/ly/flight/chainsaas/booking/biz/constants/LogEnum.java
+  symbol: com.ly.flight.chainsaas.booking.biz.constants.LogEnum#AGENT_RELATION
+  line: 19
+  commit: ''
+  content_digest: ''
+- repository: ''
+  path: app/biz/src/main/java/com/ly/flight/chainsaas/booking/biz/constants/LogEnum.java
+  symbol: com.ly.flight.chainsaas.booking.biz.constants.LogEnum#ARC_BSP_DATA_LISTENER
+  line: 255
+  commit: ''
+  content_digest: ''
+- repository: ''
+  path: app/biz/src/main/java/com/ly/flight/chainsaas/booking/biz/constants/LogEnum.java
+  symbol: com.ly.flight.chainsaas.booking.biz.constants.LogEnum#ARC_BSP_REPORT_JOB
+  line: 187
+  commit: ''
+  content_digest: ''
+- repository: ''
+  path: app/biz/src/main/java/com/ly/flight/chainsaas/booking/biz/constants/LogEnum.java
+  symbol: com.ly.flight.chainsaas.booking.biz.constants.LogEnum#ARC_BSP_REPORT_TICKET
+  line: 309
+  commit: ''
+  content_digest: ''
+- repository: ''
+  path: app/biz/src/main/java/com/ly/flight/chainsaas/booking/biz/constants/LogEnum.java
+  symbol: com.ly.flight.chainsaas.booking.biz.constants.LogEnum#ARC_BSP_REPORT_TICKET_DONE
+  line: 313
+  commit: ''
+  content_digest: ''
+- repository: ''
+  path: app/biz/src/main/java/com/ly/flight/chainsaas/booking/biz/constants/LogEnum.java
+  symbol: com.ly.flight.chainsaas.booking.biz.constants.LogEnum#ASYNC_BOOK_CALLBACK
+  line: 421
+  commit: ''
+  content_digest: ''
+- repository: ''
+  path: app/biz/src/main/java/com/ly/flight/chainsaas/booking/biz/constants/LogEnum.java
+  symbol: com.ly.flight.chainsaas.booking.biz.constants.LogEnum#BATCH_QUERY_TICKET_INFO
+  line: 426
+  commit: ''
+  content_digest: ''
+- repository: ''
+  path: app/biz/src/main/java/com/ly/flight/chainsaas/booking/biz/constants/LogEnum.java
+  symbol: com.ly.flight.chainsaas.booking.biz.constants.LogEnum#BOOK
+  line: 39
+  commit: ''
+  content_digest: ''
+- repository: ''
+  path: app/biz/src/main/java/com/ly/flight/chainsaas/booking/biz/constants/LogEnum.java
+  symbol: com.ly.flight.chainsaas.booking.biz.constants.LogEnum#BOOK_SYC_JOB
+  line: 280
+  commit: ''
+  content_digest: ''
+- repository: ''
+  path: app/biz/src/main/java/com/ly/flight/chainsaas/booking/biz/constants/LogEnum.java
+  symbol: com.ly.flight.chainsaas.booking.biz.constants.LogEnum#BOOK_TIMEOUT_CANCEL
+  line: 51
+  commit: ''
+  content_digest: ''
+- repository: ''
+  path: app/biz/src/main/java/com/ly/flight/chainsaas/booking/biz/constants/LogEnum.java
+  symbol: com.ly.flight.chainsaas.booking.biz.constants.LogEnum#CANCEL
+  line: 78
+  commit: ''
+  content_digest: ''
+affected_target_ids:
+- facade:com.ly.flight.chainsaas.booking.facade.JobFacade#executeJob
+- facade:com.ly.flight.chainsaas.booking.facade.PayCallBackFacade#payCallBack
+- facade:com.ly.flight.chainsaas.booking.facade.PayCallBackFacade#payOrderDetail
+- facade:com.ly.flight.chainsaas.booking.facade.PayCallBackFacade#payOrderRiskDetail
+- facade:com.ly.flight.chainsaas.booking.facade.PayCallBackFacade#payValidate
+evidence_digest: 35dff016ec6acf1251d2d7667f215848e342265fd8e5cf357d325e631c54f1ab
+discovered_at: '2026-08-27T15:21:11.347417Z'
+updated_at: '2026-08-27T20:27:20.151555Z'

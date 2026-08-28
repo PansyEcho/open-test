@@ -160,3 +160,31 @@ edges:
   kind: transitions
   condition: ''
   source_refs: []
+- edge_id: edge:680c2fa4e6cf46ad
+  system_id: ifightchainsaas.java.refund.core
+  source_node_id: entry:com.ly.flight.chainsaas.refund.facade.RefundFacade#cancel
+  target_node_id: logic:semantic:3d35520d4c4c01bcef98
+  kind: calls
+  condition: ''
+  source_refs: []
+- edge_id: edge:4921a92bab933257
+  system_id: ifightchainsaas.java.refund.core
+  source_node_id: entry:com.ly.flight.chainsaas.refund.facade.RefundFacade#queryList
+  target_node_id: logic:semantic:123a68f2c0d3e165c7b1
+  kind: calls
+  condition: ''
+  source_refs: []
+- edge_id: edge:9d7970a1c62b850d
+  system_id: ifightchainsaas.java.refund.core
+  source_node_id: entry:com.ly.flight.chainsaas.refund.facade.RefundFacade#createOrder
+  target_node_id: logic:semantic:667bf78e8dcd0a7706b9
+  kind: calls
+  condition: ''
+  source_refs: []
+- edge_id: edge:b2feca4f484ef4b8
+  system_id: ifightchainsaas.java.refund.core
+  source_node_id: entry:com.ly.flight.chainsaas.refund.facade.RefundFacade#createOrder
+  target_node_id: logic:semantic:acb7510b9a51202eba9c
+  kind: calls
+  condition: ''
+  source_refs: []

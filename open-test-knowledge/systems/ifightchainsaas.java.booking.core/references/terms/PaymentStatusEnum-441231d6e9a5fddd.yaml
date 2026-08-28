@@ -1,0 +1,162 @@
+candidate_id: candidate:business_term:441231d6e9a5fddd
+system_id: ifightchainsaas.java.booking.core
+kind: BUSINESS_TERM
+knowledge_form: BUSINESS_ENUM
+name: PaymentStatusEnum
+business_name: 支付状态
+business_name_source: CODE_DEFAULT
+business_name_known_unknown: false
+enum_values:
+- code: ERROR_PAYMENT
+  business_meaning: 支付失败
+  source: CODE_DEFAULT
+  known_unknown: false
+  confidence: 0.95
+  source_refs:
+  - repository: ''
+    path: app/model/src/main/java/com/ly/flight/chainsaas/booking/enums/PaymentStatusEnum.java
+    symbol: com.ly.flight.chainsaas.booking.enums.PaymentStatusEnum#ERROR_PAYMENT
+    line: 21
+    commit: ''
+    content_digest: ''
+- code: PAID_DONE_PAYMENT
+  business_meaning: 已支付
+  source: CODE_DEFAULT
+  known_unknown: false
+  confidence: 0.95
+  source_refs:
+  - repository: ''
+    path: app/model/src/main/java/com/ly/flight/chainsaas/booking/enums/PaymentStatusEnum.java
+    symbol: com.ly.flight.chainsaas.booking.enums.PaymentStatusEnum#PAID_DONE_PAYMENT
+    line: 17
+    commit: ''
+    content_digest: ''
+- code: PAID_ERROR_PAYMENT
+  business_meaning: 支付失败
+  source: CODE_DEFAULT
+  known_unknown: false
+  confidence: 0.95
+  source_refs:
+  - repository: ''
+    path: app/model/src/main/java/com/ly/flight/chainsaas/booking/enums/PaymentStatusEnum.java
+    symbol: com.ly.flight.chainsaas.booking.enums.PaymentStatusEnum#PAID_ERROR_PAYMENT
+    line: 19
+    commit: ''
+    content_digest: ''
+- code: PAID_PAYMENT
+  business_meaning: 待支付
+  source: CODE_DEFAULT
+  known_unknown: false
+  confidence: 0.95
+  source_refs:
+  - repository: ''
+    path: app/model/src/main/java/com/ly/flight/chainsaas/booking/enums/PaymentStatusEnum.java
+    symbol: com.ly.flight.chainsaas.booking.enums.PaymentStatusEnum#PAID_PAYMENT
+    line: 13
+    commit: ''
+    content_digest: ''
+- code: WAITING_PAYMENT
+  business_meaning: 支付中
+  source: CODE_DEFAULT
+  known_unknown: false
+  confidence: 0.95
+  source_refs:
+  - repository: ''
+    path: app/model/src/main/java/com/ly/flight/chainsaas/booking/enums/PaymentStatusEnum.java
+    symbol: com.ly.flight.chainsaas.booking.enums.PaymentStatusEnum#WAITING_PAYMENT
+    line: 15
+    commit: ''
+    content_digest: ''
+suggested_meaning: 枚举名称和值默认采用源码注释；缺少注释时回退代码标识，可再人工修订。
+code_meaning: 支付失败（ERROR_PAYMENT）；已支付（PAID_DONE_PAYMENT）；支付失败（PAID_ERROR_PAYMENT）；待支付（PAID_PAYMENT）；支付中（WAITING_PAYMENT）
+unresolved_codes: []
+business_meaning: ''
+status: CODE_VERIFIED
+merged_into_candidate_id: ''
+source_refs:
+- repository: ''
+  path: app/model/src/main/java/com/ly/flight/chainsaas/booking/enums/PaymentStatusEnum.java
+  symbol: com.ly.flight.chainsaas.booking.enums.PaymentStatusEnum
+  line: 10
+  commit: 004c50d90d152f1ef4892679f8b1b322cc7a7405
+  content_digest: 5add8220526d78c56920ce233a76e222e7d35568688efa901ef85364fada774b
+- repository: ''
+  path: app/model/src/main/java/com/ly/flight/chainsaas/booking/enums/PaymentStatusEnum.java
+  symbol: com.ly.flight.chainsaas.booking.enums.PaymentStatusEnum#ERROR_PAYMENT
+  line: 21
+  commit: ''
+  content_digest: ''
+- repository: ''
+  path: app/model/src/main/java/com/ly/flight/chainsaas/booking/enums/PaymentStatusEnum.java
+  symbol: com.ly.flight.chainsaas.booking.enums.PaymentStatusEnum#PAID_DONE_PAYMENT
+  line: 17
+  commit: ''
+  content_digest: ''
+- repository: ''
+  path: app/model/src/main/java/com/ly/flight/chainsaas/booking/enums/PaymentStatusEnum.java
+  symbol: com.ly.flight.chainsaas.booking.enums.PaymentStatusEnum#PAID_ERROR_PAYMENT
+  line: 19
+  commit: ''
+  content_digest: ''
+- repository: ''
+  path: app/model/src/main/java/com/ly/flight/chainsaas/booking/enums/PaymentStatusEnum.java
+  symbol: com.ly.flight.chainsaas.booking.enums.PaymentStatusEnum#PAID_PAYMENT
+  line: 13
+  commit: ''
+  content_digest: ''
+- repository: ''
+  path: app/model/src/main/java/com/ly/flight/chainsaas/booking/enums/PaymentStatusEnum.java
+  symbol: com.ly.flight.chainsaas.booking.enums.PaymentStatusEnum#WAITING_PAYMENT
+  line: 15
+  commit: ''
+  content_digest: ''
+affected_target_ids:
+- facade:com.ly.flight.chainsaas.booking.facade.PayCallBackFacade#payCallBack
+- facade:com.ly.flight.chainsaas.booking.facade.PayCallBackFacade#payOrderDetail
+- facade:com.ly.flight.chainsaas.booking.facade.PayCallBackFacade#payOrderRiskDetail
+- facade:com.ly.flight.chainsaas.booking.facade.PayCallBackFacade#payValidate
+- facade:com.ly.flight.chainsaas.booking.facade.TcplTradeFacade#book
+- facade:com.ly.flight.chainsaas.booking.facade.TcplTradeFacade#bookValidate
+- facade:com.ly.flight.chainsaas.booking.facade.TcplTradeFacade#confirmPayment
+- facade:com.ly.flight.chainsaas.booking.facade.TcplTradeFacade#notifyTicket
+- facade:com.ly.flight.chainsaas.booking.facade.TcplTradeFacade#payValidate
+- facade:com.ly.flight.chainsaas.booking.facade.TcplTradeFacade#payment
+- facade:com.ly.flight.chainsaas.booking.facade.TcplTradeFacade#retrieve
+- facade:com.ly.flight.chainsaas.booking.facade.TcplTradeFacade#searchBook
+- facade:com.ly.flight.chainsaas.booking.facade.TcplTradeFacade#validateCache
+- facade:com.ly.flight.chainsaas.booking.facade.TradeFacade#addErrorCode
+- facade:com.ly.flight.chainsaas.booking.facade.TradeFacade#addVccRecord
+- facade:com.ly.flight.chainsaas.booking.facade.TradeFacade#batchQueryTicketInfo
+- facade:com.ly.flight.chainsaas.booking.facade.TradeFacade#cancel
+- facade:com.ly.flight.chainsaas.booking.facade.TradeFacade#cancelPnrList
+- facade:com.ly.flight.chainsaas.booking.facade.TradeFacade#checkVccCard
+- facade:com.ly.flight.chainsaas.booking.facade.TradeFacade#closeVccCard
+- facade:com.ly.flight.chainsaas.booking.facade.TradeFacade#createDirectOrder
+- facade:com.ly.flight.chainsaas.booking.facade.TradeFacade#createLog
+- facade:com.ly.flight.chainsaas.booking.facade.TradeFacade#createPayment
+- facade:com.ly.flight.chainsaas.booking.facade.TradeFacade#createVcc
+- facade:com.ly.flight.chainsaas.booking.facade.TradeFacade#execute
+- facade:com.ly.flight.chainsaas.booking.facade.TradeFacade#flightChange
+- facade:com.ly.flight.chainsaas.booking.facade.TradeFacade#headerEdit
+- facade:com.ly.flight.chainsaas.booking.facade.TradeFacade#lockOrder
+- facade:com.ly.flight.chainsaas.booking.facade.TradeFacade#marketingOrderList
+- facade:com.ly.flight.chainsaas.booking.facade.TradeFacade#modifyErrorCodeState
+- facade:com.ly.flight.chainsaas.booking.facade.TradeFacade#orderRebut
+- facade:com.ly.flight.chainsaas.booking.facade.TradeFacade#pnrCallback
+- facade:com.ly.flight.chainsaas.booking.facade.TradeFacade#priceEdit
+- facade:com.ly.flight.chainsaas.booking.facade.TradeFacade#queryDetail
+- facade:com.ly.flight.chainsaas.booking.facade.TradeFacade#queryDetailByThird
+- facade:com.ly.flight.chainsaas.booking.facade.TradeFacade#queryErrorCode
+- facade:com.ly.flight.chainsaas.booking.facade.TradeFacade#queryErrorCodeList
+- facade:com.ly.flight.chainsaas.booking.facade.TradeFacade#queryList
+- facade:com.ly.flight.chainsaas.booking.facade.TradeFacade#queryVCCList
+- facade:com.ly.flight.chainsaas.booking.facade.TradeFacade#queryVccDetail
+- facade:com.ly.flight.chainsaas.booking.facade.TradeFacade#queryVccRecordList
+- facade:com.ly.flight.chainsaas.booking.facade.TradeFacade#realCancel
+- facade:com.ly.flight.chainsaas.booking.facade.TradeFacade#refund
+- facade:com.ly.flight.chainsaas.booking.facade.TradeFacade#unLockOrder
+- facade:com.ly.flight.chainsaas.booking.facade.TradeFacade#updateErrorCode
+- facade:com.ly.flight.chainsaas.booking.facade.TradeFacade#updateVccCard
+evidence_digest: b57880a9e9be6881e2cdc701d7421d9aad8e217dc94a0a9ef5057964dfbd4e22
+discovered_at: '2026-08-27T15:21:11.348553Z'
+updated_at: '2026-08-27T20:27:20.142416Z'

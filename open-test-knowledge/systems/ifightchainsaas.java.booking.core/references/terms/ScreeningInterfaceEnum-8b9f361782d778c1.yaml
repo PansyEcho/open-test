@@ -1,0 +1,517 @@
+candidate_id: candidate:business_term:8b9f361782d778c1
+system_id: ifightchainsaas.java.booking.core
+kind: BUSINESS_TERM
+knowledge_form: BUSINESS_ENUM
+name: ScreeningInterfaceEnum
+business_name: 排查接口枚举
+business_name_source: CODE_DEFAULT
+business_name_known_unknown: false
+enum_values:
+- code: ACCOUNT_CHECK_MQ
+  business_meaning: 对账MQ
+  source: CODE_DEFAULT
+  known_unknown: false
+  confidence: 0.95
+  source_refs:
+  - repository: ''
+    path: app/model/src/main/java/com/ly/flight/chainsaas/booking/enums/ScreeningInterfaceEnum.java
+    symbol: com.ly.flight.chainsaas.booking.enums.ScreeningInterfaceEnum#ACCOUNT_CHECK_MQ
+    line: 99
+    commit: ''
+    content_digest: ''
+- code: ADD_PNR
+  business_meaning: 占编
+  source: CODE_DEFAULT
+  known_unknown: false
+  confidence: 0.95
+  source_refs:
+  - repository: ''
+    path: app/model/src/main/java/com/ly/flight/chainsaas/booking/enums/ScreeningInterfaceEnum.java
+    symbol: com.ly.flight.chainsaas.booking.enums.ScreeningInterfaceEnum#ADD_PNR
+    line: 19
+    commit: ''
+    content_digest: ''
+- code: ADD_PNR_ASYNC_MQ
+  business_meaning: 异步占编MQ
+  source: CODE_DEFAULT
+  known_unknown: false
+  confidence: 0.95
+  source_refs:
+  - repository: ''
+    path: app/model/src/main/java/com/ly/flight/chainsaas/booking/enums/ScreeningInterfaceEnum.java
+    symbol: com.ly.flight.chainsaas.booking.enums.ScreeningInterfaceEnum#ADD_PNR_ASYNC_MQ
+    line: 51
+    commit: ''
+    content_digest: ''
+- code: ANCILLARY_BOOK
+  business_meaning: 辅营生单
+  source: CODE_DEFAULT
+  known_unknown: false
+  confidence: 0.95
+  source_refs:
+  - repository: ''
+    path: app/model/src/main/java/com/ly/flight/chainsaas/booking/enums/ScreeningInterfaceEnum.java
+    symbol: com.ly.flight.chainsaas.booking.enums.ScreeningInterfaceEnum#ANCILLARY_BOOK
+    line: 119
+    commit: ''
+    content_digest: ''
+- code: ANCILLARY_BOOK_RESULT
+  business_meaning: 辅营同步结果
+  source: CODE_DEFAULT
+  known_unknown: false
+  confidence: 0.95
+  source_refs:
+  - repository: ''
+    path: app/model/src/main/java/com/ly/flight/chainsaas/booking/enums/ScreeningInterfaceEnum.java
+    symbol: com.ly.flight.chainsaas.booking.enums.ScreeningInterfaceEnum#ANCILLARY_BOOK_RESULT
+    line: 123
+    commit: ''
+    content_digest: ''
+- code: ANCILLARY_CANCEL
+  business_meaning: 辅营取消
+  source: CODE_DEFAULT
+  known_unknown: false
+  confidence: 0.95
+  source_refs:
+  - repository: ''
+    path: app/model/src/main/java/com/ly/flight/chainsaas/booking/enums/ScreeningInterfaceEnum.java
+    symbol: com.ly.flight.chainsaas.booking.enums.ScreeningInterfaceEnum#ANCILLARY_CANCEL
+    line: 127
+    commit: ''
+    content_digest: ''
+- code: ANCILLARY_LIST
+  business_meaning: 辅营详情
+  source: CODE_DEFAULT
+  known_unknown: false
+  confidence: 0.95
+  source_refs:
+  - repository: ''
+    path: app/model/src/main/java/com/ly/flight/chainsaas/booking/enums/ScreeningInterfaceEnum.java
+    symbol: com.ly.flight.chainsaas.booking.enums.ScreeningInterfaceEnum#ANCILLARY_LIST
+    line: 115
+    commit: ''
+    content_digest: ''
+- code: ANCILLARY_TICKET
+  business_meaning: 辅营出票
+  source: CODE_DEFAULT
+  known_unknown: false
+  confidence: 0.95
+  source_refs:
+  - repository: ''
+    path: app/model/src/main/java/com/ly/flight/chainsaas/booking/enums/ScreeningInterfaceEnum.java
+    symbol: com.ly.flight.chainsaas.booking.enums.ScreeningInterfaceEnum#ANCILLARY_TICKET
+    line: 131
+    commit: ''
+    content_digest: ''
+- code: CANCEL_PNR
+  business_meaning: 取消PNR
+  source: CODE_DEFAULT
+  known_unknown: false
+  confidence: 0.95
+  source_refs:
+  - repository: ''
+    path: app/model/src/main/java/com/ly/flight/chainsaas/booking/enums/ScreeningInterfaceEnum.java
+    symbol: com.ly.flight.chainsaas.booking.enums.ScreeningInterfaceEnum#CANCEL_PNR
+    line: 35
+    commit: ''
+    content_digest: ''
+- code: CLOSE_VCC_CARD
+  business_meaning: 注销卡
+  source: CODE_DEFAULT
+  known_unknown: false
+  confidence: 0.95
+  source_refs:
+  - repository: ''
+    path: app/model/src/main/java/com/ly/flight/chainsaas/booking/enums/ScreeningInterfaceEnum.java
+    symbol: com.ly.flight.chainsaas.booking.enums.ScreeningInterfaceEnum#CLOSE_VCC_CARD
+    line: 139
+    commit: ''
+    content_digest: ''
+- code: CREATE_VCC_CARD
+  business_meaning: 生卡
+  source: CODE_DEFAULT
+  known_unknown: false
+  confidence: 0.95
+  source_refs:
+  - repository: ''
+    path: app/model/src/main/java/com/ly/flight/chainsaas/booking/enums/ScreeningInterfaceEnum.java
+    symbol: com.ly.flight.chainsaas.booking.enums.ScreeningInterfaceEnum#CREATE_VCC_CARD
+    line: 135
+    commit: ''
+    content_digest: ''
+- code: C_PROXY_BOOKING
+  business_meaning: C端代收生单
+  source: CODE_DEFAULT
+  known_unknown: false
+  confidence: 0.95
+  source_refs:
+  - repository: ''
+    path: app/model/src/main/java/com/ly/flight/chainsaas/booking/enums/ScreeningInterfaceEnum.java
+    symbol: com.ly.flight.chainsaas.booking.enums.ScreeningInterfaceEnum#C_PROXY_BOOKING
+    line: 103
+    commit: ''
+    content_digest: ''
+- code: C_PROXY_CANCEL
+  business_meaning: C端代收取消
+  source: CODE_DEFAULT
+  known_unknown: false
+  confidence: 0.95
+  source_refs:
+  - repository: ''
+    path: app/model/src/main/java/com/ly/flight/chainsaas/booking/enums/ScreeningInterfaceEnum.java
+    symbol: com.ly.flight.chainsaas.booking.enums.ScreeningInterfaceEnum#C_PROXY_CANCEL
+    line: 111
+    commit: ''
+    content_digest: ''
+- code: C_PROXY_TICKET
+  business_meaning: C端代收出票
+  source: CODE_DEFAULT
+  known_unknown: false
+  confidence: 0.95
+  source_refs:
+  - repository: ''
+    path: app/model/src/main/java/com/ly/flight/chainsaas/booking/enums/ScreeningInterfaceEnum.java
+    symbol: com.ly.flight.chainsaas.booking.enums.ScreeningInterfaceEnum#C_PROXY_TICKET
+    line: 107
+    commit: ''
+    content_digest: ''
+- code: EXTERNAL_BOOKING
+  business_meaning: 对外生单接口
+  source: CODE_DEFAULT
+  known_unknown: false
+  confidence: 0.95
+  source_refs:
+  - repository: ''
+    path: app/model/src/main/java/com/ly/flight/chainsaas/booking/enums/ScreeningInterfaceEnum.java
+    symbol: com.ly.flight.chainsaas.booking.enums.ScreeningInterfaceEnum#EXTERNAL_BOOKING
+    line: 75
+    commit: ''
+    content_digest: ''
+- code: EXTERNAL_NOTIFICATION
+  business_meaning: 对外通知接口
+  source: CODE_DEFAULT
+  known_unknown: false
+  confidence: 0.95
+  source_refs:
+  - repository: ''
+    path: app/model/src/main/java/com/ly/flight/chainsaas/booking/enums/ScreeningInterfaceEnum.java
+    symbol: com.ly.flight.chainsaas.booking.enums.ScreeningInterfaceEnum#EXTERNAL_NOTIFICATION
+    line: 79
+    commit: ''
+    content_digest: ''
+- code: EXTERNAL_VERIFY
+  business_meaning: 对外强校验接口
+  source: CODE_DEFAULT
+  known_unknown: false
+  confidence: 0.95
+  source_refs:
+  - repository: ''
+    path: app/model/src/main/java/com/ly/flight/chainsaas/booking/enums/ScreeningInterfaceEnum.java
+    symbol: com.ly.flight.chainsaas.booking.enums.ScreeningInterfaceEnum#EXTERNAL_VERIFY
+    line: 71
+    commit: ''
+    content_digest: ''
+- code: ISSUE_TICKET
+  business_meaning: 出票
+  source: CODE_DEFAULT
+  known_unknown: false
+  confidence: 0.95
+  source_refs:
+  - repository: ''
+    path: app/model/src/main/java/com/ly/flight/chainsaas/booking/enums/ScreeningInterfaceEnum.java
+    symbol: com.ly.flight.chainsaas.booking.enums.ScreeningInterfaceEnum#ISSUE_TICKET
+    line: 27
+    commit: ''
+    content_digest: ''
+- code: PAPER_POLICY_CALCULATE
+  business_meaning: 纸质价格计算
+  source: CODE_DEFAULT
+  known_unknown: false
+  confidence: 0.95
+  source_refs:
+  - repository: ''
+    path: app/model/src/main/java/com/ly/flight/chainsaas/booking/enums/ScreeningInterfaceEnum.java
+    symbol: com.ly.flight.chainsaas.booking.enums.ScreeningInterfaceEnum#PAPER_POLICY_CALCULATE
+    line: 95
+    commit: ''
+    content_digest: ''
+- code: PAYMENT_MQ
+  business_meaning: 支付MQ
+  source: CODE_DEFAULT
+  known_unknown: false
+  confidence: 0.95
+  source_refs:
+  - repository: ''
+    path: app/model/src/main/java/com/ly/flight/chainsaas/booking/enums/ScreeningInterfaceEnum.java
+    symbol: com.ly.flight.chainsaas.booking.enums.ScreeningInterfaceEnum#PAYMENT_MQ
+    line: 59
+    commit: ''
+    content_digest: ''
+- code: PAYMENT_VALIDATE
+  business_meaning: 支付前校验
+  source: CODE_DEFAULT
+  known_unknown: false
+  confidence: 0.95
+  source_refs:
+  - repository: ''
+    path: app/model/src/main/java/com/ly/flight/chainsaas/booking/enums/ScreeningInterfaceEnum.java
+    symbol: com.ly.flight.chainsaas.booking.enums.ScreeningInterfaceEnum#PAYMENT_VALIDATE
+    line: 23
+    commit: ''
+    content_digest: ''
+- code: POLICY_CALCULATE
+  business_meaning: 价格计算
+  source: CODE_DEFAULT
+  known_unknown: false
+  confidence: 0.95
+  source_refs:
+  - repository: ''
+    path: app/model/src/main/java/com/ly/flight/chainsaas/booking/enums/ScreeningInterfaceEnum.java
+    symbol: com.ly.flight.chainsaas.booking.enums.ScreeningInterfaceEnum#POLICY_CALCULATE
+    line: 39
+    commit: ''
+    content_digest: ''
+- code: PURCHASER_CALLBACK
+  business_meaning: 采购票号回填
+  source: CODE_DEFAULT
+  known_unknown: false
+  confidence: 0.95
+  source_refs:
+  - repository: ''
+    path: app/model/src/main/java/com/ly/flight/chainsaas/booking/enums/ScreeningInterfaceEnum.java
+    symbol: com.ly.flight.chainsaas.booking.enums.ScreeningInterfaceEnum#PURCHASER_CALLBACK
+    line: 55
+    commit: ''
+    content_digest: ''
+- code: QUERY_CVV
+  business_meaning: 查询CVV
+  source: CODE_DEFAULT
+  known_unknown: false
+  confidence: 0.95
+  source_refs:
+  - repository: ''
+    path: app/model/src/main/java/com/ly/flight/chainsaas/booking/enums/ScreeningInterfaceEnum.java
+    symbol: com.ly.flight.chainsaas.booking.enums.ScreeningInterfaceEnum#QUERY_CVV
+    line: 143
+    commit: ''
+    content_digest: ''
+- code: QUERY_VCC_CARD
+  business_meaning: 查询VCC卡
+  source: CODE_DEFAULT
+  known_unknown: false
+  confidence: 0.95
+  source_refs:
+  - repository: ''
+    path: app/model/src/main/java/com/ly/flight/chainsaas/booking/enums/ScreeningInterfaceEnum.java
+    symbol: com.ly.flight.chainsaas.booking.enums.ScreeningInterfaceEnum#QUERY_VCC_CARD
+    line: 147
+    commit: ''
+    content_digest: ''
+- code: RT_PNR
+  business_meaning: 提取PNR
+  source: CODE_DEFAULT
+  known_unknown: false
+  confidence: 0.95
+  source_refs:
+  - repository: ''
+    path: app/model/src/main/java/com/ly/flight/chainsaas/booking/enums/ScreeningInterfaceEnum.java
+    symbol: com.ly.flight.chainsaas.booking.enums.ScreeningInterfaceEnum#RT_PNR
+    line: 31
+    commit: ''
+    content_digest: ''
+- code: SEARCH_BAG
+  business_meaning: 搜索行李
+  source: CODE_DEFAULT
+  known_unknown: false
+  confidence: 0.95
+  source_refs:
+  - repository: ''
+    path: app/model/src/main/java/com/ly/flight/chainsaas/booking/enums/ScreeningInterfaceEnum.java
+    symbol: com.ly.flight.chainsaas.booking.enums.ScreeningInterfaceEnum#SEARCH_BAG
+    line: 83
+    commit: ''
+    content_digest: ''
+- code: SEARCH_DETAIL
+  business_meaning: 搜索详情
+  source: CODE_DEFAULT
+  known_unknown: false
+  confidence: 0.95
+  source_refs:
+  - repository: ''
+    path: app/model/src/main/java/com/ly/flight/chainsaas/booking/enums/ScreeningInterfaceEnum.java
+    symbol: com.ly.flight.chainsaas.booking.enums.ScreeningInterfaceEnum#SEARCH_DETAIL
+    line: 43
+    commit: ''
+    content_digest: ''
+- code: SEARCH_PRICE
+  business_meaning: 搜索价格
+  source: CODE_DEFAULT
+  known_unknown: false
+  confidence: 0.95
+  source_refs:
+  - repository: ''
+    path: app/model/src/main/java/com/ly/flight/chainsaas/booking/enums/ScreeningInterfaceEnum.java
+    symbol: com.ly.flight.chainsaas.booking.enums.ScreeningInterfaceEnum#SEARCH_PRICE
+    line: 47
+    commit: ''
+    content_digest: ''
+- code: TICKET_CALLBACK
+  business_meaning: 调用回调系统
+  source: CODE_DEFAULT
+  known_unknown: false
+  confidence: 0.95
+  source_refs:
+  - repository: ''
+    path: app/model/src/main/java/com/ly/flight/chainsaas/booking/enums/ScreeningInterfaceEnum.java
+    symbol: com.ly.flight.chainsaas.booking.enums.ScreeningInterfaceEnum#TICKET_CALLBACK
+    line: 67
+    commit: ''
+    content_digest: ''
+- code: VERIFY_CABIN
+  business_meaning: 验舱
+  source: CODE_DEFAULT
+  known_unknown: false
+  confidence: 0.95
+  source_refs:
+  - repository: ''
+    path: app/model/src/main/java/com/ly/flight/chainsaas/booking/enums/ScreeningInterfaceEnum.java
+    symbol: com.ly.flight.chainsaas.booking.enums.ScreeningInterfaceEnum#VERIFY_CABIN
+    line: 87
+    commit: ''
+    content_digest: ''
+- code: VERIFY_CABIN_AND_PRICE
+  business_meaning: 验舱验价
+  source: CODE_DEFAULT
+  known_unknown: false
+  confidence: 0.95
+  source_refs:
+  - repository: ''
+    path: app/model/src/main/java/com/ly/flight/chainsaas/booking/enums/ScreeningInterfaceEnum.java
+    symbol: com.ly.flight.chainsaas.booking.enums.ScreeningInterfaceEnum#VERIFY_CABIN_AND_PRICE
+    line: 15
+    commit: ''
+    content_digest: ''
+- code: VERIFY_PRICE
+  business_meaning: 验价
+  source: CODE_DEFAULT
+  known_unknown: false
+  confidence: 0.95
+  source_refs:
+  - repository: ''
+    path: app/model/src/main/java/com/ly/flight/chainsaas/booking/enums/ScreeningInterfaceEnum.java
+    symbol: com.ly.flight.chainsaas.booking.enums.ScreeningInterfaceEnum#VERIFY_PRICE
+    line: 91
+    commit: ''
+    content_digest: ''
+- code: VIRTUAL_PAYMENT_MQ
+  business_meaning: 虚拟支付MQ
+  source: CODE_DEFAULT
+  known_unknown: false
+  confidence: 0.95
+  source_refs:
+  - repository: ''
+    path: app/model/src/main/java/com/ly/flight/chainsaas/booking/enums/ScreeningInterfaceEnum.java
+    symbol: com.ly.flight.chainsaas.booking.enums.ScreeningInterfaceEnum#VIRTUAL_PAYMENT_MQ
+    line: 63
+    commit: ''
+    content_digest: ''
+suggested_meaning: 枚举名称和值默认采用源码注释；缺少注释时回退代码标识，可再人工修订。
+code_meaning: 对账MQ（ACCOUNT_CHECK_MQ）；占编（ADD_PNR）；异步占编MQ（ADD_PNR_ASYNC_MQ）；辅营生单（ANCILLARY_BOOK）；辅营同步结果（ANCILLARY_BOOK_RESULT）；辅营取消（ANCILLARY_CANCEL）；辅营详情（ANCILLARY_LIST）；辅营出票（ANCILLARY_TICKET）；取消PNR（CANCEL_PNR）；注销卡（CLOSE_VCC_CARD）；生卡（CREATE_VCC_CARD）；C端代收生单（C_PROXY_BOOKING）；C端代收取消（C_PROXY_CANCEL）；C端代收出票（C_PROXY_TICKET）；对外生单接口（EXTERNAL_BOOKING）；对外通知接口（EXTERNAL_NOTIFICATION）；对外强校验接口（EXTERNAL_VERIFY）；出票（ISSUE_TICKET）；纸质价格计算（PAPER_POLICY_CALCULATE）；支付MQ（PAYMENT_MQ）；支付前校验（PAYMENT_VALIDATE）；价格计算（POLICY_CALCULATE）；采购票号回填（PURCHASER_CALLBACK）；查询CVV（QUERY_CVV）；查询VCC卡（QUERY_VCC_CARD）；提取PNR（RT_PNR）；搜索行李（SEARCH_BAG）；搜索详情（SEARCH_DETAIL）；搜索价格（SEARCH_PRICE）；调用回调系统（TICKET_CALLBACK）；验舱（VERIFY_CABIN）；验舱验价（VERIFY_CABIN_AND_PRICE）；验价（VERIFY_PRICE）；虚拟支付MQ（VIRTUAL_PAYMENT_MQ）
+unresolved_codes: []
+business_meaning: ''
+status: CODE_VERIFIED
+merged_into_candidate_id: ''
+source_refs:
+- repository: ''
+  path: app/model/src/main/java/com/ly/flight/chainsaas/booking/enums/ScreeningInterfaceEnum.java
+  symbol: com.ly.flight.chainsaas.booking.enums.ScreeningInterfaceEnum
+  line: 11
+  commit: 004c50d90d152f1ef4892679f8b1b322cc7a7405
+  content_digest: 80785365fb0a26484a42a66a16eeef81d6e320521ca7115de17cc5bf0a56ea18
+- repository: ''
+  path: app/model/src/main/java/com/ly/flight/chainsaas/booking/enums/ScreeningInterfaceEnum.java
+  symbol: com.ly.flight.chainsaas.booking.enums.ScreeningInterfaceEnum#ACCOUNT_CHECK_MQ
+  line: 99
+  commit: ''
+  content_digest: ''
+- repository: ''
+  path: app/model/src/main/java/com/ly/flight/chainsaas/booking/enums/ScreeningInterfaceEnum.java
+  symbol: com.ly.flight.chainsaas.booking.enums.ScreeningInterfaceEnum#ADD_PNR
+  line: 19
+  commit: ''
+  content_digest: ''
+- repository: ''
+  path: app/model/src/main/java/com/ly/flight/chainsaas/booking/enums/ScreeningInterfaceEnum.java
+  symbol: com.ly.flight.chainsaas.booking.enums.ScreeningInterfaceEnum#ADD_PNR_ASYNC_MQ
+  line: 51
+  commit: ''
+  content_digest: ''
+- repository: ''
+  path: app/model/src/main/java/com/ly/flight/chainsaas/booking/enums/ScreeningInterfaceEnum.java
+  symbol: com.ly.flight.chainsaas.booking.enums.ScreeningInterfaceEnum#ANCILLARY_BOOK
+  line: 119
+  commit: ''
+  content_digest: ''
+- repository: ''
+  path: app/model/src/main/java/com/ly/flight/chainsaas/booking/enums/ScreeningInterfaceEnum.java
+  symbol: com.ly.flight.chainsaas.booking.enums.ScreeningInterfaceEnum#ANCILLARY_BOOK_RESULT
+  line: 123
+  commit: ''
+  content_digest: ''
+- repository: ''
+  path: app/model/src/main/java/com/ly/flight/chainsaas/booking/enums/ScreeningInterfaceEnum.java
+  symbol: com.ly.flight.chainsaas.booking.enums.ScreeningInterfaceEnum#ANCILLARY_CANCEL
+  line: 127
+  commit: ''
+  content_digest: ''
+- repository: ''
+  path: app/model/src/main/java/com/ly/flight/chainsaas/booking/enums/ScreeningInterfaceEnum.java
+  symbol: com.ly.flight.chainsaas.booking.enums.ScreeningInterfaceEnum#ANCILLARY_LIST
+  line: 115
+  commit: ''
+  content_digest: ''
+- repository: ''
+  path: app/model/src/main/java/com/ly/flight/chainsaas/booking/enums/ScreeningInterfaceEnum.java
+  symbol: com.ly.flight.chainsaas.booking.enums.ScreeningInterfaceEnum#ANCILLARY_TICKET
+  line: 131
+  commit: ''
+  content_digest: ''
+- repository: ''
+  path: app/model/src/main/java/com/ly/flight/chainsaas/booking/enums/ScreeningInterfaceEnum.java
+  symbol: com.ly.flight.chainsaas.booking.enums.ScreeningInterfaceEnum#CANCEL_PNR
+  line: 35
+  commit: ''
+  content_digest: ''
+- repository: ''
+  path: app/model/src/main/java/com/ly/flight/chainsaas/booking/enums/ScreeningInterfaceEnum.java
+  symbol: com.ly.flight.chainsaas.booking.enums.ScreeningInterfaceEnum#CLOSE_VCC_CARD
+  line: 139
+  commit: ''
+  content_digest: ''
+- repository: ''
+  path: app/model/src/main/java/com/ly/flight/chainsaas/booking/enums/ScreeningInterfaceEnum.java
+  symbol: com.ly.flight.chainsaas.booking.enums.ScreeningInterfaceEnum#CREATE_VCC_CARD
+  line: 135
+  commit: ''
+  content_digest: ''
+affected_target_ids:
+- facade:com.ly.flight.chainsaas.booking.facade.TcplTradeFacade#book
+- facade:com.ly.flight.chainsaas.booking.facade.TcplTradeFacade#bookValidate
+- facade:com.ly.flight.chainsaas.booking.facade.TcplTradeFacade#confirmPayment
+- facade:com.ly.flight.chainsaas.booking.facade.TcplTradeFacade#notifyTicket
+- facade:com.ly.flight.chainsaas.booking.facade.TcplTradeFacade#payValidate
+- facade:com.ly.flight.chainsaas.booking.facade.TcplTradeFacade#payment
+- facade:com.ly.flight.chainsaas.booking.facade.TcplTradeFacade#retrieve
+- facade:com.ly.flight.chainsaas.booking.facade.TcplTradeFacade#searchBook
+- facade:com.ly.flight.chainsaas.booking.facade.TcplTradeFacade#validateCache
+- facade:com.ly.flight.chainsaas.booking.facade.ToolFacade#compare
+- facade:com.ly.flight.chainsaas.booking.facade.ToolFacade#queryAgentRelation
+- facade:com.ly.flight.chainsaas.booking.facade.ToolFacade#queryScreeningLog
+- facade:com.ly.flight.chainsaas.booking.facade.ToolFacade#syncOrder
+- facade:com.ly.flight.chainsaas.booking.facade.external.ExternalApiTradeFacade#booking
+- facade:com.ly.flight.chainsaas.booking.facade.external.ExternalApiTradeFacade#notification
+- facade:com.ly.flight.chainsaas.booking.facade.external.ExternalApiTradeFacade#paymentValidate
+- facade:com.ly.flight.chainsaas.booking.facade.external.ExternalApiTradeFacade#verify
+evidence_digest: e840ab09a62182f5da348b2eeed2737642bed85eb9814d52204444dd35c41d76
+discovered_at: '2026-08-27T15:21:11.348693Z'
+updated_at: '2026-08-27T20:27:20.156012Z'

@@ -16,114 +16,86 @@ source_refs:
   content_digest: ''
 - repository: ''
   path: app/facade/src/main/java/com/ly/flight/chainsaas/refund/facade/RefundFacade.java
-  symbol: RefundFacade#cancel
+  symbol: com.ly.flight.chainsaas.refund.facade.RefundFacade#cancel
   line: 84
   commit: ''
   content_digest: ''
 - repository: ''
   path: app/facade-impl/src/main/java/com/ly/flight/chainsaas/refund/facade/impl/RefundFacadeImpl.java
-  symbol: RefundFacadeImpl#cancel
+  symbol: com.ly.flight.chainsaas.refund.facade.impl.RefundFacadeImpl#cancel
   line: 292
   commit: ''
   content_digest: ''
 - repository: ''
-  path: app/facade-impl/src/main/java/com/ly/flight/chainsaas/refund/facade/validator/trade/RefundCancelValidator.java
-  symbol: RefundCancelValidator#validate
-  line: 19
-  commit: ''
-  content_digest: ''
-- repository: ''
-  path: app/facade/src/main/java/com/ly/flight/chainsaas/refund/facade/model/request/RefundCancelRequest.java
-  symbol: RefundCancelRequest
-  line: 13
-  commit: ''
-  content_digest: ''
-- repository: ''
-  path: app/facade/src/main/java/com/ly/flight/chainsaas/refund/facade/model/BaseRequest.java
-  symbol: BaseRequest
-  line: 14
-  commit: ''
-  content_digest: ''
-- repository: ''
-  path: app/facade/src/main/java/com/ly/flight/chainsaas/refund/facade/model/response/RefundCancelResponse.java
-  symbol: RefundCancelResponse
-  line: 3
-  commit: ''
-  content_digest: ''
-- repository: ''
   path: app/biz/src/main/java/com/ly/flight/chainsaas/refund/biz/manager/refund/RefundCancelServiceInvoker.java
-  symbol: RefundCancelServiceInvoker#invoke
+  symbol: com.ly.flight.chainsaas.refund.biz.manager.refund.RefundCancelServiceInvoker#invoke
   line: 80
   commit: ''
   content_digest: ''
 - repository: ''
   path: app/biz/src/main/java/com/ly/flight/chainsaas/refund/biz/manager/refund/RefundCancelServiceInvoker.java
-  symbol: RefundCancelServiceInvoker#innerInvoke
+  symbol: com.ly.flight.chainsaas.refund.biz.manager.refund.RefundCancelServiceInvoker#innerInvoke
   line: 99
   commit: ''
   content_digest: ''
 - repository: ''
   path: app/biz/src/main/java/com/ly/flight/chainsaas/refund/biz/manager/refund/RefundCancelServiceInvoker.java
-  symbol: RefundCancelServiceInvoker#doInvoke
-  line: 114
+  symbol: com.ly.flight.chainsaas.refund.biz.manager.refund.RefundCancelServiceInvoker#doInvoke
+  line: 135
   commit: ''
   content_digest: ''
 - repository: ''
-  path: app/biz/src/main/java/com/ly/flight/chainsaas/refund/biz/manager/AbstractOrderServiceInvoker.java
-  symbol: AbstractOrderServiceInvoker#queryOrderByRefundSerialNo
-  line: 76
+  path: app/biz/src/main/java/com/ly/flight/chainsaas/refund/biz/service/CBDSService.java
+  symbol: com.ly.flight.chainsaas.refund.biz.service.CBDSService#refundCancel
+  line: 26
   commit: ''
   content_digest: ''
 - repository: ''
-  path: app/biz/src/main/java/com/ly/flight/chainsaas/refund/biz/service/OrderService.java
-  symbol: OrderService#queryByRefundSerialNo
-  line: 60
+  path: app/biz/src/main/java/com/ly/flight/chainsaas/refund/biz/service/impl/CBDSServiceImpl.java
+  symbol: com.ly.flight.chainsaas.refund.biz.service.impl.CBDSServiceImpl#refundCancel
+  line: 66
   commit: ''
   content_digest: ''
 - repository: ''
-  path: app/biz/src/main/java/com/ly/flight/chainsaas/refund/biz/service/impl/OrderServiceImpl.java
-  symbol: OrderServiceImpl#queryByRefundSerialNo
-  line: 250
+  path: app/integration/src/main/java/com/ly/flight/chainsaas/refund/integration/resources/ResourcesClient.java
+  symbol: com.ly.flight.chainsaas.refund.integration.resources.ResourcesClient#refundCancel
+  line: 39
   commit: ''
   content_digest: ''
 - repository: ''
-  path: app/dal/src/main/resources/sqlmap/refundcore/SaasRefundOrderMapperExt.xml
-  symbol: queryByRefundSerialNo
-  line: 169
+  path: app/integration/src/main/java/com/ly/flight/chainsaas/refund/integration/resources/ResourcesClientImpl.java
+  symbol: com.ly.flight.chainsaas.refund.integration.resources.ResourcesClientImpl#refundCancel
+  line: 61
   commit: ''
   content_digest: ''
 - repository: ''
-  path: app/biz/src/main/java/com/ly/flight/chainsaas/refund/biz/actor/post/RefundOrderCancelPostActor.java
-  symbol: RefundOrderCancelPostActor
-  line: 25
+  path: app/integration/src/main/java/com/ly/flight/chainsaas/refund/integration/proxy/RefundResourcesFacadeProxy.java
+  symbol: com.ly.flight.chainsaas.refund.integration.proxy.RefundResourcesFacadeProxy#refundCancel
+  line: 100
   commit: ''
   content_digest: ''
 - repository: ''
-  path: app/biz/src/main/java/com/ly/flight/chainsaas/refund/biz/actor/post/RefundOrderCancelPostActor.java
-  symbol: RefundOrderCancelPostActor#addTask
-  line: 32
-  commit: ''
-  content_digest: ''
-- repository: ''
-  path: app/biz/src/main/java/com/ly/flight/chainsaas/refund/biz/actor/post/RefundOrderCancelPostActor.java
-  symbol: RefundOrderCancelPostActor#addCancelReasonUpdateTask
-  line: 52
-  commit: ''
-  content_digest: ''
-- repository: ''
-  path: app/biz/src/main/java/com/ly/flight/chainsaas/refund/biz/actor/post/RefundOrderManualCancelPostActor.java
-  symbol: RefundOrderManualCancelPostActor
-  line: 20
+  path: app/model/src/main/java/com/ly/flight/chainsaas/refund/enums/RefundOrderStateEnum.java
+  symbol: com.ly.flight.chainsaas.refund.enums.RefundOrderStateEnum
+  line: 12
   commit: ''
   content_digest: ''
 status: inferred
 confidence: 1.0
 tags: []
+test_points:
+- kind: transition
+  title: 审核后取消
+  condition: 当前状态为 AUDITED
+  expected_outcome: 状态变为 REFUND_CANCEL
 metadata:
-  scan_id: scan-20260825075610-a0f437c374-8132c1a1
+  scan_id: scan-20260827223314-a0f437c374-27423ce1
   phase: post
+  owned_analysis_symbols:
+  - RefundOrderManualCancelPostActor
 invocation_contract: null
-updated_at: '2026-08-26T01:52:09.411604Z'
+entry_fact_knowledge: null
+updated_at: '2026-08-27T22:56:43.834448Z'
 ---
 
 
@@ -154,7 +126,7 @@ updated_at: '2026-08-26T01:52:09.411604Z'
 
 ## Agent代码解释（INFERRED）
 
-AUDITED 可转 REFUND_CANCEL，记录 AUDITED_CANCEL 系统日志。
+人工审核完成的 AUDITED 退票单允许流转到 REFUND_CANCEL。
 <!-- kb:auto-end -->
 
 ## 补充说明

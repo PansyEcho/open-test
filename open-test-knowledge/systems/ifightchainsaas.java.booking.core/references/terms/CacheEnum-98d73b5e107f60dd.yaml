@@ -1,0 +1,306 @@
+candidate_id: candidate:business_term:98d73b5e107f60dd
+system_id: ifightchainsaas.java.booking.core
+kind: BUSINESS_TERM
+knowledge_form: BUSINESS_ENUM
+name: CacheEnum
+business_name: CacheEnum
+business_name_source: CODE_DEFAULT
+business_name_known_unknown: false
+enum_values:
+- code: BOOK_ERROR_CACHE
+  business_meaning: 生单错误
+  source: CODE_DEFAULT
+  known_unknown: false
+  confidence: 0.95
+  source_refs:
+  - repository: ''
+    path: app/biz/src/main/java/com/ly/flight/chainsaas/booking/biz/enums/CacheEnum.java
+    symbol: com.ly.flight.chainsaas.booking.biz.enums.CacheEnum#BOOK_ERROR_CACHE
+    line: 78
+    commit: ''
+    content_digest: ''
+- code: OLD_POLICY_RESPONSE_CACHE
+  business_meaning: 强效验
+  source: CODE_DEFAULT
+  known_unknown: false
+  confidence: 0.95
+  source_refs:
+  - repository: ''
+    path: app/biz/src/main/java/com/ly/flight/chainsaas/booking/biz/enums/CacheEnum.java
+    symbol: com.ly.flight.chainsaas.booking.biz.enums.CacheEnum#OLD_POLICY_RESPONSE_CACHE
+    line: 24
+    commit: ''
+    content_digest: ''
+- code: POLICY_DETAIL_RESPONSE_CACHE
+  business_meaning: 政策详情
+  source: CODE_DEFAULT
+  known_unknown: false
+  confidence: 0.95
+  source_refs:
+  - repository: ''
+    path: app/biz/src/main/java/com/ly/flight/chainsaas/booking/biz/enums/CacheEnum.java
+    symbol: com.ly.flight.chainsaas.booking.biz.enums.CacheEnum#POLICY_DETAIL_RESPONSE_CACHE
+    line: 53
+    commit: ''
+    content_digest: ''
+- code: POLICY_INNER_DETAIL_RESPONSE_CACHE
+  business_meaning: 政策详情
+  source: CODE_DEFAULT
+  known_unknown: false
+  confidence: 0.95
+  source_refs:
+  - repository: ''
+    path: app/biz/src/main/java/com/ly/flight/chainsaas/booking/biz/enums/CacheEnum.java
+    symbol: com.ly.flight.chainsaas.booking.biz.enums.CacheEnum#POLICY_INNER_DETAIL_RESPONSE_CACHE
+    line: 69
+    commit: ''
+    content_digest: ''
+- code: POLICY_INNER_REQUEST_CACHE
+  business_meaning: 强效验
+  source: CODE_DEFAULT
+  known_unknown: false
+  confidence: 0.95
+  source_refs:
+  - repository: ''
+    path: app/biz/src/main/java/com/ly/flight/chainsaas/booking/biz/enums/CacheEnum.java
+    symbol: com.ly.flight.chainsaas.booking.biz.enums.CacheEnum#POLICY_INNER_REQUEST_CACHE
+    line: 65
+    commit: ''
+    content_digest: ''
+- code: POLICY_INNER_RESPONSE_CACHE
+  business_meaning: 强效验
+  source: CODE_DEFAULT
+  known_unknown: false
+  confidence: 0.95
+  source_refs:
+  - repository: ''
+    path: app/biz/src/main/java/com/ly/flight/chainsaas/booking/biz/enums/CacheEnum.java
+    symbol: com.ly.flight.chainsaas.booking.biz.enums.CacheEnum#POLICY_INNER_RESPONSE_CACHE
+    line: 57
+    commit: ''
+    content_digest: ''
+- code: POLICY_REQUEST_CACHE
+  business_meaning: 强效验
+  source: CODE_DEFAULT
+  known_unknown: false
+  confidence: 0.95
+  source_refs:
+  - repository: ''
+    path: app/biz/src/main/java/com/ly/flight/chainsaas/booking/biz/enums/CacheEnum.java
+    symbol: com.ly.flight.chainsaas.booking.biz.enums.CacheEnum#POLICY_REQUEST_CACHE
+    line: 44
+    commit: ''
+    content_digest: ''
+- code: POLICY_RESPONSE_CACHE
+  business_meaning: 强效验
+  source: CODE_DEFAULT
+  known_unknown: false
+  confidence: 0.95
+  source_refs:
+  - repository: ''
+    path: app/biz/src/main/java/com/ly/flight/chainsaas/booking/biz/enums/CacheEnum.java
+    symbol: com.ly.flight.chainsaas.booking.biz.enums.CacheEnum#POLICY_RESPONSE_CACHE
+    line: 28
+    commit: ''
+    content_digest: ''
+- code: RESOURCES_INNER_RESPONSE_CACHE
+  business_meaning: 强效验
+  source: CODE_DEFAULT
+  known_unknown: false
+  confidence: 0.95
+  source_refs:
+  - repository: ''
+    path: app/biz/src/main/java/com/ly/flight/chainsaas/booking/biz/enums/CacheEnum.java
+    symbol: com.ly.flight.chainsaas.booking.biz.enums.CacheEnum#RESOURCES_INNER_RESPONSE_CACHE
+    line: 49
+    commit: ''
+    content_digest: ''
+- code: RESOURCES_REQUEST_RETURN_CACHE
+  business_meaning: 强效验缓存
+  source: CODE_DEFAULT
+  known_unknown: false
+  confidence: 0.95
+  source_refs:
+  - repository: ''
+    path: app/biz/src/main/java/com/ly/flight/chainsaas/booking/biz/enums/CacheEnum.java
+    symbol: com.ly.flight.chainsaas.booking.biz.enums.CacheEnum#RESOURCES_REQUEST_RETURN_CACHE
+    line: 40
+    commit: ''
+    content_digest: ''
+- code: RESOURCES_RESPONSE_CACHE
+  business_meaning: 强效验
+  source: CODE_DEFAULT
+  known_unknown: false
+  confidence: 0.95
+  source_refs:
+  - repository: ''
+    path: app/biz/src/main/java/com/ly/flight/chainsaas/booking/biz/enums/CacheEnum.java
+    symbol: com.ly.flight.chainsaas.booking.biz.enums.CacheEnum#RESOURCES_RESPONSE_CACHE
+    line: 32
+    commit: ''
+    content_digest: ''
+- code: RESOURCES_RESPONSE_RETURN_CACHE
+  business_meaning: 强效验缓存
+  source: CODE_DEFAULT
+  known_unknown: false
+  confidence: 0.95
+  source_refs:
+  - repository: ''
+    path: app/biz/src/main/java/com/ly/flight/chainsaas/booking/biz/enums/CacheEnum.java
+    symbol: com.ly.flight.chainsaas.booking.biz.enums.CacheEnum#RESOURCES_RESPONSE_RETURN_CACHE
+    line: 36
+    commit: ''
+    content_digest: ''
+- code: VALIDATE_ERROR_CACHE
+  business_meaning: 强效验错误
+  source: CODE_DEFAULT
+  known_unknown: false
+  confidence: 0.95
+  source_refs:
+  - repository: ''
+    path: app/biz/src/main/java/com/ly/flight/chainsaas/booking/biz/enums/CacheEnum.java
+    symbol: com.ly.flight.chainsaas.booking.biz.enums.CacheEnum#VALIDATE_ERROR_CACHE
+    line: 74
+    commit: ''
+    content_digest: ''
+- code: VALIDATE_PRICE_CHANGE
+  business_meaning: 政策详情
+  source: CODE_DEFAULT
+  known_unknown: false
+  confidence: 0.95
+  source_refs:
+  - repository: ''
+    path: app/biz/src/main/java/com/ly/flight/chainsaas/booking/biz/enums/CacheEnum.java
+    symbol: com.ly.flight.chainsaas.booking.biz.enums.CacheEnum#VALIDATE_PRICE_CHANGE
+    line: 61
+    commit: ''
+    content_digest: ''
+suggested_meaning: 枚举名称和值默认采用源码注释；缺少注释时回退代码标识，可再人工修订。
+code_meaning: 生单错误（BOOK_ERROR_CACHE）；强效验（OLD_POLICY_RESPONSE_CACHE）；政策详情（POLICY_DETAIL_RESPONSE_CACHE）；政策详情（POLICY_INNER_DETAIL_RESPONSE_CACHE）；强效验（POLICY_INNER_REQUEST_CACHE）；强效验（POLICY_INNER_RESPONSE_CACHE）；强效验（POLICY_REQUEST_CACHE）；强效验（POLICY_RESPONSE_CACHE）；强效验（RESOURCES_INNER_RESPONSE_CACHE）；强效验缓存（RESOURCES_REQUEST_RETURN_CACHE）；强效验（RESOURCES_RESPONSE_CACHE）；强效验缓存（RESOURCES_RESPONSE_RETURN_CACHE）；强效验错误（VALIDATE_ERROR_CACHE）；政策详情（VALIDATE_PRICE_CHANGE）
+unresolved_codes: []
+business_meaning: ''
+status: CODE_VERIFIED
+merged_into_candidate_id: ''
+source_refs:
+- repository: ''
+  path: app/biz/src/main/java/com/ly/flight/chainsaas/booking/biz/enums/CacheEnum.java
+  symbol: com.ly.flight.chainsaas.booking.biz.enums.CacheEnum
+  line: 19
+  commit: 004c50d90d152f1ef4892679f8b1b322cc7a7405
+  content_digest: 08110ed38c0dcb7dcbc3c20998a11ee08d222c5f5611220cbd44525e9b8a2c70
+- repository: ''
+  path: app/biz/src/main/java/com/ly/flight/chainsaas/booking/biz/enums/CacheEnum.java
+  symbol: com.ly.flight.chainsaas.booking.biz.enums.CacheEnum#BOOK_ERROR_CACHE
+  line: 78
+  commit: ''
+  content_digest: ''
+- repository: ''
+  path: app/biz/src/main/java/com/ly/flight/chainsaas/booking/biz/enums/CacheEnum.java
+  symbol: com.ly.flight.chainsaas.booking.biz.enums.CacheEnum#OLD_POLICY_RESPONSE_CACHE
+  line: 24
+  commit: ''
+  content_digest: ''
+- repository: ''
+  path: app/biz/src/main/java/com/ly/flight/chainsaas/booking/biz/enums/CacheEnum.java
+  symbol: com.ly.flight.chainsaas.booking.biz.enums.CacheEnum#POLICY_DETAIL_RESPONSE_CACHE
+  line: 53
+  commit: ''
+  content_digest: ''
+- repository: ''
+  path: app/biz/src/main/java/com/ly/flight/chainsaas/booking/biz/enums/CacheEnum.java
+  symbol: com.ly.flight.chainsaas.booking.biz.enums.CacheEnum#POLICY_INNER_DETAIL_RESPONSE_CACHE
+  line: 69
+  commit: ''
+  content_digest: ''
+- repository: ''
+  path: app/biz/src/main/java/com/ly/flight/chainsaas/booking/biz/enums/CacheEnum.java
+  symbol: com.ly.flight.chainsaas.booking.biz.enums.CacheEnum#POLICY_INNER_REQUEST_CACHE
+  line: 65
+  commit: ''
+  content_digest: ''
+- repository: ''
+  path: app/biz/src/main/java/com/ly/flight/chainsaas/booking/biz/enums/CacheEnum.java
+  symbol: com.ly.flight.chainsaas.booking.biz.enums.CacheEnum#POLICY_INNER_RESPONSE_CACHE
+  line: 57
+  commit: ''
+  content_digest: ''
+- repository: ''
+  path: app/biz/src/main/java/com/ly/flight/chainsaas/booking/biz/enums/CacheEnum.java
+  symbol: com.ly.flight.chainsaas.booking.biz.enums.CacheEnum#POLICY_REQUEST_CACHE
+  line: 44
+  commit: ''
+  content_digest: ''
+- repository: ''
+  path: app/biz/src/main/java/com/ly/flight/chainsaas/booking/biz/enums/CacheEnum.java
+  symbol: com.ly.flight.chainsaas.booking.biz.enums.CacheEnum#POLICY_RESPONSE_CACHE
+  line: 28
+  commit: ''
+  content_digest: ''
+- repository: ''
+  path: app/biz/src/main/java/com/ly/flight/chainsaas/booking/biz/enums/CacheEnum.java
+  symbol: com.ly.flight.chainsaas.booking.biz.enums.CacheEnum#RESOURCES_INNER_RESPONSE_CACHE
+  line: 49
+  commit: ''
+  content_digest: ''
+- repository: ''
+  path: app/biz/src/main/java/com/ly/flight/chainsaas/booking/biz/enums/CacheEnum.java
+  symbol: com.ly.flight.chainsaas.booking.biz.enums.CacheEnum#RESOURCES_REQUEST_RETURN_CACHE
+  line: 40
+  commit: ''
+  content_digest: ''
+- repository: ''
+  path: app/biz/src/main/java/com/ly/flight/chainsaas/booking/biz/enums/CacheEnum.java
+  symbol: com.ly.flight.chainsaas.booking.biz.enums.CacheEnum#RESOURCES_RESPONSE_CACHE
+  line: 32
+  commit: ''
+  content_digest: ''
+affected_target_ids:
+- facade:com.ly.flight.chainsaas.booking.facade.PayCallBackFacade#payCallBack
+- facade:com.ly.flight.chainsaas.booking.facade.PayCallBackFacade#payOrderDetail
+- facade:com.ly.flight.chainsaas.booking.facade.PayCallBackFacade#payOrderRiskDetail
+- facade:com.ly.flight.chainsaas.booking.facade.PayCallBackFacade#payValidate
+- facade:com.ly.flight.chainsaas.booking.facade.TcplTradeFacade#book
+- facade:com.ly.flight.chainsaas.booking.facade.TcplTradeFacade#bookValidate
+- facade:com.ly.flight.chainsaas.booking.facade.TcplTradeFacade#confirmPayment
+- facade:com.ly.flight.chainsaas.booking.facade.TcplTradeFacade#notifyTicket
+- facade:com.ly.flight.chainsaas.booking.facade.TcplTradeFacade#payValidate
+- facade:com.ly.flight.chainsaas.booking.facade.TcplTradeFacade#payment
+- facade:com.ly.flight.chainsaas.booking.facade.TcplTradeFacade#retrieve
+- facade:com.ly.flight.chainsaas.booking.facade.TcplTradeFacade#searchBook
+- facade:com.ly.flight.chainsaas.booking.facade.TcplTradeFacade#validateCache
+- facade:com.ly.flight.chainsaas.booking.facade.TradeFacade#addErrorCode
+- facade:com.ly.flight.chainsaas.booking.facade.TradeFacade#addVccRecord
+- facade:com.ly.flight.chainsaas.booking.facade.TradeFacade#batchQueryTicketInfo
+- facade:com.ly.flight.chainsaas.booking.facade.TradeFacade#cancel
+- facade:com.ly.flight.chainsaas.booking.facade.TradeFacade#cancelPnrList
+- facade:com.ly.flight.chainsaas.booking.facade.TradeFacade#checkVccCard
+- facade:com.ly.flight.chainsaas.booking.facade.TradeFacade#closeVccCard
+- facade:com.ly.flight.chainsaas.booking.facade.TradeFacade#createDirectOrder
+- facade:com.ly.flight.chainsaas.booking.facade.TradeFacade#createLog
+- facade:com.ly.flight.chainsaas.booking.facade.TradeFacade#createPayment
+- facade:com.ly.flight.chainsaas.booking.facade.TradeFacade#createVcc
+- facade:com.ly.flight.chainsaas.booking.facade.TradeFacade#execute
+- facade:com.ly.flight.chainsaas.booking.facade.TradeFacade#flightChange
+- facade:com.ly.flight.chainsaas.booking.facade.TradeFacade#headerEdit
+- facade:com.ly.flight.chainsaas.booking.facade.TradeFacade#lockOrder
+- facade:com.ly.flight.chainsaas.booking.facade.TradeFacade#marketingOrderList
+- facade:com.ly.flight.chainsaas.booking.facade.TradeFacade#modifyErrorCodeState
+- facade:com.ly.flight.chainsaas.booking.facade.TradeFacade#orderRebut
+- facade:com.ly.flight.chainsaas.booking.facade.TradeFacade#pnrCallback
+- facade:com.ly.flight.chainsaas.booking.facade.TradeFacade#priceEdit
+- facade:com.ly.flight.chainsaas.booking.facade.TradeFacade#queryDetail
+- facade:com.ly.flight.chainsaas.booking.facade.TradeFacade#queryDetailByThird
+- facade:com.ly.flight.chainsaas.booking.facade.TradeFacade#queryErrorCode
+- facade:com.ly.flight.chainsaas.booking.facade.TradeFacade#queryErrorCodeList
+- facade:com.ly.flight.chainsaas.booking.facade.TradeFacade#queryList
+- facade:com.ly.flight.chainsaas.booking.facade.TradeFacade#queryVCCList
+- facade:com.ly.flight.chainsaas.booking.facade.TradeFacade#queryVccDetail
+- facade:com.ly.flight.chainsaas.booking.facade.TradeFacade#queryVccRecordList
+- facade:com.ly.flight.chainsaas.booking.facade.TradeFacade#realCancel
+- facade:com.ly.flight.chainsaas.booking.facade.TradeFacade#refund
+- facade:com.ly.flight.chainsaas.booking.facade.TradeFacade#unLockOrder
+- facade:com.ly.flight.chainsaas.booking.facade.TradeFacade#updateErrorCode
+- facade:com.ly.flight.chainsaas.booking.facade.TradeFacade#updateVccCard
+evidence_digest: 9e15dd3cddff013fb3b694d2cb63ae396dbfcce5c8980278cb1f0acb412a7537
+discovered_at: '2026-08-27T15:21:11.346608Z'
+updated_at: '2026-08-27T20:27:20.143034Z'

@@ -9,11 +9,21 @@ import pytest
 import yaml
 
 from opentest.adapters.source_analysis import SourceScanArtifactStore
+from opentest.application.capability_schemas import (
+    candidate_has_restricted_projection_surface,
+    candidate_projection_path_evidence,
+    java_closed_business_generic_reference,
+    project_value_to_schema,
+)
 from opentest.application.foundation import OpenTestApplication
 from opentest.application.program_case_analysis import ProgramCaseAnalysisBuilder
 from opentest.domain.errors import KnowledgeNotFoundError, KnowledgeValidationError
 from opentest.domain.models import (
     CandidateOperation,
+    CandidateOperationKind,
+    CandidateOperationStatus,
+    CandidateDtoDefinition,
+    CandidateDtoField,
     CandidateRef,
     CapabilityDraftSubmission,
     DsfClientProfile,
@@ -26,7 +36,9 @@ from opentest.domain.models import (
     ScanManifest,
     SemanticAnalysisResult,
     SemanticFieldDefinition,
+    SemanticFieldConversionEvidence,
     SemanticMethodDefinition,
+    SemanticResolutionStatus,
     SemanticTypeDefinition,
     SourceBaseline,
     SourceReference,
@@ -38,6 +50,8 @@ def _publish_atomic_scan(
     application: OpenTestApplication,
     system_id: str,
     commit: str = "atomic-v1",
+    response_mode: str = "plain",
+    generic_field_required: bool = False,
 ) -> None:
     """发布一个具有真实Java文件、完整DTO和唯一DSF Operation的通用扫描。
 
@@ -45,6 +59,8 @@ def _publish_atomic_scan(
         application: 隔离知识仓库应用。
         system_id: 本次扫描独立所属系统。
         commit: 用于漂移测试的源码基线标识。
+        response_mode: plain、bound_generic或raw_generic响应继承模式。
+        generic_field_required: raw或bound父响应的泛型字段是否有运行时必填证据。
 
     Side Effects:
         写入通用Java源码、注册系统并原子发布latest scan bundle。
@@ -53,16 +69,35 @@ def _publish_atomic_scan(
     source_root = application.knowledge_root.parent / f"source-{system_id}"
     source_file = source_root / "src/main/java/sample/AtomicFacadeImpl.java"
     source_file.parent.mkdir(parents=True)
+    generic_source = (
+        (
+            "@interface NotNull {} class BaseResponse<T> { @NotNull T data; } "
+            if generic_field_required
+            else "class BaseResponse<T> { T data; } "
+        )
+        if response_mode != "plain"
+        else ""
+    )
+    response_source = (
+        "class AtomicResponse extends BaseResponse<String> { String referenceId; } "
+        if response_mode == "bound_generic"
+        else (
+            "class AtomicResponse extends BaseResponse { String referenceId; } "
+            if response_mode == "raw_generic"
+            else "class AtomicResponse { String referenceId; } "
+        )
+    )
     source_file.write_text(
         "package sample; "
         "interface AtomicFacade { AtomicResponse execute(AtomicRequest request); } "
         "class BaseRequest { String traceId; } "
         "class AtomicPayload { String itemCode; } "
         "class AtomicRequest extends BaseRequest { String requestId; AtomicPayload payload; } "
-        "class AtomicResponse { String referenceId; } "
-        "class AtomicFacadeImpl implements AtomicFacade { "
-        "public AtomicResponse execute(AtomicRequest request) { return new AtomicResponse(); } "
-        "public AtomicResponse inspect(AtomicRequest request) { return new AtomicResponse(); } }\n",
+        + generic_source
+        + response_source
+        + "class AtomicFacadeImpl implements AtomicFacade { "
+        + "public AtomicResponse execute(AtomicRequest request) { return new AtomicResponse(); } "
+        + "public AtomicResponse inspect(AtomicRequest request) { return new AtomicResponse(); } }\n",
         encoding="utf-8",
     )
     baseline = SourceBaseline(source_path=str(source_root), commit=commit)
@@ -86,6 +121,8 @@ def _publish_atomic_scan(
     interface_ref = implementation_ref.model_copy(update={"symbol": interface_symbol})
     request_ref = implementation_ref.model_copy(update={"symbol": request_type})
     response_ref = implementation_ref.model_copy(update={"symbol": response_type})
+    generic_base_type = "sample.BaseResponse"
+    generic_base_ref = implementation_ref.model_copy(update={"symbol": generic_base_type})
     base_request_type = "sample.BaseRequest"
     payload_type = "sample.AtomicPayload"
     base_request_ref = implementation_ref.model_copy(update={"symbol": base_request_type})
@@ -192,6 +229,11 @@ def _publish_atomic_scan(
                 symbol_id=response_type,
                 qualified_class_name=response_type,
                 simple_name="AtomicResponse",
+                base_types=(
+                    [f"{generic_base_type}<java.lang.String>"]
+                    if response_mode == "bound_generic"
+                    else ([generic_base_type] if response_mode == "raw_generic" else [])
+                ),
                 fields=[
                     SemanticFieldDefinition(
                         field_name="referenceId",
@@ -201,6 +243,30 @@ def _publish_atomic_scan(
                     )
                 ],
                 source_ref=response_ref,
+            ),
+            *(
+                [
+                    SemanticTypeDefinition(
+                        symbol_id=generic_base_type,
+                        qualified_class_name=generic_base_type,
+                        simple_name="BaseResponse",
+                        fields=[
+                            SemanticFieldDefinition(
+                                field_name="data",
+                                declared_type="T",
+                                referenced_type="T",
+                                runtime_required=generic_field_required,
+                                runtime_required_evidence=(
+                                    ["sample.NotNull"] if generic_field_required else []
+                                ),
+                                source_ref=generic_base_ref,
+                            )
+                        ],
+                        source_ref=generic_base_ref,
+                    )
+                ]
+                if response_mode != "plain"
+                else []
             ),
         ],
     )
@@ -266,6 +332,357 @@ def _entry_candidate(application: OpenTestApplication, system_id: str) -> Candid
     return next(candidate for candidate in candidates if candidate.entry_ids)
 
 
+def _publish_closed_business_generic_scan(
+    application: OpenTestApplication,
+    system_id: str,
+) -> None:
+    """在通用扫描上发布一个Page<Payload>闭合对象响应字段。
+
+    Args:
+        application: 隔离知识仓库应用。
+        system_id: 本次扫描独立所属系统。
+
+    Side Effects:
+        更新测试Java源码并原子发布一个新的latest scan bundle。
+    """
+
+    _publish_atomic_scan(application, system_id)
+    artifacts = SourceScanArtifactStore(application.knowledge_root)
+    manifest = artifacts.read(system_id, "latest")
+    analysis = manifest.semantic_analysis
+    assert analysis is not None
+    response_type = next(
+        item for item in analysis.types if item.qualified_class_name == "sample.AtomicResponse"
+    )
+    page_type_name = "sample.Page"
+    page_ref = response_type.source_ref.model_copy(update={"symbol": page_type_name})
+    paged_response = response_type.model_copy(
+        update={
+            "fields": [
+                *response_type.fields,
+                SemanticFieldDefinition(
+                    field_name="page",
+                    declared_type="Page<AtomicPayload>",
+                    referenced_type="sample.Page<sample.AtomicPayload>",
+                    source_ref=response_type.source_ref,
+                ),
+            ]
+        }
+    )
+    page_type = SemanticTypeDefinition(
+        symbol_id=page_type_name,
+        qualified_class_name=page_type_name,
+        simple_name="Page",
+        fields=[
+            SemanticFieldDefinition(
+                field_name="items",
+                declared_type="java.util.List<T>",
+                referenced_type="T",
+                collection=True,
+                source_ref=page_ref,
+            ),
+            SemanticFieldDefinition(
+                field_name="pageNo",
+                declared_type="int",
+                source_ref=page_ref,
+            ),
+        ],
+        source_ref=page_ref,
+    )
+    generic_analysis = analysis.model_copy(
+        update={
+            "types": [
+                paged_response
+                if item.qualified_class_name == paged_response.qualified_class_name
+                else item
+                for item in analysis.types
+            ]
+            + [page_type]
+        }
+    )
+    generic_manifest = manifest.model_copy(
+        update={
+            "scan_id": f"scan-{system_id}-closed-business-generic",
+            "semantic_analysis": generic_analysis,
+        }
+    )
+    artifacts.write_scan_bundle(
+        generic_manifest,
+        ProgramCaseAnalysisBuilder().build(generic_manifest),
+    )
+    artifacts.publish_latest(system_id, generic_manifest.scan_id)
+
+
+def _publish_generic_root_scan(
+    application: OpenTestApplication,
+    system_id: str,
+    concrete_return_type: str,
+) -> None:
+    """Publish a scan whose facade returns one exact raw or unclosed generic use.
+
+    Args:
+        application: Isolated OpenTest application and knowledge root.
+        system_id: System receiving the synthetic latest scan.
+        concrete_return_type: Exact Java return type used by interface and implementation methods.
+
+    Side Effects:
+        Replaces the system latest scan with the requested generic root evidence.
+    """
+
+    _publish_atomic_scan(application, system_id, response_mode="raw_generic")
+    artifacts = SourceScanArtifactStore(application.knowledge_root)
+    manifest = artifacts.read(system_id, "latest")
+    analysis = manifest.semantic_analysis
+    assert analysis is not None
+
+    # 方法根类型不携带“具体子DTO继承raw父类”的兼容语义，必须单独验证失败关闭。
+    generic_methods = [
+        method.model_copy(
+            update={
+                "return_type": concrete_return_type.rsplit(".", 1)[-1],
+                "return_qualified_type": concrete_return_type,
+            }
+        )
+        for method in analysis.methods
+    ]
+    generic_manifest = manifest.model_copy(
+        update={
+            "scan_id": f"scan-{system_id}-generic-root",
+            "semantic_analysis": analysis.model_copy(update={"methods": generic_methods}),
+        }
+    )
+    artifacts.write_scan_bundle(
+        generic_manifest,
+        ProgramCaseAnalysisBuilder().build(generic_manifest),
+    )
+    artifacts.publish_latest(system_id, generic_manifest.scan_id)
+
+
+def _publish_wildcard_generic_parent_scan(
+    application: OpenTestApplication,
+    system_id: str,
+) -> None:
+    """Publish a concrete response that inherits an unclosed wildcard generic parent.
+
+    Args:
+        application: Isolated OpenTest application and knowledge root.
+        system_id: System receiving the synthetic latest scan.
+
+    Side Effects:
+        Replaces the system latest scan with ``AtomicResponse extends BaseResponse<?>`` evidence.
+    """
+
+    _publish_atomic_scan(application, system_id, response_mode="raw_generic")
+    artifacts = SourceScanArtifactStore(application.knowledge_root)
+    manifest = artifacts.read(system_id, "latest")
+    analysis = manifest.semantic_analysis
+    assert analysis is not None
+
+    # 通配父类不是raw兼容边界，不能借可选T字段省略而形成可发布响应。
+    response_type = next(
+        item for item in analysis.types if item.qualified_class_name == "sample.AtomicResponse"
+    )
+    wildcard_response = response_type.model_copy(
+        update={"base_types": ["sample.BaseResponse<?>"]}
+    )
+    wildcard_manifest = manifest.model_copy(
+        update={
+            "scan_id": f"scan-{system_id}-wildcard-parent",
+            "semantic_analysis": analysis.model_copy(
+                update={
+                    "types": [
+                        wildcard_response
+                        if item.qualified_class_name == wildcard_response.qualified_class_name
+                        else item
+                        for item in analysis.types
+                    ]
+                }
+            ),
+        }
+    )
+    artifacts.write_scan_bundle(
+        wildcard_manifest,
+        ProgramCaseAnalysisBuilder().build(wildcard_manifest),
+    )
+    artifacts.publish_latest(system_id, wildcard_manifest.scan_id)
+
+
+def _publish_inherited_field_collision_scan(
+    application: OpenTestApplication,
+    system_id: str,
+    child_trace_type: str,
+) -> None:
+    """发布子DTO重声明父字段的通用扫描，验证继承合并不会静默覆盖类型冲突。
+
+    Args:
+        application: 隔离知识仓库应用。
+        system_id: 本次扫描独立所属系统。
+        child_trace_type: 子DTO中重声明traceId使用的Java类型。
+
+    Side Effects:
+        在通用扫描的请求DTO中增加同名字段并原子替换latest scan bundle。
+    """
+
+    _publish_atomic_scan(application, system_id)
+    artifacts = SourceScanArtifactStore(application.knowledge_root)
+    manifest = artifacts.read(system_id, "latest")
+    analysis = manifest.semantic_analysis
+    assert analysis is not None
+    request_type = next(
+        item for item in analysis.types if item.qualified_class_name == "sample.AtomicRequest"
+    )
+    trace_reference = "java.lang.String" if child_trace_type == "String" else ""
+    # 子类同名字段保留自己的源码证据，Operation层再决定同形合并或冲突阻塞。
+    shadowed_request = request_type.model_copy(
+        update={
+            "fields": [
+                *request_type.fields,
+                SemanticFieldDefinition(
+                    field_name="traceId",
+                    declared_type=child_trace_type,
+                    referenced_type=trace_reference,
+                    source_ref=request_type.source_ref,
+                ),
+            ]
+        }
+    )
+    collision_analysis = analysis.model_copy(
+        update={
+            "types": [
+                shadowed_request
+                if item.qualified_class_name == shadowed_request.qualified_class_name
+                else item
+                for item in analysis.types
+            ]
+        }
+    )
+    collision_manifest = manifest.model_copy(
+        update={
+            "scan_id": f"scan-{system_id}-shadow-{child_trace_type.lower()}",
+            "semantic_analysis": collision_analysis,
+        }
+    )
+    artifacts.write_scan_bundle(
+        collision_manifest,
+        ProgramCaseAnalysisBuilder().build(collision_manifest),
+    )
+    artifacts.publish_latest(system_id, collision_manifest.scan_id)
+
+
+def _publish_restricted_projection_scan(
+    application: OpenTestApplication,
+    system_id: str,
+    include_typed_conversion: bool = False,
+) -> None:
+    """发布一个只有未选外部父类和枚举不完整的通用扫描。
+
+    Args:
+        application: Pytest隔离的应用与知识目录。
+        system_id: 持有PARTIAL Candidate的注册系统。
+        include_typed_conversion: 是否加入Analyzer证明的integer访问器转换。
+
+    Side Effects:
+        以新scan代际替换latest，不发布能力或访问QA。
+    """
+
+    _publish_atomic_scan(application, system_id)
+    artifacts = SourceScanArtifactStore(application.knowledge_root)
+    manifest = artifacts.read(system_id, "latest")
+    analysis = manifest.semantic_analysis
+    assert analysis is not None
+    response_type = next(
+        item for item in analysis.types if item.qualified_class_name == "sample.AtomicResponse"
+    )
+    external_enum_name = "external.contract.ExternalStateEnum"
+    external_enum_ref = response_type.source_ref.model_copy(update={"symbol": external_enum_name})
+    partial_response = response_type.model_copy(
+        update={
+            "fields": [
+                *response_type.fields,
+                SemanticFieldDefinition(
+                    field_name="externalState",
+                    declared_type="ExternalStateEnum",
+                    referenced_type=external_enum_name,
+                    source_ref=response_type.source_ref,
+                ),
+            ]
+        }
+    )
+    partial_enum = SemanticTypeDefinition(
+        symbol_id=external_enum_name,
+        qualified_class_name=external_enum_name,
+        simple_name="ExternalStateEnum",
+        kind="enum",
+        source_ref=external_enum_ref,
+        resolution_status=SemanticResolutionStatus.PARTIAL,
+    )
+    getter_symbol = "sample.AtomicResponse#getExternalState()"
+    getter_ref = response_type.source_ref.model_copy(update={"symbol": getter_symbol, "line": 2})
+    converter_ref = response_type.source_ref.model_copy(
+        update={"symbol": "external.contract.ExternalStateEnum#getCode()", "line": 3}
+    )
+    conversion_methods = (
+        [
+            SemanticMethodDefinition(
+                symbol_id=getter_symbol,
+                qualified_class_name="sample.AtomicResponse",
+                method_name="getExternalState",
+                return_type="Integer",
+                return_qualified_type="java.lang.Integer",
+                owner_type_kind="class",
+                has_executable_body=True,
+                source_ref=getter_ref,
+            )
+        ]
+        if include_typed_conversion
+        else []
+    )
+    conversions = (
+        [
+            SemanticFieldConversionEvidence(
+                evidence_id="field-conversion:atomic-response:external-state",
+                mapper_method_symbol_id=getter_symbol,
+                target_type="sample.AtomicResponse",
+                target_field_path="externalState",
+                conversion_kind="ACCESSOR_RETURN",
+                serialized_java_type="java.lang.Integer",
+                serialized_schema_type="integer",
+                converter_method_symbol_id=(
+                    "external.contract.ExternalStateEnum#getCode()"
+                ),
+                source_refs=[getter_ref, converter_ref],
+            )
+        ]
+        if include_typed_conversion
+        else []
+    )
+    partial_analysis = analysis.model_copy(
+        update={
+            "methods": [*analysis.methods, *conversion_methods],
+            "types": [
+                partial_response
+                if item.qualified_class_name == partial_response.qualified_class_name
+                else item
+                for item in analysis.types
+                if item.qualified_class_name != "sample.BaseRequest"
+            ]
+            + [partial_enum],
+            "field_conversions": conversions,
+        }
+    )
+    partial_manifest = manifest.model_copy(
+        update={
+            "scan_id": f"scan-{system_id}-restricted-projection",
+            "semantic_analysis": partial_analysis,
+        }
+    )
+    artifacts.write_scan_bundle(
+        partial_manifest,
+        ProgramCaseAnalysisBuilder().build(partial_manifest),
+    )
+    artifacts.publish_latest(system_id, partial_manifest.scan_id)
+
+
 def _candidate_ref(candidate: CandidateOperation) -> CandidateRef:
     """冻结当前Candidate全部发布相关源码事实。
 
@@ -285,6 +702,7 @@ def _candidate_ref(candidate: CandidateOperation) -> CandidateRef:
         request_dto_types=candidate.request_dto_types,
         response_dto_type=candidate.response_dto_type,
         dto_definitions=candidate.dto_definitions,
+        field_conversions=candidate.field_conversions,
     )
 
 
@@ -414,6 +832,691 @@ def test_publish_uses_existing_operation_without_executing_qa(
     assert not (application.knowledge_root / ".opentest/operation-executions").exists()
 
 
+def test_identical_inherited_field_declaration_is_coalesced(
+    tmp_path: Path,
+) -> None:
+    """子父DTO重复声明同形JSON字段时应只保留一个可发布属性。
+
+    Args:
+        tmp_path: Pytest隔离知识、源码和扫描资产目录。
+    """
+
+    application = OpenTestApplication(tmp_path / "knowledge")
+    _publish_inherited_field_collision_scan(application, "atomic-app", "String")
+
+    operation = next(
+        item for item in application.operation_catalog.derive("atomic-app") if item.source_entry_ids
+    )
+    request_properties = operation.publication_input_schema["properties"]
+
+    assert request_properties["traceId"] == {"type": "string"}
+    assert list(request_properties).count("traceId") == 1
+
+
+def test_conflicting_inherited_field_declaration_remains_fail_closed(
+    tmp_path: Path,
+) -> None:
+    """子父DTO同名字段形状冲突时必须阻止Operation发布Schema形成。
+
+    Args:
+        tmp_path: Pytest隔离知识、源码和扫描资产目录。
+    """
+
+    application = OpenTestApplication(tmp_path / "knowledge")
+    _publish_inherited_field_collision_scan(application, "atomic-app", "int")
+
+    operation = next(
+        item for item in application.operation_catalog.derive("atomic-app") if item.source_entry_ids
+    )
+
+    assert operation.publication_input_schema == {}
+
+
+def test_generic_parent_response_produces_closed_candidate_and_operation_schema(
+    tmp_path: Path,
+) -> None:
+    """单形参泛型父响应应按具体实参冻结Candidate并通过正式发布门禁。
+
+    Args:
+        tmp_path: Pytest隔离知识、源码和能力注册表目录。
+    """
+
+    application = OpenTestApplication(tmp_path / "knowledge")
+    _publish_atomic_scan(application, "atomic-app", response_mode="bound_generic")
+    _configure_real_local_binding(application, "atomic-app")
+
+    candidate = _entry_candidate(application, "atomic-app")
+    operation = next(
+        item for item in application.operation_catalog.derive("atomic-app") if item.source_entry_ids
+    )
+    result = application.publish_operation_capability(
+        "atomic-app",
+        _submission(application, "atomic-app", "publish-generic-response-0001"),
+    )
+
+    # Candidate冻结专门化父DTO，不能以CURRENT状态继续携带未绑定类型变量。
+    assert candidate.status.value == "CURRENT"
+    assert "BLOCKED_CANDIDATE_DTO_UNRESOLVED:T" not in candidate.blockers
+    generic_definition = next(
+        definition
+        for definition in candidate.dto_definitions
+        if definition.qualified_type == "sample.BaseResponse<java.lang.String>"
+    )
+    assert generic_definition.fields[0].declared_type == "java.lang.String"
+    assert generic_definition.fields[0].referenced_type == "java.lang.String"
+
+    # Operation输出必须同时包含子响应字段和父响应中已专门化的数据字段。
+    payload_properties = operation.publication_output_schema["properties"]["output"]["properties"]
+    assert payload_properties["data"] == {"type": "string"}
+    assert payload_properties["referenceId"] == {"type": "string"}
+    assert result.status == "PUBLISHED"
+
+
+def test_closed_business_generic_wrapper_is_published_as_recursive_object(
+    tmp_path: Path,
+) -> None:
+    """Page<Payload>证据完整时应递归闭合为对象，不能当数组或透明Payload。
+
+    Args:
+        tmp_path: Pytest隔离知识、源码和能力注册表目录。
+    """
+
+    application = OpenTestApplication(tmp_path / "knowledge")
+    _publish_closed_business_generic_scan(application, "atomic-app")
+    _configure_real_local_binding(application, "atomic-app")
+
+    candidate = _entry_candidate(application, "atomic-app")
+    operation = next(
+        item for item in application.operation_catalog.derive("atomic-app") if item.source_entry_ids
+    )
+    result = application.publish_operation_capability(
+        "atomic-app",
+        _submission(application, "atomic-app", "publish-business-generic-0001"),
+    )
+
+    assert candidate.status.value == "CURRENT"
+    page_definition = next(
+        definition
+        for definition in candidate.dto_definitions
+        if definition.qualified_type == "sample.Page<sample.AtomicPayload>"
+    )
+    assert page_definition.fields[0].declared_type == "java.util.List<sample.AtomicPayload>"
+    payload_schema = operation.publication_output_schema["properties"]["output"]
+    page_schema = payload_schema["properties"]["page"]
+    assert page_schema["type"] == "object"
+    assert page_schema["properties"]["items"]["type"] == "array"
+    assert page_schema["properties"]["items"]["items"]["properties"]["itemCode"] == {
+        "type": "string"
+    }
+    assert result.status == "PUBLISHED"
+
+
+def test_restricted_projection_traverses_closed_wrapper_and_inherited_selected_field() -> None:
+    """受限投影可穿过闭合业务泛型，但仍拒绝选中的partial枚举字段。
+
+    Returns:
+        None；从Page<Entity>继承基类的resolved标识可证明，partial状态不可证明时通过。
+    """
+
+    reference = SourceReference(path="GenericProjection.java", symbol="sample.QueryFacade#queryList")
+    response_type = "sample.OrderListResponse"
+    page_type = "sample.Page<sample.Order>"
+    order_type = "sample.Order"
+    core_type = "sample.CoreOrder"
+    generic_base_type = "sample.BaseVO<java.lang.Long>"
+    enum_type = "external.OrderStateEnum"
+    candidate = CandidateOperation(
+        candidate_id="candidate:generic-app:sample.QueryFacadeImpl#queryList(sample.QueryRequest)",
+        system_id="generic-app",
+        source_scan_id="scan-generic-projection",
+        source_baseline=SourceBaseline(source_path="/tmp/generic-source", commit="generic-v1"),
+        kind=CandidateOperationKind.FACADE,
+        status=CandidateOperationStatus.PARTIAL,
+        qualified_name="sample.QueryFacadeImpl#queryList",
+        method_signature="sample.QueryFacadeImpl#queryList(sample.QueryRequest): sample.OrderListResponse",
+        parameter_names=["request"],
+        parameter_types=["sample.QueryRequest"],
+        return_type=response_type,
+        request_dto_types=["sample.QueryRequest"],
+        response_dto_type=response_type,
+        dto_definitions=[
+            CandidateDtoDefinition(
+                qualified_type=response_type,
+                fields=[
+                    CandidateDtoField(
+                        field_name="list",
+                        declared_type="Page<Order>",
+                        referenced_type=page_type,
+                        source_ref=reference,
+                    )
+                ],
+                source_ref=reference,
+            ),
+            CandidateDtoDefinition(
+                qualified_type=page_type,
+                fields=[
+                    CandidateDtoField(
+                        field_name="pageList",
+                        declared_type="java.util.List<sample.Order>",
+                        referenced_type=order_type,
+                        collection=True,
+                        source_ref=reference,
+                    )
+                ],
+                source_ref=reference,
+            ),
+            CandidateDtoDefinition(
+                qualified_type=order_type,
+                base_types=[core_type],
+                fields=[
+                    CandidateDtoField(
+                        field_name="orderState",
+                        declared_type="OrderStateEnum",
+                        referenced_type=enum_type,
+                        source_ref=reference,
+                        resolution_status=SemanticResolutionStatus.PARTIAL,
+                    )
+                ],
+                source_ref=reference,
+            ),
+            CandidateDtoDefinition(
+                qualified_type=core_type,
+                base_types=[generic_base_type],
+                fields=[
+                    CandidateDtoField(
+                        field_name="orderSerialNo",
+                        declared_type="String",
+                        referenced_type="java.lang.String",
+                        source_ref=reference,
+                    )
+                ],
+                source_ref=reference,
+            ),
+            CandidateDtoDefinition(
+                qualified_type=generic_base_type,
+                fields=[],
+                source_ref=reference,
+            ),
+        ],
+        source_ref=reference,
+        implementation_symbol_id="sample.QueryFacadeImpl#queryList(sample.QueryRequest)",
+        entry_ids=["facade:sample.QueryFacade#queryList"],
+        blockers=[
+            f"BLOCKED_CANDIDATE_DTO_FIELD_PARTIAL:{order_type}.orderState",
+            f"BLOCKED_CANDIDATE_DTO_UNRESOLVED:{enum_type}",
+            f"BLOCKED_CANDIDATE_DTO_GENERIC_BINDING_UNRESOLVED:{generic_base_type}",
+        ],
+    )
+    identity_only_schema = {
+        "type": "array",
+        "items": {
+            "type": "object",
+            "properties": {"orderSerialNo": {"type": "string"}},
+            "required": ["orderSerialNo"],
+            "additionalProperties": False,
+        },
+    }
+    stateful_schema = {
+        "type": "array",
+        "items": {
+            "type": "object",
+            "properties": {
+                "orderSerialNo": {"type": "string"},
+                "orderState": {"type": "integer"},
+            },
+            "required": ["orderSerialNo", "orderState"],
+            "additionalProperties": False,
+        },
+    }
+
+    # 未闭合的泛型基类不影响在其他resolved父类中声明的精确标识字段。
+    restricted_surface = candidate_has_restricted_projection_surface(candidate)
+    identity_evidence = candidate_projection_path_evidence(
+        candidate,
+        "output.list.pageList",
+        identity_only_schema,
+        "output",
+    )
+    state_evidence = candidate_projection_path_evidence(
+        candidate,
+        "output.list.pageList",
+        stateful_schema,
+        "output",
+    )
+    typed_candidate = candidate.model_copy(
+        update={
+            "field_conversions": [
+                SemanticFieldConversionEvidence(
+                    evidence_id="field-conversion:generic-order-state",
+                    mapper_method_symbol_id=(
+                        "sample.QueryFacadeImpl#queryList(sample.QueryRequest)"
+                    ),
+                    target_type=order_type,
+                    target_field_path="orderState",
+                    conversion_kind="MAPPER_SETTER",
+                    serialized_java_type="java.lang.Integer",
+                    serialized_schema_type="integer",
+                    converter_method_symbol_id="sample.OrderStateConverter#toCode(sample.Order)",
+                    source_refs=[
+                        reference.model_copy(update={"symbol": "sample.OrderMapper#setOrderState"}),
+                        reference.model_copy(update={"symbol": "sample.OrderStateConverter#toCode"}),
+                    ],
+                )
+            ]
+        }
+    )
+    typed_state_evidence = candidate_projection_path_evidence(
+        typed_candidate,
+        "output.list.pageList",
+        stateful_schema,
+        "output",
+    )
+
+    assert restricted_surface
+    assert identity_evidence == reference
+    assert state_evidence is None
+    assert typed_state_evidence is not None
+
+
+def test_optional_raw_generic_field_is_evidence_only_and_cannot_enter_mapping_schema(
+    tmp_path: Path,
+) -> None:
+    """raw父类的可选裸变量字段可保留证据，但不得阻塞其他闭合输出字段发布。
+
+    Args:
+        tmp_path: Pytest隔离知识、源码和能力注册表目录。
+    """
+
+    application = OpenTestApplication(tmp_path / "knowledge")
+    _publish_atomic_scan(application, "atomic-app", response_mode="raw_generic")
+    _configure_real_local_binding(application, "atomic-app")
+
+    candidate = _entry_candidate(application, "atomic-app")
+    operation = next(
+        item for item in application.operation_catalog.derive("atomic-app") if item.source_entry_ids
+    )
+    result = application.publish_operation_capability(
+        "atomic-app",
+        _submission(application, "atomic-app", "publish-raw-generic-response-0001"),
+    )
+
+    # Candidate仍冻结raw字段源码证据，发布面只排除无法证明JSON形状的可选变量字段。
+    assert candidate.status.value == "CURRENT"
+    raw_definition = next(
+        definition
+        for definition in candidate.dto_definitions
+        if definition.qualified_type == "sample.BaseResponse"
+    )
+    assert raw_definition.fields[0].declared_type == "T"
+    payload_properties = operation.publication_output_schema["properties"]["output"]["properties"]
+    assert "data" not in payload_properties
+    assert payload_properties["referenceId"] == {"type": "string"}
+    assert result.status == "PUBLISHED"
+
+
+def test_required_raw_generic_field_remains_fail_closed(
+    tmp_path: Path,
+) -> None:
+    """raw父类裸变量字段有运行时必填证据时必须阻塞Candidate和能力发布。
+
+    Args:
+        tmp_path: Pytest隔离知识、源码和能力注册表目录。
+    """
+
+    application = OpenTestApplication(tmp_path / "knowledge")
+    _publish_atomic_scan(
+        application,
+        "atomic-app",
+        response_mode="raw_generic",
+        generic_field_required=True,
+    )
+    _configure_real_local_binding(application, "atomic-app")
+
+    candidate = _entry_candidate(application, "atomic-app")
+    operation = next(
+        item for item in application.operation_catalog.derive("atomic-app") if item.source_entry_ids
+    )
+    result = application.publish_operation_capability(
+        "atomic-app",
+        _submission(application, "atomic-app", "publish-required-raw-generic-0001"),
+    )
+
+    assert candidate.status.value == "PARTIAL"
+    assert (
+        "BLOCKED_CANDIDATE_DTO_FIELD_UNRESOLVED:sample.BaseResponse.data"
+        in candidate.blockers
+    )
+    assert operation.publication_output_schema == {}
+    assert result.status == "BLOCKED"
+    assert "CANDIDATE_METADATA_PARTIAL" in {issue.code for issue in result.issues}
+
+
+def test_partial_candidate_publishes_only_analyzer_proven_selected_paths(
+    tmp_path: Path,
+) -> None:
+    """PARTIAL Candidate可发布受限投影，但不能改写候选整体状态。
+
+    Args:
+        tmp_path: Pytest隔离的知识、源码、环境和能力目录。
+
+    Returns:
+        None；未选外部父类/枚举保留PARTIAL，直接resolved字段可发布并重验时通过。
+
+    Side Effects:
+        只向临时Git真相发布一个Published能力，不执行QA。
+    """
+
+    application = OpenTestApplication(tmp_path / "knowledge")
+    _publish_restricted_projection_scan(application, "atomic-app")
+    _configure_real_local_binding(application, "atomic-app")
+
+    candidate = _entry_candidate(application, "atomic-app")
+    operation = next(
+        item for item in application.operation_catalog.derive("atomic-app") if item.source_entry_ids
+    )
+    result = application.publish_operation_capability(
+        "atomic-app",
+        _submission(application, "atomic-app", "publish-restricted-projection-0001"),
+    )
+
+    assert candidate.status.value == "PARTIAL"
+    assert set(candidate.blockers) == {
+        "BLOCKED_CANDIDATE_DTO_PARTIAL:external.contract.ExternalStateEnum",
+        "BLOCKED_CANDIDATE_DTO_UNRESOLVED:sample.BaseRequest",
+    }
+    assert operation.publication_input_schema == {}
+    assert operation.publication_output_schema == {}
+    assert result.status == "PUBLISHED"
+    assert result.capability is not None
+    assert (
+        application.published_capabilities.get_current(
+            "atomic-app",
+            result.capability.capability_id,
+        )
+        == result.capability
+    )
+    # 运行投影也只保留Published显式字段，未选外部字段不进入Fact。
+    projected = project_value_to_schema(
+        {
+            "type": "object",
+            "properties": {"referenceId": {"type": "string"}},
+            "required": ["referenceId"],
+            "additionalProperties": False,
+        },
+        {"referenceId": "ref-1", "externalState": "UNKNOWN"},
+    )
+    assert projected == {"referenceId": "ref-1"}
+
+
+def test_partial_candidate_publishes_exact_typed_output_conversion(tmp_path: Path) -> None:
+    """PARTIAL枚举字段只有携带current typed converter证据时才可投影为integer。
+
+    Args:
+        tmp_path: Pytest隔离源码、scan和Published目录。
+
+    Side Effects:
+        只发布临时受限能力；不读取Token值或执行QA。
+    """
+
+    application = OpenTestApplication(tmp_path / "knowledge")
+    _publish_restricted_projection_scan(
+        application,
+        "atomic-app",
+        include_typed_conversion=True,
+    )
+    base_submission = _submission(
+        application,
+        "atomic-app",
+        "publish-typed-conversion-0001",
+    )
+    submission = base_submission.model_copy(
+        update={
+            "output_fact_schema": {
+                "type": "object",
+                "properties": {"external_state": {"type": "integer"}},
+                "required": ["external_state"],
+                "additionalProperties": False,
+            },
+            "output_mapping": {"external_state": "output.externalState"},
+        }
+    )
+
+    result = application.publish_operation_capability("atomic-app", submission)
+
+    assert result.status == "PUBLISHED"
+    assert result.capability is not None
+    assert result.capability.candidate_ref.field_conversions
+    assert (
+        application.published_capabilities.get_current(
+            "atomic-app",
+            result.capability.capability_id,
+        )
+        == result.capability
+    )
+
+
+def test_partial_candidate_rejects_unfrozen_typed_conversion_proof(tmp_path: Path) -> None:
+    """草稿遗漏Analyzer conversion快照时不得靠current Candidate隐式补证。
+
+    Args:
+        tmp_path: Pytest隔离源码、scan和Published目录。
+    """
+
+    application = OpenTestApplication(tmp_path / "knowledge")
+    _publish_restricted_projection_scan(
+        application,
+        "atomic-app",
+        include_typed_conversion=True,
+    )
+    base_submission = _submission(
+        application,
+        "atomic-app",
+        "publish-unfrozen-conversion-0001",
+    )
+    stale_reference = base_submission.candidate_ref.model_copy(
+        update={"field_conversions": []}
+    )
+    submission = base_submission.model_copy(update={"candidate_ref": stale_reference})
+
+    result = application.publish_operation_capability("atomic-app", submission)
+
+    assert result.status == "BLOCKED"
+    assert "CANDIDATE_DTO_DRIFT" in {issue.code for issue in result.issues}
+    application.close()
+
+
+@pytest.mark.parametrize(
+    ("input_schema", "input_mapping", "output_schema", "output_mapping"),
+    [
+        (
+            {
+                "type": "object",
+                "properties": {"trace_id": {"type": "string"}},
+                "required": ["trace_id"],
+                "additionalProperties": False,
+            },
+            {"trace_id": "traceId"},
+            {
+                "type": "object",
+                "properties": {"reference_id": {"type": "string"}},
+                "required": ["reference_id"],
+                "additionalProperties": False,
+            },
+            {"reference_id": "output.referenceId"},
+        ),
+        (
+            {
+                "type": "object",
+                "properties": {"request_id": {"type": "string"}},
+                "required": ["request_id"],
+                "additionalProperties": False,
+            },
+            {"request_id": "requestId"},
+            {
+                "type": "object",
+                "properties": {"state": {"type": "string"}},
+                "required": ["state"],
+                "additionalProperties": False,
+            },
+            {"state": "output.externalState"},
+        ),
+    ],
+)
+def test_partial_candidate_rejects_unproven_selected_path(
+    tmp_path: Path,
+    input_schema: dict[str, object],
+    input_mapping: dict[str, str],
+    output_schema: dict[str, object],
+    output_mapping: dict[str, str],
+) -> None:
+    """受限投影必须拒绝落在未解析外部父类或枚举上的选中路径。
+
+    Args:
+        tmp_path: Pytest隔离知识、源码和能力目录。
+        input_schema: 本轮草稿选中的逻辑输入形状。
+        input_mapping: 逻辑输入到provider的精确路径。
+        output_schema: 本轮草稿选中的逻辑输出形状。
+        output_mapping: provider结果到逻辑输出的精确路径。
+
+    Returns:
+        None；任一selected path不可程序证明时发布保持BLOCKED。
+
+    Side Effects:
+        只校验临时草稿，不写Published真相或访问QA。
+    """
+
+    application = OpenTestApplication(tmp_path / "knowledge")
+    _publish_restricted_projection_scan(application, "atomic-app")
+    _configure_real_local_binding(application, "atomic-app")
+    base = _submission(application, "atomic-app", "publish-unproven-projection-0001")
+    submission = base.model_copy(
+        update={
+            "input_schema": input_schema,
+            "input_mapping": input_mapping,
+            "output_fact_schema": output_schema,
+            "output_mapping": output_mapping,
+        }
+    )
+
+    result = application.publish_operation_capability("atomic-app", submission)
+
+    assert result.status == "BLOCKED"
+    assert "CANDIDATE_SELECTED_PATH_UNPROVEN" in {issue.code for issue in result.issues}
+    assert not (
+        application.store.system_root("atomic-app") / "capabilities/published.yaml"
+    ).exists()
+    application.close()
+
+
+@pytest.mark.parametrize(
+    "concrete_return_type",
+    [
+        "sample.BaseResponse",
+        "sample.BaseResponse<?>",
+        "sample.BaseResponse<java.util.List<java.lang.String>>",
+        "sample.BaseResponse<java.lang.String,java.lang.Integer>",
+    ],
+)
+def test_raw_or_unclosed_generic_method_root_remains_fail_closed(
+    tmp_path: Path,
+    concrete_return_type: str,
+) -> None:
+    """Method roots cannot use the raw-parent compatibility path to hide generic uncertainty.
+
+    Args:
+        tmp_path: Pytest isolated knowledge, source, and scan root.
+        concrete_return_type: Raw, wildcard, nested, or multi-argument generic return use.
+    """
+
+    application = OpenTestApplication(tmp_path / "knowledge")
+    _publish_generic_root_scan(application, "atomic-app", concrete_return_type)
+
+    candidate = _entry_candidate(application, "atomic-app")
+    operation = next(
+        item for item in application.operation_catalog.derive("atomic-app") if item.source_entry_ids
+    )
+
+    assert candidate.status.value == "PARTIAL"
+    assert operation.publication_output_schema == {}
+
+
+def test_wildcard_generic_parent_remains_fail_closed(tmp_path: Path) -> None:
+    """A wildcard parent is not equivalent to a deliberately raw inherited compatibility DTO.
+
+    Args:
+        tmp_path: Pytest isolated knowledge, source, and scan root.
+    """
+
+    application = OpenTestApplication(tmp_path / "knowledge")
+    _publish_wildcard_generic_parent_scan(application, "atomic-app")
+
+    candidate = _entry_candidate(application, "atomic-app")
+    operation = next(
+        item for item in application.operation_catalog.derive("atomic-app") if item.source_entry_ids
+    )
+
+    assert candidate.status.value == "PARTIAL"
+    assert operation.publication_output_schema == {}
+
+
+def test_closed_business_generic_reference_requires_matching_owner_and_argument() -> None:
+    """Closed business wrappers accept simple-to-FQN resolution but reject package drift."""
+
+    assert java_closed_business_generic_reference(
+        "Page<Payload>",
+        "sample.Page<sample.Payload>",
+    )
+    assert not java_closed_business_generic_reference(
+        "a.Page<a.Payload>",
+        "b.Page<b.Other>",
+    )
+    assert not java_closed_business_generic_reference(
+        "a.Page<a.Payload>",
+        "a.Page<b.Other>",
+    )
+
+
+def test_top_level_unbound_type_variable_remains_unresolved(
+    tmp_path: Path,
+) -> None:
+    """方法顶层返回变量没有具体owner绑定时不得借Entry展示类型猜测响应Schema。
+
+    Args:
+        tmp_path: Pytest隔离知识、源码和扫描资产目录。
+    """
+
+    application = OpenTestApplication(tmp_path / "knowledge")
+    _publish_atomic_scan(application, "atomic-app")
+    artifacts = SourceScanArtifactStore(application.knowledge_root)
+    manifest = artifacts.read("atomic-app", "latest")
+    analysis = manifest.semantic_analysis
+    assert analysis is not None
+    unbound_methods = [
+        (
+            method.model_copy(update={"return_type": "T", "return_qualified_type": "T"})
+            if method.owner_type_kind == "class"
+            else method
+        )
+        for method in analysis.methods
+    ]
+    unbound_manifest = manifest.model_copy(
+        update={
+            "scan_id": "scan-atomic-app-unbound-top-level",
+            "semantic_analysis": analysis.model_copy(update={"methods": unbound_methods}),
+        }
+    )
+    artifacts.write_scan_bundle(
+        unbound_manifest,
+        ProgramCaseAnalysisBuilder().build(unbound_manifest),
+    )
+    artifacts.publish_latest("atomic-app", unbound_manifest.scan_id)
+
+    candidate = _entry_candidate(application, "atomic-app")
+
+    assert candidate.status.value == "PARTIAL"
+    assert "BLOCKED_CANDIDATE_DTO_UNRESOLVED:T" in candidate.blockers
+
+
 def test_publication_request_is_idempotent_and_conflicting_retry_is_blocked(tmp_path: Path) -> None:
     """相同请求重试返回原能力，修改载荷则阻塞且不覆盖Git。
 
@@ -506,8 +1609,10 @@ def test_schema_mapping_and_source_drift_block_publication(
     ).exists()
 
 
-def test_missing_owner_local_binding_and_unproven_same_name_are_blocked(tmp_path: Path) -> None:
-    """缺少所属系统绑定或无共同Entry/symbol时都不得借用现有Operation。
+def test_missing_local_value_does_not_block_publication_but_unproven_operation_does(
+    tmp_path: Path,
+) -> None:
+    """离线发布只冻结安全绑定路径，而无共同Entry/symbol仍不得借用Operation。
 
     Args:
         tmp_path: Pytest隔离知识与源码根目录。
@@ -517,7 +1622,7 @@ def test_missing_owner_local_binding_and_unproven_same_name_are_blocked(tmp_path
     _publish_atomic_scan(application, "atomic-app")
     submission = _submission(application, "atomic-app")
 
-    missing_binding = application.publish_operation_capability("atomic-app", submission)
+    offline_publication = application.publish_operation_capability("atomic-app", submission)
     inspect_candidate = next(
         candidate
         for candidate in application.candidate_operation_catalog("atomic-app").candidates
@@ -534,11 +1639,13 @@ def test_missing_owner_local_binding_and_unproven_same_name_are_blocked(tmp_path
         ),
     )
 
-    assert "CAPABILITY_LOCAL_ENVIRONMENT_MISSING" in {
-        issue.code for issue in missing_binding.issues
-    }
+    assert offline_publication.status == "PUBLISHED"
+    assert offline_publication.capability is not None
+    assert offline_publication.capability.required_local_bindings == [
+        "values.tool_environment.LABRADOR_TOKEN"
+    ]
     assert "CAPABILITY_OPERATION_UNPROVEN" in {issue.code for issue in unproven.issues}
-    assert application.published_capability_registry("atomic-app").capabilities == []
+    assert len(application.published_capability_registry("atomic-app").capabilities) == 1
 
 
 def test_missing_nested_dto_keeps_candidate_partial_and_blocks_publication(tmp_path: Path) -> None:
@@ -605,10 +1712,10 @@ def test_missing_nested_dto_keeps_candidate_partial_and_blocks_publication(tmp_p
     ).exists()
 
 
-def test_map_and_arbitrary_generic_wrappers_cannot_be_published_as_arrays(
+def test_map_and_mismatched_generic_wrapper_references_remain_fail_closed(
     tmp_path: Path,
 ) -> None:
-    """Map与Page等泛型包装即使旧分析标resolved也必须在发布端失败关闭。
+    """Map与声明/解析不一致的业务包装即使标resolved也必须失败关闭。
 
     Args:
         tmp_path: Pytest隔离知识、源码和V2注册表目录。
@@ -798,16 +1905,16 @@ def test_malformed_v2_registry_never_selects_duplicate_or_cross_system_records(t
         application.published_capability_registry("atomic-app")
 
 
-def test_real_registered_refund_and_booking_sources_remain_truthfully_blocked(
+def test_real_registered_refund_and_booking_sources_enforce_current_publication_gates(
     tmp_path: Path,
 ) -> None:
-    """在正式registered/latest的隔离副本中验证真实系统不会被通用夹具冒充发布。
+    """在正式registered/latest隔离副本中验证退款可发布且Booking仍服从真实门禁。
 
     Args:
         tmp_path: 承载正式知识、扫描与0600本地绑定的原样隔离副本。
 
     Side Effects:
-        只向临时副本提交两个当前必然阻塞的真实草稿；正式知识仓库始终只读。
+        只向临时副本提交两个真实草稿；正式知识仓库始终只读且不执行QA。
     """
 
     project_root = Path(__file__).resolve().parents[2]
@@ -854,13 +1961,8 @@ def test_real_registered_refund_and_booking_sources_remain_truthfully_blocked(
     }
     assert set(selected_refund_candidates) == expected_refund_methods
     assert all(candidate.entry_ids for candidate in selected_refund_candidates.values())
-    assert all(
-        candidate.status.value == "PARTIAL"
-        and any("DTO_" in blocker for blocker in candidate.blockers)
-        for candidate in selected_refund_candidates.values()
-    )
 
-    # 原始泛型T和未解析集合DTO使真实退款输出契约无法闭合，不能按方法名猜测后发布。
+    # cancel的raw父类可选T保留证据但不再遮蔽其余闭合输入输出字段。
     refund_operations = {
         operation.operation_id: operation
         for operation in application.operation_catalog.derive(refund_system_id)
@@ -869,6 +1971,9 @@ def test_real_registered_refund_and_booking_sources_remain_truthfully_blocked(
         "com.ly.flight.chainsaas.refund.facade.impl.RefundFacadeImpl#cancel"
     ]
     cancel_operation = refund_operations[cancel_candidate.entry_ids[0]]
+    assert cancel_candidate.status.value == "CURRENT"
+    assert cancel_candidate.blockers == []
+    assert cancel_operation.publication_output_schema["properties"]["output"]["properties"]
     refund_registry_path = (
         application.store.system_root(refund_system_id) / "capabilities/published.yaml"
     )
@@ -884,35 +1989,36 @@ def test_real_registered_refund_and_booking_sources_remain_truthfully_blocked(
             source_scan_id=cancel_operation.source_scan_id,
         ),
         business_name="真实退款取消原子操作",
-        business_purpose="验证正式退款Candidate在DTO证据不完整时保持阻塞。",
+        business_purpose="使用正式退款Candidate发布取消Action，不执行QA。",
         input_schema={
             "type": "object",
-            "properties": {},
-            "required": [],
+            "properties": {"refund_serial_no": {"type": "string"}},
+            "required": ["refund_serial_no"],
             "additionalProperties": False,
         },
-        input_mapping={},
+        input_mapping={"refund_serial_no": "refundSerialNo"},
         output_fact_schema={
             "type": "object",
-            "properties": {},
-            "required": [],
+            "properties": {
+                "success": {"type": "boolean"},
+                "code": {"type": "string"},
+            },
+            "required": ["success", "code"],
             "additionalProperties": False,
         },
-        output_mapping={},
+        output_mapping={"success": "output.success", "code": "output.code"},
     )
     refund_result = application.publish_operation_capability(
         refund_system_id,
         refund_submission,
     )
-    assert refund_result.status == "BLOCKED"
-    assert {issue.code for issue in refund_result.issues}.issuperset(
-        {"CANDIDATE_METADATA_PARTIAL", "CAPABILITY_OPERATION_SCHEMA_INCOMPLETE"}
-    )
+    assert refund_result.status == "PUBLISHED"
+    assert refund_result.issues == []
     assert (
         refund_registry_path.read_bytes() if refund_registry_path.exists() else None
-    ) == refund_registry_before
+    ) != refund_registry_before
 
-    # Booking同样读取正式latest；其本地Token缺失必须作为真实发布断点返回。
+    # Booking同样读取正式latest；本地Token缺失只影响显式Attempt，不阻止离线发布。
     booking_candidates = application.candidate_operation_catalog(booking_system_id).candidates
     booking_operations = {
         operation.operation_id: operation
@@ -940,7 +2046,7 @@ def test_real_registered_refund_and_booking_sources_remain_truthfully_blocked(
                 source_scan_id=booking_operation.source_scan_id,
             ),
             "business_name": "真实Booking原子操作",
-            "business_purpose": "验证正式Booking所属系统缺少本地Token时保持阻塞。",
+            "business_purpose": "验证正式Booking离线发布只冻结本地绑定路径。",
         }
     )
     booking_result = application.publish_operation_capability(
@@ -948,7 +2054,10 @@ def test_real_registered_refund_and_booking_sources_remain_truthfully_blocked(
         booking_submission,
     )
     assert booking_result.status == "BLOCKED"
-    assert "CAPABILITY_LOCAL_BINDING_MISSING" in {
+    assert "CAPABILITY_LOCAL_BINDING_MISSING" not in {
+        issue.code for issue in booking_result.issues
+    }
+    assert "CAPABILITY_LOCAL_ENVIRONMENT_MISSING" not in {
         issue.code for issue in booking_result.issues
     }
     assert (

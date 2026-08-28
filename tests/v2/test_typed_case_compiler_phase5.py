@@ -6,6 +6,8 @@ import shutil
 import time
 from dataclasses import dataclass
 from pathlib import Path
+from types import SimpleNamespace
+from urllib.parse import quote
 
 import pytest
 import yaml
@@ -16,7 +18,10 @@ from opentest.api import create_app
 from opentest.application.foundation import OpenTestApplication
 from opentest.application.program_case_analysis import ProgramCaseAnalysisBuilder
 from opentest.application.scenarios import PairwiseVariantSelector
-from opentest.application.typed_case_compiler import ConstrainedPairwiseGenerator
+from opentest.application.typed_case_compiler import (
+    ConstrainedPairwiseGenerator,
+    StatefulPlanResolutionState,
+)
 from opentest.domain.errors import KnowledgeValidationError
 from opentest.domain.models import (
     ActionFactContractDefinition,
@@ -25,6 +30,9 @@ from opentest.domain.models import (
     CandidateRef,
     CapabilityDraftSubmission,
     CapabilityInputSourcePolicy,
+    CaseCondition,
+    CaseConditionResolutionOwner,
+    CaseConditionType,
     CaseCompilationActionProfile,
     CaseCompilationRuleSet,
     DecisionObligation,
@@ -35,12 +43,21 @@ from opentest.domain.models import (
     DsfOperationMutability,
     DsfProfileStatus,
     EffectObligation,
+    EntryFactAssertion,
+    EntryFactCandidateSet,
+    EntryFactKnowledge,
     EntryPoint,
     FactorObligation,
     FactorCombinationConstraint,
     FaultInjectionObligation,
     GeneratedInputRef,
+    HybridCaseGenerationRequest,
+    KnowledgeConclusionSource,
+    KnowledgeDraft,
+    KnowledgeGenerationWorkflowBatch,
+    KnowledgeNode,
     KnowledgeNodeKind,
+    KnowledgeStatus,
     OperationMutability,
     OracleAssertionTemplate,
     OracleEffectObservationTemplate,
@@ -48,6 +65,7 @@ from opentest.domain.models import (
     OracleTemplate,
     ProgramCaseAnalysisArtifact,
     ProgramCaseAnalysisCatalog,
+    ProducerEntrySourceRef,
     ProviderOperationRef,
     PublishedCapabilityRef,
     PublishedOperationCapability,
@@ -62,8 +80,13 @@ from opentest.domain.models import (
     SemanticTypeDefinition,
     SequenceObligation,
     SetupFactRequiredField,
+    SetupContractRuleSet,
+    SetupFactContractDefinition,
+    SetupFactOrigin,
+    SetupStatePredicateDefinition,
     SourceBaseline,
     SourceReference,
+    StatefulEntityRequirement,
     SystemDefinition,
     SystemDependencyBindingSubmission,
     SystemDependencyPurpose,
@@ -120,6 +143,709 @@ def test_public_compile_request_rejects_all_client_asset_injection(tmp_path: Pat
         "cleanup_plan_id",
         "base_inputs",
     }
+
+
+def test_formal_entry_fact_knowledge_uses_scan_entry_identity_in_case_preview(
+    tmp_path: Path,
+) -> None:
+    """正式知识节点的历史ID必须桥接到scan入口并进入Case条件。
+
+    Args:
+        tmp_path: Pytest隔离知识节点、Setup契约和Case预览资产。
+
+    Returns:
+        None；canonical入口事实进入Frozen条件且缺Producer时友好阻塞。
+
+    Side Effects:
+        仅在临时Git知识根写正式节点和Setup规则，不访问AI或QA。
+    """
+
+    harness = _compiler_harness(tmp_path, [])
+    manifest = harness.application.source_analysis.artifacts.read(SYSTEM_ID, "latest")
+    entry = manifest.entries[0]
+    fact_contract_id = "generic-entity/v1"
+    harness.application.setup_contract_rules.write(
+        SetupContractRuleSet(
+            system_id=SYSTEM_ID,
+            fact_contracts=[
+                SetupFactContractDefinition(
+                    fact_contract_id=fact_contract_id,
+                    required_origin=SetupFactOrigin.UPSTREAM_PUBLISHED_OUTPUT,
+                    required_fields=[
+                        SetupFactRequiredField(path="entity_id", schema_type="string"),
+                        SetupFactRequiredField(path="status", schema_type="string"),
+                    ],
+                    business_identity_paths=["entity_id"],
+                        state_path="status",
+                        state_predicates=[
+                            SetupStatePredicateDefinition(
+                                name="READY",
+                                allowed_values=["READY"],
+                            )
+                        ],
+                )
+            ],
+        )
+    )
+    requirement = EntryFactAssertion(
+        assertion_id="entry-fact:generic-requires-ready",
+        assertion_type="REQUIRES_FACT",
+        slot_id="generic_entity",
+        fact_contract_id=fact_contract_id,
+        required_state="READY",
+        acquisition_policy="QUERY_THEN_CREATE",
+        source=KnowledgeConclusionSource.CODE_PROVEN,
+        evidence_refs=[
+            SourceReference(
+                path=entry.source_path,
+                symbol=METHOD_ID,
+                line=1,
+                commit=manifest.baseline.commit,
+            )
+        ],
+    )
+    node = KnowledgeNode(
+        node_id=f"entry:{entry.source_id}",
+        system_id=SYSTEM_ID,
+        kind=KnowledgeNodeKind.FACADE,
+        title=entry.display_name,
+        aliases=[entry.entry_id, entry.source_id, entry.display_name],
+        status=KnowledgeStatus.CODE_VERIFIED,
+        entry_fact_knowledge=EntryFactKnowledge(
+            entry_id=entry.entry_id,
+            source_scan_id=manifest.scan_id,
+            source_baseline=manifest.baseline,
+            requires_facts=[requirement],
+        ),
+    )
+    harness.application.store.write_node(node, "# Generic entry\n")
+
+    preview = harness.application.preview_case_rules(SYSTEM_ID, ENTRY_ID)
+    compilation = harness.application.compile_typed_cases(
+        SYSTEM_ID,
+        TypedCaseCompileRequest(entry_id=ENTRY_ID),
+    )
+
+    stateful_conditions = [
+        condition
+        for condition in preview.manifest.conditions
+        if condition.condition_type.value == "STATEFUL_ENTITY_PRECONDITION"
+    ]
+    assert len(stateful_conditions) == 1
+    assert stateful_conditions[0].stateful_requirement.slot_id == "generic_entity"
+    assert {blocker.code for blocker in compilation.blockers} >= {
+        "BLOCKED_STATEFUL_ENTITY_PRODUCER_REQUIRED"
+    }
+    producer_blocker = next(
+        blocker
+        for blocker in compilation.blockers
+        if blocker.code == "BLOCKED_STATEFUL_ENTITY_PRODUCER_REQUIRED"
+    )
+    assert producer_blocker.obligation_id == stateful_conditions[0].condition_id
+
+
+def test_pending_entry_fact_candidate_blocks_without_becoming_case_condition(
+    tmp_path: Path,
+) -> None:
+    """未确认Fact候选只能形成单一待确认阻塞，精确确认后才进入正式条件。
+
+    Args:
+        tmp_path: Pytest隔离知识草稿、正式节点、Fact契约和Generation资产。
+
+    Returns:
+        None；候选不被消费、Generation保持Blocked且精确确认后出现正式条件时通过。
+
+    Side Effects:
+        仅写临时知识草稿与正式节点，不调用AI、QA或业务接口。
+    """
+
+    harness = _compiler_harness(tmp_path, [])
+    manifest = harness.application.source_analysis.artifacts.read(SYSTEM_ID, "latest")
+    entry = manifest.entries[0]
+    contract = SetupFactContractDefinition(
+        fact_contract_id="generic-entity/v1",
+        display_name="通用业务实体",
+        required_origin=SetupFactOrigin.PUBLISHED_OUTPUT,
+        required_fields=[
+            SetupFactRequiredField(path="entity_id", schema_type="string"),
+            SetupFactRequiredField(path="status", schema_type="string"),
+        ],
+        business_identity_paths=["entity_id"],
+        state_path="status",
+        state_predicates=[
+            SetupStatePredicateDefinition(
+                name="READY",
+                display_name="可用",
+                allowed_values=["READY"],
+            )
+        ],
+    )
+    harness.application.setup_contract_rules.write(
+        SetupContractRuleSet(system_id=SYSTEM_ID, fact_contracts=[contract])
+    )
+    evidence_path = Path(entry.source_path).relative_to(manifest.baseline.source_path).as_posix()
+    evidence = SourceReference(
+        path=evidence_path,
+        symbol=METHOD_ID,
+        line=1,
+        commit=manifest.baseline.commit,
+    )
+    node = KnowledgeNode(
+        node_id=f"entry:{entry.source_id}",
+        system_id=SYSTEM_ID,
+        kind=KnowledgeNodeKind.FACADE,
+        title=entry.display_name,
+        aliases=[entry.entry_id, entry.source_id, entry.display_name],
+        source_refs=[evidence],
+        status=KnowledgeStatus.INFERRED,
+    )
+    harness.application.store.write_node(node, "# Generic entry\n")
+    candidate = EntryFactAssertion(
+        assertion_id="entry-fact:generic-pending-ready",
+        assertion_type="REQUIRES_FACT",
+        slot_id="generic_entity",
+        fact_contract_id=contract.fact_contract_id,
+        required_state="READY",
+        acquisition_policy="QUERY_ONLY",
+        source=KnowledgeConclusionSource.AI_CANDIDATE,
+        evidence_refs=[evidence],
+    )
+    candidate_set = EntryFactCandidateSet(
+        system_id=SYSTEM_ID,
+        entry_id=entry.entry_id,
+        source_scan_id=manifest.scan_id,
+        source_baseline=manifest.baseline,
+        assertions=[candidate],
+    )
+    draft = KnowledgeDraft(
+        draft_id="knowledge-draft:generic-pending-fact",
+        system_id=SYSTEM_ID,
+        target_id=entry.entry_id,
+        node=node,
+        content="候选事实仍待精确确认。",
+        entry_fact_candidates=candidate_set,
+    )
+    batch = KnowledgeGenerationWorkflowBatch(
+        batch_id="knowledge-client-generic-pending-fact",
+        system_id=SYSTEM_ID,
+        scan_id=manifest.scan_id,
+        target_ids=[entry.entry_id],
+        status="PENDING_CONFIRMATION",
+        drafts=[draft],
+    )
+    harness.application.store.write_draft_batch(batch)
+
+    with TestClient(create_app(harness.application)) as client:
+        detail_response = client.get(
+            f"/api/v2/systems/{SYSTEM_ID}/knowledge/targets/{quote(entry.entry_id, safe='')}",
+            params={
+                "include_questions": "false",
+                "include_context": "false",
+                "scan_id": manifest.scan_id,
+            },
+        )
+    assert detail_response.status_code == 200
+    pending_projection = detail_response.json()["target"]
+    assert pending_projection["formal_entry_facts"] == []
+    assert pending_projection["pending_entry_fact_candidates"] == [
+        {
+            "batch_id": batch.batch_id,
+            "draft_id": draft.draft_id,
+            "assertions": [candidate.model_dump(mode="json")],
+        }
+    ]
+
+    pending_preview = harness.application.preview_case_rules(SYSTEM_ID, ENTRY_ID)
+    pending_generation = harness.application.hybrid_case_generation.generate(
+        SYSTEM_ID,
+        HybridCaseGenerationRequest(entry_id=ENTRY_ID),
+    )
+
+    pending_codes = [blocker.code for blocker in pending_preview.manifest.blockers]
+    assert pending_codes.count("BLOCKED_ENTRY_FACT_CANDIDATE_CONFIRMATION_REQUIRED") == 1
+    assert not any(
+        condition.condition_type == CaseConditionType.STATEFUL_ENTITY_PRECONDITION
+        for condition in pending_preview.manifest.conditions
+    )
+    assert pending_generation.status == "BLOCKED"
+    assert {
+        blocker.code for blocker in pending_generation.coverage_manifest.blockers
+    } >= {"BLOCKED_ENTRY_FACT_CANDIDATE_CONFIRMATION_REQUIRED"}
+
+    with TestClient(create_app(harness.application)) as client:
+        confirmation_response = client.post(
+            f"/api/v2/systems/{SYSTEM_ID}/knowledge/generation-batches/"
+            f"{batch.batch_id}/entry-fact-confirmations",
+            json={
+                "draft_id": draft.draft_id,
+                "fact_candidate_ids": [candidate.assertion_id],
+            },
+        )
+        confirmed_detail_response = client.get(
+            f"/api/v2/systems/{SYSTEM_ID}/knowledge/targets/{quote(entry.entry_id, safe='')}",
+            params={
+                "include_questions": "false",
+                "include_context": "false",
+                "scan_id": manifest.scan_id,
+            },
+        )
+    assert confirmation_response.status_code == 200
+    assert confirmed_detail_response.status_code == 200
+    confirmed_detail = confirmed_detail_response.json()["target"]
+    assert confirmed_detail["pending_entry_fact_candidates"] == []
+    assert confirmed_detail["formal_entry_facts"][0]["assertions"][0]["source"] == (
+        "USER_CONFIRMED"
+    )
+    confirmed_preview = harness.application.preview_case_rules(SYSTEM_ID, ENTRY_ID)
+
+    assert "BLOCKED_ENTRY_FACT_CANDIDATE_CONFIRMATION_REQUIRED" not in {
+        blocker.code for blocker in confirmed_preview.manifest.blockers
+    }
+    assert [
+        condition.stateful_requirement.slot_id
+        for condition in confirmed_preview.manifest.conditions
+        if condition.condition_type == CaseConditionType.STATEFUL_ENTITY_PRECONDITION
+    ] == ["generic_entity"]
+
+
+def test_compiler_snapshot_includes_distinct_stateful_producer_source(
+    tmp_path: Path,
+) -> None:
+    """编译锁集合必须包含与Recipe步骤provider不同的Producer源码系统。
+
+    Args:
+        tmp_path: Pytest隔离的通用编译资产根目录。
+
+    Returns:
+        None；consumer、步骤provider和Producer source均参与固定快照时通过。
+
+    Side Effects:
+        仅建立临时编译资产并调用锁集合计算，不访问QA或发布Recipe。
+    """
+
+    harness = _compiler_harness(tmp_path, [])
+    recipe_catalog = SimpleNamespace(
+        recipes=[
+            SimpleNamespace(
+                steps=[
+                    SimpleNamespace(
+                        capability_ref=SimpleNamespace(system_id="generic-step-provider")
+                    )
+                ],
+                producer_entry_ref=SimpleNamespace(
+                    system_id="generic-producer-source"
+                ),
+            )
+        ]
+    )
+
+    system_ids = harness.application.typed_case_compiler._asset_system_ids(
+        SYSTEM_ID,
+        None,
+        recipe_catalog,
+    )
+
+    assert system_ids == {
+        SYSTEM_ID,
+        "generic-step-provider",
+        "generic-producer-source",
+    }
+
+
+def test_stateful_recipe_resolution_builds_recursive_dag_and_detects_cycle(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """状态实体Recipe必须递归冻结依赖、无响应身份创建和依赖环。
+
+    Args:
+        tmp_path: Pytest隔离的编译、扫描和Published资产根目录。
+        monkeypatch: 隔离current Recipe重验，使本测试聚焦递归与环算法。
+
+    Returns:
+        None；Ticket依赖先于Refund、无CREATE身份时冻结末次查询Fact，且反向依赖
+        产生稳定环阻塞时通过。
+
+    Side Effects:
+        仅创建临时通用编译资产，不发布Recipe、访问AI或调用QA。
+    """
+
+    harness = _compiler_harness(tmp_path, [])
+    compiler = harness.application.typed_case_compiler
+    current_manifest = harness.application.source_analysis.artifacts.read(
+        SYSTEM_ID,
+        "latest",
+    )
+    producer_entry_ref = ProducerEntrySourceRef(
+        system_id=SYSTEM_ID,
+        entry_id=ENTRY_ID,
+        source_scan_id=harness.scan_id,
+        source_baseline=current_manifest.baseline,
+    )
+    ticket_contract = SetupFactContractDefinition(
+        fact_contract_id="ticket-order/v1",
+        display_name="通用出票单",
+        required_origin=SetupFactOrigin.PUBLISHED_OUTPUT,
+        required_fields=[
+            SetupFactRequiredField(path="order_no", schema_type="string"),
+            SetupFactRequiredField(path="state", schema_type="string"),
+        ],
+        business_identity_paths=["order_no"],
+        state_path="state",
+        state_predicates=[
+            SetupStatePredicateDefinition(
+                name="ISSUED",
+                display_name="已出票",
+                allowed_values=["ISSUED"],
+            )
+        ],
+    )
+    refund_contract = SetupFactContractDefinition(
+        fact_contract_id="refund-order/v1",
+        display_name="通用退票单",
+        required_origin=SetupFactOrigin.PUBLISHED_OUTPUT,
+        required_fields=[
+            SetupFactRequiredField(path="refund_no", schema_type="string"),
+            SetupFactRequiredField(path="ticket_order_no", schema_type="string"),
+            SetupFactRequiredField(path="state", schema_type="string"),
+        ],
+        business_identity_paths=["refund_no"],
+        state_path="state",
+        state_predicates=[
+            SetupStatePredicateDefinition(
+                name="CREATED",
+                display_name="已创建",
+                allowed_values=["CREATED"],
+            ),
+            SetupStatePredicateDefinition(
+                name="CANCELLABLE",
+                display_name="可取消",
+                allowed_values=["CANCELLABLE"],
+            ),
+        ],
+    )
+    ticket_output = SimpleNamespace(
+        fact_name="issued_ticket",
+        fact_contract_id=ticket_contract.fact_contract_id,
+        from_step_id="query-ticket",
+        produced_state="ISSUED",
+        constraints=[],
+        relations={},
+        fact_schema={
+            "type": "object",
+            "properties": {
+                "order_no": {"type": "string"},
+                "state": {"type": "string"},
+            },
+            "required": ["order_no", "state"],
+        },
+    )
+    ticket_requirement = SimpleNamespace(
+        slot_id="ticket_order",
+        fact_contract_id=ticket_contract.fact_contract_id,
+        required_state="ISSUED",
+        acquisition_policy="QUERY_ONLY",
+        constraints={},
+        relations={},
+    )
+    ticket_recipe = SimpleNamespace(
+        system_id=SYSTEM_ID,
+        recipe_id="setup:generic-ticket-query",
+        entry_source_scan_id=harness.scan_id,
+        producer_scope="ENTITY_PRODUCER",
+        acquisition_policy="QUERY_ONLY",
+        selection_priority=10,
+        steps=[SimpleNamespace(step_id="query-ticket", operation_role="QUERY")],
+        fact_outputs=[ticket_output],
+        requires_facts=[],
+        producer_entry_ref=producer_entry_ref,
+    )
+    created_refund = SimpleNamespace(
+        fact_name="created_refund",
+        fact_contract_id=refund_contract.fact_contract_id,
+        from_step_id="create-refund",
+        produced_state="CREATED",
+        constraints=[],
+        relations={"ticket_order_no": "${ticket_order.order_no}"},
+        fact_schema={
+            "type": "object",
+            "properties": {
+                "refund_no": {"type": "string"},
+                "ticket_order_no": {"type": "string"},
+                "state": {"type": "string"},
+            },
+            "required": ["refund_no", "ticket_order_no", "state"],
+        },
+    )
+    verified_refund = SimpleNamespace(
+        **{
+            **vars(created_refund),
+            "fact_name": "verified_refund",
+            "from_step_id": "query-refund-after-create",
+            "produced_state": "CANCELLABLE",
+        }
+    )
+    refund_requirement = StatefulEntityRequirement(
+        slot_id="refund_order",
+        fact_contract_id=refund_contract.fact_contract_id,
+        required_state="CANCELLABLE",
+        acquisition_policy="QUERY_THEN_CREATE",
+    )
+    refund_recipe = SimpleNamespace(
+        system_id=SYSTEM_ID,
+        recipe_id="setup:generic-refund-query-create",
+        entry_source_scan_id=harness.scan_id,
+        producer_scope="ENTITY_PRODUCER",
+        acquisition_policy="QUERY_THEN_CREATE",
+        selection_priority=10,
+        steps=[
+            SimpleNamespace(step_id="query-refund", operation_role="QUERY"),
+            SimpleNamespace(step_id="create-refund", operation_role="CREATE"),
+            SimpleNamespace(
+                step_id="query-refund-after-create",
+                operation_role="QUERY",
+            ),
+        ],
+        fact_outputs=[created_refund, verified_refund],
+        requires_facts=[ticket_requirement],
+        producer_entry_ref=producer_entry_ref,
+    )
+
+    def accept_current_recipe(_system_id: str, _recipe: object) -> list[object]:
+        """让测试只验证递归解析，不重复覆盖current资产重验。
+
+        Args:
+            _system_id: 固定通用consumer系统。
+            _recipe: 当前内存Recipe。
+
+        Returns:
+            空问题列表，表示外层current验证已通过。
+        """
+
+        return []
+
+    monkeypatch.setattr(compiler, "_recipe_current_issues", accept_current_recipe)
+    contracts = {
+        ticket_contract.fact_contract_id: ticket_contract,
+        refund_contract.fact_contract_id: refund_contract,
+    }
+    state = StatefulPlanResolutionState(
+        system_id=SYSTEM_ID,
+        manifest=SimpleNamespace(source_scan_id=harness.scan_id),
+        recipes=(ticket_recipe, refund_recipe),
+        contracts=contracts,
+        nodes=[],
+        selected_recipes={},
+        visiting=set(),
+        resolved_nodes={},
+    )
+    blockers = []
+    root = compiler._resolve_stateful_requirement(state, refund_requirement, blockers)
+
+    assert blockers == []
+    assert root is not None
+    assert [node.slot_id for node in state.nodes] == ["ticket_order", "refund_order"]
+    assert root.dependency_node_ids == [state.nodes[0].node_id]
+    assert root.output_fact_name == "verified_refund"
+    assert root.created_fact_name == "created_refund"
+    assert root.create_relations == {"ticket_order_no": "${ticket_order.order_no}"}
+
+    # 真实创建接口可以只返回成功码；最终查询关系闭合时无需伪造CREATE实体Fact。
+    identityless_recipe = SimpleNamespace(
+        **{**vars(refund_recipe), "fact_outputs": [verified_refund]}
+    )
+    identityless_state = StatefulPlanResolutionState(
+        system_id=SYSTEM_ID,
+        manifest=SimpleNamespace(source_scan_id=harness.scan_id),
+        recipes=(ticket_recipe, identityless_recipe),
+        contracts=contracts,
+        nodes=[],
+        selected_recipes={},
+        visiting=set(),
+        resolved_nodes={},
+    )
+    identityless_blockers = []
+    identityless_root = compiler._resolve_stateful_requirement(
+        identityless_state,
+        refund_requirement,
+        identityless_blockers,
+    )
+
+    assert identityless_blockers == []
+    assert identityless_root is not None
+    assert identityless_root.created_fact_name == ""
+    assert identityless_root.output_fact_name == "verified_refund"
+
+    related_state = StatefulPlanResolutionState(
+        system_id=SYSTEM_ID,
+        manifest=SimpleNamespace(source_scan_id=harness.scan_id),
+        recipes=(ticket_recipe, refund_recipe),
+        contracts=contracts,
+        nodes=[],
+        selected_recipes={},
+        visiting=set(),
+        resolved_nodes={},
+    )
+    relation_blockers = []
+    related_root = compiler._resolve_stateful_requirement(
+        related_state,
+        refund_requirement.model_copy(
+            update={
+                "relations": {
+                    "ticket_order_no": "${ticket_order.order_no}"
+                }
+            }
+        ),
+        relation_blockers,
+    )
+
+    assert related_root is None
+    assert {blocker.code for blocker in relation_blockers} == {
+        "BLOCKED_STATEFUL_QUERY_HIT_RELATION_UNAVAILABLE"
+    }
+
+    refund_dependency = SimpleNamespace(
+        slot_id="refund_order",
+        fact_contract_id=refund_contract.fact_contract_id,
+        required_state="CANCELLABLE",
+        acquisition_policy="QUERY_THEN_CREATE",
+        constraints={},
+        relations={},
+    )
+    cyclic_ticket_recipe = SimpleNamespace(
+        **{**vars(ticket_recipe), "requires_facts": [refund_dependency]}
+    )
+    cyclic_state = StatefulPlanResolutionState(
+        system_id=SYSTEM_ID,
+        manifest=SimpleNamespace(source_scan_id=harness.scan_id),
+        recipes=(cyclic_ticket_recipe, refund_recipe),
+        contracts=contracts,
+        nodes=[],
+        selected_recipes={},
+        visiting=set(),
+        resolved_nodes={},
+    )
+    cycle_blockers = []
+    cyclic_root = compiler._resolve_stateful_requirement(
+        cyclic_state,
+        refund_requirement,
+        cycle_blockers,
+    )
+
+    assert cyclic_root is None
+    assert {blocker.code for blocker in cycle_blockers} == {
+        "BLOCKED_STATEFUL_ENTITY_DEPENDENCY_CYCLE"
+    }
+    harness.application.close()
+
+
+def test_unhandled_case_condition_fails_closed_while_diagnostic_does_not_block(
+    tmp_path: Path,
+) -> None:
+    """无执行处理器的条件必须明确阻塞，内部诊断仍不得影响Ready。
+
+    Args:
+        tmp_path: Pytest隔离的Program与冻结清单资产根目录。
+
+    Returns:
+        None；异步条件得到稳定unsupported blocker且诊断条件无阻塞时通过。
+
+    Side Effects:
+        仅生成临时通用编译资产，不访问AI或QA。
+    """
+
+    harness = _compiler_harness(tmp_path, [])
+    manifest = harness.application.preview_case_rules(SYSTEM_ID, ENTRY_ID).manifest
+    async_condition = CaseCondition(
+        condition_id="condition:generic:async-wait",
+        condition_type=CaseConditionType.ASYNC_WAIT_CONDITION,
+        title="等待通用异步结果",
+        summary="业务结果需要等待异步状态完成。",
+    )
+    diagnostic = CaseCondition(
+        condition_id="condition:generic:internal-diagnostic",
+        condition_type=CaseConditionType.INTERNAL_DIAGNOSTIC,
+        title="内部错误响应组装",
+        summary="该证据不由入口字段控制。",
+        resolution_owner=CaseConditionResolutionOwner.NONE,
+    )
+    fault_source = SourceReference(
+        path="src/main/java/sample/ItemService.java",
+        symbol="sample.ItemService#apply",
+        line=20,
+        commit="generic-compiler-v1",
+    )
+    fault_condition = CaseCondition(
+        condition_id="condition:generic:fault-trigger",
+        condition_type=CaseConditionType.FAULT_TRIGGER_REQUIREMENT,
+        title="真实故障触发",
+        summary="在指定业务调用处触发一次已发布故障。",
+        evidence_ids=["evidence:fault:item-service"],
+        source_refs=[fault_source],
+    )
+    unrelated_fault_condition = fault_condition.model_copy(
+        update={
+            "condition_id": "condition:generic:unrelated-fault-trigger",
+            "evidence_ids": ["evidence:fault:unrelated-service"],
+            "source_refs": [
+                fault_source.model_copy(
+                    update={"path": "src/main/java/sample/UnrelatedService.java"}
+                )
+            ],
+        }
+    )
+    fault_obligation = FaultInjectionObligation(
+        **_obligation_base("fault:item-service"),
+        source_refs=[fault_source],
+        target_operation="sample.ItemService#apply",
+        invocation_positions=["FIRST"],
+        expected_entity_states={
+            "previous_entities": "SUCCESS",
+            "current_entity": "FAILED",
+            "remaining_entities": "NOT_EXECUTED",
+        },
+    )
+
+    async_blockers = (
+        harness.application.typed_case_compiler._condition_dispatch_blockers(
+            manifest.model_copy(update={"conditions": [async_condition]})
+        )
+    )
+    diagnostic_blockers = (
+        harness.application.typed_case_compiler._condition_dispatch_blockers(
+            manifest.model_copy(update={"conditions": [diagnostic]})
+        )
+    )
+    fault_blockers = (
+        harness.application.typed_case_compiler._condition_dispatch_blockers(
+            manifest.model_copy(
+                update={
+                    "conditions": [fault_condition],
+                    "obligations": [fault_obligation],
+                }
+            )
+        )
+    )
+    unrelated_fault_blockers = (
+        harness.application.typed_case_compiler._condition_dispatch_blockers(
+            manifest.model_copy(
+                update={
+                    "conditions": [unrelated_fault_condition],
+                    "obligations": [fault_obligation],
+                }
+            )
+        )
+    )
+
+    assert {blocker.code for blocker in async_blockers} == {
+        "BLOCKED_UNSUPPORTED_CASE_CONDITION"
+    }
+    assert diagnostic_blockers == []
+    assert fault_blockers == []
+    assert {blocker.code for blocker in unrelated_fault_blockers} == {
+        "BLOCKED_UNSUPPORTED_CASE_CONDITION"
+    }
+    harness.application.close()
 
 
 def test_typed_generators_preserve_exact_proofs_and_fault_blocker(tmp_path: Path) -> None:
@@ -707,11 +1433,17 @@ def test_oracle_factor_namespace_rejects_decision_only_input(tmp_path: Path) -> 
     assert not compilation.variants
 
 
-def test_real_refund_copy_has_no_published_action_or_generated_attempt(tmp_path: Path) -> None:
-    """正式退款知识副本必须因真实Published为0而阻塞，不能出现硬编码Scenario或Attempt。
+def test_real_refund_copy_uses_current_formal_facts_without_generated_attempt(tmp_path: Path) -> None:
+    """正式退款知识副本必须读取current结构化事实且不能编造Scenario或Attempt。
 
     Args:
         tmp_path: 保存正式知识仓库只读副本的隔离目录。
+
+    Returns:
+        None；仅当current正式事实消除旧候选阻塞且没有执行副作用时通过。
+
+    Side Effects:
+        只复制知识到临时目录并读取编译结果；不访问QA或创建Attempt。
     """
 
     project_root = Path(__file__).parents[2]
@@ -721,19 +1453,22 @@ def test_real_refund_copy_has_no_published_action_or_generated_attempt(tmp_path:
     system_id = "ifightchainsaas.java.refund.core"
     entry_id = "facade:com.ly.flight.chainsaas.refund.facade.RefundFacade#createOrder"
 
-    before_attempts = application.list_hybrid_case_attempts(system_id)
-    compilation = application.compile_typed_cases(
-        system_id,
-        TypedCaseCompileRequest(entry_id=entry_id),
-    )
+    try:
+        before_attempts = application.list_hybrid_case_attempts(system_id)
+        compilation = application.compile_typed_cases(
+            system_id,
+            TypedCaseCompileRequest(entry_id=entry_id),
+        )
 
-    assert {blocker.code for blocker in compilation.blockers} == {
-        "BLOCKED_ACTION_PROFILE_MISSING",
-        "BLOCKED_SEMANTIC_RESOLUTION_REQUIRED",
-    }
-    assert compilation.scenarios == []
-    assert compilation.variants == []
-    assert application.list_hybrid_case_attempts(system_id) == before_attempts == []
+        # createOrder的产出事实已由current源码证明；尚未发布Action Profile才是当前精确断点。
+        assert {blocker.code for blocker in compilation.blockers} == {
+            "BLOCKED_ACTION_PROFILE_MISSING",
+        }
+        assert compilation.scenarios == []
+        assert compilation.variants == []
+        assert application.list_hybrid_case_attempts(system_id) == before_attempts == []
+    finally:
+        application.close()
 
 
 def _compiler_harness(
@@ -1332,6 +2067,7 @@ def _candidate_ref(candidate: object) -> CandidateRef:
         request_dto_types=candidate.request_dto_types,
         response_dto_type=candidate.response_dto_type,
         dto_definitions=candidate.dto_definitions,
+        field_conversions=candidate.field_conversions,
     )
 
 

@@ -1,0 +1,104 @@
+candidate_id: candidate:external_application:d49202a89057d685
+system_id: ifightchainsaas.java.booking.core
+kind: EXTERNAL_APPLICATION
+knowledge_form: EXTERNAL_APPLICATION
+name: PolicyClient
+business_name: ''
+business_name_source: UNRESOLVED
+business_name_known_unknown: false
+enum_values: []
+suggested_meaning: 源码调用该远程协作者；请说明对应应用、业务职责和失败时的业务影响。
+code_meaning: ''
+unresolved_codes: []
+business_meaning: ''
+status: OPEN
+merged_into_candidate_id: ''
+source_refs:
+- repository: ''
+  path: app/biz/src/main/java/com/ly/flight/chainsaas/booking/biz/builder/impl/BaggageBuilder.java
+  symbol: com.ly.flight.chainsaas.booking.biz.builder.impl.BaggageBuilder
+  line: 25
+  commit: 004c50d90d152f1ef4892679f8b1b322cc7a7405
+  content_digest: 68d58168d2aee9329a31a0561b3e15b9b4625f48cafde217324e82b4f8ffa7ad
+- repository: ''
+  path: app/biz/src/main/java/com/ly/flight/chainsaas/booking/biz/converter/ArcBspRequestConverter.java
+  symbol: com.ly.flight.chainsaas.booking.biz.converter.ArcBspRequestConverter
+  line: 53
+  commit: 004c50d90d152f1ef4892679f8b1b322cc7a7405
+  content_digest: 7708da6f7cd57c69e0a26bc58163d45d383f7d0c893877609b6aced2341e975d
+- repository: ''
+  path: app/biz/src/main/java/com/ly/flight/chainsaas/booking/biz/converter/TradeOrderConverter.java
+  symbol: com.ly.flight.chainsaas.booking.biz.converter.TradeOrderConverter
+  line: 64
+  commit: 004c50d90d152f1ef4892679f8b1b322cc7a7405
+  content_digest: 2a8c083fb674bf421048c03cfdcd045b4d67bf10e5a1aed99d6efe5870d110d5
+- repository: ''
+  path: app/biz/src/main/java/com/ly/flight/chainsaas/booking/biz/gateway/invoker/manager/distribution/AbstractDistributionServiceInvoker.java
+  symbol: com.ly.flight.chainsaas.booking.biz.gateway.invoker.manager.distribution.AbstractDistributionServiceInvoker
+  line: 68
+  commit: 004c50d90d152f1ef4892679f8b1b322cc7a7405
+  content_digest: a2b484e9615d8e19678f76ee41c0ae1d79095a6918c446438852d1da9c2c96e9
+- repository: ''
+  path: app/biz/src/main/java/com/ly/flight/chainsaas/booking/biz/gateway/invoker/manager/resources/ManualParseCalculateInvoker.java
+  symbol: com.ly.flight.chainsaas.booking.biz.gateway.invoker.manager.resources.ManualParseCalculateInvoker
+  line: 25
+  commit: 004c50d90d152f1ef4892679f8b1b322cc7a7405
+  content_digest: e3f274c20c8b5bf798a7e9a6a9b010981da53217dcc773517be2da190e1b8d4e
+- repository: ''
+  path: app/biz/src/main/java/com/ly/flight/chainsaas/booking/biz/gateway/invoker/manager/resources/SearchDataCalculateInvoker.java
+  symbol: com.ly.flight.chainsaas.booking.biz.gateway.invoker.manager.resources.SearchDataCalculateInvoker
+  line: 21
+  commit: 004c50d90d152f1ef4892679f8b1b322cc7a7405
+  content_digest: c4ffcd78f259c0a71f4a499cd2e7f3e571b3a143e171028b9c11c42bfd109c72
+- repository: ''
+  path: app/biz/src/main/java/com/ly/flight/chainsaas/booking/biz/gateway/invoker/manager/resources/VerifyCalculateInvoker.java
+  symbol: com.ly.flight.chainsaas.booking.biz.gateway.invoker.manager.resources.VerifyCalculateInvoker
+  line: 17
+  commit: 004c50d90d152f1ef4892679f8b1b322cc7a7405
+  content_digest: f1c5925bd9121078344f5ac3f77ea5a992f1657f82b7518620ce9e3688370e30
+- repository: ''
+  path: app/biz/src/main/java/com/ly/flight/chainsaas/booking/biz/manager/validate/client/PolicyCalculateClient.java
+  symbol: com.ly.flight.chainsaas.booking.biz.manager.validate.client.PolicyCalculateClient
+  line: 21
+  commit: 004c50d90d152f1ef4892679f8b1b322cc7a7405
+  content_digest: f3ebcfa9d546058f22c78ae4a87a74e0ab5e7c1ab071cbe7567b614ddaf95459
+- repository: ''
+  path: app/biz/src/main/java/com/ly/flight/chainsaas/booking/biz/rule/provider/FareOrderProvider.java
+  symbol: com.ly.flight.chainsaas.booking.biz.rule.provider.FareOrderProvider
+  line: 10
+  commit: 004c50d90d152f1ef4892679f8b1b322cc7a7405
+  content_digest: 2482e0bd2f9f2246cb22a81e16ff675b83d60f572f4fd1d28d94917cbba4a5d4
+- repository: ''
+  path: app/biz/src/main/java/com/ly/flight/chainsaas/booking/biz/rule/provider/NormalOrderProvider.java
+  symbol: com.ly.flight.chainsaas.booking.biz.rule.provider.NormalOrderProvider
+  line: 10
+  commit: 004c50d90d152f1ef4892679f8b1b322cc7a7405
+  content_digest: e3a29c48417d04d91cd6975c390e1aece6ebadc7c0c0ff58c100d7991953baa5
+- repository: ''
+  path: app/biz/src/main/java/com/ly/flight/chainsaas/booking/biz/rule/provider/TradeOrderSyncProvider.java
+  symbol: com.ly.flight.chainsaas.booking.biz.rule.provider.TradeOrderSyncProvider
+  line: 10
+  commit: 004c50d90d152f1ef4892679f8b1b322cc7a7405
+  content_digest: 21852772cfc75c66211bdd3a56b2da33195286135d317264e8f74bb6670e6cef
+- repository: ''
+  path: app/biz/src/main/java/com/ly/flight/chainsaas/booking/biz/service/impl/CommonInfoServiceImpl.java
+  symbol: com.ly.flight.chainsaas.booking.biz.service.impl.CommonInfoServiceImpl
+  line: 25
+  commit: 004c50d90d152f1ef4892679f8b1b322cc7a7405
+  content_digest: 90561d9fb826a3a15e886de61db1cee301e593262ad5aa02db46529195b07200
+affected_target_ids:
+- facade:com.ly.flight.chainsaas.booking.facade.DistributionFacade#issueTickets
+- facade:com.ly.flight.chainsaas.booking.facade.DistributionFacade#qCallBack
+- facade:com.ly.flight.chainsaas.booking.facade.DistributionFacade#queryOrderByPnr
+- facade:com.ly.flight.chainsaas.booking.facade.DistributionFacade#reportDataProcess
+- facade:com.ly.flight.chainsaas.booking.facade.TradeResourcesFacade#calculate
+- facade:com.ly.flight.chainsaas.booking.facade.TradeResourcesFacade#manualParseCalculate
+- facade:com.ly.flight.chainsaas.booking.facade.TradeResourcesFacade#mappingTaxDetail
+- facade:com.ly.flight.chainsaas.booking.facade.TradeResourcesFacade#paymentValidate
+- facade:com.ly.flight.chainsaas.booking.facade.TradeResourcesFacade#searchDataCalculate
+- facade:com.ly.flight.chainsaas.booking.facade.TradeResourcesFacade#verifyPNR
+- facade:com.ly.flight.chainsaas.booking.facade.TradeResourcesFacade#verifyPrice
+- facade:com.ly.flight.chainsaas.booking.facade.TradeResourcesFacade#verifyPriceAndCabin
+evidence_digest: 3bea79a99ee780580ea1d43fef45ecfe080ac6ee4cbea81cbb8902766e6c3eff
+discovered_at: '2026-08-27T15:21:11.349956Z'
+updated_at: '2026-08-27T20:27:20.162039Z'

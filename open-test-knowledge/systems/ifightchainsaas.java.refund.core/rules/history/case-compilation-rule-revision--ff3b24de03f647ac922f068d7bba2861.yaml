@@ -1,0 +1,48 @@
+contract_version: case-compilation-rules/v1
+rule_revision_id: case-compilation-rule-revision:ff3b24de03f647ac922f068d7bba2861
+system_id: ifightchainsaas.java.refund.core
+action_profiles:
+- profile_id: action-profile:refund-cancel-v3
+  entry_id: facade:com.ly.flight.chainsaas.refund.facade.RefundFacade#cancel
+  source_scan_id: scan-20260827223314-a0f437c374-27423ce1
+  action_capability_ref:
+    system_id: ifightchainsaas.java.refund.core
+    capability_id: published:ifightchainsaas.java.refund.core:publish-refund-cancel-action-v3-current-20260828
+  input_bindings:
+  - input_path: refund_serial_no
+    business_identity: true
+    source_ref:
+      source: setup_fact
+      slot_id: refund_order
+      fact_contract_id: refund-order/v3
+      fact_path: refundSerialNo
+  action_fact_contract: null
+  oracle_template_id: oracle:refund-cancel-response-v2
+  resource_lifecycle_policy: per_variant
+input_policies:
+- capability_ref:
+    system_id: ifightchainsaas.java.refund.core
+    capability_id: published:ifightchainsaas.java.refund.core:publish-refund-cancel-action-v3-current-20260828
+  input_path: refund_serial_no
+  business_identity: true
+  allowed_sources:
+  - setup_fact
+  allowed_safe_constants: []
+oracle_templates:
+- oracle_template_id: oracle:refund-cancel-response-v2
+  entry_id: facade:com.ly.flight.chainsaas.refund.facade.RefundFacade#cancel
+  source_scan_id: scan-20260827223314-a0f437c374-27423ce1
+  action_capability_ref:
+    system_id: ifightchainsaas.java.refund.core
+    capability_id: published:ifightchainsaas.java.refund.core:publish-refund-cancel-action-v3-current-20260828
+  evaluator_id: structured-expression/v2
+  assertions:
+  - actual_source: action_result
+    actual_path: success
+    expected:
+      operator: literal
+      path: ''
+      fact_contract_id: ''
+      value: true
+      operands: []
+  effect_observations: []

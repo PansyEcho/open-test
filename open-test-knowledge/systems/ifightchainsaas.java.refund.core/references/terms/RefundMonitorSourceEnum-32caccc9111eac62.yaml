@@ -102,4 +102,4 @@ affected_target_ids:
 - facade:com.ly.flight.chainsaas.refund.facade.RefundFacade#walletRefundRetry
 evidence_digest: efa2781bb57181de3ddf7e09ca73d39bf46992820f53c3e1e817b508e006f668
 discovered_at: '2026-08-13T11:09:41.120151Z'
-updated_at: '2026-08-25T07:56:26.982590Z'
+updated_at: '2026-08-27T22:34:23.132766Z'

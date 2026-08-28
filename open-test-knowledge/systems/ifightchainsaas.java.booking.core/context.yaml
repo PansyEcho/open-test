@@ -1,0 +1,17 @@
+system_id: ifightchainsaas.java.booking.core
+system_purpose: 已注册为SaaS出票核心；当前知识范围仅确认其Facade提供出票订单查询与交易操作，状态机维护订单从占座到出票等代码状态。
+upstream_entry_narrative: 本系统在当前验收中作为退票系统的已注册Booking上游，仅提供正式扫描中的TradeFacade订单查询能力；退票单创建、取消和退款生命周期仍由已注册refund系统负责。
+interview_answers:
+  interview:system-positioning: 已注册为SaaS出票核心；当前知识范围仅确认其Facade提供出票订单查询与交易操作，状态机维护订单从占座到出票等代码状态。
+  interview:core-objects: 核心代码实体为SaasOrderVO；orderSerialNo是订单身份字段，orderState是订单状态字段，TradeFacade#queryList以PageVO<SaasOrderVO>返回分页订单。
+  interview:primary-flow: 当前纵向验收只确认TradeFacade#queryList：接收OrderQueryRequest筛选和分页参数，读取出票订单并返回OrderListResponse；订单状态机代码包含进入TICKETED的迁移。
+  interview:responsibility-boundaries: 本系统在当前验收中作为退票系统的已注册Booking上游，仅提供正式扫描中的TradeFacade订单查询能力；退票单创建、取消和退款生命周期仍由已注册refund系统负责。
+interview_unknowns: []
+interview_round: 1
+interview_skipped: false
+background_completed_at: '2026-08-27T20:25:04.048550Z'
+stale_target_ids: []
+last_scan_id: scan-20260827202526-207e53b9cd-acc69a73
+discovery_status: COMPLETED
+discovery_warning: ''
+updated_at: '2026-08-27T20:27:20.162162Z'

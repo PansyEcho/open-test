@@ -1,0 +1,47 @@
+contract_version: setup-contract-rules/v1
+rule_revision_id: setup-rule-revision:852ee16eabbb4f92b1b8f560d497c377
+system_id: ifightchainsaas.java.refund.core
+fact_contracts:
+- fact_contract_id: refund-order/v1
+  display_name: 退票单
+  required_origin: PUBLISHED_OUTPUT
+  required_fields:
+  - path: refund_serial_no
+    schema_type: string
+  - path: refund_state_code
+    schema_type: integer
+  business_identity_paths:
+  - refund_serial_no
+  required_constraints: []
+  state_path: refund_state_code
+  state_predicates:
+  - name: CANCELLABLE
+    display_name: 可取消
+    allowed_values:
+    - 0
+    - 1
+    - 2
+    - 5
+    - 8
+  - name: PENDING_APPLY
+    display_name: 退票申请
+    allowed_values:
+    - 0
+- fact_contract_id: ticket-order/v1
+  display_name: 出票单
+  required_origin: UPSTREAM_PUBLISHED_OUTPUT
+  required_fields:
+  - path: order_serial_no
+    schema_type: string
+  - path: status
+    schema_type: string
+  business_identity_paths:
+  - order_serial_no
+  required_constraints: []
+  state_path: status
+  state_predicates:
+  - name: ISSUED
+    display_name: 出票成功
+    allowed_values:
+    - Issued
+input_policies: []

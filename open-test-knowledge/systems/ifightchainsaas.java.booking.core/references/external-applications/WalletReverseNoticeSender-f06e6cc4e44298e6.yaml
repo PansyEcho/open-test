@@ -1,0 +1,71 @@
+candidate_id: candidate:external_application:f06e6cc4e44298e6
+system_id: ifightchainsaas.java.booking.core
+kind: EXTERNAL_APPLICATION
+knowledge_form: EXTERNAL_APPLICATION
+name: WalletReverseNoticeSender
+business_name: ''
+business_name_source: UNRESOLVED
+business_name_known_unknown: false
+enum_values: []
+suggested_meaning: 源码调用该远程协作者；请说明对应应用、业务职责和失败时的业务影响。
+code_meaning: ''
+unresolved_codes: []
+business_meaning: ''
+status: OPEN
+merged_into_candidate_id: ''
+source_refs:
+- repository: ''
+  path: app/biz/src/main/java/com/ly/flight/chainsaas/booking/biz/gateway/invoker/manager/trade/OrderRefundInvoker.java
+  symbol: com.ly.flight.chainsaas.booking.biz.gateway.invoker.manager.trade.OrderRefundInvoker
+  line: 13
+  commit: 004c50d90d152f1ef4892679f8b1b322cc7a7405
+  content_digest: 731cfa5bcfe2b6e1df3033deff96aa40711719c77d647f2e7dee489d63dfb68c
+- repository: ''
+  path: app/biz/src/main/java/com/ly/flight/chainsaas/booking/biz/service/impl/CancelServiceImpl.java
+  symbol: com.ly.flight.chainsaas.booking.biz.service.impl.CancelServiceImpl
+  line: 11
+  commit: 004c50d90d152f1ef4892679f8b1b322cc7a7405
+  content_digest: 571a329d6598b32c86462380a9faf346071cacfff1c9157fa1f008893e13948e
+- repository: ''
+  path: app/biz/src/main/java/com/ly/flight/chainsaas/booking/biz/service/impl/WalletTradeServiceImpl.java
+  symbol: com.ly.flight.chainsaas.booking.biz.service.impl.WalletTradeServiceImpl
+  line: 7
+  commit: 004c50d90d152f1ef4892679f8b1b322cc7a7405
+  content_digest: 067c5e6afd686f40d03408172293f4fa2cac26cdb94f065908e0d1990bc2503b
+affected_target_ids:
+- facade:com.ly.flight.chainsaas.booking.facade.TradeFacade#addErrorCode
+- facade:com.ly.flight.chainsaas.booking.facade.TradeFacade#addVccRecord
+- facade:com.ly.flight.chainsaas.booking.facade.TradeFacade#batchQueryTicketInfo
+- facade:com.ly.flight.chainsaas.booking.facade.TradeFacade#cancel
+- facade:com.ly.flight.chainsaas.booking.facade.TradeFacade#cancelPnrList
+- facade:com.ly.flight.chainsaas.booking.facade.TradeFacade#checkVccCard
+- facade:com.ly.flight.chainsaas.booking.facade.TradeFacade#closeVccCard
+- facade:com.ly.flight.chainsaas.booking.facade.TradeFacade#createDirectOrder
+- facade:com.ly.flight.chainsaas.booking.facade.TradeFacade#createLog
+- facade:com.ly.flight.chainsaas.booking.facade.TradeFacade#createPayment
+- facade:com.ly.flight.chainsaas.booking.facade.TradeFacade#createVcc
+- facade:com.ly.flight.chainsaas.booking.facade.TradeFacade#execute
+- facade:com.ly.flight.chainsaas.booking.facade.TradeFacade#flightChange
+- facade:com.ly.flight.chainsaas.booking.facade.TradeFacade#headerEdit
+- facade:com.ly.flight.chainsaas.booking.facade.TradeFacade#lockOrder
+- facade:com.ly.flight.chainsaas.booking.facade.TradeFacade#marketingOrderList
+- facade:com.ly.flight.chainsaas.booking.facade.TradeFacade#modifyErrorCodeState
+- facade:com.ly.flight.chainsaas.booking.facade.TradeFacade#orderRebut
+- facade:com.ly.flight.chainsaas.booking.facade.TradeFacade#pnrCallback
+- facade:com.ly.flight.chainsaas.booking.facade.TradeFacade#priceEdit
+- facade:com.ly.flight.chainsaas.booking.facade.TradeFacade#queryDetail
+- facade:com.ly.flight.chainsaas.booking.facade.TradeFacade#queryDetailByThird
+- facade:com.ly.flight.chainsaas.booking.facade.TradeFacade#queryErrorCode
+- facade:com.ly.flight.chainsaas.booking.facade.TradeFacade#queryErrorCodeList
+- facade:com.ly.flight.chainsaas.booking.facade.TradeFacade#queryList
+- facade:com.ly.flight.chainsaas.booking.facade.TradeFacade#queryVCCList
+- facade:com.ly.flight.chainsaas.booking.facade.TradeFacade#queryVccDetail
+- facade:com.ly.flight.chainsaas.booking.facade.TradeFacade#queryVccRecordList
+- facade:com.ly.flight.chainsaas.booking.facade.TradeFacade#realCancel
+- facade:com.ly.flight.chainsaas.booking.facade.TradeFacade#refund
+- facade:com.ly.flight.chainsaas.booking.facade.TradeFacade#unLockOrder
+- facade:com.ly.flight.chainsaas.booking.facade.TradeFacade#updateErrorCode
+- facade:com.ly.flight.chainsaas.booking.facade.TradeFacade#updateVccCard
+evidence_digest: 60875ba151ab22914a277b8a3a73299b17c542f552483872bb9394f7796a9acd
+discovered_at: '2026-08-27T15:21:11.349908Z'
+updated_at: '2026-08-27T20:27:20.161998Z'

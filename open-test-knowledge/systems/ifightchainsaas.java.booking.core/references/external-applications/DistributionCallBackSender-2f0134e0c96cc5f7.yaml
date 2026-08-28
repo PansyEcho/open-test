@@ -1,0 +1,36 @@
+candidate_id: candidate:external_application:2f0134e0c96cc5f7
+system_id: ifightchainsaas.java.booking.core
+kind: EXTERNAL_APPLICATION
+knowledge_form: EXTERNAL_APPLICATION
+name: DistributionCallBackSender
+business_name: ''
+business_name_source: UNRESOLVED
+business_name_known_unknown: false
+enum_values: []
+suggested_meaning: 源码调用该远程协作者；请说明对应应用、业务职责和失败时的业务影响。
+code_meaning: ''
+unresolved_codes: []
+business_meaning: ''
+status: OPEN
+merged_into_candidate_id: ''
+source_refs:
+- repository: ''
+  path: app/biz/src/main/java/com/ly/flight/chainsaas/booking/biz/gateway/invoker/manager/distribution/DistributionCallBackInvoker.java
+  symbol: com.ly.flight.chainsaas.booking.biz.gateway.invoker.manager.distribution.DistributionCallBackInvoker
+  line: 16
+  commit: 004c50d90d152f1ef4892679f8b1b322cc7a7405
+  content_digest: 4cfdd8f0cd971e6780cd9f832cd1f52e3cee4f785ed5188b6bbc2dcc89cb49d8
+- repository: ''
+  path: app/biz/src/main/java/com/ly/flight/chainsaas/booking/biz/service/impl/ReportDataServiceImpl.java
+  symbol: com.ly.flight.chainsaas.booking.biz.service.impl.ReportDataServiceImpl
+  line: 13
+  commit: 004c50d90d152f1ef4892679f8b1b322cc7a7405
+  content_digest: 3a6721c4db72cfac9482ec701d0f7e92cff7b18871117c4923eb968d78ee4a16
+affected_target_ids:
+- facade:com.ly.flight.chainsaas.booking.facade.DistributionFacade#issueTickets
+- facade:com.ly.flight.chainsaas.booking.facade.DistributionFacade#qCallBack
+- facade:com.ly.flight.chainsaas.booking.facade.DistributionFacade#queryOrderByPnr
+- facade:com.ly.flight.chainsaas.booking.facade.DistributionFacade#reportDataProcess
+evidence_digest: 8bf3cb05409aad2a00be4e0a2941a33d2eaaf38fee37f986bc5ecd4a2e6139ab
+discovered_at: '2026-08-27T15:21:11.349987Z'
+updated_at: '2026-08-27T20:27:20.162109Z'

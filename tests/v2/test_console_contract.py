@@ -18,8 +18,9 @@ def test_console_static_client_uses_versioned_routes_and_safe_rendering() -> Non
 
     assert "OpenTest V2 Console" in html
     assert 'const API_ROOT = "/api/v2"' in script
-    assert '<meta name="opentest-page-version" content="20260827-04">' in html
-    assert '/assets/app.js?v=20260827-04' in html
+    assert '<meta name="opentest-page-version" content="20260828-02">' in html
+    assert '/assets/app.js?v=20260828-02' in html
+    assert '/assets/styles.css?v=20260828-02' in html
     assert 'id="stale-page-warning"' in html
     assert html.index('id="stale-page-warning"') < html.index('id="workspace-workbench"')
     assert "verifyCurrentPageVersion" in script
@@ -47,11 +48,13 @@ def test_console_static_client_uses_versioned_routes_and_safe_rendering() -> Non
     assert "systemRequestGeneration" in script
     assert "isCurrentSystemScope" in script
     assert 'id="detail-drawer"' in html
-    assert "ScenarioDefinition → CaseVariant → ExecutionAttempt" in script
-    assert "不再确认矩阵" in html
+    assert "ScenarioDefinition → CaseVariant → ExecutionAttempt" not in script
+    assert "场景矩阵" not in html
     assert "QA 数据模板" not in html
     assert "/knowledge/generations" in script
-    assert "/knowledge/generation-batches/" not in script
+    assert script.count("/knowledge/generation-batches/") == 1
+    assert "/entry-fact-confirmations" in script
+    assert "/continuations" not in script
     assert "/case-generations" in script
     assert "/natural-language-tests/previews" in script
     assert "preview-natural-language\" disabled" not in html
@@ -162,21 +165,71 @@ def test_console_static_client_uses_versioned_routes_and_safe_rendering() -> Non
     assert "refund-canaries" not in script
     assert "const requestScope = captureSystemScope();" in script
     assert "if (!isCurrentSystemScope(requestScope))" in script
-    assert "appendLegacyCaseDetails(detail, entry);" in script
-    assert 'generation.status === "READY" && entry?.can_execute === true' in script
+    assert "appendLegacyCaseDetails" not in script
+    assert "variant.can_execute === true" in script
     assert "startHybridCaseGeneration" in script
     assert "JSON.stringify({ entry_id: entryId })" in script
-    assert "entry.semantic_gaps" in script
-    assert "entry.pipeline_steps" in script
-    assert "evidence.operation_execution_id" in script
-    assert "attempt.generation_id === generation.generation_id && attempt.variant_id === variant.variant_id" in script
-    assert "旧V3记录只读展示并禁止访问QA" in script
+    assert "generation_progress" in script
+    assert 'phase === "AGENT_RUNNING" || phase === "VALIDATING"' in script
+    assert 'WAITING_TO_START: "待补充"' in script
+    assert "scheduleCaseGenerationProgressPolling" in script
+    assert "CASE_PROGRESS_POLL_INTERVAL_MS" in script
+    assert "stopCaseGenerationProgressPolling();" in script[
+        script.index("function clearSystemWorkspaceState") : script.index("function renderSystemSelector")
+    ]
+    assert "生成阶段不访问QA" in script
+    assert "openCaseGenerationAgentTask" in script
+    assert "/case-generation-handoffs/${encodeURIComponent(agentAction.handoff_id)}/turns" in script
+    assert 'agentAction?.deep_link?.startsWith("codex://threads/")' in script
+    start_case_generation = script[
+        script.index("async function startHybridCaseGeneration") : script.index("function appendCasePipelineDetails")
+    ]
+    assert "window.location.href" not in start_case_generation
+    assert "await loadHybridCaseWorkspace(entryId)" in start_case_generation
+    progress_renderer = script[
+        script.index("function appendCaseGenerationProgress") : script.index("function stopCaseGenerationProgressPolling")
+    ]
+    assert "step.label" in progress_renderer
+    assert "step.code" not in progress_renderer
+    assert 'CURRENT: ["进行中", "current"]' in progress_renderer
+    assert 'BLOCKED: ["待处理", "blocked"]' in progress_renderer
+    assert "agentAction?.deep_link" in progress_renderer
+    progress_polling = script[
+        script.index("function scheduleCaseGenerationProgressPolling") : script.index("function renderHybridGeneration")
+    ]
+    assert "isActiveCaseGenerationPhase(entry.generation_progress?.phase)" in progress_polling
+    assert "window.setTimeout" in progress_polling
+    assert "window.setInterval" not in progress_polling
+    generation_renderer = script[
+        script.index("function renderHybridGeneration") : script.index("function appendUserFacingCaseStatus")
+    ]
+    assert 'entry.generation_lifecycle === "GENERATING"' not in generation_renderer
+    assert "currentCaseWorkspaceDetail?.technical_details" in script
+    assert "attempt.user_status?.title" in script
+    assert "入口详情暂时无法读取，请稍后重试。" in script
+    assert "查看覆盖、准备、断言与运行证据" in script
+    assert "最近运行证据" in script
+    entry_renderer = script[
+        script.index("async function renderCaseWorkspaceEntry") : script.index("async function handleHybridCaseGenerationClick")
+    ]
+    assert 'error.message || "入口详情读取失败。"' not in entry_renderer
+    assert "caseDetailRequestGeneration += 1" in entry_renderer
+    assert "detailGeneration !== caseDetailRequestGeneration" in entry_renderer
+    scenario_renderer = script[
+        script.index("async function renderCaseScenarioDetail") : script.index("function caseAttemptStatusLabel")
+    ]
+    assert "caseDetailRequestGeneration += 1" in scenario_renderer
+    assert "detailGeneration !== caseDetailRequestGeneration" in scenario_renderer
+    assert "evidence.operation_execution_id" not in script
+    assert "/case-workspace-scenarios/detail?" in script
+    assert "scenarioDetail.recent_results" in script
+    assert "旧V3记录只读展示并禁止访问QA" not in script
     assert 'id="run-natural-language"' in html
     assert 'id="save-natural-language-case"' in html
     assert 'id="knowledge-task-progress"' in html
     assert "finishKnowledgeGeneration" in script
     assert "helpedAction" in script
-    assert "阻塞 ${blocker.code}" in script
+    assert "阻塞 ${blocker.code}" not in script
     assert "renderKnowledgeBackgroundEditor" in script
     assert "saveKnowledgeBackground" in script
     assert "renderBusinessTermEditor" in script
@@ -198,6 +251,13 @@ def test_console_static_client_uses_versioned_routes_and_safe_rendering() -> Non
     target_renderer = script[script.index("function renderKnowledgeTargetDetail") : script.index("async function loadKnowledgeInterview")]
     assert "detail.questions" not in target_renderer
     assert "detail.latest_drafts" not in target_renderer
+    assert "detail.formal_entry_facts" in target_renderer
+    assert "detail.pending_entry_fact_candidates" in target_renderer
+    assert "AI候选（未发布）" in target_renderer
+    assert "input[data-entry-fact-assertion-id]:checked" in target_renderer
+    assert "/entry-fact-confirmations" in target_renderer
+    assert "fact_candidate_ids: selectedIds" in target_renderer
+    assert "draft.content" not in target_renderer
     assert 'id="knowledge-feedback"' not in html
     assert 'id="knowledge-conversation-history"' in html
     assert 'id="send-knowledge-conversation"' in html

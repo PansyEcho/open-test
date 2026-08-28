@@ -1,0 +1,365 @@
+candidate_id: candidate:business_term:b6fe0c35fc4c1d70
+system_id: ifightchainsaas.java.booking.core
+kind: BUSINESS_TERM
+knowledge_form: BUSINESS_ENUM
+name: CreditTypeEnum
+business_name: CreditTypeEnum
+business_name_source: CODE_DEFAULT
+business_name_known_unknown: false
+enum_values:
+- code: com.ly.flight.chainsaas.booking.biz.enums.CreditTypeEnum#GA
+  business_meaning: 港澳通行证
+  source: CODE_DEFAULT
+  known_unknown: false
+  confidence: 0.95
+  source_refs:
+  - repository: ''
+    path: app/biz/src/main/java/com/ly/flight/chainsaas/booking/biz/enums/CreditTypeEnum.java
+    symbol: com.ly.flight.chainsaas.booking.biz.enums.CreditTypeEnum#GA
+    line: 17
+    commit: ''
+    content_digest: ''
+- code: com.ly.flight.chainsaas.booking.biz.enums.CreditTypeEnum#HX
+  business_meaning: 回乡证
+  source: CODE_DEFAULT
+  known_unknown: false
+  confidence: 0.95
+  source_refs:
+  - repository: ''
+    path: app/biz/src/main/java/com/ly/flight/chainsaas/booking/biz/enums/CreditTypeEnum.java
+    symbol: com.ly.flight.chainsaas.booking.biz.enums.CreditTypeEnum#HX
+    line: 23
+    commit: ''
+    content_digest: ''
+- code: com.ly.flight.chainsaas.booking.biz.enums.CreditTypeEnum#HY
+  business_meaning: 国际海员证
+  source: CODE_DEFAULT
+  known_unknown: false
+  confidence: 0.95
+  source_refs:
+  - repository: ''
+    path: app/biz/src/main/java/com/ly/flight/chainsaas/booking/biz/enums/CreditTypeEnum.java
+    symbol: com.ly.flight.chainsaas.booking.biz.enums.CreditTypeEnum#HY
+    line: 25
+    commit: ''
+    content_digest: ''
+- code: com.ly.flight.chainsaas.booking.biz.enums.CreditTypeEnum#NONE
+  business_meaning: 未知
+  source: CODE_DEFAULT
+  known_unknown: false
+  confidence: 0.95
+  source_refs:
+  - repository: ''
+    path: app/biz/src/main/java/com/ly/flight/chainsaas/booking/biz/enums/CreditTypeEnum.java
+    symbol: com.ly.flight.chainsaas.booking.biz.enums.CreditTypeEnum#NONE
+    line: 13
+    commit: ''
+    content_digest: ''
+- code: com.ly.flight.chainsaas.booking.biz.enums.CreditTypeEnum#PP
+  business_meaning: 护照
+  source: CODE_DEFAULT
+  known_unknown: false
+  confidence: 0.95
+  source_refs:
+  - repository: ''
+    path: app/biz/src/main/java/com/ly/flight/chainsaas/booking/biz/enums/CreditTypeEnum.java
+    symbol: com.ly.flight.chainsaas.booking.biz.enums.CreditTypeEnum#PP
+    line: 15
+    commit: ''
+    content_digest: ''
+- code: com.ly.flight.chainsaas.booking.biz.enums.CreditTypeEnum#QT
+  business_meaning: 其他
+  source: CODE_DEFAULT
+  known_unknown: false
+  confidence: 0.95
+  source_refs:
+  - repository: ''
+    path: app/biz/src/main/java/com/ly/flight/chainsaas/booking/biz/enums/CreditTypeEnum.java
+    symbol: com.ly.flight.chainsaas.booking.biz.enums.CreditTypeEnum#QT
+    line: 27
+    commit: ''
+    content_digest: ''
+- code: com.ly.flight.chainsaas.booking.biz.enums.CreditTypeEnum#TB
+  business_meaning: 台胞证
+  source: CODE_DEFAULT
+  known_unknown: false
+  confidence: 0.95
+  source_refs:
+  - repository: ''
+    path: app/biz/src/main/java/com/ly/flight/chainsaas/booking/biz/enums/CreditTypeEnum.java
+    symbol: com.ly.flight.chainsaas.booking.biz.enums.CreditTypeEnum#TB
+    line: 21
+    commit: ''
+    content_digest: ''
+- code: com.ly.flight.chainsaas.booking.biz.enums.CreditTypeEnum#TW
+  business_meaning: 台湾通行证
+  source: CODE_DEFAULT
+  known_unknown: false
+  confidence: 0.95
+  source_refs:
+  - repository: ''
+    path: app/biz/src/main/java/com/ly/flight/chainsaas/booking/biz/enums/CreditTypeEnum.java
+    symbol: com.ly.flight.chainsaas.booking.biz.enums.CreditTypeEnum#TW
+    line: 19
+    commit: ''
+    content_digest: ''
+- code: com.ly.flight.chainsaas.booking.enums.CreditTypeEnum#GA
+  business_meaning: 港澳通行证
+  source: CODE_DEFAULT
+  known_unknown: false
+  confidence: 0.95
+  source_refs:
+  - repository: ''
+    path: app/model/src/main/java/com/ly/flight/chainsaas/booking/enums/CreditTypeEnum.java
+    symbol: com.ly.flight.chainsaas.booking.enums.CreditTypeEnum#GA
+    line: 17
+    commit: ''
+    content_digest: ''
+- code: com.ly.flight.chainsaas.booking.enums.CreditTypeEnum#HX
+  business_meaning: 回乡证
+  source: CODE_DEFAULT
+  known_unknown: false
+  confidence: 0.95
+  source_refs:
+  - repository: ''
+    path: app/model/src/main/java/com/ly/flight/chainsaas/booking/enums/CreditTypeEnum.java
+    symbol: com.ly.flight.chainsaas.booking.enums.CreditTypeEnum#HX
+    line: 23
+    commit: ''
+    content_digest: ''
+- code: com.ly.flight.chainsaas.booking.enums.CreditTypeEnum#HY
+  business_meaning: 国际海员证
+  source: CODE_DEFAULT
+  known_unknown: false
+  confidence: 0.95
+  source_refs:
+  - repository: ''
+    path: app/model/src/main/java/com/ly/flight/chainsaas/booking/enums/CreditTypeEnum.java
+    symbol: com.ly.flight.chainsaas.booking.enums.CreditTypeEnum#HY
+    line: 25
+    commit: ''
+    content_digest: ''
+- code: com.ly.flight.chainsaas.booking.enums.CreditTypeEnum#ID
+  business_meaning: 身份证
+  source: CODE_DEFAULT
+  known_unknown: false
+  confidence: 0.95
+  source_refs:
+  - repository: ''
+    path: app/model/src/main/java/com/ly/flight/chainsaas/booking/enums/CreditTypeEnum.java
+    symbol: com.ly.flight.chainsaas.booking.enums.CreditTypeEnum#ID
+    line: 27
+    commit: ''
+    content_digest: ''
+- code: com.ly.flight.chainsaas.booking.enums.CreditTypeEnum#NONE
+  business_meaning: 未知
+  source: CODE_DEFAULT
+  known_unknown: false
+  confidence: 0.95
+  source_refs:
+  - repository: ''
+    path: app/model/src/main/java/com/ly/flight/chainsaas/booking/enums/CreditTypeEnum.java
+    symbol: com.ly.flight.chainsaas.booking.enums.CreditTypeEnum#NONE
+    line: 13
+    commit: ''
+    content_digest: ''
+- code: com.ly.flight.chainsaas.booking.enums.CreditTypeEnum#PP
+  business_meaning: 护照
+  source: CODE_DEFAULT
+  known_unknown: false
+  confidence: 0.95
+  source_refs:
+  - repository: ''
+    path: app/model/src/main/java/com/ly/flight/chainsaas/booking/enums/CreditTypeEnum.java
+    symbol: com.ly.flight.chainsaas.booking.enums.CreditTypeEnum#PP
+    line: 15
+    commit: ''
+    content_digest: ''
+- code: com.ly.flight.chainsaas.booking.enums.CreditTypeEnum#QT
+  business_meaning: 其他
+  source: CODE_DEFAULT
+  known_unknown: false
+  confidence: 0.95
+  source_refs:
+  - repository: ''
+    path: app/model/src/main/java/com/ly/flight/chainsaas/booking/enums/CreditTypeEnum.java
+    symbol: com.ly.flight.chainsaas.booking.enums.CreditTypeEnum#QT
+    line: 29
+    commit: ''
+    content_digest: ''
+- code: com.ly.flight.chainsaas.booking.enums.CreditTypeEnum#TB
+  business_meaning: 台胞证
+  source: CODE_DEFAULT
+  known_unknown: false
+  confidence: 0.95
+  source_refs:
+  - repository: ''
+    path: app/model/src/main/java/com/ly/flight/chainsaas/booking/enums/CreditTypeEnum.java
+    symbol: com.ly.flight.chainsaas.booking.enums.CreditTypeEnum#TB
+    line: 21
+    commit: ''
+    content_digest: ''
+- code: com.ly.flight.chainsaas.booking.enums.CreditTypeEnum#TW
+  business_meaning: 台湾通行证
+  source: CODE_DEFAULT
+  known_unknown: false
+  confidence: 0.95
+  source_refs:
+  - repository: ''
+    path: app/model/src/main/java/com/ly/flight/chainsaas/booking/enums/CreditTypeEnum.java
+    symbol: com.ly.flight.chainsaas.booking.enums.CreditTypeEnum#TW
+    line: 19
+    commit: ''
+    content_digest: ''
+suggested_meaning: 源码存在同名枚举类型，页面按全限定常量展示代码注释默认值，可再人工修订。
+code_meaning: 港澳通行证（com.ly.flight.chainsaas.booking.biz.enums.CreditTypeEnum#GA）；回乡证（com.ly.flight.chainsaas.booking.biz.enums.CreditTypeEnum#HX）；国际海员证（com.ly.flight.chainsaas.booking.biz.enums.CreditTypeEnum#HY）；未知（com.ly.flight.chainsaas.booking.biz.enums.CreditTypeEnum#NONE）；护照（com.ly.flight.chainsaas.booking.biz.enums.CreditTypeEnum#PP）；其他（com.ly.flight.chainsaas.booking.biz.enums.CreditTypeEnum#QT）；台胞证（com.ly.flight.chainsaas.booking.biz.enums.CreditTypeEnum#TB）；台湾通行证（com.ly.flight.chainsaas.booking.biz.enums.CreditTypeEnum#TW）；港澳通行证（com.ly.flight.chainsaas.booking.enums.CreditTypeEnum#GA）；回乡证（com.ly.flight.chainsaas.booking.enums.CreditTypeEnum#HX）；国际海员证（com.ly.flight.chainsaas.booking.enums.CreditTypeEnum#HY）；身份证（com.ly.flight.chainsaas.booking.enums.CreditTypeEnum#ID）；未知（com.ly.flight.chainsaas.booking.enums.CreditTypeEnum#NONE）；护照（com.ly.flight.chainsaas.booking.enums.CreditTypeEnum#PP）；其他（com.ly.flight.chainsaas.booking.enums.CreditTypeEnum#QT）；台胞证（com.ly.flight.chainsaas.booking.enums.CreditTypeEnum#TB）；台湾通行证（com.ly.flight.chainsaas.booking.enums.CreditTypeEnum#TW）
+unresolved_codes: []
+business_meaning: ''
+status: CODE_VERIFIED
+merged_into_candidate_id: ''
+source_refs:
+- repository: ''
+  path: app/biz/src/main/java/com/ly/flight/chainsaas/booking/biz/enums/CreditTypeEnum.java
+  symbol: com.ly.flight.chainsaas.booking.biz.enums.CreditTypeEnum
+  line: 10
+  commit: 004c50d90d152f1ef4892679f8b1b322cc7a7405
+  content_digest: 046d5d170df8c49108f361a35bc7adc224b3425e2fbad51ecbcf683464816a9a
+- repository: ''
+  path: app/model/src/main/java/com/ly/flight/chainsaas/booking/enums/CreditTypeEnum.java
+  symbol: com.ly.flight.chainsaas.booking.enums.CreditTypeEnum
+  line: 10
+  commit: 004c50d90d152f1ef4892679f8b1b322cc7a7405
+  content_digest: a4d29a7a46a3b2b677f08f3591da2737237d0e6c6148fdc479beda6735b50b37
+- repository: ''
+  path: app/biz/src/main/java/com/ly/flight/chainsaas/booking/biz/enums/CreditTypeEnum.java
+  symbol: com.ly.flight.chainsaas.booking.biz.enums.CreditTypeEnum#GA
+  line: 17
+  commit: ''
+  content_digest: ''
+- repository: ''
+  path: app/biz/src/main/java/com/ly/flight/chainsaas/booking/biz/enums/CreditTypeEnum.java
+  symbol: com.ly.flight.chainsaas.booking.biz.enums.CreditTypeEnum#HX
+  line: 23
+  commit: ''
+  content_digest: ''
+- repository: ''
+  path: app/biz/src/main/java/com/ly/flight/chainsaas/booking/biz/enums/CreditTypeEnum.java
+  symbol: com.ly.flight.chainsaas.booking.biz.enums.CreditTypeEnum#HY
+  line: 25
+  commit: ''
+  content_digest: ''
+- repository: ''
+  path: app/biz/src/main/java/com/ly/flight/chainsaas/booking/biz/enums/CreditTypeEnum.java
+  symbol: com.ly.flight.chainsaas.booking.biz.enums.CreditTypeEnum#NONE
+  line: 13
+  commit: ''
+  content_digest: ''
+- repository: ''
+  path: app/biz/src/main/java/com/ly/flight/chainsaas/booking/biz/enums/CreditTypeEnum.java
+  symbol: com.ly.flight.chainsaas.booking.biz.enums.CreditTypeEnum#PP
+  line: 15
+  commit: ''
+  content_digest: ''
+- repository: ''
+  path: app/biz/src/main/java/com/ly/flight/chainsaas/booking/biz/enums/CreditTypeEnum.java
+  symbol: com.ly.flight.chainsaas.booking.biz.enums.CreditTypeEnum#QT
+  line: 27
+  commit: ''
+  content_digest: ''
+- repository: ''
+  path: app/biz/src/main/java/com/ly/flight/chainsaas/booking/biz/enums/CreditTypeEnum.java
+  symbol: com.ly.flight.chainsaas.booking.biz.enums.CreditTypeEnum#TB
+  line: 21
+  commit: ''
+  content_digest: ''
+- repository: ''
+  path: app/biz/src/main/java/com/ly/flight/chainsaas/booking/biz/enums/CreditTypeEnum.java
+  symbol: com.ly.flight.chainsaas.booking.biz.enums.CreditTypeEnum#TW
+  line: 19
+  commit: ''
+  content_digest: ''
+- repository: ''
+  path: app/model/src/main/java/com/ly/flight/chainsaas/booking/enums/CreditTypeEnum.java
+  symbol: com.ly.flight.chainsaas.booking.enums.CreditTypeEnum#GA
+  line: 17
+  commit: ''
+  content_digest: ''
+- repository: ''
+  path: app/model/src/main/java/com/ly/flight/chainsaas/booking/enums/CreditTypeEnum.java
+  symbol: com.ly.flight.chainsaas.booking.enums.CreditTypeEnum#HX
+  line: 23
+  commit: ''
+  content_digest: ''
+affected_target_ids:
+- facade:com.ly.flight.chainsaas.booking.facade.DistributionFacade#issueTickets
+- facade:com.ly.flight.chainsaas.booking.facade.DistributionFacade#qCallBack
+- facade:com.ly.flight.chainsaas.booking.facade.DistributionFacade#queryOrderByPnr
+- facade:com.ly.flight.chainsaas.booking.facade.DistributionFacade#reportDataProcess
+- facade:com.ly.flight.chainsaas.booking.facade.PayCallBackFacade#payCallBack
+- facade:com.ly.flight.chainsaas.booking.facade.PayCallBackFacade#payOrderDetail
+- facade:com.ly.flight.chainsaas.booking.facade.PayCallBackFacade#payOrderRiskDetail
+- facade:com.ly.flight.chainsaas.booking.facade.PayCallBackFacade#payValidate
+- facade:com.ly.flight.chainsaas.booking.facade.TcplTradeFacade#book
+- facade:com.ly.flight.chainsaas.booking.facade.TcplTradeFacade#bookValidate
+- facade:com.ly.flight.chainsaas.booking.facade.TcplTradeFacade#confirmPayment
+- facade:com.ly.flight.chainsaas.booking.facade.TcplTradeFacade#notifyTicket
+- facade:com.ly.flight.chainsaas.booking.facade.TcplTradeFacade#payValidate
+- facade:com.ly.flight.chainsaas.booking.facade.TcplTradeFacade#payment
+- facade:com.ly.flight.chainsaas.booking.facade.TcplTradeFacade#retrieve
+- facade:com.ly.flight.chainsaas.booking.facade.TcplTradeFacade#searchBook
+- facade:com.ly.flight.chainsaas.booking.facade.TcplTradeFacade#validateCache
+- facade:com.ly.flight.chainsaas.booking.facade.TradeFacade#addErrorCode
+- facade:com.ly.flight.chainsaas.booking.facade.TradeFacade#addVccRecord
+- facade:com.ly.flight.chainsaas.booking.facade.TradeFacade#batchQueryTicketInfo
+- facade:com.ly.flight.chainsaas.booking.facade.TradeFacade#cancel
+- facade:com.ly.flight.chainsaas.booking.facade.TradeFacade#cancelPnrList
+- facade:com.ly.flight.chainsaas.booking.facade.TradeFacade#checkVccCard
+- facade:com.ly.flight.chainsaas.booking.facade.TradeFacade#closeVccCard
+- facade:com.ly.flight.chainsaas.booking.facade.TradeFacade#createDirectOrder
+- facade:com.ly.flight.chainsaas.booking.facade.TradeFacade#createLog
+- facade:com.ly.flight.chainsaas.booking.facade.TradeFacade#createPayment
+- facade:com.ly.flight.chainsaas.booking.facade.TradeFacade#createVcc
+- facade:com.ly.flight.chainsaas.booking.facade.TradeFacade#execute
+- facade:com.ly.flight.chainsaas.booking.facade.TradeFacade#flightChange
+- facade:com.ly.flight.chainsaas.booking.facade.TradeFacade#headerEdit
+- facade:com.ly.flight.chainsaas.booking.facade.TradeFacade#lockOrder
+- facade:com.ly.flight.chainsaas.booking.facade.TradeFacade#marketingOrderList
+- facade:com.ly.flight.chainsaas.booking.facade.TradeFacade#modifyErrorCodeState
+- facade:com.ly.flight.chainsaas.booking.facade.TradeFacade#orderRebut
+- facade:com.ly.flight.chainsaas.booking.facade.TradeFacade#pnrCallback
+- facade:com.ly.flight.chainsaas.booking.facade.TradeFacade#priceEdit
+- facade:com.ly.flight.chainsaas.booking.facade.TradeFacade#queryDetail
+- facade:com.ly.flight.chainsaas.booking.facade.TradeFacade#queryDetailByThird
+- facade:com.ly.flight.chainsaas.booking.facade.TradeFacade#queryErrorCode
+- facade:com.ly.flight.chainsaas.booking.facade.TradeFacade#queryErrorCodeList
+- facade:com.ly.flight.chainsaas.booking.facade.TradeFacade#queryList
+- facade:com.ly.flight.chainsaas.booking.facade.TradeFacade#queryVCCList
+- facade:com.ly.flight.chainsaas.booking.facade.TradeFacade#queryVccDetail
+- facade:com.ly.flight.chainsaas.booking.facade.TradeFacade#queryVccRecordList
+- facade:com.ly.flight.chainsaas.booking.facade.TradeFacade#realCancel
+- facade:com.ly.flight.chainsaas.booking.facade.TradeFacade#refund
+- facade:com.ly.flight.chainsaas.booking.facade.TradeFacade#unLockOrder
+- facade:com.ly.flight.chainsaas.booking.facade.TradeFacade#updateErrorCode
+- facade:com.ly.flight.chainsaas.booking.facade.TradeFacade#updateVccCard
+- facade:com.ly.flight.chainsaas.booking.facade.TradeResourcesFacade#calculate
+- facade:com.ly.flight.chainsaas.booking.facade.TradeResourcesFacade#manualParseCalculate
+- facade:com.ly.flight.chainsaas.booking.facade.TradeResourcesFacade#mappingTaxDetail
+- facade:com.ly.flight.chainsaas.booking.facade.TradeResourcesFacade#paymentValidate
+- facade:com.ly.flight.chainsaas.booking.facade.TradeResourcesFacade#searchDataCalculate
+- facade:com.ly.flight.chainsaas.booking.facade.TradeResourcesFacade#verifyPNR
+- facade:com.ly.flight.chainsaas.booking.facade.TradeResourcesFacade#verifyPrice
+- facade:com.ly.flight.chainsaas.booking.facade.TradeResourcesFacade#verifyPriceAndCabin
+- facade:com.ly.flight.chainsaas.booking.facade.honghu.HonghuApiFacade#booking
+- facade:com.ly.flight.chainsaas.booking.facade.honghu.HonghuApiFacade#cancel
+- facade:com.ly.flight.chainsaas.booking.facade.honghu.HonghuApiFacade#interceptTicket
+- facade:com.ly.flight.chainsaas.booking.facade.honghu.HonghuApiFacade#payment
+- facade:com.ly.flight.chainsaas.booking.facade.honghu.HonghuApiFacade#ticketNotify
+- facade:com.ly.flight.chainsaas.booking.facade.honghu.HonghuApiFacade#verify
+- facade:com.ly.flight.chainsaas.booking.facade.tcpl.TcplApiFacade#book
+- facade:com.ly.flight.chainsaas.booking.facade.tcpl.TcplApiFacade#bookProcessing
+- facade:com.ly.flight.chainsaas.booking.facade.tcpl.TcplApiFacade#flightChange
+- facade:com.ly.flight.chainsaas.booking.facade.tcpl.TcplApiFacade#notifications
+- facade:com.ly.flight.chainsaas.booking.facade.tcpl.TcplApiFacade#verify
+evidence_digest: 514144e1be648a6c4ef54911cc7f508d1d4d5046b1a807db4154a6dae34adbb5
+discovered_at: '2026-08-27T15:21:11.346923Z'
+updated_at: '2026-08-27T20:27:20.142792Z'

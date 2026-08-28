@@ -1,0 +1,104 @@
+candidate_id: candidate:business_term:aec32cc8f4dfcf15
+system_id: ifightchainsaas.java.booking.core
+kind: BUSINESS_TERM
+knowledge_form: BUSINESS_ENUM
+name: ErrorMessageEnum
+business_name: ErrorMessageEnum
+business_name_source: CODE_DEFAULT
+business_name_known_unknown: false
+enum_values:
+- code: PARAMS_NOT_EXIST
+  business_meaning: 参数为不存在
+  source: CODE_DEFAULT
+  known_unknown: false
+  confidence: 0.95
+  source_refs:
+  - repository: ''
+    path: app/integration/src/main/java/com/ly/flight/chainsaas/booking/integration/proxy/callback/message/ErrorMessageEnum.java
+    symbol: com.ly.flight.chainsaas.booking.integration.proxy.callback.message.ErrorMessageEnum#PARAMS_NOT_EXIST
+    line: 26
+    commit: ''
+    content_digest: ''
+- code: SYSTEM_ERROR
+  business_meaning: 系统异常
+  source: CODE_DEFAULT
+  known_unknown: false
+  confidence: 0.95
+  source_refs:
+  - repository: ''
+    path: app/integration/src/main/java/com/ly/flight/chainsaas/booking/integration/proxy/callback/message/ErrorMessageEnum.java
+    symbol: com.ly.flight.chainsaas.booking.integration.proxy.callback.message.ErrorMessageEnum#SYSTEM_ERROR
+    line: 18
+    commit: ''
+    content_digest: ''
+- code: SYSTEM_ERROR_PROCESSING
+  business_meaning: 内部程序异常
+  source: CODE_DEFAULT
+  known_unknown: false
+  confidence: 0.95
+  source_refs:
+  - repository: ''
+    path: app/integration/src/main/java/com/ly/flight/chainsaas/booking/integration/proxy/callback/message/ErrorMessageEnum.java
+    symbol: com.ly.flight.chainsaas.booking.integration.proxy.callback.message.ErrorMessageEnum#SYSTEM_ERROR_PROCESSING
+    line: 22
+    commit: ''
+    content_digest: ''
+- code: TOKEN_ERROR
+  business_meaning: 获取token异常
+  source: CODE_DEFAULT
+  known_unknown: false
+  confidence: 0.95
+  source_refs:
+  - repository: ''
+    path: app/integration/src/main/java/com/ly/flight/chainsaas/booking/integration/proxy/callback/message/ErrorMessageEnum.java
+    symbol: com.ly.flight.chainsaas.booking.integration.proxy.callback.message.ErrorMessageEnum#TOKEN_ERROR
+    line: 14
+    commit: ''
+    content_digest: ''
+suggested_meaning: 枚举名称和值默认采用源码注释；缺少注释时回退代码标识，可再人工修订。
+code_meaning: 参数为不存在（PARAMS_NOT_EXIST）；系统异常（SYSTEM_ERROR）；内部程序异常（SYSTEM_ERROR_PROCESSING）；获取token异常（TOKEN_ERROR）
+unresolved_codes: []
+business_meaning: ''
+status: CODE_VERIFIED
+merged_into_candidate_id: ''
+source_refs:
+- repository: ''
+  path: app/integration/src/main/java/com/ly/flight/chainsaas/booking/integration/proxy/callback/message/ErrorMessageEnum.java
+  symbol: com.ly.flight.chainsaas.booking.integration.proxy.callback.message.ErrorMessageEnum
+  line: 10
+  commit: 004c50d90d152f1ef4892679f8b1b322cc7a7405
+  content_digest: 8306bdadb70c9cf16f0d680888d5315c6dc6534b25388e7b4d69bde85ae28719
+- repository: ''
+  path: app/integration/src/main/java/com/ly/flight/chainsaas/booking/integration/proxy/callback/message/ErrorMessageEnum.java
+  symbol: com.ly.flight.chainsaas.booking.integration.proxy.callback.message.ErrorMessageEnum#PARAMS_NOT_EXIST
+  line: 26
+  commit: ''
+  content_digest: ''
+- repository: ''
+  path: app/integration/src/main/java/com/ly/flight/chainsaas/booking/integration/proxy/callback/message/ErrorMessageEnum.java
+  symbol: com.ly.flight.chainsaas.booking.integration.proxy.callback.message.ErrorMessageEnum#SYSTEM_ERROR
+  line: 18
+  commit: ''
+  content_digest: ''
+- repository: ''
+  path: app/integration/src/main/java/com/ly/flight/chainsaas/booking/integration/proxy/callback/message/ErrorMessageEnum.java
+  symbol: com.ly.flight.chainsaas.booking.integration.proxy.callback.message.ErrorMessageEnum#SYSTEM_ERROR_PROCESSING
+  line: 22
+  commit: ''
+  content_digest: ''
+- repository: ''
+  path: app/integration/src/main/java/com/ly/flight/chainsaas/booking/integration/proxy/callback/message/ErrorMessageEnum.java
+  symbol: com.ly.flight.chainsaas.booking.integration.proxy.callback.message.ErrorMessageEnum#TOKEN_ERROR
+  line: 14
+  commit: ''
+  content_digest: ''
+affected_target_ids:
+- facade:com.ly.flight.chainsaas.booking.facade.honghu.HonghuApiFacade#booking
+- facade:com.ly.flight.chainsaas.booking.facade.honghu.HonghuApiFacade#cancel
+- facade:com.ly.flight.chainsaas.booking.facade.honghu.HonghuApiFacade#interceptTicket
+- facade:com.ly.flight.chainsaas.booking.facade.honghu.HonghuApiFacade#payment
+- facade:com.ly.flight.chainsaas.booking.facade.honghu.HonghuApiFacade#ticketNotify
+- facade:com.ly.flight.chainsaas.booking.facade.honghu.HonghuApiFacade#verify
+evidence_digest: ab7e8afc3bdceb367e8ddf13ea87eddd3440080974ffc4b52d1053964cdcb1c0
+discovered_at: '2026-08-27T15:21:11.347094Z'
+updated_at: '2026-08-27T20:27:20.143559Z'

@@ -13,6 +13,9 @@ from opentest.application.foundation import OpenTestApplication
 from opentest.application.program_case_analysis import ProgramCaseAnalysisBuilder
 from opentest.domain.errors import KnowledgeNotFoundError, KnowledgeValidationError
 from opentest.domain.models import (
+    CaseCondition,
+    CaseConditionResolutionOwner,
+    CaseConditionType,
     CaseSemanticDraft,
     CaseSemanticResolution,
     DecisionObligation,
@@ -145,9 +148,23 @@ def test_semantic_draft_requires_exactly_one_resolution_per_program_gap(tmp_path
         status="ANALYZED",
         evidence=[gap_evidence, unrelated_evidence],
         core_obligations=[requirement],
+        conditions=[
+            CaseCondition(
+                condition_id="condition:program:0001:calculation",
+                condition_type=CaseConditionType.INPUT_COVERAGE,
+                title="计算影响待业务分区",
+                summary="入口字段影响计算，但业务取值仍需确认。",
+                evidence_ids=[gap_evidence.evidence_id],
+                source_refs=[gap_evidence.source_ref],
+                resolution_owner=CaseConditionResolutionOwner.AI,
+                blocks_generation=True,
+                technical_code="BLOCKED_FIELD_PARTITION_REQUIRED",
+            )
+        ],
         semantic_gaps=[
             ProgramSemanticGap(
                 gap_id="semantic-gap:program:0001:0001",
+                condition_id="condition:program:0001:calculation",
                 requirement_obligation_id=requirement.obligation_id,
                 evidence_ids=["sample#submit:field_influence:1:1"],
                 reason_code="BLOCKED_FIELD_PARTITION_REQUIRED",
@@ -162,7 +179,8 @@ def test_semantic_draft_requires_exactly_one_resolution_per_program_gap(tmp_path
         [
             CaseSemanticResolution(
                 gap_id=artifact.semantic_gaps[0].gap_id,
-                action="ADD_OBLIGATION",
+                condition_id=artifact.semantic_gaps[0].condition_id,
+                action="REPLACE_WITH_TYPED_OBLIGATION",
                 obligation_kind="factor",
                 title="示例因素",
                 payload={
@@ -174,11 +192,26 @@ def test_semantic_draft_requires_exactly_one_resolution_per_program_gap(tmp_path
             )
         ],
     )
+    valid_replacement = _semantic_draft(
+        artifact,
+        [
+            CaseSemanticResolution(
+                gap_id=artifact.semantic_gaps[0].gap_id,
+                condition_id=artifact.semantic_gaps[0].condition_id,
+                action="REPLACE_WITH_TYPED_OBLIGATION",
+                obligation_kind="factor",
+                title="金额分区",
+                payload={"factor_path": "request.amount", "values": [1, 2]},
+                reason="业务确认两个代表值。",
+            )
+        ],
+    )
     complete_draft = _semantic_draft(
         artifact,
         [
             CaseSemanticResolution(
                 gap_id=artifact.semantic_gaps[0].gap_id,
+                condition_id=artifact.semantic_gaps[0].condition_id,
                 action="NO_ADDITIONAL_OBLIGATION",
                 reason="程序Decision义务已经覆盖该影响，无需新增因素。",
             )
@@ -189,7 +222,8 @@ def test_semantic_draft_requires_exactly_one_resolution_per_program_gap(tmp_path
         [
             CaseSemanticResolution(
                 gap_id=artifact.semantic_gaps[0].gap_id,
-                action="ADD_OBLIGATION",
+                condition_id=artifact.semantic_gaps[0].condition_id,
+                action="REPLACE_WITH_TYPED_OBLIGATION",
                 obligation_kind="decision",
                 title="借用其他分支证据",
                 payload={
@@ -218,8 +252,74 @@ def test_semantic_draft_requires_exactly_one_resolution_per_program_gap(tmp_path
         builder.validate_semantic_draft(artifact, controlled_payload)
     with pytest.raises(KnowledgeValidationError, match="outside its program gap"):
         builder.validate_semantic_draft(artifact, borrowed_evidence_draft)
-    assert builder.validate_semantic_draft(artifact, complete_draft) == []
+    with pytest.raises(KnowledgeValidationError, match="cannot remove"):
+        builder.validate_semantic_draft(artifact, complete_draft)
+    accepted = builder.validate_semantic_draft(artifact, valid_replacement)
+    assert len(accepted) == 1
+    assert accepted[0].kind == "factor"
     assert artifact.core_obligations == [requirement]
+
+
+def test_semantic_draft_rejects_unsupported_and_non_ai_condition_disposal(
+    tmp_path: Path,
+) -> None:
+    """不支持动作和非AI条件都不能删除程序冻结的覆盖分母。
+
+    Args:
+        tmp_path: 用于构造通用源码扫描基线的隔离路径。
+
+    Returns:
+        None；两种绕过均被稳定校验错误拒绝时结束。
+
+    Side Effects:
+        无；仅构造内存程序分析和语义草稿。
+    """
+
+    artifact = _semantic_input_artifact(tmp_path)
+    gap = artifact.semantic_gaps[0]
+    unsupported = _semantic_draft(
+        artifact,
+        [
+            CaseSemanticResolution(
+                gap_id=gap.gap_id,
+                condition_id=gap.condition_id,
+                action="UNSUPPORTED",
+                reason="当前没有可验证的类型化处理方式。",
+            )
+        ],
+    )
+    program_owned_artifact = artifact.model_copy(
+        update={
+            "conditions": [
+                artifact.conditions[0].model_copy(
+                    update={"resolution_owner": CaseConditionResolutionOwner.PROGRAM}
+                )
+            ]
+        }
+    )
+    replacement = _semantic_draft(
+        program_owned_artifact,
+        [
+            CaseSemanticResolution(
+                gap_id=gap.gap_id,
+                condition_id=gap.condition_id,
+                action="REPLACE_WITH_TYPED_OBLIGATION",
+                obligation_kind="factor",
+                title="金额分区",
+                payload={"factor_path": "request.amount", "values": [1, 2]},
+                reason="业务确认两个代表值。",
+            )
+        ],
+    )
+
+    builder = ProgramCaseAnalysisBuilder()
+    with pytest.raises(
+        KnowledgeValidationError,
+        match="BLOCKED_UNSUPPORTED_CASE_CONDITION_RESOLUTION",
+    ):
+        builder.validate_semantic_draft(artifact, unsupported)
+    with pytest.raises(KnowledgeValidationError, match="non-AI"):
+        builder.validate_semantic_draft(program_owned_artifact, replacement)
 
 
 def test_program_analysis_blocks_ambiguous_entry_implementation(tmp_path: Path) -> None:
@@ -344,14 +444,72 @@ def test_program_analysis_preserves_proven_core_and_deduplicates_semantic_gap(tm
     assert {item.binding_kind for item in artifact.evidence if item.field_paths} == {"entry_parameter"}
 
 
-def test_reachable_method_parameter_never_becomes_entry_request_field(tmp_path: Path) -> None:
-    """查询结果与入口子对象传入helper但无完整传播证明时只能形成语义缺口。
+def test_unresolved_collection_multi_fields_receive_distinct_condition_ids(
+    tmp_path: Path,
+) -> None:
+    """同一未解析集合证据绑定多个入口字段时应形成可分别确认的稳定条件。
 
     Args:
         tmp_path: 用于构造通用源码基线的隔离路径。
 
     Returns:
-        None；内部字段不进入Entry字段目录且不会生成可执行核心边界时通过。
+        None；两个Gap各自引用唯一AI条件且程序目录可正常构建时通过。
+    """
+
+    artifact = _multi_field_unresolved_artifact(tmp_path, "collection_iteration")
+
+    condition_ids = [gap.condition_id for gap in artifact.semantic_gaps]
+    assert artifact.status == "ANALYZED"
+    assert len(condition_ids) == 2
+    assert len(set(condition_ids)) == 2
+    assert set(condition_ids) == {item.condition_id for item in artifact.conditions}
+
+
+def test_unresolved_calculation_multi_fields_support_exact_resolutions(
+    tmp_path: Path,
+) -> None:
+    """多字段计算缺口必须允许AI逐Gap提交互不借用的typed替换。
+
+    Args:
+        tmp_path: 用于构造通用源码基线的隔离路径。
+
+    Returns:
+        None；两个Resolution精确绑定各自条件并共同通过校验时结束。
+    """
+
+    artifact = _multi_field_unresolved_artifact(tmp_path, "calculation")
+    fields = ["request.amount", "request.fee"]
+    resolutions = [
+        CaseSemanticResolution(
+            gap_id=gap.gap_id,
+            condition_id=gap.condition_id,
+            action="REPLACE_WITH_TYPED_OBLIGATION",
+            obligation_kind="factor",
+            title=f"{field_path}业务分区",
+            payload={"factor_path": field_path, "values": ["LOW", "HIGH"]},
+            reason="该入口字段影响计算结果，需要两个确定性代表分区。",
+        )
+        for gap, field_path in zip(artifact.semantic_gaps, fields, strict=True)
+    ]
+
+    accepted_obligations = ProgramCaseAnalysisBuilder().validate_semantic_draft(
+        artifact,
+        _semantic_draft(artifact, resolutions),
+    )
+
+    assert len(accepted_obligations) == 2
+    assert {item.factor_path for item in accepted_obligations} == set(fields)
+    assert len({gap.condition_id for gap in artifact.semantic_gaps}) == 2
+
+
+def test_reachable_method_parameter_never_becomes_entry_request_field(tmp_path: Path) -> None:
+    """查询结果与入口子对象传入helper但无传播证明时只保留内部诊断。
+
+    Args:
+        tmp_path: 用于构造通用源码基线的隔离路径。
+
+    Returns:
+        None；内部字段不进入Entry字段目录、覆盖分母或强制AI任务时通过。
 
     Side Effects:
         无；仅验证Java证据到程序分析的可信提升边界。
@@ -413,23 +571,23 @@ def test_reachable_method_parameter_never_becomes_entry_request_field(tmp_path: 
     artifact = catalog.artifacts[0]
     assert artifact.status == "ANALYZED"
     assert artifact.fields == []
-    assert {obligation.kind for obligation in artifact.core_obligations} == {"requirement"}
-    assert len(artifact.semantic_gaps) == 2
-    assert {gap.reason_code for gap in artifact.semantic_gaps} == {
-        "BLOCKED_DECISION_INPUT_SOURCE",
-        "BLOCKED_REACHABLE_INPUT_BINDING_REQUIRED",
+    assert artifact.core_obligations == []
+    assert artifact.semantic_gaps == []
+    assert {condition.condition_type.value for condition in artifact.conditions} == {
+        "INTERNAL_DIAGNOSTIC"
     }
+    assert all(not condition.blocks_generation for condition in artifact.conditions)
     assert {item.binding_kind for item in artifact.evidence} == {"method_parameter"}
 
 
-def test_unbound_collection_loop_is_frozen_as_semantic_gap(tmp_path: Path) -> None:
-    """查询或局部计算得到的集合循环不得静默缩小覆盖分母。
+def test_unbound_collection_loop_is_internal_diagnostic(tmp_path: Path) -> None:
+    """查询或局部计算得到的集合循环不得扩大入口覆盖分母。
 
     Args:
         tmp_path: 用于构造通用源码基线的隔离路径。
 
     Returns:
-        None；无入口字段的真实循环形成program Requirement和明确Gap时通过。
+        None；无入口字段的真实循环只形成不阻塞的内部诊断时通过。
 
     Side Effects:
         无；不生成Case且不访问数据源。
@@ -462,9 +620,80 @@ def test_unbound_collection_loop_is_frozen_as_semantic_gap(tmp_path: Path) -> No
     ).artifacts[0]
 
     assert artifact.fields == []
-    assert [obligation.kind for obligation in artifact.core_obligations] == ["requirement"]
-    assert artifact.semantic_gaps[0].reason_code == "BLOCKED_REACHABLE_INPUT_BINDING_REQUIRED"
-    assert artifact.operations[0].operation_id == "sample.RecordProcessor#process(sample.Record)"
+    assert artifact.core_obligations == []
+    assert artifact.semantic_gaps == []
+    assert [condition.condition_type.value for condition in artifact.conditions] == [
+        "INTERNAL_DIAGNOSTIC"
+    ]
+    assert artifact.operations == []
+
+
+def test_helper_method_error_response_downstream_call_is_internal_diagnostic(
+    tmp_path: Path,
+) -> None:
+    """AbstractFacade方法参数不得冒充入口字段并升级为业务覆盖分区。
+
+    Args:
+        tmp_path: 用于构造通用退款Facade扫描基线的隔离路径。
+
+    Returns:
+        None；真实helper参数形状的createErrorResponse调用仅保留非阻塞诊断时通过。
+
+    Side Effects:
+        无；只在内存复现真实方法形状和downstream_call证据。
+    """
+
+    manifest = _manifest(tmp_path)
+    entry_method = _semantic_method("sample.SubmitFacadeImpl", "submit")
+    error_method = _semantic_method("com.ly.flight.chainsaas.refund.facade.impl.AbstractFacade", "createErrorResponse").model_copy(
+        update={
+            "symbol_id": (
+                "com.ly.flight.chainsaas.refund.facade.impl.AbstractFacade"
+                "#createErrorResponse(Request,APIException,Class<Response>)"
+            ),
+            "parameter_names": ["request", "exception", "responseType"],
+            "parameter_types": ["Request", "APIException", "Class<Response>"],
+            "parameter_qualified_types": [
+                "sample.Request",
+                "sample.APIException",
+                "java.lang.Class",
+            ],
+            "owner_interfaces": [],
+            "entry_point_ids": [entry_method.symbol_id],
+        }
+    )
+    semantic = SemanticAnalysisResult(
+        schema_version=5,
+        analyzer="javaparser-symbol-solver",
+        analyzer_version="test-case-evidence",
+        system_id=SYSTEM_ID,
+        methods=[entry_method, error_method],
+        case_evidence=[
+            SemanticCaseEvidence(
+                evidence_id="refund:create-error-response:downstream:1",
+                method_symbol_id=error_method.symbol_id,
+                kind="field_influence",
+                field_paths=["errorCode", "message"],
+                influence_kind="downstream_call",
+                operation_ids=["sample.ResponseFactory#createErrorResponse()"],
+                binding_kind="method_parameter",
+                gap_reason="downstream_operation_unresolved",
+                source_ref=error_method.source_ref,
+                resolution_status="partial",
+            )
+        ],
+    )
+
+    artifact = ProgramCaseAnalysisBuilder().build(
+        manifest.model_copy(update={"semantic_analysis": semantic})
+    ).artifacts[0]
+
+    assert artifact.semantic_gaps == []
+    assert artifact.core_obligations == []
+    assert [condition.condition_type.value for condition in artifact.conditions] == [
+        "INTERNAL_DIAGNOSTIC"
+    ]
+    assert artifact.conditions[0].blocks_generation is False
 
 
 def test_entry_matching_requires_resolved_concrete_method_body(tmp_path: Path) -> None:
@@ -864,4 +1093,117 @@ def _semantic_draft(
         analysis_artifact_id=artifact.artifact_id,
         entry_id=artifact.entry_id,
         resolutions=resolutions,
+    )
+
+
+def _multi_field_unresolved_artifact(
+    tmp_path: Path,
+    influence_kind: str,
+) -> ProgramCaseAnalysisArtifact:
+    """用一条真实入口证据构造两个字段共享来源的未解析Program Artifact。
+
+    Args:
+        tmp_path: 通用源码Manifest使用的隔离路径。
+        influence_kind: 本次证据的集合迭代或计算影响类型。
+
+    Returns:
+        由正式Builder生成且每个入口字段均形成独立Gap的分析资产。
+    """
+
+    manifest = _manifest(tmp_path)
+    method = _semantic_method("sample.SubmitFacadeImpl", "submit")
+    field_paths = (
+        ["request.items", "request.moreItems"]
+        if influence_kind == "collection_iteration"
+        else ["request.amount", "request.fee"]
+    )
+    evidence = SemanticCaseEvidence(
+        evidence_id=f"sample:multi-field:{influence_kind}",
+        method_symbol_id=method.symbol_id,
+        kind="field_influence",
+        field_paths=field_paths,
+        influence_kind=influence_kind,
+        binding_kind="method_parameter",
+        resolution_status=SemanticResolutionStatus.UNRESOLVED,
+        source_ref=method.source_ref,
+    )
+    semantic = SemanticAnalysisResult(
+        schema_version=5,
+        analyzer="javaparser-symbol-solver",
+        analyzer_version="test-multi-field-condition-id",
+        system_id=SYSTEM_ID,
+        methods=[method],
+        case_evidence=[evidence],
+    )
+
+    return ProgramCaseAnalysisBuilder().build(
+        manifest.model_copy(update={"semantic_analysis": semantic})
+    ).artifacts[0]
+
+
+def _semantic_input_artifact(tmp_path: Path) -> ProgramCaseAnalysisArtifact:
+    """构造一个只能由精确AI类型化替换关闭的入口字段计算缺口。
+
+    Args:
+        tmp_path: 用于构造通用源码扫描基线的隔离路径。
+
+    Returns:
+        带一个Program Requirement、AI条件和对应Semantic Gap的分析资产。
+    """
+
+    manifest = _manifest(tmp_path)
+    evidence = SemanticCaseEvidence(
+        evidence_id="sample:calculation:typed",
+        method_symbol_id="sample.SubmitFacadeImpl#submit(sample.SubmitRequest)",
+        kind="field_influence",
+        field_paths=["request.amount"],
+        influence_kind="calculation",
+        binding_kind="entry_parameter",
+        source_ref=SourceReference(
+            path="src/main/java/sample/SubmitFacadeImpl.java",
+            line=10,
+        ),
+    )
+    gap_id = "semantic-gap:program:0001:0001"
+    condition_id = "condition:program:0001:calculation"
+    requirement = RequirementObligation(
+        obligation_id="obligation:program:0001:0001",
+        system_id=SYSTEM_ID,
+        entry_id=ENTRY_ID,
+        title="程序影响待语义分区",
+        origin="program",
+        requirement_id=gap_id,
+        statement="入口金额影响计算结果。",
+    )
+    condition = CaseCondition(
+        condition_id=condition_id,
+        condition_type=CaseConditionType.INPUT_COVERAGE,
+        title="金额影响待业务分区",
+        summary="入口金额影响计算，但业务取值仍需确认。",
+        evidence_ids=[evidence.evidence_id],
+        source_refs=[evidence.source_ref],
+        resolution_owner=CaseConditionResolutionOwner.AI,
+        blocks_generation=True,
+        technical_code="BLOCKED_FIELD_PARTITION_REQUIRED",
+    )
+    return ProgramCaseAnalysisArtifact(
+        artifact_id=f"program-analysis:{manifest.scan_id}:0001",
+        system_id=SYSTEM_ID,
+        source_scan_id=manifest.scan_id,
+        source_baseline=manifest.baseline,
+        entry_id=ENTRY_ID,
+        status="ANALYZED",
+        evidence=[evidence],
+        core_obligations=[requirement],
+        conditions=[condition],
+        semantic_gaps=[
+            ProgramSemanticGap(
+                gap_id=gap_id,
+                condition_id=condition_id,
+                requirement_obligation_id=requirement.obligation_id,
+                evidence_ids=[evidence.evidence_id],
+                reason_code="BLOCKED_FIELD_PARTITION_REQUIRED",
+                message="需要确定业务分区。",
+            )
+        ],
     )

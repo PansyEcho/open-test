@@ -1,0 +1,118 @@
+contract_version: setup-contract-rules/v1
+rule_revision_id: setup-rule-revision:857da080bd6f4b45a015b11c1655c086
+system_id: ifightchainsaas.java.refund.core
+fact_contracts:
+- fact_contract_id: refund-order/v1
+  display_name: 退票单
+  required_origin: PUBLISHED_OUTPUT
+  required_fields:
+  - path: refund_serial_no
+    schema_type: string
+  - path: refund_state_code
+    schema_type: integer
+  business_identity_paths:
+  - refund_serial_no
+  required_constraints: []
+  state_path: refund_state_code
+  state_predicates:
+  - name: CANCELLABLE
+    display_name: 可取消
+    allowed_values:
+    - 0
+    - 1
+    - 2
+    - 5
+    - 8
+  - name: PENDING_APPLY
+    display_name: 退票申请
+    allowed_values:
+    - 0
+- fact_contract_id: ticket-order/v1
+  display_name: 出票单
+  required_origin: UPSTREAM_PUBLISHED_OUTPUT
+  required_fields:
+  - path: order_serial_no
+    schema_type: string
+  - path: status
+    schema_type: string
+  business_identity_paths:
+  - order_serial_no
+  required_constraints: []
+  state_path: status
+  state_predicates:
+  - name: ISSUED
+    display_name: 出票成功
+    allowed_values:
+    - Issued
+- fact_contract_id: refund-order/v2
+  display_name: 退票单
+  required_origin: PUBLISHED_OUTPUT
+  required_fields:
+  - path: refundSerialNo
+    schema_type: string
+  - path: refundState
+    schema_type: string
+  business_identity_paths:
+  - refundSerialNo
+  required_constraints: []
+  state_path: refundState
+  state_predicates:
+  - name: CANCELLABLE
+    display_name: 可取消
+    allowed_values:
+    - PENDING_APPLY
+    - WAIT_REFUND
+    - AUDITED
+    - REFUND_FAIL
+    - RESHOPING
+  - name: PENDING_APPLY
+    display_name: 退票申请
+    allowed_values:
+    - PENDING_APPLY
+- fact_contract_id: refund-order/v3
+  display_name: 退票单
+  required_origin: PUBLISHED_OUTPUT
+  required_fields:
+  - path: refundSerialNo
+    schema_type: string
+  - path: refundState
+    schema_type: string
+  business_identity_paths:
+  - refundSerialNo
+  required_constraints: []
+  state_path: refundState
+  state_predicates:
+  - name: CANCELLABLE
+    display_name: 可取消
+    allowed_values:
+    - PENDING_APPLY
+    - WAIT_REFUND
+    - AUDITED
+    - REFUND_FAIL
+    - RESHOPING
+  - name: PENDING_APPLY
+    display_name: 退票申请
+    allowed_values:
+    - PENDING_APPLY
+  - name: CANCELLED
+    display_name: 已取消并消费
+    allowed_values:
+    - REFUND_CANCEL
+- fact_contract_id: ticket-order/v2
+  display_name: 出票单
+  required_origin: UPSTREAM_PUBLISHED_OUTPUT
+  required_fields:
+  - path: orderSerialNo
+    schema_type: string
+  - path: orderState
+    schema_type: integer
+  business_identity_paths:
+  - orderSerialNo
+  required_constraints: []
+  state_path: orderState
+  state_predicates:
+  - name: ISSUED
+    display_name: 出票成功
+    allowed_values:
+    - 4
+input_policies: []

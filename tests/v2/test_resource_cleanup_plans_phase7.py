@@ -6,6 +6,7 @@ import json
 import shutil
 from contextlib import contextmanager
 from pathlib import Path
+from types import SimpleNamespace
 from typing import Iterator
 
 import pytest
@@ -14,11 +15,13 @@ from fastapi.testclient import TestClient
 from pydantic import ValidationError
 
 from opentest.api import create_app
+from opentest.application.cleanup_plans import CleanupPlanService
 from opentest.application.foundation import OpenTestApplication
 from opentest.domain.errors import KnowledgeValidationError
 from opentest.domain.models import (
     CleanupCandidateClassifier,
     CleanupBusinessIdentityRef,
+    ConsumedByActionCleanupContract,
     CleanupContractRuleSet,
     CleanupEntryContract,
     CleanupExpectedField,
@@ -29,11 +32,30 @@ from opentest.domain.models import (
     CleanupSqlContract,
     CleanupSqlParameter,
     CaseCompilationRuleSet,
+    DataSetupRecipeSubmission,
     DataSetupRecipeRef,
+    DataSetupStep,
     DiscoveredResource,
+    EntryFactAssertion,
+    EntryFactKnowledge,
+    KnowledgeConclusionSource,
+    KnowledgeNode,
+    KnowledgeNodeKind,
+    KnowledgeStatus,
+    PublishedCapabilityRef,
+    RecipeFactOutputSubmission,
     ResourceKind,
     ResourceRole,
     SafeConstantInputRef,
+    SetupAvailabilityRule,
+    SetupContractRuleSet,
+    SetupEntityExtractionRule,
+    SetupFactContractDefinition,
+    SetupFactOrigin,
+    SetupFactRequiredField,
+    SetupInputBinding,
+    SetupInputPolicy,
+    SetupStatePredicateDefinition,
     SourceReference,
     SystemDependencyBindingSubmission,
     SystemDependencyPurpose,
@@ -53,6 +75,285 @@ from test_typed_case_compiler_phase5 import (
 
 RESOURCE_ID = "mysql:generic-resource-state"
 CONTRACT_ID = "generic_resource_cleanup/v1"
+
+
+def test_identityless_qtc_cleanup_requires_dependency_anchored_final_query_fact() -> None:
+    """无CREATE实体响应的Producer只能用依赖关系验证后的末次Query Fact回收。
+
+    Returns:
+        None；查询输入和输出关系闭合时允许最终Fact，去掉关系时拒绝。
+
+    Side Effects:
+        无；仅对通用typed Recipe对象执行纯校验。
+    """
+
+    query_ref = PublishedCapabilityRef(
+        system_id=SYSTEM_ID,
+        capability_id="published:generic-entity-query",
+    )
+    query_rule = SetupAvailabilityRule(type="VALUE_NOT_NULL", path="entity")
+    extraction_rule = SetupEntityExtractionRule(type="VALUE", path="entity")
+    initial_query = DataSetupStep(
+        step_id="query-existing",
+        capability_ref=query_ref,
+        operation_role="QUERY",
+        availability=query_rule,
+        entity_extraction=extraction_rule,
+    )
+    create_step = DataSetupStep(
+        step_id="create-entity",
+        capability_ref=PublishedCapabilityRef(
+            system_id=SYSTEM_ID,
+            capability_id="published:generic-entity-create",
+        ),
+        operation_role="CREATE",
+    )
+    final_query = DataSetupStep(
+        step_id="query-created",
+        capability_ref=query_ref,
+        operation_role="QUERY",
+        input_bindings={
+            "order_no": SetupInputBinding(
+                source="fact",
+                path="dependency_order.order_no",
+            )
+        },
+        availability=query_rule,
+        entity_extraction=extraction_rule,
+    )
+    fact = SimpleNamespace(
+        fact_name="verified_entity",
+        fact_contract_id="generic-entity/v1",
+        from_step_id=final_query.step_id,
+        relations={"order_no": "${dependency_order.order_no}"},
+    )
+    recipe = SimpleNamespace(
+        acquisition_policy="QUERY_THEN_CREATE",
+        steps=[initial_query, create_step, final_query],
+        fact_outputs=[fact],
+        requires_facts=[
+            SimpleNamespace(
+                slot_id="dependency_order",
+                fact_contract_id="dependency-order/v1",
+            )
+        ],
+    )
+    dependency_contract = SetupFactContractDefinition(
+        fact_contract_id="dependency-order/v1",
+        required_origin=SetupFactOrigin.PUBLISHED_OUTPUT,
+        required_fields=[
+            SetupFactRequiredField(path="order_no", schema_type="string")
+        ],
+        business_identity_paths=["order_no"],
+    )
+    rules = SetupContractRuleSet(
+        system_id=SYSTEM_ID,
+        fact_contracts=[dependency_contract],
+        input_policies=[
+            SetupInputPolicy(
+                capability_ref=query_ref,
+                input_path="order_no",
+                allowed_sources=["fact"],
+                business_identity=True,
+            )
+        ],
+    )
+
+    anchored = CleanupPlanService._identityless_qtc_final_fact_is_safe(
+        recipe,
+        fact,
+        final_query,
+        rules,
+    )
+    unanchored = CleanupPlanService._identityless_qtc_final_fact_is_safe(
+        recipe,
+        SimpleNamespace(**{**vars(fact), "relations": {}}),
+        final_query,
+        rules,
+    )
+
+    assert anchored is True
+    assert unanchored is False
+
+
+def test_consumed_by_action_contract_requires_exact_setup_fact_identity() -> None:
+    """Action消费终结只能绑定目标入口根Setup Fact，不能复用ActionFact身份。"""
+
+    with pytest.raises(ValidationError, match="Setup Fact identity"):
+        CleanupEntryContract(
+            cleanup_contract_id="generic_consumed_action/v1",
+            entry_id=ENTRY_ID,
+            action_profile_id="action-profile:generic-inspect:v1",
+            identity=CleanupIdentityContract(
+                required_source="action_fact",
+                fact_contract_id="generic_action_result/v1",
+                fact_path="reference_id",
+            ),
+            consumed_by_action=ConsumedByActionCleanupContract(
+                state_transition_assertion_id="entry-fact:generic-consumed-transition",
+                oracle_actual_source="action_result",
+                oracle_actual_path="accepted",
+            ),
+        )
+
+
+def test_consumed_by_action_plan_requires_formal_transition_and_action_oracle(
+    tmp_path: Path,
+) -> None:
+    """正式状态转换和current Action Oracle齐备时才能发布消费终结Plan。
+
+    Args:
+        tmp_path: Pytest隔离源码、知识、Recipe与Cleanup资产根目录。
+    """
+
+    harness = _cleanup_harness(tmp_path, include_cleanup_dependency=False)
+    application = harness.application
+    manifest = application.case_rules.artifacts.read(SYSTEM_ID, "latest")
+    entry = next(item for item in manifest.entries if item.entry_id == ENTRY_ID)
+    current_setup_rules = application.setup_contract_rules.read(SYSTEM_ID)
+    current_fact = current_setup_rules.fact_contracts[0]
+    stateful_fact = current_fact.model_copy(
+        update={
+            "fact_contract_id": "generic_consumable/v1",
+            "business_identity_paths": ["firstOrdinal"],
+            "state_path": "mode",
+            "state_predicates": [
+                SetupStatePredicateDefinition(name="AVAILABLE", allowed_values=["NORMAL"]),
+                SetupStatePredicateDefinition(name="CONSUMED", allowed_values=["CONSUMED"]),
+            ],
+        }
+    )
+    stateful_rules = application.setup_contract_rules.write(
+        current_setup_rules.model_copy(
+            update={
+                "rule_revision_id": "",
+                "fact_contracts": [*current_setup_rules.fact_contracts, stateful_fact],
+            }
+        )
+    )
+    setup_ref = PublishedCapabilityRef(
+        system_id=PROVIDER_ID,
+        capability_id=harness.setup.capability_id,
+    )
+    recipe_id = "setup:generic-consumable-action"
+    publication = application.publish_data_setup_recipe(
+        SYSTEM_ID,
+        DataSetupRecipeSubmission(
+            recipe_id=recipe_id,
+            entry_id=ENTRY_ID,
+            entry_source_scan_id=manifest.scan_id,
+            name="查询或建立可消费通用实体",
+            steps=[
+                DataSetupStep(
+                    step_id="prepare-consumable",
+                    capability_ref=setup_ref,
+                    input_bindings={
+                        "partition": SetupInputBinding(
+                            source="literal",
+                            value="QA_PARTITION",
+                        )
+                    },
+                )
+            ],
+            fact_outputs=[
+                RecipeFactOutputSubmission(
+                    fact_name="consumable_entity",
+                    fact_contract_id=stateful_fact.fact_contract_id,
+                    from_step_id="prepare-consumable",
+                    output_path="trigger",
+                    constraints=[
+                        {"path": "mode", "operator": "eq", "expected": "NORMAL"}
+                    ],
+                    produced_state="AVAILABLE",
+                )
+            ],
+        ),
+    )
+    assert publication.status == "PUBLISHED", publication.issues
+    assert publication.recipe is not None
+    assert publication.recipe.setup_rule_revision_id == stateful_rules.rule_revision_id
+    evidence = SourceReference(
+        path=entry.source_path,
+        symbol=entry.source_id,
+        line=1,
+        commit=manifest.baseline.commit,
+    )
+    transition = EntryFactAssertion(
+        assertion_id="entry-fact:generic-consumed-transition",
+        assertion_type="STATE_TRANSITION",
+        fact_contract_id=stateful_fact.fact_contract_id,
+        from_state="AVAILABLE",
+        to_state="CONSUMED",
+        source=KnowledgeConclusionSource.CODE_PROVEN,
+        evidence_refs=[evidence],
+    )
+    application.store.write_node(
+        KnowledgeNode(
+            node_id=f"entry:{entry.source_id}",
+            system_id=SYSTEM_ID,
+            kind=KnowledgeNodeKind.FACADE,
+            title=entry.display_name,
+            aliases=[entry.entry_id, entry.source_id],
+            status=KnowledgeStatus.CODE_VERIFIED,
+            entry_fact_knowledge=EntryFactKnowledge(
+                entry_id=entry.entry_id,
+                source_scan_id=manifest.scan_id,
+                source_baseline=manifest.baseline,
+                state_transitions=[transition],
+            ),
+        ),
+        "# Generic consumed action\n",
+    )
+    profile = application.case_compilation_rules.read(SYSTEM_ID).action_profiles[0]
+    application.put_cleanup_contract_rules(
+        SYSTEM_ID,
+        CleanupContractRuleSet(
+            system_id=SYSTEM_ID,
+            contracts=[
+                CleanupEntryContract(
+                    cleanup_contract_id="generic_consumed_action/v1",
+                    entry_id=ENTRY_ID,
+                    action_profile_id=profile.profile_id,
+                    identity=CleanupIdentityContract(
+                        required_source="setup_fact",
+                        fact_contract_id=stateful_fact.fact_contract_id,
+                        fact_name="consumable_entity",
+                        fact_path="firstOrdinal",
+                    ),
+                    consumed_by_action=ConsumedByActionCleanupContract(
+                        state_transition_assertion_id=transition.assertion_id,
+                        oracle_actual_source="action_result",
+                        oracle_actual_path="accepted",
+                    ),
+                )
+            ],
+        ),
+    )
+
+    result = application.publish_cleanup_plan(
+        SYSTEM_ID,
+        CleanupPlanSubmission(
+            cleanup_plan_id="cleanup:generic-consumed-action",
+            entry_id=ENTRY_ID,
+            source_scan_id=manifest.scan_id,
+            setup_recipe_ref=DataSetupRecipeRef(
+                system_id=SYSTEM_ID,
+                recipe_id=recipe_id,
+            ),
+            cleanup_contract_id="generic_consumed_action/v1",
+            name="目标Action消费通用实体",
+        ),
+    )
+
+    assert result.status == "PUBLISHED", result.issues
+    assert result.plan is not None
+    assert result.plan.primary_strategy == "CONSUMED_BY_ACTION"
+    assert result.plan.consumed_by_action is not None
+    assert result.plan.recovery_oracle is None
+    assert application.cleanup_plans.get_current(
+        SYSTEM_ID,
+        result.plan.cleanup_plan_id,
+    ) == result.plan
 
 
 def test_business_cancel_requires_exact_candidate_and_current_published(
@@ -396,13 +697,19 @@ def test_api_rejects_client_sql_fact_and_isolation_injection(tmp_path: Path) -> 
     assert rejected >= {"sql_update", "business_identity", "isolation_policy"}
 
 
-def test_real_refund_knowledge_copy_stays_blocked_without_formal_assets(
+def test_real_refund_knowledge_copy_rejects_missing_recipe_without_asset_mutation(
     tmp_path: Path,
 ) -> None:
-    """真实Refund latest有createOrder但零Published/Recipe时不得生成Cleanup Plan。
+    """真实Refund即使已有正式资产也不得用不存在的Recipe生成Cleanup Plan。
 
     Args:
         tmp_path: 真实知识最小临时副本目标目录。
+
+    Returns:
+        None；无效引用保持阻塞且不改写复制前已有能力、Recipe或Cleanup。
+
+    Side Effects:
+        仅在临时真实知识副本提交一个无效Cleanup草稿，不访问QA。
     """
 
     project_root = Path(__file__).resolve().parents[2]
@@ -415,14 +722,13 @@ def test_real_refund_knowledge_copy_stays_blocked_without_formal_assets(
         ).read_text(encoding="utf-8")
     )
     scan_id = manifest_payload["scan_id"]
-    formal_application = OpenTestApplication(source_root)
     formal_system_id = "ifightchainsaas.java.refund.core"
-    # 先对正式根做只读断言，再复制同一真实资产；不是靠省略目录制造零值。
-    assert formal_application.published_capabilities.list(formal_system_id).capabilities == []
-    assert formal_application.data_setup_recipes.list(formal_system_id).recipes == []
     _copy_refund_truth(source_root, target_root, scan_id)
     application = OpenTestApplication(target_root)
     system_id = "ifightchainsaas.java.refund.core"
+    published_before = application.published_capabilities.list(formal_system_id).capabilities
+    recipes_before = application.data_setup_recipes.list(formal_system_id).recipes
+    cleanups_before = application.cleanup_plan_catalog(formal_system_id).plans
     manifest = application.case_rules.artifacts.read(system_id, "latest")
     entry_id = next(
         item.entry_id
@@ -445,11 +751,11 @@ def test_real_refund_knowledge_copy_stays_blocked_without_formal_assets(
         ),
     )
 
-    assert application.published_capabilities.list(system_id).capabilities == []
-    assert application.data_setup_recipes.list(system_id).recipes == []
+    assert application.published_capabilities.list(system_id).capabilities == published_before
+    assert application.data_setup_recipes.list(system_id).recipes == recipes_before
     assert result.status == "BLOCKED"
     assert {item.code for item in result.issues} == {"CLEANUP_PUBLICATION_SCOPE_INVALID"}
-    assert application.cleanup_plan_catalog(system_id).plans == []
+    assert application.cleanup_plan_catalog(system_id).plans == cleanups_before
 
 
 def _cleanup_harness(tmp_path: Path, include_cleanup_dependency: bool) -> Phase6Harness:

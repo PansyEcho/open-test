@@ -20,10 +20,11 @@ from opentest.adapters.codex_app_server import (
     CodexThreadStartWire,
     _resolve_codex_app_server_executable,
 )
-from opentest.adapters.knowledge_store import GitKnowledgeStore
+from opentest.adapters.knowledge_store import AUTO_END, AUTO_START, GitKnowledgeStore
 from opentest.adapters.knowledge_tracing import JavaKnowledgeTracer
 from opentest.adapters.registered_source_mcp import RegisteredSourceReader
 from opentest.adapters import registered_source_mcp
+from opentest.adapters.setup_contract_store import SetupContractRuleStore
 from opentest.adapters.source_analysis import SourceScanArtifactStore
 from opentest.adapters.sqlite_index import SqliteKnowledgeIndex
 from opentest.application.knowledge import KnowledgeGenerationService
@@ -36,23 +37,41 @@ from opentest.domain.models import (
     AgentKnowledgeSourceReference,
     AgentRunEvidence,
     AgentRunRequest,
+    EntryFactAssertion,
+    EntryFactCandidateConfirmation,
+    EntryFactCandidateReplacement,
+    EntryFactCandidateSet,
+    EntryFactKnowledge,
     EntryPoint,
     KnowledgeConfirmation,
+    KnowledgeDraft,
     KnowledgeGenerationRequest,
     KnowledgeGenerationBatchRequest,
+    KnowledgeGenerationWorkflowBatch,
+    KnowledgeConclusionSource,
     KnowledgeNode,
     KnowledgeNodeKind,
     KnowledgeClientCandidateEnvelope,
     KnowledgeInvocationContract,
     KnowledgeQuestion,
     KnowledgeStatus,
+    OperationMutability,
     ScanManifest,
     SemanticAnalysisResult,
+    SemanticCaseEvidence,
     SemanticCallEdge,
+    SemanticFieldDefinition,
     SemanticMethodDefinition,
     SemanticResolutionStatus,
+    SemanticTypeDefinition,
     SourceBaseline,
     SourceReference,
+    SetupAvailabilityRule,
+    SetupContractRuleSet,
+    SetupFactContractDefinition,
+    SetupFactOrigin,
+    SetupFactRequiredField,
+    SetupStatePredicateDefinition,
     StateMachineDefinition,
     StateTransition,
     SystemDefinition,
@@ -207,6 +226,118 @@ def _knowledge_service(tmp_path: Path) -> tuple[KnowledgeGenerationService, GitK
     return service, store, manifest
 
 
+def _entry_fact_confirmation_fixture(
+    tmp_path: Path,
+) -> tuple[
+    KnowledgeGenerationService,
+    GitKnowledgeStore,
+    ScanManifest,
+    KnowledgeGenerationWorkflowBatch,
+    EntryFactAssertion,
+    EntryFactAssertion,
+]:
+    """准备含两个隔离AI候选和一个正式Fact契约的入口知识批次。
+
+    Args:
+        tmp_path: Pytest隔离的源码、知识和索引目录。
+
+    Returns:
+        知识服务、存储、latest扫描、候选批次及两条可独立确认的候选断言。
+
+    Side Effects:
+        生成临时正式入口节点，并写入临时Setup契约和候选草稿批次。
+    """
+
+    service, store, manifest = _knowledge_service(tmp_path)
+    generated = service.generate(
+        KnowledgeGenerationRequest(
+            system_id=manifest.system_id,
+            entry_id=manifest.entries[0].entry_id,
+        )
+    )
+    entry_node = next(
+        node for node in generated.nodes if node.kind == KnowledgeNodeKind.FACADE
+    )
+    entry_id = entry_node.aliases[0]
+    contract_id = "ticket-order/v1"
+    SetupContractRuleStore(store).write(
+        SetupContractRuleSet(
+            system_id=manifest.system_id,
+            fact_contracts=[
+                SetupFactContractDefinition(
+                    fact_contract_id=contract_id,
+                    display_name="通用出票单",
+                    required_origin=SetupFactOrigin.PUBLISHED_OUTPUT,
+                    required_fields=[
+                        SetupFactRequiredField(
+                            path="order_no",
+                            schema_type="string",
+                        ),
+                        SetupFactRequiredField(
+                            path="state",
+                            schema_type="string",
+                        ),
+                    ],
+                    business_identity_paths=["order_no"],
+                    state_path="state",
+                    state_predicates=[
+                        SetupStatePredicateDefinition(
+                            name="ISSUED",
+                            display_name="已出票",
+                            allowed_values=["ISSUED"],
+                        )
+                    ],
+                )
+            ],
+        )
+    )
+    evidence = entry_node.source_refs[0]
+    required = EntryFactAssertion(
+        assertion_id="entry-fact:generic-ticket-required",
+        assertion_type="REQUIRES_FACT",
+        slot_id="ticket_order",
+        fact_contract_id=contract_id,
+        required_state="ISSUED",
+        acquisition_policy="QUERY_ONLY",
+        source=KnowledgeConclusionSource.AI_CANDIDATE,
+        evidence_refs=[evidence],
+    )
+    produced = EntryFactAssertion(
+        assertion_id="entry-fact:generic-ticket-produced",
+        assertion_type="PRODUCES_FACT",
+        slot_id="created_ticket_order",
+        fact_contract_id=contract_id,
+        produced_state="ISSUED",
+        source=KnowledgeConclusionSource.AI_CANDIDATE,
+        evidence_refs=[evidence],
+    )
+    candidates = EntryFactCandidateSet(
+        system_id=manifest.system_id,
+        entry_id=entry_id,
+        source_scan_id=manifest.scan_id,
+        source_baseline=manifest.baseline,
+        assertions=[required, produced],
+    )
+    draft = KnowledgeDraft(
+        draft_id="draft-entry-fact-confirmation",
+        system_id=manifest.system_id,
+        target_id=entry_id,
+        node=entry_node,
+        content="仅包含待确认结构化入口事实的通用草稿。",
+        entry_fact_candidates=candidates,
+    )
+    batch = KnowledgeGenerationWorkflowBatch(
+        batch_id="knowledge-workflow-entry-fact-confirmation",
+        system_id=manifest.system_id,
+        scan_id=manifest.scan_id,
+        target_ids=[entry_id],
+        status="PENDING_CONFIRMATION",
+        drafts=[draft],
+    )
+    store.write_draft_batch(batch)
+    return service, store, manifest, batch, required, produced
+
+
 def test_create_order_tracer_builds_deep_hk_rules_with_source_lines(tmp_path: Path) -> None:
     """createOrder应沿Invoker到港币规则、数据源和状态机生成可追溯关系。"""
 
@@ -286,6 +417,7 @@ def _write_dependency_sources(source: Path) -> dict[str, Path]:
         "validator": source / "RefundCancelValidator.java",
         "invoker": source / "RefundCancelServiceInvoker.java",
         "shared": source / "SharedRefundRules.java",
+        "entity": source / "RefundOrder.java",
         "cancel_actor": source / "RefundOrderCancelPostActor.java",
         "manual_actor": source / "RefundOrderManualCancelPostActor.java",
         "other_actor": source / "OtherCancelPostActor.java",
@@ -309,13 +441,23 @@ def _write_dependency_sources(source: Path) -> dict[str, Path]:
         "package demo; @TradeService(name = RefundOrderServiceEnum.CANCEL)\n"
         "class RefundCancelServiceInvoker {\n"
         "  Object invoke(Object request) { return doInvoke(request); }\n"
-        "  Object doInvoke(Object request) { sharedRefundRules.evaluate(request); orderStateDelegate.setState(request, RefundOrderStateEnum.REFUND_CANCEL); return request; }\n"
+        "  Object doInvoke(Object request) {\n"
+        "    sharedRefundRules.evaluate(request);\n"
+        "    created.setState(RefundOrderStateEnum.PENDING_APPLY);\n"
+        "    refundOrderDao.insert(created);\n"
+        "    orderStateDelegate.setState(request, RefundOrderStateEnum.REFUND_CANCEL);\n"
+        "    return request;\n"
+        "  }\n"
         "  void unrelated(Object request) { orderStateDelegate.setState(request, OtherStateEnum.REFUND_CANCEL); }\n"
         "}\n",
         encoding="utf-8",
     )
     files["shared"].write_text(
         "package demo; class SharedRefundRules { Object evaluate(Object request) { if (request == null) throw new Error(); return request; } }\n",
+        encoding="utf-8",
+    )
+    files["entity"].write_text(
+        "package demo; class RefundOrder { String refund_no; RefundOrderStateEnum state; }\n",
         encoding="utf-8",
     )
     files["cancel_actor"].write_text(
@@ -1637,6 +1779,1415 @@ def test_generation_preserves_manual_content_and_answered_questions(tmp_path: Pa
     assert "人工口径：异常需要记录风险。" in document
     assert questions[confirmation.question_id].status == "answered"
     assert questions[confirmation.question_id].answer == confirmation.answer
+
+
+def test_direct_generation_preserves_formal_entry_facts_only_for_exact_source_generation(
+    tmp_path: Path,
+) -> None:
+    """直接知识重生成只可在同scan和baseline保留已确认结构化入口事实。
+
+    Args:
+        tmp_path: Pytest隔离的知识、扫描与源码目录。
+
+    Returns:
+        None；同代重建保留正式Fact，新源码代际不继承时通过。
+
+    Side Effects:
+        只写临时知识资产和两个不可变扫描Manifest，不访问QA。
+    """
+
+    service, store, manifest = _knowledge_service(tmp_path)
+    request = KnowledgeGenerationRequest(
+        system_id=manifest.system_id,
+        entry_id=manifest.entries[0].entry_id,
+    )
+    first_batch = service.generate(request)
+    entry_node = next(
+        node for node in first_batch.nodes if node.kind == KnowledgeNodeKind.FACADE
+    )
+    formal_entry_id = entry_node.aliases[0]
+    evidence = entry_node.source_refs[0]
+    assertion = EntryFactAssertion(
+        assertion_id="entry-fact:generic-required-order",
+        assertion_type="REQUIRES_FACT",
+        slot_id="ticket_order",
+        fact_contract_id="ticket-order/v1",
+        required_state="ISSUED",
+        acquisition_policy="QUERY_ONLY",
+        source=KnowledgeConclusionSource.USER_CONFIRMED,
+        evidence_refs=[evidence],
+    )
+    formal = EntryFactKnowledge(
+        entry_id=formal_entry_id,
+        source_scan_id=manifest.scan_id,
+        source_baseline=manifest.baseline,
+        requires_facts=[assertion],
+        evidence_refs=[evidence],
+    )
+    confirmed = entry_node.model_copy(
+        update={
+            "status": KnowledgeStatus.USER_CONFIRMED,
+            "entry_fact_knowledge": formal,
+        }
+    )
+    store.write_node(confirmed, "已确认的结构化入口事实。")
+
+    same_generation = service.generate(request)
+    same_entry = next(node for node in same_generation.nodes if node.node_id == entry_node.node_id)
+    assert same_entry.entry_fact_knowledge == formal
+
+    new_baseline = manifest.baseline.model_copy(update={"commit": "def456"})
+    new_manifest = manifest.model_copy(
+        update={
+            "scan_id": "scan-20260827000000-def456-test",
+            "baseline": new_baseline,
+        }
+    )
+    service.artifacts.write_manifest(new_manifest)
+    service.artifacts.publish_latest(new_manifest.system_id, new_manifest.scan_id)
+    service.git_repository = FixedBaselineRepository(new_baseline)
+    new_generation = service.generate(
+        request.model_copy(update={"scan_id": new_manifest.scan_id})
+    )
+    new_entry = next(node for node in new_generation.nodes if node.node_id == entry_node.node_id)
+    assert new_entry.entry_fact_knowledge is None
+
+
+def test_entry_fact_candidates_require_exact_confirmation_and_survive_auto_publish(
+    tmp_path: Path,
+) -> None:
+    """自动发布不得升级AI候选，逐ID确认也不得连带发布同草稿兄弟项。
+
+    Args:
+        tmp_path: Pytest隔离的知识、扫描、Fact契约和草稿目录。
+
+    Returns:
+        None；正式节点只含精确确认断言且未选候选仍隔离保留时通过。
+
+    Side Effects:
+        仅在临时知识库发布通用入口节点并确认一条typed候选，不访问QA。
+    """
+
+    service, store, manifest, batch, required, produced = (
+        _entry_fact_confirmation_fixture(tmp_path)
+    )
+    service.publish_ready_drafts(manifest.system_id, batch.batch_id)
+    published_node = next(
+        node
+        for node, _path, _body in store.list_nodes(manifest.system_id)
+        if node.node_id == batch.drafts[0].node.node_id
+    )
+    assert published_node.entry_fact_knowledge is None
+    node_path = store.node_path(published_node)
+    node_path.write_text(
+        node_path.read_text(encoding="utf-8") + "\n人工确认说明：保留既有业务口径。\n",
+        encoding="utf-8",
+    )
+
+    confirmed = service.confirm_entry_fact_candidates(
+        manifest.system_id,
+        batch.batch_id,
+        EntryFactCandidateConfirmation(
+            draft_id=batch.drafts[0].draft_id,
+            fact_candidate_ids=[required.assertion_id],
+        ),
+    )
+    assert confirmed.entry_fact_knowledge is not None
+    assert [
+        assertion.assertion_id
+        for assertion in confirmed.entry_fact_knowledge.requires_facts
+    ] == [required.assertion_id]
+    assert confirmed.entry_fact_knowledge.produces_facts == []
+    assert confirmed.entry_fact_knowledge.requires_facts[0].source == (
+        KnowledgeConclusionSource.USER_CONFIRMED
+    )
+    confirmed_document = node_path.read_text(encoding="utf-8")
+    assert confirmed_document.count(AUTO_START) == 1
+    assert confirmed_document.count(AUTO_END) == 1
+    assert "人工确认说明：保留既有业务口径。" in confirmed_document
+    remaining_batch = store.read_draft_batch(manifest.system_id, batch.batch_id)
+    remaining_candidates = remaining_batch.drafts[0].entry_fact_candidates
+    assert remaining_candidates is not None
+    assert [item.assertion_id for item in remaining_candidates.assertions] == [
+        produced.assertion_id
+    ]
+
+    with pytest.raises(
+        KnowledgeValidationError,
+        match="unknown candidates",
+    ):
+        service.confirm_entry_fact_candidates(
+            manifest.system_id,
+            batch.batch_id,
+            EntryFactCandidateConfirmation(
+                draft_id=batch.drafts[0].draft_id,
+                fact_candidate_ids=["entry-fact:generic-unknown-candidate"],
+            ),
+        )
+
+
+def test_entry_fact_confirmation_replaces_only_exact_same_target_assertions(
+    tmp_path: Path,
+) -> None:
+    """逐Fact确认可以迁移同一业务槽位，同时保留无关正式事实和兄弟候选。
+
+    Args:
+        tmp_path: Pytest隔离的知识、扫描、Fact契约和草稿目录。
+
+    Returns:
+        None；旧断言被精确替换、其他候选仍隔离且跨目标删除被拒绝时通过。
+
+    Side Effects:
+        仅在临时知识库确认两次typed候选，不访问AI或QA。
+    """
+
+    service, store, manifest, batch, required, produced = (
+        _entry_fact_confirmation_fixture(tmp_path)
+    )
+    service.publish_ready_drafts(manifest.system_id, batch.batch_id)
+    service.confirm_entry_fact_candidates(
+        manifest.system_id,
+        batch.batch_id,
+        EntryFactCandidateConfirmation(
+            draft_id=batch.drafts[0].draft_id,
+            fact_candidate_ids=[required.assertion_id],
+        ),
+    )
+    remaining_batch = store.read_draft_batch(manifest.system_id, batch.batch_id)
+    remaining_draft = remaining_batch.drafts[0]
+    replacement = required.model_copy(
+        update={
+            "assertion_id": "entry-fact:generic-ticket-required-v2",
+            "acquisition_policy": "QUERY_THEN_CREATE",
+        }
+    )
+    replacement_candidates = remaining_draft.entry_fact_candidates.model_copy(
+        update={"assertions": [replacement, produced]}
+    )
+    store.write_draft_batch(
+        remaining_batch.model_copy(
+            update={
+                "drafts": [
+                    remaining_draft.model_copy(
+                        update={"entry_fact_candidates": replacement_candidates}
+                    )
+                ]
+            }
+        )
+    )
+
+    # 替换命令只删除同slot旧断言，并把新结论按本次用户确认来源发布。
+    migrated = service.confirm_entry_fact_candidates(
+        manifest.system_id,
+        batch.batch_id,
+        EntryFactCandidateConfirmation(
+            draft_id=batch.drafts[0].draft_id,
+            fact_candidate_ids=[replacement.assertion_id],
+            replacements=[
+                EntryFactCandidateReplacement(
+                    candidate_assertion_id=replacement.assertion_id,
+                    superseded_assertion_ids=[required.assertion_id],
+                )
+            ],
+        ),
+    )
+    formal_requirements = migrated.entry_fact_knowledge.requires_facts
+    assert [item.assertion_id for item in formal_requirements] == [
+        replacement.assertion_id
+    ]
+    assert formal_requirements[0].acquisition_policy == "QUERY_THEN_CREATE"
+    remaining_candidates = store.read_draft_batch(
+        manifest.system_id,
+        batch.batch_id,
+    ).drafts[0].entry_fact_candidates
+    assert remaining_candidates is not None
+    assert [item.assertion_id for item in remaining_candidates.assertions] == [
+        produced.assertion_id
+    ]
+
+    invalid_batch = store.read_draft_batch(manifest.system_id, batch.batch_id)
+    invalid_draft = invalid_batch.drafts[0]
+    with pytest.raises(
+        KnowledgeValidationError,
+        match="preserve the semantic assertion target",
+    ):
+        service.confirm_entry_fact_candidates(
+            manifest.system_id,
+            batch.batch_id,
+            EntryFactCandidateConfirmation(
+                draft_id=invalid_draft.draft_id,
+                fact_candidate_ids=[produced.assertion_id],
+                replacements=[
+                    EntryFactCandidateReplacement(
+                        candidate_assertion_id=produced.assertion_id,
+                        superseded_assertion_ids=[replacement.assertion_id],
+                    )
+                ],
+            ),
+        )
+
+
+def test_entry_fact_confirmation_code_proof_basis_fails_closed(
+    tmp_path: Path,
+) -> None:
+    """显式CODE_PROOF_REQUIRED不能把仅有AI引用的候选升级为正式事实。
+
+    Args:
+        tmp_path: Pytest隔离的知识、扫描、Fact契约和草稿目录。
+
+    Returns:
+        None；缺少完整程序证明的候选仍保留隔离时通过。
+
+    Side Effects:
+        只尝试发布临时候选，不访问AI或QA，也不改正式入口事实。
+    """
+
+    service, store, manifest, batch, required, _produced = (
+        _entry_fact_confirmation_fixture(tmp_path)
+    )
+    service.publish_ready_drafts(manifest.system_id, batch.batch_id)
+
+    with pytest.raises(
+        KnowledgeValidationError,
+        match="lack complete code proof",
+    ):
+        service.confirm_entry_fact_candidates(
+            manifest.system_id,
+            batch.batch_id,
+            EntryFactCandidateConfirmation(
+                draft_id=batch.drafts[0].draft_id,
+                fact_candidate_ids=[required.assertion_id],
+                promotion_basis="CODE_PROOF_REQUIRED",
+            ),
+        )
+    remaining = store.read_draft_batch(manifest.system_id, batch.batch_id)
+    assert remaining.drafts[0].entry_fact_candidates is not None
+    assert remaining.drafts[0].entry_fact_candidates.assertions[0].source == (
+        KnowledgeConclusionSource.AI_CANDIDATE
+    )
+
+
+def test_auto_publish_promotes_only_exact_state_machine_entry_facts(
+    tmp_path: Path,
+) -> None:
+    """自动发布只提升被current可达状态机完整证明的前置和迁移断言。
+
+    Args:
+        tmp_path: Pytest隔离的源码、latest扫描、Fact契约和知识草稿目录。
+
+    Returns:
+        None；精确状态闭包成为CODE_PROVEN，产出和不完整状态候选继续隔离时通过。
+
+    Side Effects:
+        只在临时知识库发布结构化入口知识，不确认候选、不访问AI或QA。
+    """
+
+    source = tmp_path / "source"
+    files = _write_dependency_sources(source)
+    manifest = _dependency_manifest(source, files)
+    analysis = manifest.semantic_analysis
+    assert analysis is not None
+    entity_type = "demo.RefundOrder"
+    do_invoke_symbol = "demo.RefundCancelServiceInvoker#doInvoke(java.lang.Object)"
+    entity_reference = _dependency_source_ref(
+        source,
+        files["entity"],
+        entity_type,
+        "class RefundOrder",
+    )
+    assignment_reference = _dependency_source_ref(
+        source,
+        files["invoker"],
+        do_invoke_symbol + ":state-assignment",
+        "created.setState(RefundOrderStateEnum.PENDING_APPLY)",
+    )
+    persistence_reference = _dependency_source_ref(
+        source,
+        files["invoker"],
+        "demo.RefundOrderDao#insert(demo.RefundOrder)",
+        "refundOrderDao.insert(created)",
+    )
+    orchestration_reference = _dependency_source_ref(
+        source,
+        files["invoker"],
+        do_invoke_symbol + ":entity-lifecycle",
+        "Object doInvoke",
+    )
+    manifest = manifest.model_copy(
+        update={
+            "semantic_analysis": analysis.model_copy(
+                update={
+                    "schema_version": 7,
+                    "types": [
+                        SemanticTypeDefinition(
+                            symbol_id=entity_type,
+                            qualified_class_name=entity_type,
+                            simple_name="RefundOrder",
+                            fields=[
+                                SemanticFieldDefinition(
+                                    field_name="refund_no",
+                                    declared_type="String",
+                                    source_ref=entity_reference,
+                                ),
+                                SemanticFieldDefinition(
+                                    field_name="state",
+                                    declared_type="RefundOrderStateEnum",
+                                    referenced_type="demo.RefundOrderStateEnum",
+                                    source_ref=entity_reference,
+                                ),
+                            ],
+                            source_ref=entity_reference,
+                        )
+                    ],
+                    "case_evidence": [
+                        SemanticCaseEvidence(
+                            evidence_id="semantic-proof:refund-order-pending-persisted",
+                            method_symbol_id=do_invoke_symbol,
+                            kind="entity_lifecycle",
+                            entity_type=entity_type,
+                            state_path="state",
+                            state_value="PENDING_APPLY",
+                            persistence_operation_id=(
+                                "demo.RefundOrderDao#insert(demo.RefundOrder)"
+                            ),
+                            operation_ids=[
+                                "demo.RefundOrderDao#insert(demo.RefundOrder)"
+                            ],
+                            control_flow_path=[do_invoke_symbol],
+                            binding_kind="same_path_resolved_calls",
+                            source_ref=orchestration_reference,
+                            related_source_refs=[
+                                assignment_reference,
+                                persistence_reference,
+                            ],
+                        )
+                    ],
+                }
+            )
+        }
+    )
+    knowledge_root = tmp_path / "knowledge"
+    store = GitKnowledgeStore(knowledge_root)
+    store.register_system(
+        SystemDefinition(
+            system_id=manifest.system_id,
+            name="退款状态证明系统",
+            source_path=str(source),
+        )
+    )
+    artifacts = SourceScanArtifactStore(knowledge_root)
+    artifacts.write_manifest(manifest)
+    artifacts.publish_latest(manifest.system_id, manifest.scan_id)
+    service = KnowledgeGenerationService(
+        store,
+        SqliteKnowledgeIndex(knowledge_root / ".opentest" / "index.sqlite"),
+        artifacts,
+        git_repository=FixedBaselineRepository(manifest.baseline),
+    )
+    cancellable_states = [
+        "PENDING_APPLY",
+        "WAIT_REFUND",
+        "RESHOPING",
+        "REFUND_FAIL",
+        "AUDITED",
+    ]
+    SetupContractRuleStore(store).write(
+        SetupContractRuleSet(
+            system_id=manifest.system_id,
+            fact_contracts=[
+                SetupFactContractDefinition(
+                    fact_contract_id="stateful-refund/v1",
+                    display_name="通用退款实体",
+                    required_origin=SetupFactOrigin.PUBLISHED_OUTPUT,
+                    required_fields=[
+                        SetupFactRequiredField(path="refund_no", schema_type="string"),
+                        SetupFactRequiredField(path="state", schema_type="string"),
+                    ],
+                    business_identity_paths=["refund_no"],
+                    state_path="state",
+                    state_predicates=[
+                        SetupStatePredicateDefinition(
+                            name="CANCELLABLE",
+                            display_name="可取消",
+                            allowed_values=cancellable_states,
+                        ),
+                        SetupStatePredicateDefinition(
+                            name="CANCELLED",
+                            display_name="已取消",
+                            allowed_values=["REFUND_CANCEL"],
+                        ),
+                    ],
+                ),
+                SetupFactContractDefinition(
+                    fact_contract_id="incomplete-refund/v1",
+                    display_name="含未证明状态的退款实体",
+                    required_origin=SetupFactOrigin.PUBLISHED_OUTPUT,
+                    required_fields=[
+                        SetupFactRequiredField(path="refund_no", schema_type="string"),
+                        SetupFactRequiredField(path="state", schema_type="string"),
+                    ],
+                    business_identity_paths=["refund_no"],
+                    state_path="state",
+                    state_predicates=[
+                        SetupStatePredicateDefinition(
+                            name="CANCELLABLE",
+                            allowed_values=[*cancellable_states, "UNPROVEN"],
+                        ),
+                        SetupStatePredicateDefinition(
+                            name="CANCELLED",
+                            allowed_values=["REFUND_CANCEL"],
+                        ),
+                    ],
+                ),
+            ],
+        )
+    )
+    entry = manifest.entries[0]
+    candidate_evidence = SourceReference(
+        path=entry.source_path,
+        symbol=entry.source_id,
+        line=1,
+    )
+    exact_requirement = EntryFactAssertion(
+        assertion_id="entry-fact:stateful-refund-required",
+        assertion_type="REQUIRES_FACT",
+        slot_id="refund_order",
+        fact_contract_id="stateful-refund/v1",
+        required_state="CANCELLABLE",
+        acquisition_policy="QUERY_THEN_CREATE",
+        source=KnowledgeConclusionSource.AI_CANDIDATE,
+        evidence_refs=[candidate_evidence],
+    )
+    exact_transition = EntryFactAssertion(
+        assertion_id="entry-fact:stateful-refund-transition",
+        assertion_type="STATE_TRANSITION",
+        fact_contract_id="stateful-refund/v1",
+        from_state="CANCELLABLE",
+        to_state="CANCELLED",
+        source=KnowledgeConclusionSource.AI_CANDIDATE,
+        evidence_refs=[candidate_evidence],
+    )
+    unproven_product = EntryFactAssertion(
+        assertion_id="entry-fact:stateful-refund-product",
+        assertion_type="PRODUCES_FACT",
+        slot_id="cancelled_refund_order",
+        fact_contract_id="stateful-refund/v1",
+        produced_state="CANCELLED",
+        source=KnowledgeConclusionSource.AI_CANDIDATE,
+        evidence_refs=[candidate_evidence],
+    )
+    proven_product = unproven_product.model_copy(
+        update={
+            "assertion_id": "entry-fact:stateful-refund-pending-product",
+            "slot_id": "created_refund_order",
+            "produced_state": "CANCELLABLE",
+        }
+    )
+    incomplete_requirement = exact_requirement.model_copy(
+        update={
+            "assertion_id": "entry-fact:incomplete-refund-required",
+            "slot_id": "incomplete_refund_order",
+            "fact_contract_id": "incomplete-refund/v1",
+        }
+    )
+    candidates = EntryFactCandidateSet(
+        system_id=manifest.system_id,
+        entry_id=entry.entry_id,
+        source_scan_id=manifest.scan_id,
+        source_baseline=manifest.baseline,
+        assertions=[
+            exact_requirement,
+            exact_transition,
+            proven_product,
+            unproven_product,
+            incomplete_requirement,
+        ],
+    )
+    node = KnowledgeNode(
+        node_id="entry:demo.RefundFacade#cancel",
+        system_id=manifest.system_id,
+        kind=KnowledgeNodeKind.FACADE,
+        title=entry.display_name,
+        aliases=[entry.entry_id, entry.source_id, entry.display_name],
+        status=KnowledgeStatus.INFERRED,
+        source_refs=[candidate_evidence],
+    )
+    draft = KnowledgeDraft(
+        draft_id="draft-state-machine-code-proof",
+        system_id=manifest.system_id,
+        target_id=entry.entry_id,
+        node=node,
+        content="Agent提出的状态实体候选，等待程序证据分类。",
+        entry_fact_candidates=candidates,
+    )
+    batch = KnowledgeGenerationWorkflowBatch(
+        batch_id="knowledge-workflow-state-machine-code-proof",
+        system_id=manifest.system_id,
+        scan_id=manifest.scan_id,
+        target_ids=[entry.entry_id],
+        status="PENDING_CONFIRMATION",
+        drafts=[draft],
+    )
+    store.write_draft_batch(batch)
+
+    # 自动发布必须重新沿current源码关系求证，不能把INFERRED节点本身当作程序证据。
+    service.publish_ready_drafts(manifest.system_id, batch.batch_id, rebuild_index=False)
+
+    published = store.get_node(manifest.system_id, node.node_id)[0]
+    assert published.entry_fact_knowledge is not None
+    assert [item.assertion_id for item in published.entry_fact_knowledge.requires_facts] == [
+        exact_requirement.assertion_id
+    ]
+    assert [item.assertion_id for item in published.entry_fact_knowledge.state_transitions] == [
+        exact_transition.assertion_id
+    ]
+    assert [item.assertion_id for item in published.entry_fact_knowledge.produces_facts] == [
+        proven_product.assertion_id
+    ]
+    formal_assertions = [
+        *published.entry_fact_knowledge.requires_facts,
+        *published.entry_fact_knowledge.produces_facts,
+        *published.entry_fact_knowledge.state_transitions,
+    ]
+    assert {item.source for item in formal_assertions} == {
+        KnowledgeConclusionSource.CODE_PROVEN
+    }
+    state_machine_symbols = {
+        reference.symbol
+        for item in [
+            *published.entry_fact_knowledge.requires_facts,
+            *published.entry_fact_knowledge.state_transitions,
+        ]
+        for reference in item.evidence_refs
+    }
+    assert state_machine_symbols == {
+        "RefundOrderCancelPostActor",
+        "RefundOrderManualCancelPostActor",
+    }
+    produced_refs = published.entry_fact_knowledge.produces_facts[0].evidence_refs
+    assert {reference.symbol for reference in produced_refs} == {
+        do_invoke_symbol + ":entity-lifecycle",
+        do_invoke_symbol + ":state-assignment",
+        "demo.RefundOrderDao#insert(demo.RefundOrder)",
+    }
+    assert {reference.commit for reference in produced_refs} == {
+        manifest.baseline.commit
+    }
+    assert candidate_evidence not in produced_refs
+    remaining = store.read_draft_batch(manifest.system_id, batch.batch_id)
+    remaining_candidates = remaining.drafts[0].entry_fact_candidates
+    assert remaining_candidates is not None
+    assert [item.assertion_id for item in remaining_candidates.assertions] == [
+        unproven_product.assertion_id,
+        incomplete_requirement.assertion_id,
+    ]
+    assert all(
+        item.source == KnowledgeConclusionSource.AI_CANDIDATE
+        for item in remaining_candidates.assertions
+    )
+
+    # 同一业务slot升级时显式要求current代码证明，旧正式断言才会被原子替换。
+    replacement_requirement = exact_requirement.model_copy(
+        update={
+            "assertion_id": "entry-fact:stateful-refund-required-v2",
+        }
+    )
+    replacement_set = remaining_candidates.model_copy(
+        update={
+            "assertions": [
+                replacement_requirement,
+                *remaining_candidates.assertions,
+            ]
+        }
+    )
+    replacement_draft = remaining.drafts[0].model_copy(
+        update={"entry_fact_candidates": replacement_set}
+    )
+    store.write_draft_batch(
+        remaining.model_copy(update={"drafts": [replacement_draft]})
+    )
+    migrated = service.confirm_entry_fact_candidates(
+        manifest.system_id,
+        batch.batch_id,
+        EntryFactCandidateConfirmation(
+            draft_id=draft.draft_id,
+            fact_candidate_ids=[replacement_requirement.assertion_id],
+            promotion_basis="CODE_PROOF_REQUIRED",
+            replacements=[
+                EntryFactCandidateReplacement(
+                    candidate_assertion_id=replacement_requirement.assertion_id,
+                    superseded_assertion_ids=[exact_requirement.assertion_id],
+                )
+            ],
+        ),
+    )
+    migrated_facts = migrated.entry_fact_knowledge
+    assert [item.assertion_id for item in migrated_facts.requires_facts] == [
+        replacement_requirement.assertion_id
+    ]
+    assert migrated_facts.requires_facts[0].source == KnowledgeConclusionSource.CODE_PROVEN
+    assert [item.assertion_id for item in migrated_facts.state_transitions] == [
+        exact_transition.assertion_id
+    ]
+
+
+def test_auto_publish_binding_requires_exact_current_published_mapping(
+    tmp_path: Path,
+) -> None:
+    """Binding只有被current Published逻辑到provider映射及Fact字段共同证明才自动发布。
+
+    Args:
+        tmp_path: Pytest隔离的latest扫描、Published、Fact契约和知识草稿目录。
+
+    Returns:
+        None；精确物理字段映射成为CODE_PROVEN，类型兼容但目标不一致的候选仍隔离时通过。
+
+    Side Effects:
+        复用通用编译夹具在临时知识库发布能力和入口知识，不访问AI或QA。
+    """
+
+    from test_typed_case_compiler_phase5 import ENTRY_ID, SYSTEM_ID, _compiler_harness
+
+    harness = _compiler_harness(tmp_path, [])
+    application = harness.application
+    manifest = application.source_analysis.artifacts.read(SYSTEM_ID, "latest")
+    SetupContractRuleStore(application.store).write(
+        SetupContractRuleSet(
+            system_id=SYSTEM_ID,
+            fact_contracts=[
+                SetupFactContractDefinition(
+                    fact_contract_id="generic-action-input/v1",
+                    display_name="通用Action输入实体",
+                    required_origin=SetupFactOrigin.PUBLISHED_OUTPUT,
+                    required_fields=[
+                        SetupFactRequiredField(path="mode", schema_type="string"),
+                        SetupFactRequiredField(path="state", schema_type="string"),
+                    ],
+                    business_identity_paths=["mode"],
+                    state_path="state",
+                    state_predicates=[
+                        SetupStatePredicateDefinition(
+                            name="READY",
+                            allowed_values=["READY"],
+                        )
+                    ],
+                )
+            ],
+        )
+    )
+    entry = manifest.entries[0]
+    formal_evidence = SourceReference(
+        path=entry.source_path,
+        symbol=entry.source_id,
+        line=1,
+        commit=manifest.baseline.commit,
+    )
+    requirement = EntryFactAssertion(
+        assertion_id="entry-fact:generic-action-required",
+        assertion_type="REQUIRES_FACT",
+        slot_id="action_input",
+        fact_contract_id="generic-action-input/v1",
+        required_state="READY",
+        acquisition_policy="QUERY_THEN_CREATE",
+        source=KnowledgeConclusionSource.USER_CONFIRMED,
+        evidence_refs=[formal_evidence],
+    )
+    existing_formal = EntryFactKnowledge(
+        entry_id=entry.entry_id,
+        source_scan_id=manifest.scan_id,
+        source_baseline=manifest.baseline,
+        requires_facts=[requirement],
+        evidence_refs=[formal_evidence],
+    )
+    existing_node = KnowledgeNode(
+        node_id="entry:sample.AtomicFacade#inspect",
+        system_id=SYSTEM_ID,
+        kind=KnowledgeNodeKind.FACADE,
+        title=entry.display_name,
+        aliases=[entry.entry_id, entry.source_id, entry.display_name],
+        status=KnowledgeStatus.USER_CONFIRMED,
+        source_refs=[formal_evidence],
+        entry_fact_knowledge=existing_formal,
+    )
+    application.store.write_node(existing_node, "已确认通用Action所需实体。")
+    untrusted_reference = SourceReference(
+        path="AgentSuggested.java",
+        symbol="agent.suggestion",
+        line=999,
+    )
+    exact_binding = EntryFactAssertion(
+        assertion_id="entry-fact:generic-action-mode-binding",
+        assertion_type="BINDING_PATH",
+        slot_id="action_input",
+        fact_contract_id="generic-action-input/v1",
+        request_path="mode",
+        fact_path="mode",
+        source=KnowledgeConclusionSource.AI_CANDIDATE,
+        evidence_refs=[untrusted_reference],
+    )
+    mismatched_binding = exact_binding.model_copy(
+        update={
+            "assertion_id": "entry-fact:generic-action-state-binding",
+            "fact_path": "state",
+        }
+    )
+    candidates = EntryFactCandidateSet(
+        system_id=SYSTEM_ID,
+        entry_id=entry.entry_id,
+        source_scan_id=manifest.scan_id,
+        source_baseline=manifest.baseline,
+        assertions=[exact_binding, mismatched_binding],
+    )
+    draft = KnowledgeDraft(
+        draft_id="draft-current-published-binding-proof",
+        system_id=SYSTEM_ID,
+        target_id=entry.entry_id,
+        node=existing_node.model_copy(
+            update={
+                "status": KnowledgeStatus.INFERRED,
+                "entry_fact_knowledge": None,
+            }
+        ),
+        content="Agent提出的字段绑定候选，等待current Published映射证明。",
+        entry_fact_candidates=candidates,
+    )
+    batch = KnowledgeGenerationWorkflowBatch(
+        batch_id="knowledge-workflow-current-published-binding-proof",
+        system_id=SYSTEM_ID,
+        scan_id=manifest.scan_id,
+        target_ids=[entry.entry_id],
+        status="PENDING_CONFIRMATION",
+        drafts=[draft],
+    )
+    application.store.write_draft_batch(batch)
+
+    # Published逻辑mode映射到provider mode，只有同一provider形状的Fact字段可自动建立绑定。
+    application.knowledge.publish_ready_drafts(
+        SYSTEM_ID,
+        batch.batch_id,
+        rebuild_index=False,
+    )
+
+    published = application.store.get_node(SYSTEM_ID, existing_node.node_id)[0]
+    assert published.entry_fact_knowledge is not None
+    assert [item.assertion_id for item in published.entry_fact_knowledge.binding_paths] == [
+        exact_binding.assertion_id
+    ]
+    formal_binding = published.entry_fact_knowledge.binding_paths[0]
+    assert formal_binding.source == KnowledgeConclusionSource.CODE_PROVEN
+    assert untrusted_reference not in formal_binding.evidence_refs
+    assert formal_binding.evidence_refs
+    remaining = application.store.read_draft_batch(SYSTEM_ID, batch.batch_id)
+    remaining_candidates = remaining.drafts[0].entry_fact_candidates
+    assert remaining_candidates is not None
+    assert [item.assertion_id for item in remaining_candidates.assertions] == [
+        mismatched_binding.assertion_id
+    ]
+    assert remaining_candidates.assertions[0].source == (
+        KnowledgeConclusionSource.AI_CANDIDATE
+    )
+    application.close()
+
+
+@pytest.mark.parametrize(
+    ("operation_role", "mutability", "availability"),
+    [
+        (
+            "QUERY",
+            OperationMutability.READ_ONLY,
+            SetupAvailabilityRule(type="VALUE_NOT_NULL", path="reference_id"),
+        ),
+        ("CREATE", OperationMutability.WRITE, None),
+    ],
+)
+def test_auto_publish_candidate_operation_requires_current_published_closure(
+    tmp_path: Path,
+    operation_role: str,
+    mutability: OperationMutability,
+    availability: SetupAvailabilityRule | None,
+) -> None:
+    """查询和创建候选只有与current Published完整闭合时才能成为CODE_PROVEN。
+
+    Args:
+        tmp_path: Pytest隔离的latest扫描、Published、Fact契约和知识草稿目录。
+        operation_role: 本次验证的QUERY或CREATE知识角色。
+        mutability: 与角色对应的Published读写分类。
+        availability: QUERY必须提供的结构型存在性规则；CREATE为空。
+
+    Returns:
+        None；正确角色自动提升，读写不符或业务型miss语义仍隔离时通过。
+
+    Side Effects:
+        复用通用编译夹具在临时知识库发布能力和入口知识，不访问AI或QA。
+    """
+
+    from test_typed_case_compiler_phase5 import ENTRY_ID, SYSTEM_ID, _compiler_harness
+
+    harness = _compiler_harness(
+        tmp_path / operation_role.lower(),
+        [],
+        mutability=mutability,
+    )
+    application = harness.application
+    manifest = application.source_analysis.artifacts.read(SYSTEM_ID, "latest")
+    SetupContractRuleStore(application.store).write(
+        SetupContractRuleSet(
+            system_id=SYSTEM_ID,
+            fact_contracts=[
+                SetupFactContractDefinition(
+                    fact_contract_id="generic-operation-result/v1",
+                    display_name="通用操作实体",
+                    required_origin=SetupFactOrigin.PUBLISHED_OUTPUT,
+                    required_fields=[
+                        SetupFactRequiredField(path="entity_id", schema_type="string"),
+                        SetupFactRequiredField(path="state", schema_type="string"),
+                    ],
+                    business_identity_paths=["entity_id"],
+                    state_path="state",
+                    state_predicates=[
+                        SetupStatePredicateDefinition(
+                            name="READY",
+                            allowed_values=["READY"],
+                        )
+                    ],
+                )
+            ],
+        )
+    )
+    entry = manifest.entries[0]
+    untrusted_reference = SourceReference(
+        path="AgentSuggestedOperation.java",
+        symbol="agent.operation.suggestion",
+        line=999,
+    )
+    exact_operation = EntryFactAssertion(
+        assertion_id=f"entry-fact:generic-{operation_role.lower()}-operation",
+        assertion_type="CANDIDATE_OPERATION",
+        fact_contract_id="generic-operation-result/v1",
+        operation_role=operation_role,
+        candidate_system_id=SYSTEM_ID,
+        candidate_operation_id=harness.action.provider_operation_ref.operation_id,
+        query_availability=availability,
+        source=KnowledgeConclusionSource.AI_CANDIDATE,
+        evidence_refs=[untrusted_reference],
+    )
+    wrong_role = "CREATE" if operation_role == "QUERY" else "QUERY"
+    wrong_role_availability = (
+        SetupAvailabilityRule(type="VALUE_NOT_NULL", path="reference_id")
+        if wrong_role == "QUERY"
+        else None
+    )
+    mismatched_operation = exact_operation.model_copy(
+        update={
+            "assertion_id": f"entry-fact:generic-{wrong_role.lower()}-operation-mismatch",
+            "operation_role": wrong_role,
+            "query_availability": wrong_role_availability,
+        }
+    )
+    assertions = [exact_operation, mismatched_operation]
+    if operation_role == "QUERY":
+        # 布尔字段类型本身不能证明true代表“找到实体”，仍须保留为AI语义候选。
+        assertions.append(
+            exact_operation.model_copy(
+                update={
+                    "assertion_id": "entry-fact:generic-query-semantic-availability",
+                    "query_availability": SetupAvailabilityRule(
+                        type="BOOLEAN_EQUALS",
+                        path="accepted",
+                        expected_boolean=True,
+                    ),
+                }
+            )
+        )
+    candidates = EntryFactCandidateSet(
+        system_id=SYSTEM_ID,
+        entry_id=entry.entry_id,
+        source_scan_id=manifest.scan_id,
+        source_baseline=manifest.baseline,
+        assertions=assertions,
+    )
+    node = KnowledgeNode(
+        node_id="entry:sample.AtomicFacade#inspect-operation-proof",
+        system_id=SYSTEM_ID,
+        kind=KnowledgeNodeKind.FACADE,
+        title=entry.display_name,
+        aliases=[entry.entry_id, entry.source_id, entry.display_name],
+        status=KnowledgeStatus.INFERRED,
+        source_refs=[untrusted_reference],
+    )
+    draft = KnowledgeDraft(
+        draft_id=f"draft-current-published-{operation_role.lower()}-proof",
+        system_id=SYSTEM_ID,
+        target_id=ENTRY_ID,
+        node=node,
+        content="Agent提出的操作候选，等待current Published闭环证明。",
+        entry_fact_candidates=candidates,
+    )
+    batch = KnowledgeGenerationWorkflowBatch(
+        batch_id=f"knowledge-workflow-current-published-{operation_role.lower()}-proof",
+        system_id=SYSTEM_ID,
+        scan_id=manifest.scan_id,
+        target_ids=[ENTRY_ID],
+        status="PENDING_CONFIRMATION",
+        drafts=[draft],
+    )
+    application.store.write_draft_batch(batch)
+
+    # 自动发布重新读取Published、Candidate及provider operation，不采用Agent来源引用。
+    application.knowledge.publish_ready_drafts(
+        SYSTEM_ID,
+        batch.batch_id,
+        rebuild_index=False,
+    )
+
+    published = application.store.get_node(SYSTEM_ID, node.node_id)[0]
+    assert published.entry_fact_knowledge is not None
+    assert [item.assertion_id for item in published.entry_fact_knowledge.candidate_operations] == [
+        exact_operation.assertion_id
+    ]
+    formal_operation = published.entry_fact_knowledge.candidate_operations[0]
+    assert formal_operation.source == KnowledgeConclusionSource.CODE_PROVEN
+    assert untrusted_reference not in formal_operation.evidence_refs
+    assert formal_operation.evidence_refs
+    remaining = application.store.read_draft_batch(SYSTEM_ID, batch.batch_id)
+    remaining_candidates = remaining.drafts[0].entry_fact_candidates
+    assert remaining_candidates is not None
+    assert [item.assertion_id for item in remaining_candidates.assertions] == [
+        item.assertion_id for item in assertions[1:]
+    ]
+    assert all(
+        item.source == KnowledgeConclusionSource.AI_CANDIDATE
+        for item in remaining_candidates.assertions
+    )
+    application.close()
+
+
+def test_auto_publish_candidate_operation_accepts_exact_current_restricted_projection(
+    tmp_path: Path,
+) -> None:
+    """知识CODE_PROVEN应重验PARTIAL Candidate的精确Published选中路径。
+
+    Args:
+        tmp_path: Pytest隔离的扫描、知识、能力和本地环境目录。
+
+    Returns:
+        None；受限投影仍current时操作候选成为CODE_PROVEN，Candidate保持PARTIAL。
+
+    Side Effects:
+        只在临时Git真相中发布能力与知识，不访问AI或QA。
+    """
+
+    from test_published_operation_capabilities_phase3 import (
+        _configure_real_local_binding,
+        _entry_candidate,
+        _publish_restricted_projection_scan,
+        _submission,
+    )
+
+    application = OpenTestApplication(tmp_path / "knowledge")
+    system_id = "atomic-app"
+    _publish_restricted_projection_scan(application, system_id)
+    _configure_real_local_binding(application, system_id)
+    publication = application.publish_operation_capability(
+        system_id,
+        _submission(application, system_id, "publish-knowledge-projection-0001"),
+    )
+    assert publication.status == "PUBLISHED"
+    assert publication.capability is not None
+    candidate = _entry_candidate(application, system_id)
+    assert candidate.status.value == "PARTIAL"
+    manifest = application.source_analysis.artifacts.read(system_id, "latest")
+    entry = manifest.entries[0]
+    SetupContractRuleStore(application.store).write(
+        SetupContractRuleSet(
+            system_id=system_id,
+            fact_contracts=[
+                SetupFactContractDefinition(
+                    fact_contract_id="restricted-result/v1",
+                    display_name="受限投影操作结果",
+                    required_origin=SetupFactOrigin.PUBLISHED_OUTPUT,
+                    required_fields=[
+                        SetupFactRequiredField(path="reference_id", schema_type="string")
+                    ],
+                    business_identity_paths=["reference_id"],
+                )
+            ],
+        )
+    )
+    assertion = EntryFactAssertion(
+        assertion_id="entry-fact:restricted-create-operation",
+        assertion_type="CANDIDATE_OPERATION",
+        fact_contract_id="restricted-result/v1",
+        operation_role="CREATE",
+        candidate_system_id=system_id,
+        candidate_operation_id=publication.capability.provider_operation_ref.operation_id,
+        source=KnowledgeConclusionSource.AI_CANDIDATE,
+        evidence_refs=[
+            SourceReference(path="AgentSuggested.java", symbol="agent.suggestion", line=999)
+        ],
+    )
+    candidate_set = EntryFactCandidateSet(
+        system_id=system_id,
+        entry_id=entry.entry_id,
+        source_scan_id=manifest.scan_id,
+        source_baseline=manifest.baseline,
+        assertions=[assertion],
+    )
+    node = KnowledgeNode(
+        node_id="entry:sample.AtomicFacade#restricted-projection-proof",
+        system_id=system_id,
+        kind=KnowledgeNodeKind.FACADE,
+        title=entry.display_name,
+        aliases=[entry.entry_id, entry.source_id, entry.display_name],
+        status=KnowledgeStatus.INFERRED,
+        source_refs=[candidate.source_ref],
+    )
+    draft = KnowledgeDraft(
+        draft_id="draft-current-restricted-published-proof",
+        system_id=system_id,
+        target_id=entry.entry_id,
+        node=node,
+        content="受限投影操作候选等待程序闭环证明。",
+        entry_fact_candidates=candidate_set,
+    )
+    batch = KnowledgeGenerationWorkflowBatch(
+        batch_id="knowledge-workflow-current-restricted-published-proof",
+        system_id=system_id,
+        scan_id=manifest.scan_id,
+        target_ids=[entry.entry_id],
+        status="PENDING_CONFIRMATION",
+        drafts=[draft],
+    )
+    application.store.write_draft_batch(batch)
+
+    application.knowledge.publish_ready_drafts(
+        system_id,
+        batch.batch_id,
+        rebuild_index=False,
+    )
+
+    published_node = application.store.get_node(system_id, node.node_id)[0]
+    assert published_node.entry_fact_knowledge is not None
+    assert [
+        item.assertion_id
+        for item in published_node.entry_fact_knowledge.candidate_operations
+    ] == [assertion.assertion_id]
+    assert (
+        published_node.entry_fact_knowledge.candidate_operations[0].source
+        == KnowledgeConclusionSource.CODE_PROVEN
+    )
+    application.close()
+
+
+def test_auto_publish_repairs_only_exact_legacy_double_wrapping(tmp_path: Path) -> None:
+    """后续自动发布应修复旧版确认造成的精确双层包装但拒绝歧义嵌套。
+
+    Args:
+        tmp_path: Pytest隔离的知识、扫描和源码目录。
+
+    Returns:
+        None；精确重复正文被折叠且不相同的人工后缀仍被拒绝时通过。
+
+    Side Effects:
+        仅构造并改写临时知识Markdown，不访问QA或真实知识资产。
+    """
+
+    service, store, manifest = _knowledge_service(tmp_path)
+    batch = service.generate(
+        KnowledgeGenerationRequest(
+            system_id=manifest.system_id,
+            entry_id=manifest.entries[0].entry_id,
+        )
+    )
+    entry_node = next(node for node in batch.nodes if node.kind == KnowledgeNodeKind.FACADE)
+    node_path = store.node_path(entry_node)
+    _stored_node, body = store.read_node(node_path)
+
+    # 精确模拟旧调用把完整正文传给write_node后形成的双层包装。
+    outer_start = body.index(AUTO_START)
+    outer_end = body.index(AUTO_END)
+    prefix = body[:outer_start]
+    suffix = body[outer_end + len(AUTO_END) :]
+    duplicated_body = f"{prefix.rstrip()}\n{AUTO_START}\n{body.strip()}\n{AUTO_END}{suffix}"
+    document = node_path.read_text(encoding="utf-8")
+    node_path.write_text(
+        document[: -len(body)] + duplicated_body,
+        encoding="utf-8",
+    )
+
+    store.write_node(entry_node, "重新生成的可信正文。")
+    repaired_document = node_path.read_text(encoding="utf-8")
+    assert repaired_document.count(AUTO_START) == 1
+    assert repaired_document.count(AUTO_END) == 1
+    assert "重新生成的可信正文。" in repaired_document
+
+    # 人工区域不一致时无法证明来自旧缺陷，必须继续拒绝自动猜测边界。
+    _repaired_node, repaired_body = store.read_node(node_path)
+    ambiguous_body = (
+        f"{AUTO_START}\n{repaired_body.strip()}\n{AUTO_END}\n\n"
+        "## 与内层不一致的人工说明\n"
+    )
+    ambiguous_document = node_path.read_text(encoding="utf-8")
+    node_path.write_text(
+        ambiguous_document[: -len(repaired_body)] + ambiguous_body,
+        encoding="utf-8",
+    )
+    with pytest.raises(
+        KnowledgeValidationError,
+        match="invalid or ambiguous knowledge auto-region markers",
+    ):
+        store.write_node(entry_node, "不得覆盖歧义正文。")
+
+
+def test_metadata_update_preserves_legacy_markerless_knowledge_body(tmp_path: Path) -> None:
+    """逐Fact元数据更新必须兼容尚未迁入自动区域的旧知识正文。
+
+    Args:
+        tmp_path: Pytest隔离的知识、扫描和源码目录。
+
+    Returns:
+        None；旧正文逐字保留且只更新frontmatter时通过。
+
+    Side Effects:
+        仅把临时知识节点改写为旧格式并执行一次元数据更新，不访问QA。
+    """
+
+    service, store, manifest = _knowledge_service(tmp_path)
+    batch = service.generate(
+        KnowledgeGenerationRequest(
+            system_id=manifest.system_id,
+            entry_id=manifest.entries[0].entry_id,
+        )
+    )
+    entry_node = next(node for node in batch.nodes if node.kind == KnowledgeNodeKind.FACADE)
+    node_path = store.node_path(entry_node)
+    _stored_node, body = store.read_node(node_path)
+    legacy_body = "旧版人工知识正文，没有自动区域标记。\n"
+    document = node_path.read_text(encoding="utf-8")
+    node_path.write_text(document[: -len(body)] + legacy_body, encoding="utf-8")
+
+    updated_node = entry_node.model_copy(update={"status": KnowledgeStatus.USER_CONFIRMED})
+    store.write_node_metadata(updated_node)
+    persisted_node, persisted_body = store.read_node(node_path)
+
+    assert persisted_node.status == KnowledgeStatus.USER_CONFIRMED
+    assert persisted_body.strip() == legacy_body.strip()
+    assert AUTO_START not in persisted_body
+    assert AUTO_END not in persisted_body
+
+
+def test_entry_fact_confirmation_rejects_stale_scan_and_invalid_evidence(
+    tmp_path: Path,
+) -> None:
+    """候选确认必须重验latest扫描、状态谓词和源码证据而非信任草稿。
+
+    Args:
+        tmp_path: Pytest隔离的知识、扫描、Fact契约和源码目录。
+
+    Returns:
+        None；旧扫描、未知状态和越界证据均被正式发布边界拒绝时通过。
+
+    Side Effects:
+        只改写临时latest扫描和候选草稿，不发布断言或访问QA。
+    """
+
+    service, store, manifest, batch, required, _produced = (
+        _entry_fact_confirmation_fixture(tmp_path)
+    )
+    newer_manifest = manifest.model_copy(
+        update={"scan_id": "scan-20260827000000-entry-fact-newer"}
+    )
+    service.artifacts.write_manifest(newer_manifest)
+    service.artifacts.publish_latest(newer_manifest.system_id, newer_manifest.scan_id)
+    confirmation = EntryFactCandidateConfirmation(
+        draft_id=batch.drafts[0].draft_id,
+        fact_candidate_ids=[required.assertion_id],
+    )
+    with pytest.raises(KnowledgeValidationError, match="source scope is stale"):
+        service.confirm_entry_fact_candidates(
+            manifest.system_id,
+            batch.batch_id,
+            confirmation,
+        )
+
+    # 恢复候选所属代际后，未知业务状态仍不能借用户确认绕过Fact契约。
+    service.artifacts.publish_latest(manifest.system_id, manifest.scan_id)
+    unknown_state = required.model_copy(update={"required_state": "UNKNOWN_STATE"})
+    unknown_state_candidates = batch.drafts[0].entry_fact_candidates.model_copy(
+        update={"assertions": [unknown_state]}
+    )
+    unknown_state_batch = batch.model_copy(
+        update={
+            "drafts": [
+                batch.drafts[0].model_copy(
+                    update={"entry_fact_candidates": unknown_state_candidates}
+                )
+            ]
+        }
+    )
+    store.write_draft_batch(unknown_state_batch)
+    with pytest.raises(KnowledgeValidationError, match="unknown state predicate"):
+        service.confirm_entry_fact_candidates(
+            manifest.system_id,
+            batch.batch_id,
+            confirmation,
+        )
+
+    # 合法状态也必须重新读取注册源码，越界行号不能被视为有效证据。
+    invalid_evidence = required.model_copy(
+        update={
+            "evidence_refs": [
+                required.evidence_refs[0].model_copy(update={"line": 99_999})
+            ]
+        }
+    )
+    invalid_candidates = unknown_state_candidates.model_copy(
+        update={"assertions": [invalid_evidence]}
+    )
+    store.write_draft_batch(
+        batch.model_copy(
+            update={
+                "drafts": [
+                    batch.drafts[0].model_copy(
+                        update={"entry_fact_candidates": invalid_candidates}
+                    )
+                ]
+            }
+        )
+    )
+    with pytest.raises(KnowledgeValidationError, match="evidence is no longer valid"):
+        service.confirm_entry_fact_candidates(
+            manifest.system_id,
+            batch.batch_id,
+            confirmation,
+        )
+
+
+def test_candidate_operation_evidence_uses_provider_latest_registered_root(
+    tmp_path: Path,
+) -> None:
+    """跨系统候选操作证据必须从provider current源码而不是consumer同名路径读取。
+
+    Args:
+        tmp_path: Pytest隔离的consumer、provider源码和知识目录。
+
+    Returns:
+        None；consumer同路径证据被拒绝、provider真实证据和操作身份同时通过时成立。
+
+    Side Effects:
+        注册一个临时provider系统并发布其latest Manifest，不访问AI或QA。
+    """
+
+    service, store, consumer_manifest = _knowledge_service(tmp_path)
+    provider_system_id = "flight-provider-core"
+    provider_source = tmp_path / "provider-source"
+    provider_source.mkdir()
+    provider_facade = provider_source / "TradeFacadeImpl.java"
+    provider_facade.write_text(
+        "class TradeFacadeImpl { Object queryList(Object request) { return request; } }\n",
+        encoding="utf-8",
+    )
+    provider_entry_id = "facade:demo.TradeFacade#queryList"
+    provider_manifest = ScanManifest(
+        scan_id="scan-20260828000000-provider-test",
+        system_id=provider_system_id,
+        baseline=SourceBaseline(
+            source_path=str(provider_source),
+            commit="provider-current",
+        ),
+        entries=[
+            EntryPoint(
+                entry_id=provider_entry_id,
+                system_id=provider_system_id,
+                kind=KnowledgeNodeKind.FACADE,
+                display_name="TradeFacade#queryList",
+                source_id="demo.TradeFacade#queryList",
+                source_path="TradeFacadeImpl.java",
+            )
+        ],
+    )
+    store.register_system(
+        SystemDefinition(
+            system_id=provider_system_id,
+            name="航班查询Provider",
+            source_path=str(provider_source),
+            baseline=provider_manifest.baseline,
+        )
+    )
+    service.artifacts.write_manifest(provider_manifest)
+    service.artifacts.publish_latest(provider_system_id, provider_manifest.scan_id)
+    provider_candidate_id = f"candidate:{provider_system_id}:{provider_entry_id}"
+
+    # consumer根恰好也存在同名文件和createOrder方法，不能借相对路径相同冒充provider证据。
+    consumer_only_evidence = SourceReference(
+        path="TradeFacadeImpl.java",
+        symbol="TradeFacadeImpl#createOrder",
+        line=1,
+        commit=consumer_manifest.baseline.commit,
+    )
+    assertion = EntryFactAssertion(
+        assertion_id="entry-fact:provider-query-operation",
+        assertion_type="CANDIDATE_OPERATION",
+        fact_contract_id="ticket-order/v1",
+        operation_role="QUERY",
+        candidate_system_id=provider_system_id,
+        candidate_operation_id=provider_candidate_id,
+        source=KnowledgeConclusionSource.AI_CANDIDATE,
+        evidence_refs=[consumer_only_evidence],
+    )
+    with pytest.raises(KnowledgeValidationError, match="evidence is no longer valid"):
+        service._revalidate_entry_fact_evidence(
+            consumer_manifest.system_id,
+            assertion,
+        )
+
+    # provider current文件中的精确方法和latest操作身份共同闭合后才允许确认边界继续。
+    provider_evidence = SourceReference(
+        path="TradeFacadeImpl.java",
+        symbol="TradeFacadeImpl#queryList",
+        line=1,
+    )
+    validated = service._revalidate_entry_fact_evidence(
+        consumer_manifest.system_id,
+        assertion.model_copy(update={"evidence_refs": [provider_evidence]}),
+    )
+    assert validated.candidate_source_scan_id == provider_manifest.scan_id
+    assert validated.candidate_source_baseline == provider_manifest.baseline
+    assert validated.evidence_refs[0].repository == provider_system_id
+    assert validated.evidence_refs[0].commit == provider_manifest.baseline.commit
+    with pytest.raises(KnowledgeValidationError, match="absent from provider latest"):
+        service._revalidate_entry_fact_evidence(
+            consumer_manifest.system_id,
+            assertion.model_copy(
+                update={
+                    "candidate_operation_id": "facade:demo.TradeFacade#missing",
+                    "evidence_refs": [provider_evidence],
+                }
+            ),
+        )
+
+    # 已确认断言冻结provider scan/baseline；provider推进后旧正式证据必须显式失效。
+    provider_next = provider_manifest.model_copy(
+        update={
+            "scan_id": "scan-20260828000001-provider-next",
+            "baseline": provider_manifest.baseline.model_copy(
+                update={"commit": "provider-next"}
+            ),
+        }
+    )
+    service.artifacts.write_manifest(provider_next)
+    service.artifacts.publish_latest(provider_system_id, provider_next.scan_id)
+    store.update_system(
+        provider_system_id,
+        store.get_system(provider_system_id).model_copy(
+            update={"baseline": provider_next.baseline}
+        ),
+    )
+    with pytest.raises(KnowledgeValidationError, match="provider source scope is stale"):
+        service._revalidate_entry_fact_evidence(
+            consumer_manifest.system_id,
+            validated,
+        )
 
 
 def test_generation_rebuilds_search_and_relation_index(tmp_path: Path) -> None:

@@ -1,0 +1,161 @@
+candidate_id: candidate:external_application:6c18c621767ba595
+system_id: ifightchainsaas.java.booking.core
+kind: EXTERNAL_APPLICATION
+knowledge_form: EXTERNAL_APPLICATION
+name: WebHookNoticeSender
+business_name: ''
+business_name_source: UNRESOLVED
+business_name_known_unknown: false
+enum_values: []
+suggested_meaning: 源码调用该远程协作者；请说明对应应用、业务职责和失败时的业务影响。
+code_meaning: ''
+unresolved_codes: []
+business_meaning: ''
+status: OPEN
+merged_into_candidate_id: ''
+source_refs:
+- repository: ''
+  path: app/biz/src/main/java/com/ly/flight/chainsaas/booking/biz/builder/impl/RefundChangeBuilder.java
+  symbol: com.ly.flight.chainsaas.booking.biz.builder.impl.RefundChangeBuilder
+  line: 12
+  commit: 004c50d90d152f1ef4892679f8b1b322cc7a7405
+  content_digest: 5c7c80072210525414728044aa88c056bed09f3ae658e8c2980569d5cdab30f4
+- repository: ''
+  path: app/biz/src/main/java/com/ly/flight/chainsaas/booking/biz/converter/ResourceConverter.java
+  symbol: com.ly.flight.chainsaas.booking.biz.converter.ResourceConverter
+  line: 83
+  commit: 004c50d90d152f1ef4892679f8b1b322cc7a7405
+  content_digest: dc334b11ba7a57b311c9672ccdf54665cf20b7e3e15eb50ccda889e122575e9e
+- repository: ''
+  path: app/biz/src/main/java/com/ly/flight/chainsaas/booking/biz/converter/TradeOrderConverter.java
+  symbol: com.ly.flight.chainsaas.booking.biz.converter.TradeOrderConverter
+  line: 55
+  commit: 004c50d90d152f1ef4892679f8b1b322cc7a7405
+  content_digest: 61c7f4b65842928a03e8f18bd6d8f9d6a80819f8c16de06e27316c06039ba2ad
+- repository: ''
+  path: app/biz/src/main/java/com/ly/flight/chainsaas/booking/biz/gateway/invoker/manager/honghu/HonghuInterceptTicketInvoker.java
+  symbol: com.ly.flight.chainsaas.booking.biz.gateway.invoker.manager.honghu.HonghuInterceptTicketInvoker
+  line: 17
+  commit: 004c50d90d152f1ef4892679f8b1b322cc7a7405
+  content_digest: fae8a9ce905ff27ae7e8fc12402ad1ae0a54f6bf9f776b0d2f69448682d9e130
+- repository: ''
+  path: app/biz/src/main/java/com/ly/flight/chainsaas/booking/biz/gateway/invoker/manager/trade/UpdateTicketInvoker.java
+  symbol: com.ly.flight.chainsaas.booking.biz.gateway.invoker.manager.trade.UpdateTicketInvoker
+  line: 46
+  commit: 004c50d90d152f1ef4892679f8b1b322cc7a7405
+  content_digest: 68c084c65cfd08c07fc5f959fa1784113f0e86902e98c10c60ad2323e1060b7f
+- repository: ''
+  path: app/biz/src/main/java/com/ly/flight/chainsaas/booking/biz/job/impl/RealCancelJob.java
+  symbol: com.ly.flight.chainsaas.booking.biz.job.impl.RealCancelJob
+  line: 18
+  commit: 004c50d90d152f1ef4892679f8b1b322cc7a7405
+  content_digest: aa77b115dd9956e86b868ed7d9bee7c34e50505bec1723d3d8934da7a2833a35
+- repository: ''
+  path: app/biz/src/main/java/com/ly/flight/chainsaas/booking/biz/manager/booker/booking/service/AbstractBookProcessHandler.java
+  symbol: com.ly.flight.chainsaas.booking.biz.manager.booker.booking.service.AbstractBookProcessHandler
+  line: 25
+  commit: 004c50d90d152f1ef4892679f8b1b322cc7a7405
+  content_digest: a787476ed057acec776ba4233ba5afd985c546e9b136d7f9494ce8cf33682c24
+- repository: ''
+  path: app/biz/src/main/java/com/ly/flight/chainsaas/booking/biz/manager/booker/booking/service/AbstractBookingService.java
+  symbol: com.ly.flight.chainsaas.booking.biz.manager.booker.booking.service.AbstractBookingService
+  line: 42
+  commit: 004c50d90d152f1ef4892679f8b1b322cc7a7405
+  content_digest: 6c7265d819d1526ec8d9246705fdfb3b35d935f61b594bccd51baccad4baaf13
+- repository: ''
+  path: app/biz/src/main/java/com/ly/flight/chainsaas/booking/biz/manager/booker/validate/service/impl/BookGdsPriceValidateServiceImpl.java
+  symbol: com.ly.flight.chainsaas.booking.biz.manager.booker.validate.service.impl.BookGdsPriceValidateServiceImpl
+  line: 32
+  commit: 004c50d90d152f1ef4892679f8b1b322cc7a7405
+  content_digest: 6ebdc19aaccc01f5da12272d7e3b7abd0cd4bff8145278437e0e733b2755e095
+- repository: ''
+  path: app/biz/src/main/java/com/ly/flight/chainsaas/booking/biz/mq/AbstractMqMessageListener.java
+  symbol: com.ly.flight.chainsaas.booking.biz.mq.AbstractMqMessageListener
+  line: 11
+  commit: 004c50d90d152f1ef4892679f8b1b322cc7a7405
+  content_digest: 9bcc8ffbc46ffc9ed70e615524a59af2366197f80a2c0284eecda372f8158dd8
+- repository: ''
+  path: app/biz/src/main/java/com/ly/flight/chainsaas/booking/biz/mq/listener/OrderAsyncBookMessageListener.java
+  symbol: com.ly.flight.chainsaas.booking.biz.mq.listener.OrderAsyncBookMessageListener
+  line: 41
+  commit: 004c50d90d152f1ef4892679f8b1b322cc7a7405
+  content_digest: f41ff69bea94a69ccf516f4d5c1732f2e0722e38380d0778641796d52bf3453a
+- repository: ''
+  path: app/biz/src/main/java/com/ly/flight/chainsaas/booking/biz/ordertask/WebHookNoticeTaskHelper.java
+  symbol: com.ly.flight.chainsaas.booking.biz.ordertask.WebHookNoticeTaskHelper
+  line: 16
+  commit: 004c50d90d152f1ef4892679f8b1b322cc7a7405
+  content_digest: 587898a61dcaaa3e5fe2320460846f7665fc2545f908e84460075a1bb8611384
+affected_target_ids:
+- facade:com.ly.flight.chainsaas.booking.facade.DistributionFacade#issueTickets
+- facade:com.ly.flight.chainsaas.booking.facade.DistributionFacade#qCallBack
+- facade:com.ly.flight.chainsaas.booking.facade.DistributionFacade#queryOrderByPnr
+- facade:com.ly.flight.chainsaas.booking.facade.DistributionFacade#reportDataProcess
+- facade:com.ly.flight.chainsaas.booking.facade.PayCallBackFacade#payCallBack
+- facade:com.ly.flight.chainsaas.booking.facade.PayCallBackFacade#payOrderDetail
+- facade:com.ly.flight.chainsaas.booking.facade.PayCallBackFacade#payOrderRiskDetail
+- facade:com.ly.flight.chainsaas.booking.facade.PayCallBackFacade#payValidate
+- facade:com.ly.flight.chainsaas.booking.facade.TcplTradeFacade#book
+- facade:com.ly.flight.chainsaas.booking.facade.TcplTradeFacade#bookValidate
+- facade:com.ly.flight.chainsaas.booking.facade.TcplTradeFacade#confirmPayment
+- facade:com.ly.flight.chainsaas.booking.facade.TcplTradeFacade#notifyTicket
+- facade:com.ly.flight.chainsaas.booking.facade.TcplTradeFacade#payValidate
+- facade:com.ly.flight.chainsaas.booking.facade.TcplTradeFacade#payment
+- facade:com.ly.flight.chainsaas.booking.facade.TcplTradeFacade#retrieve
+- facade:com.ly.flight.chainsaas.booking.facade.TcplTradeFacade#searchBook
+- facade:com.ly.flight.chainsaas.booking.facade.TcplTradeFacade#validateCache
+- facade:com.ly.flight.chainsaas.booking.facade.TradeFacade#addErrorCode
+- facade:com.ly.flight.chainsaas.booking.facade.TradeFacade#addVccRecord
+- facade:com.ly.flight.chainsaas.booking.facade.TradeFacade#batchQueryTicketInfo
+- facade:com.ly.flight.chainsaas.booking.facade.TradeFacade#cancel
+- facade:com.ly.flight.chainsaas.booking.facade.TradeFacade#cancelPnrList
+- facade:com.ly.flight.chainsaas.booking.facade.TradeFacade#checkVccCard
+- facade:com.ly.flight.chainsaas.booking.facade.TradeFacade#closeVccCard
+- facade:com.ly.flight.chainsaas.booking.facade.TradeFacade#createDirectOrder
+- facade:com.ly.flight.chainsaas.booking.facade.TradeFacade#createLog
+- facade:com.ly.flight.chainsaas.booking.facade.TradeFacade#createPayment
+- facade:com.ly.flight.chainsaas.booking.facade.TradeFacade#createVcc
+- facade:com.ly.flight.chainsaas.booking.facade.TradeFacade#execute
+- facade:com.ly.flight.chainsaas.booking.facade.TradeFacade#flightChange
+- facade:com.ly.flight.chainsaas.booking.facade.TradeFacade#headerEdit
+- facade:com.ly.flight.chainsaas.booking.facade.TradeFacade#lockOrder
+- facade:com.ly.flight.chainsaas.booking.facade.TradeFacade#marketingOrderList
+- facade:com.ly.flight.chainsaas.booking.facade.TradeFacade#modifyErrorCodeState
+- facade:com.ly.flight.chainsaas.booking.facade.TradeFacade#orderRebut
+- facade:com.ly.flight.chainsaas.booking.facade.TradeFacade#pnrCallback
+- facade:com.ly.flight.chainsaas.booking.facade.TradeFacade#priceEdit
+- facade:com.ly.flight.chainsaas.booking.facade.TradeFacade#queryDetail
+- facade:com.ly.flight.chainsaas.booking.facade.TradeFacade#queryDetailByThird
+- facade:com.ly.flight.chainsaas.booking.facade.TradeFacade#queryErrorCode
+- facade:com.ly.flight.chainsaas.booking.facade.TradeFacade#queryErrorCodeList
+- facade:com.ly.flight.chainsaas.booking.facade.TradeFacade#queryList
+- facade:com.ly.flight.chainsaas.booking.facade.TradeFacade#queryVCCList
+- facade:com.ly.flight.chainsaas.booking.facade.TradeFacade#queryVccDetail
+- facade:com.ly.flight.chainsaas.booking.facade.TradeFacade#queryVccRecordList
+- facade:com.ly.flight.chainsaas.booking.facade.TradeFacade#realCancel
+- facade:com.ly.flight.chainsaas.booking.facade.TradeFacade#refund
+- facade:com.ly.flight.chainsaas.booking.facade.TradeFacade#unLockOrder
+- facade:com.ly.flight.chainsaas.booking.facade.TradeFacade#updateErrorCode
+- facade:com.ly.flight.chainsaas.booking.facade.TradeFacade#updateVccCard
+- facade:com.ly.flight.chainsaas.booking.facade.TradeResourcesFacade#calculate
+- facade:com.ly.flight.chainsaas.booking.facade.TradeResourcesFacade#manualParseCalculate
+- facade:com.ly.flight.chainsaas.booking.facade.TradeResourcesFacade#mappingTaxDetail
+- facade:com.ly.flight.chainsaas.booking.facade.TradeResourcesFacade#paymentValidate
+- facade:com.ly.flight.chainsaas.booking.facade.TradeResourcesFacade#searchDataCalculate
+- facade:com.ly.flight.chainsaas.booking.facade.TradeResourcesFacade#verifyPNR
+- facade:com.ly.flight.chainsaas.booking.facade.TradeResourcesFacade#verifyPrice
+- facade:com.ly.flight.chainsaas.booking.facade.TradeResourcesFacade#verifyPriceAndCabin
+- facade:com.ly.flight.chainsaas.booking.facade.honghu.HonghuApiFacade#booking
+- facade:com.ly.flight.chainsaas.booking.facade.honghu.HonghuApiFacade#cancel
+- facade:com.ly.flight.chainsaas.booking.facade.honghu.HonghuApiFacade#interceptTicket
+- facade:com.ly.flight.chainsaas.booking.facade.honghu.HonghuApiFacade#payment
+- facade:com.ly.flight.chainsaas.booking.facade.honghu.HonghuApiFacade#ticketNotify
+- facade:com.ly.flight.chainsaas.booking.facade.honghu.HonghuApiFacade#verify
+- facade:com.ly.flight.chainsaas.booking.facade.tcpl.TcplApiFacade#book
+- facade:com.ly.flight.chainsaas.booking.facade.tcpl.TcplApiFacade#bookProcessing
+- facade:com.ly.flight.chainsaas.booking.facade.tcpl.TcplApiFacade#flightChange
+- facade:com.ly.flight.chainsaas.booking.facade.tcpl.TcplApiFacade#notifications
+- facade:com.ly.flight.chainsaas.booking.facade.tcpl.TcplApiFacade#verify
+evidence_digest: 25971ec3b14df9516c5847b9d58ba74867152de8a1e2f64b607ca042abbc5cf2
+discovered_at: '2026-08-27T15:21:11.349719Z'
+updated_at: '2026-08-27T20:27:20.161797Z'

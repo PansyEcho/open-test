@@ -1,0 +1,22 @@
+contract_version: setup-contract-rules/v1
+rule_revision_id: setup-rule-revision:82ef7af57cb14d5883ed2b9fcfe1d1c2
+system_id: ifightchainsaas.java.booking.core
+fact_contracts:
+- fact_contract_id: ticket-order/v1
+  display_name: 出票单
+  required_origin: PUBLISHED_OUTPUT
+  required_fields:
+  - path: order_serial_no
+    schema_type: string
+  - path: status
+    schema_type: string
+  business_identity_paths:
+  - order_serial_no
+  required_constraints: []
+  state_path: status
+  state_predicates:
+  - name: ISSUED
+    display_name: 出票成功
+    allowed_values:
+    - Issued
+input_policies: []

@@ -1,0 +1,66 @@
+candidate_id: candidate:external_application:cbd449fe79136fe1
+system_id: ifightchainsaas.java.booking.core
+kind: EXTERNAL_APPLICATION
+knowledge_form: EXTERNAL_APPLICATION
+name: CouponClient
+business_name: ''
+business_name_source: UNRESOLVED
+business_name_known_unknown: false
+enum_values: []
+suggested_meaning: 源码调用该远程协作者；请说明对应应用、业务职责和失败时的业务影响。
+code_meaning: ''
+unresolved_codes: []
+business_meaning: ''
+status: OPEN
+merged_into_candidate_id: ''
+source_refs:
+- repository: ''
+  path: app/biz/src/main/java/com/ly/flight/chainsaas/booking/biz/actor/order/cancel/sync/AbstractCouponPreTransitActor.java
+  symbol: com.ly.flight.chainsaas.booking.biz.actor.order.cancel.sync.AbstractCouponPreTransitActor
+  line: 10
+  commit: 004c50d90d152f1ef4892679f8b1b322cc7a7405
+  content_digest: df0396600823917ce9a429b440102ad476467accd153585182b67878afb82f96
+- repository: ''
+  path: app/biz/src/main/java/com/ly/flight/chainsaas/booking/biz/builder/impl/CouponBuilder.java
+  symbol: com.ly.flight.chainsaas.booking.biz.builder.impl.CouponBuilder
+  line: 12
+  commit: 004c50d90d152f1ef4892679f8b1b322cc7a7405
+  content_digest: 9f5c836a7c8a231c091dac633a175264c79625400cb65a0f89d1f63f5f51048f
+- repository: ''
+  path: app/biz/src/main/java/com/ly/flight/chainsaas/booking/biz/gateway/invoker/manager/pay/PayCallBackInvoker.java
+  symbol: com.ly.flight.chainsaas.booking.biz.gateway.invoker.manager.pay.PayCallBackInvoker
+  line: 33
+  commit: 004c50d90d152f1ef4892679f8b1b322cc7a7405
+  content_digest: 3027a55d82d052bd93dad49e88de9f6066c95aad3a93bf653074a51cebbfc80c
+- repository: ''
+  path: app/biz/src/main/java/com/ly/flight/chainsaas/booking/biz/gateway/invoker/manager/pay/PayOrderDetailInvoker.java
+  symbol: com.ly.flight.chainsaas.booking.biz.gateway.invoker.manager.pay.PayOrderDetailInvoker
+  line: 27
+  commit: 004c50d90d152f1ef4892679f8b1b322cc7a7405
+  content_digest: 42ddd08bf0defd4f6e70a1fcb7a9470cffb52cacb71b64bd934cb732c7abe2cf
+- repository: ''
+  path: app/biz/src/main/java/com/ly/flight/chainsaas/booking/biz/manager/booker/service/AbstractOrderBooker.java
+  symbol: com.ly.flight.chainsaas.booking.biz.manager.booker.service.AbstractOrderBooker
+  line: 8
+  commit: 004c50d90d152f1ef4892679f8b1b322cc7a7405
+  content_digest: 65f33534f9d9fc0e059465af0a4b8706a810094f07a26f815fa2d47fbb240e87
+- repository: ''
+  path: app/biz/src/main/java/com/ly/flight/chainsaas/booking/biz/mq/listener/PayRefundDoneMessageListener.java
+  symbol: com.ly.flight.chainsaas.booking.biz.mq.listener.PayRefundDoneMessageListener
+  line: 25
+  commit: 004c50d90d152f1ef4892679f8b1b322cc7a7405
+  content_digest: b5ea0cbd2b822425a0c1f99cb04dc6c74a5f7fe74e1fedbe94c299669ca9ccd4
+- repository: ''
+  path: app/integration/src/main/java/com/ly/flight/chainsaas/booking/integration/coupon/CouponClientImpl.java
+  symbol: com.ly.flight.chainsaas.booking.integration.coupon.CouponClientImpl
+  line: 28
+  commit: 004c50d90d152f1ef4892679f8b1b322cc7a7405
+  content_digest: 7a27c4fcab236eec0f2f25d2e618c9cfdb4d263ceddc8e330e6b12d39e8a32a4
+affected_target_ids:
+- facade:com.ly.flight.chainsaas.booking.facade.PayCallBackFacade#payCallBack
+- facade:com.ly.flight.chainsaas.booking.facade.PayCallBackFacade#payOrderDetail
+- facade:com.ly.flight.chainsaas.booking.facade.PayCallBackFacade#payOrderRiskDetail
+- facade:com.ly.flight.chainsaas.booking.facade.PayCallBackFacade#payValidate
+evidence_digest: eb57a21f7d4499527cfe4dc63b543dab12a2fc548da586b6a6db40b144b41649
+discovered_at: '2026-08-27T15:21:11.349975Z'
+updated_at: '2026-08-27T20:27:20.162079Z'

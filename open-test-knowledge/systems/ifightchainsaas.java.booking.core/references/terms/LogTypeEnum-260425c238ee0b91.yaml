@@ -1,0 +1,908 @@
+candidate_id: candidate:business_term:260425c238ee0b91
+system_id: ifightchainsaas.java.booking.core
+kind: BUSINESS_TERM
+knowledge_form: BUSINESS_ENUM
+name: LogTypeEnum
+business_name: LogTypeEnum
+business_name_source: CODE_DEFAULT
+business_name_known_unknown: false
+enum_values:
+- code: ANCILLARY_OCCUPIED
+  business_meaning: 已预订
+  source: CODE_DEFAULT
+  known_unknown: false
+  confidence: 0.95
+  source_refs:
+  - repository: ''
+    path: app/model/src/main/java/com/ly/flight/chainsaas/booking/enums/LogTypeEnum.java
+    symbol: com.ly.flight.chainsaas.booking.enums.LogTypeEnum#ANCILLARY_OCCUPIED
+    line: 14
+    commit: ''
+    content_digest: ''
+- code: ANCILLARY_OCCUPIED_ERROR
+  business_meaning: 已预订
+  source: CODE_DEFAULT
+  known_unknown: false
+  confidence: 0.95
+  source_refs:
+  - repository: ''
+    path: app/model/src/main/java/com/ly/flight/chainsaas/booking/enums/LogTypeEnum.java
+    symbol: com.ly.flight.chainsaas.booking.enums.LogTypeEnum#ANCILLARY_OCCUPIED_ERROR
+    line: 16
+    commit: ''
+    content_digest: ''
+- code: BOOK_ORDER_PRICE_CHANGE
+  business_meaning: 生单变价
+  source: CODE_DEFAULT
+  known_unknown: false
+  confidence: 0.95
+  source_refs:
+  - repository: ''
+    path: app/model/src/main/java/com/ly/flight/chainsaas/booking/enums/LogTypeEnum.java
+    symbol: com.ly.flight.chainsaas.booking.enums.LogTypeEnum#BOOK_ORDER_PRICE_CHANGE
+    line: 93
+    commit: ''
+    content_digest: ''
+- code: CHANGE_REFUND_RULE_LOG
+  business_meaning: CHANGE_REFUND_RULE_LOG
+  source: CODE_DEFAULT
+  known_unknown: false
+  confidence: 0.5
+  source_refs:
+  - repository: ''
+    path: app/model/src/main/java/com/ly/flight/chainsaas/booking/enums/LogTypeEnum.java
+    symbol: com.ly.flight.chainsaas.booking.enums.LogTypeEnum#CHANGE_REFUND_RULE_LOG
+    line: 109
+    commit: ''
+    content_digest: ''
+- code: CLIENT_PAYMENT_CONFIRM
+  business_meaning: C端用户确认支付
+  source: CODE_DEFAULT
+  known_unknown: false
+  confidence: 0.95
+  source_refs:
+  - repository: ''
+    path: app/model/src/main/java/com/ly/flight/chainsaas/booking/enums/LogTypeEnum.java
+    symbol: com.ly.flight.chainsaas.booking.enums.LogTypeEnum#CLIENT_PAYMENT_CONFIRM
+    line: 41
+    commit: ''
+    content_digest: ''
+- code: CLIENT_PAYMENT_SUCCESS
+  business_meaning: C端用户支付
+  source: CODE_DEFAULT
+  known_unknown: false
+  confidence: 0.95
+  source_refs:
+  - repository: ''
+    path: app/model/src/main/java/com/ly/flight/chainsaas/booking/enums/LogTypeEnum.java
+    symbol: com.ly.flight.chainsaas.booking.enums.LogTypeEnum#CLIENT_PAYMENT_SUCCESS
+    line: 39
+    commit: ''
+    content_digest: ''
+- code: COUPON_ERROR
+  business_meaning: 优惠券
+  source: CODE_DEFAULT
+  known_unknown: false
+  confidence: 0.95
+  source_refs:
+  - repository: ''
+    path: app/model/src/main/java/com/ly/flight/chainsaas/booking/enums/LogTypeEnum.java
+    symbol: com.ly.flight.chainsaas.booking.enums.LogTypeEnum#COUPON_ERROR
+    line: 67
+    commit: ''
+    content_digest: ''
+- code: COUPON_SUCCESS
+  business_meaning: 优惠券
+  source: CODE_DEFAULT
+  known_unknown: false
+  confidence: 0.95
+  source_refs:
+  - repository: ''
+    path: app/model/src/main/java/com/ly/flight/chainsaas/booking/enums/LogTypeEnum.java
+    symbol: com.ly.flight.chainsaas.booking.enums.LogTypeEnum#COUPON_SUCCESS
+    line: 65
+    commit: ''
+    content_digest: ''
+- code: CREATE_LOG
+  business_meaning: 人工添加
+  source: CODE_DEFAULT
+  known_unknown: false
+  confidence: 0.95
+  source_refs:
+  - repository: ''
+    path: app/model/src/main/java/com/ly/flight/chainsaas/booking/enums/LogTypeEnum.java
+    symbol: com.ly.flight.chainsaas.booking.enums.LogTypeEnum#CREATE_LOG
+    line: 77
+    commit: ''
+    content_digest: ''
+- code: CREATE_VCC_FAIL
+  business_meaning: 创建VCC失败
+  source: CODE_DEFAULT
+  known_unknown: false
+  confidence: 0.95
+  source_refs:
+  - repository: ''
+    path: app/model/src/main/java/com/ly/flight/chainsaas/booking/enums/LogTypeEnum.java
+    symbol: com.ly.flight.chainsaas.booking.enums.LogTypeEnum#CREATE_VCC_FAIL
+    line: 69
+    commit: ''
+    content_digest: ''
+- code: CVV_QUERY
+  business_meaning: CVV查询
+  source: CODE_DEFAULT
+  known_unknown: false
+  confidence: 0.95
+  source_refs:
+  - repository: ''
+    path: app/model/src/main/java/com/ly/flight/chainsaas/booking/enums/LogTypeEnum.java
+    symbol: com.ly.flight.chainsaas.booking.enums.LogTypeEnum#CVV_QUERY
+    line: 75
+    commit: ''
+    content_digest: ''
+- code: DECODE_CARD_LOG
+  business_meaning: 待订座 直付供应模式 卡号解密
+  source: CODE_DEFAULT
+  known_unknown: false
+  confidence: 0.95
+  source_refs:
+  - repository: ''
+    path: app/model/src/main/java/com/ly/flight/chainsaas/booking/enums/LogTypeEnum.java
+    symbol: com.ly.flight.chainsaas.booking.enums.LogTypeEnum#DECODE_CARD_LOG
+    line: 121
+    commit: ''
+    content_digest: ''
+- code: DEMOTE_OCCUPIED
+  business_meaning: 下沉 占编
+  source: CODE_DEFAULT
+  known_unknown: false
+  confidence: 0.95
+  source_refs:
+  - repository: ''
+    path: app/model/src/main/java/com/ly/flight/chainsaas/booking/enums/LogTypeEnum.java
+    symbol: com.ly.flight.chainsaas.booking.enums.LogTypeEnum#DEMOTE_OCCUPIED
+    line: 112
+    commit: ''
+    content_digest: ''
+- code: DISHONEST
+  business_meaning: 失信人
+  source: CODE_DEFAULT
+  known_unknown: false
+  confidence: 0.95
+  source_refs:
+  - repository: ''
+    path: app/model/src/main/java/com/ly/flight/chainsaas/booking/enums/LogTypeEnum.java
+    symbol: com.ly.flight.chainsaas.booking.enums.LogTypeEnum#DISHONEST
+    line: 18
+    commit: ''
+    content_digest: ''
+- code: DOWNLOAD_JOURNEY
+  business_meaning: 下载行程单
+  source: CODE_DEFAULT
+  known_unknown: false
+  confidence: 0.95
+  source_refs:
+  - repository: ''
+    path: app/model/src/main/java/com/ly/flight/chainsaas/booking/enums/LogTypeEnum.java
+    symbol: com.ly.flight.chainsaas.booking.enums.LogTypeEnum#DOWNLOAD_JOURNEY
+    line: 79
+    commit: ''
+    content_digest: ''
+- code: FLIGHT_CHANGE
+  business_meaning: 发生航变
+  source: CODE_DEFAULT
+  known_unknown: false
+  confidence: 0.95
+  source_refs:
+  - repository: ''
+    path: app/model/src/main/java/com/ly/flight/chainsaas/booking/enums/LogTypeEnum.java
+    symbol: com.ly.flight.chainsaas.booking.enums.LogTypeEnum#FLIGHT_CHANGE
+    line: 55
+    commit: ''
+    content_digest: ''
+- code: GDS_OCCUPIED_RESET
+  business_meaning: GDS 占座成功回填
+  source: CODE_DEFAULT
+  known_unknown: false
+  confidence: 0.95
+  source_refs:
+  - repository: ''
+    path: app/model/src/main/java/com/ly/flight/chainsaas/booking/enums/LogTypeEnum.java
+    symbol: com.ly.flight.chainsaas.booking.enums.LogTypeEnum#GDS_OCCUPIED_RESET
+    line: 105
+    commit: ''
+    content_digest: ''
+- code: INTERCEPT_TICKET
+  business_meaning: 拦截出票
+  source: CODE_DEFAULT
+  known_unknown: false
+  confidence: 0.95
+  source_refs:
+  - repository: ''
+    path: app/model/src/main/java/com/ly/flight/chainsaas/booking/enums/LogTypeEnum.java
+    symbol: com.ly.flight.chainsaas.booking.enums.LogTypeEnum#INTERCEPT_TICKET
+    line: 124
+    commit: ''
+    content_digest: ''
+- code: ISSUETICKET
+  business_meaning: 供应商出票
+  source: CODE_DEFAULT
+  known_unknown: false
+  confidence: 0.95
+  source_refs:
+  - repository: ''
+    path: app/model/src/main/java/com/ly/flight/chainsaas/booking/enums/LogTypeEnum.java
+    symbol: com.ly.flight.chainsaas.booking.enums.LogTypeEnum#ISSUETICKET
+    line: 20
+    commit: ''
+    content_digest: ''
+- code: LOCK_ORDER
+  business_meaning: 锁单
+  source: CODE_DEFAULT
+  known_unknown: false
+  confidence: 0.95
+  source_refs:
+  - repository: ''
+    path: app/model/src/main/java/com/ly/flight/chainsaas/booking/enums/LogTypeEnum.java
+    symbol: com.ly.flight.chainsaas.booking.enums.LogTypeEnum#LOCK_ORDER
+    line: 81
+    commit: ''
+    content_digest: ''
+- code: OCCUPIED
+  business_meaning: 已预订
+  source: CODE_DEFAULT
+  known_unknown: false
+  confidence: 0.95
+  source_refs:
+  - repository: ''
+    path: app/model/src/main/java/com/ly/flight/chainsaas/booking/enums/LogTypeEnum.java
+    symbol: com.ly.flight.chainsaas.booking.enums.LogTypeEnum#OCCUPIED
+    line: 12
+    commit: ''
+    content_digest: ''
+- code: OCCUPIED_VALIDATE_PRICE
+  business_meaning: 占座变价
+  source: CODE_DEFAULT
+  known_unknown: false
+  confidence: 0.95
+  source_refs:
+  - repository: ''
+    path: app/model/src/main/java/com/ly/flight/chainsaas/booking/enums/LogTypeEnum.java
+    symbol: com.ly.flight.chainsaas.booking.enums.LogTypeEnum#OCCUPIED_VALIDATE_PRICE
+    line: 116
+    commit: ''
+    content_digest: ''
+- code: OCCUPYING
+  business_meaning: 预定中
+  source: CODE_DEFAULT
+  known_unknown: false
+  confidence: 0.95
+  source_refs:
+  - repository: ''
+    path: app/model/src/main/java/com/ly/flight/chainsaas/booking/enums/LogTypeEnum.java
+    symbol: com.ly.flight.chainsaas.booking.enums.LogTypeEnum#OCCUPYING
+    line: 10
+    commit: ''
+    content_digest: ''
+- code: OCCUPY_FAIL
+  business_meaning: 预订失败
+  source: CODE_DEFAULT
+  known_unknown: false
+  confidence: 0.95
+  source_refs:
+  - repository: ''
+    path: app/model/src/main/java/com/ly/flight/chainsaas/booking/enums/LogTypeEnum.java
+    symbol: com.ly.flight.chainsaas.booking.enums.LogTypeEnum#OCCUPY_FAIL
+    line: 33
+    commit: ''
+    content_digest: ''
+- code: ORDER_REFUND
+  business_meaning: 订单退款
+  source: CODE_DEFAULT
+  known_unknown: false
+  confidence: 0.95
+  source_refs:
+  - repository: ''
+    path: app/model/src/main/java/com/ly/flight/chainsaas/booking/enums/LogTypeEnum.java
+    symbol: com.ly.flight.chainsaas.booking.enums.LogTypeEnum#ORDER_REFUND
+    line: 95
+    commit: ''
+    content_digest: ''
+- code: ORDER_REFUND_DONE
+  business_meaning: 订单退款完成
+  source: CODE_DEFAULT
+  known_unknown: false
+  confidence: 0.95
+  source_refs:
+  - repository: ''
+    path: app/model/src/main/java/com/ly/flight/chainsaas/booking/enums/LogTypeEnum.java
+    symbol: com.ly.flight.chainsaas.booking.enums.LogTypeEnum#ORDER_REFUND_DONE
+    line: 97
+    commit: ''
+    content_digest: ''
+- code: PAYMENT_LOG
+  business_meaning: 支付信息
+  source: CODE_DEFAULT
+  known_unknown: false
+  confidence: 0.95
+  source_refs:
+  - repository: ''
+    path: app/model/src/main/java/com/ly/flight/chainsaas/booking/enums/LogTypeEnum.java
+    symbol: com.ly.flight.chainsaas.booking.enums.LogTypeEnum#PAYMENT_LOG
+    line: 107
+    commit: ''
+    content_digest: ''
+- code: PAYMENT_SUCCESS
+  business_meaning: 支付成功
+  source: CODE_DEFAULT
+  known_unknown: false
+  confidence: 0.95
+  source_refs:
+  - repository: ''
+    path: app/model/src/main/java/com/ly/flight/chainsaas/booking/enums/LogTypeEnum.java
+    symbol: com.ly.flight.chainsaas.booking.enums.LogTypeEnum#PAYMENT_SUCCESS
+    line: 43
+    commit: ''
+    content_digest: ''
+- code: PAY_CALLBACK
+  business_meaning: 支付回调
+  source: CODE_DEFAULT
+  known_unknown: false
+  confidence: 0.95
+  source_refs:
+  - repository: ''
+    path: app/model/src/main/java/com/ly/flight/chainsaas/booking/enums/LogTypeEnum.java
+    symbol: com.ly.flight.chainsaas.booking.enums.LogTypeEnum#PAY_CALLBACK
+    line: 91
+    commit: ''
+    content_digest: ''
+- code: PENDING_OCCUPY
+  business_meaning: 待订座
+  source: CODE_DEFAULT
+  known_unknown: false
+  confidence: 0.95
+  source_refs:
+  - repository: ''
+    path: app/model/src/main/java/com/ly/flight/chainsaas/booking/enums/LogTypeEnum.java
+    symbol: com.ly.flight.chainsaas.booking.enums.LogTypeEnum#PENDING_OCCUPY
+    line: 6
+    commit: ''
+    content_digest: ''
+- code: PENDING_OCCUPY_DIRECT_SUPPLY_MODE
+  business_meaning: 待订座 直付供应模式
+  source: CODE_DEFAULT
+  known_unknown: false
+  confidence: 0.95
+  source_refs:
+  - repository: ''
+    path: app/model/src/main/java/com/ly/flight/chainsaas/booking/enums/LogTypeEnum.java
+    symbol: com.ly.flight.chainsaas.booking.enums.LogTypeEnum#PENDING_OCCUPY_DIRECT_SUPPLY_MODE
+    line: 119
+    commit: ''
+    content_digest: ''
+- code: PENDING_TICKET
+  business_meaning: 待出票
+  source: CODE_DEFAULT
+  known_unknown: false
+  confidence: 0.95
+  source_refs:
+  - repository: ''
+    path: app/model/src/main/java/com/ly/flight/chainsaas/booking/enums/LogTypeEnum.java
+    symbol: com.ly.flight.chainsaas.booking.enums.LogTypeEnum#PENDING_TICKET
+    line: 35
+    commit: ''
+    content_digest: ''
+- code: PRIVATE_ISSUETICKET
+  business_meaning: ISSUETICKET
+  source: CODE_VERIFIED
+  known_unknown: false
+  confidence: 1.0
+  source_refs:
+  - repository: ''
+    path: app/model/src/main/java/com/ly/flight/chainsaas/booking/enums/LogTypeEnum.java
+    symbol: com.ly.flight.chainsaas.booking.enums.LogTypeEnum#PRIVATE_ISSUETICKET
+    line: 22
+    commit: ''
+    content_digest: ''
+- code: REBUT_ORDER
+  business_meaning: 驳回订单
+  source: CODE_DEFAULT
+  known_unknown: false
+  confidence: 0.95
+  source_refs:
+  - repository: ''
+    path: app/model/src/main/java/com/ly/flight/chainsaas/booking/enums/LogTypeEnum.java
+    symbol: com.ly.flight.chainsaas.booking.enums.LogTypeEnum#REBUT_ORDER
+    line: 89
+    commit: ''
+    content_digest: ''
+- code: REFUND_SUCCESS
+  business_meaning: 退票成功
+  source: CODE_DEFAULT
+  known_unknown: false
+  confidence: 0.95
+  source_refs:
+  - repository: ''
+    path: app/model/src/main/java/com/ly/flight/chainsaas/booking/enums/LogTypeEnum.java
+    symbol: com.ly.flight.chainsaas.booking.enums.LogTypeEnum#REFUND_SUCCESS
+    line: 45
+    commit: ''
+    content_digest: ''
+- code: RETRIEVE_CALLBACK
+  business_meaning: RT更新
+  source: CODE_DEFAULT
+  known_unknown: false
+  confidence: 0.95
+  source_refs:
+  - repository: ''
+    path: app/model/src/main/java/com/ly/flight/chainsaas/booking/enums/LogTypeEnum.java
+    symbol: com.ly.flight.chainsaas.booking.enums.LogTypeEnum#RETRIEVE_CALLBACK
+    line: 51
+    commit: ''
+    content_digest: ''
+- code: SYNCCLIENT
+  business_meaning: 同步C端
+  source: CODE_DEFAULT
+  known_unknown: false
+  confidence: 0.95
+  source_refs:
+  - repository: ''
+    path: app/model/src/main/java/com/ly/flight/chainsaas/booking/enums/LogTypeEnum.java
+    symbol: com.ly.flight.chainsaas.booking.enums.LogTypeEnum#SYNCCLIENT
+    line: 24
+    commit: ''
+    content_digest: ''
+- code: SYNCCLIENT_FAIL
+  business_meaning: 同步C端退票
+  source: CODE_DEFAULT
+  known_unknown: false
+  confidence: 0.95
+  source_refs:
+  - repository: ''
+    path: app/model/src/main/java/com/ly/flight/chainsaas/booking/enums/LogTypeEnum.java
+    symbol: com.ly.flight.chainsaas.booking.enums.LogTypeEnum#SYNCCLIENT_FAIL
+    line: 31
+    commit: ''
+    content_digest: ''
+- code: SYNCCLIENT_SUCCESS
+  business_meaning: 同步C端
+  source: CODE_DEFAULT
+  known_unknown: false
+  confidence: 0.95
+  source_refs:
+  - repository: ''
+    path: app/model/src/main/java/com/ly/flight/chainsaas/booking/enums/LogTypeEnum.java
+    symbol: com.ly.flight.chainsaas.booking.enums.LogTypeEnum#SYNCCLIENT_SUCCESS
+    line: 26
+    commit: ''
+    content_digest: ''
+- code: TICKETED
+  business_meaning: 出票成功
+  source: CODE_DEFAULT
+  known_unknown: false
+  confidence: 0.95
+  source_refs:
+  - repository: ''
+    path: app/model/src/main/java/com/ly/flight/chainsaas/booking/enums/LogTypeEnum.java
+    symbol: com.ly.flight.chainsaas.booking.enums.LogTypeEnum#TICKETED
+    line: 37
+    commit: ''
+    content_digest: ''
+- code: TICKETED_JOURNEY
+  business_meaning: 发送行程单
+  source: CODE_DEFAULT
+  known_unknown: false
+  confidence: 0.95
+  source_refs:
+  - repository: ''
+    path: app/model/src/main/java/com/ly/flight/chainsaas/booking/enums/LogTypeEnum.java
+    symbol: com.ly.flight.chainsaas.booking.enums.LogTypeEnum#TICKETED_JOURNEY
+    line: 103
+    commit: ''
+    content_digest: ''
+- code: TICKET_CALLBACK
+  business_meaning: 票号回填
+  source: CODE_DEFAULT
+  known_unknown: false
+  confidence: 0.95
+  source_refs:
+  - repository: ''
+    path: app/model/src/main/java/com/ly/flight/chainsaas/booking/enums/LogTypeEnum.java
+    symbol: com.ly.flight.chainsaas.booking.enums.LogTypeEnum#TICKET_CALLBACK
+    line: 47
+    commit: ''
+    content_digest: ''
+- code: TICKET_CANCEL
+  business_meaning: 已取消
+  source: CODE_DEFAULT
+  known_unknown: false
+  confidence: 0.95
+  source_refs:
+  - repository: ''
+    path: app/model/src/main/java/com/ly/flight/chainsaas/booking/enums/LogTypeEnum.java
+    symbol: com.ly.flight.chainsaas.booking.enums.LogTypeEnum#TICKET_CANCEL
+    line: 57
+    commit: ''
+    content_digest: ''
+- code: TICKET_CANCEL_FAIL
+  business_meaning: 已取消
+  source: CODE_DEFAULT
+  known_unknown: false
+  confidence: 0.95
+  source_refs:
+  - repository: ''
+    path: app/model/src/main/java/com/ly/flight/chainsaas/booking/enums/LogTypeEnum.java
+    symbol: com.ly.flight.chainsaas.booking.enums.LogTypeEnum#TICKET_CANCEL_FAIL
+    line: 63
+    commit: ''
+    content_digest: ''
+- code: TICKET_EDIT_HEAD
+  business_meaning: 编辑订单表头
+  source: CODE_DEFAULT
+  known_unknown: false
+  confidence: 0.95
+  source_refs:
+  - repository: ''
+    path: app/model/src/main/java/com/ly/flight/chainsaas/booking/enums/LogTypeEnum.java
+    symbol: com.ly.flight.chainsaas.booking.enums.LogTypeEnum#TICKET_EDIT_HEAD
+    line: 101
+    commit: ''
+    content_digest: ''
+- code: TICKET_EDIT_PRICE
+  business_meaning: 编辑订单价格
+  source: CODE_DEFAULT
+  known_unknown: false
+  confidence: 0.95
+  source_refs:
+  - repository: ''
+    path: app/model/src/main/java/com/ly/flight/chainsaas/booking/enums/LogTypeEnum.java
+    symbol: com.ly.flight.chainsaas.booking.enums.LogTypeEnum#TICKET_EDIT_PRICE
+    line: 99
+    commit: ''
+    content_digest: ''
+- code: TICKET_FAIL
+  business_meaning: 出票失败
+  source: CODE_DEFAULT
+  known_unknown: false
+  confidence: 0.95
+  source_refs:
+  - repository: ''
+    path: app/model/src/main/java/com/ly/flight/chainsaas/booking/enums/LogTypeEnum.java
+    symbol: com.ly.flight.chainsaas.booking.enums.LogTypeEnum#TICKET_FAIL
+    line: 53
+    commit: ''
+    content_digest: ''
+- code: TICKET_TIMEOUT_CANCEL
+  business_meaning: 超时已取消
+  source: CODE_DEFAULT
+  known_unknown: false
+  confidence: 0.95
+  source_refs:
+  - repository: ''
+    path: app/model/src/main/java/com/ly/flight/chainsaas/booking/enums/LogTypeEnum.java
+    symbol: com.ly.flight.chainsaas.booking.enums.LogTypeEnum#TICKET_TIMEOUT_CANCEL
+    line: 59
+    commit: ''
+    content_digest: ''
+- code: TICKET_TIMEOUT_CANCEL_FAIL
+  business_meaning: 超时已取消
+  source: CODE_DEFAULT
+  known_unknown: false
+  confidence: 0.95
+  source_refs:
+  - repository: ''
+    path: app/model/src/main/java/com/ly/flight/chainsaas/booking/enums/LogTypeEnum.java
+    symbol: com.ly.flight.chainsaas.booking.enums.LogTypeEnum#TICKET_TIMEOUT_CANCEL_FAIL
+    line: 61
+    commit: ''
+    content_digest: ''
+- code: UN_LOCK_ORDER
+  business_meaning: 解锁
+  source: CODE_DEFAULT
+  known_unknown: false
+  confidence: 0.95
+  source_refs:
+  - repository: ''
+    path: app/model/src/main/java/com/ly/flight/chainsaas/booking/enums/LogTypeEnum.java
+    symbol: com.ly.flight.chainsaas.booking.enums.LogTypeEnum#UN_LOCK_ORDER
+    line: 87
+    commit: ''
+    content_digest: ''
+- code: UN_LOCK_ORDER_ADMIN
+  business_meaning: 解锁单
+  source: CODE_DEFAULT
+  known_unknown: false
+  confidence: 0.95
+  source_refs:
+  - repository: ''
+    path: app/model/src/main/java/com/ly/flight/chainsaas/booking/enums/LogTypeEnum.java
+    symbol: com.ly.flight.chainsaas.booking.enums.LogTypeEnum#UN_LOCK_ORDER_ADMIN
+    line: 83
+    commit: ''
+    content_digest: ''
+- code: UPDATE_CALLBACK
+  business_meaning: 回填更新
+  source: CODE_DEFAULT
+  known_unknown: false
+  confidence: 0.95
+  source_refs:
+  - repository: ''
+    path: app/model/src/main/java/com/ly/flight/chainsaas/booking/enums/LogTypeEnum.java
+    symbol: com.ly.flight.chainsaas.booking.enums.LogTypeEnum#UPDATE_CALLBACK
+    line: 49
+    commit: ''
+    content_digest: ''
+- code: VALIDATE_FAIL
+  business_meaning: 支付前校验
+  source: CODE_DEFAULT
+  known_unknown: false
+  confidence: 0.95
+  source_refs:
+  - repository: ''
+    path: app/model/src/main/java/com/ly/flight/chainsaas/booking/enums/LogTypeEnum.java
+    symbol: com.ly.flight.chainsaas.booking.enums.LogTypeEnum#VALIDATE_FAIL
+    line: 29
+    commit: ''
+    content_digest: ''
+- code: VCC_CLOSE
+  business_meaning: VCC注销
+  source: CODE_DEFAULT
+  known_unknown: false
+  confidence: 0.95
+  source_refs:
+  - repository: ''
+    path: app/model/src/main/java/com/ly/flight/chainsaas/booking/enums/LogTypeEnum.java
+    symbol: com.ly.flight.chainsaas.booking.enums.LogTypeEnum#VCC_CLOSE
+    line: 71
+    commit: ''
+    content_digest: ''
+- code: VCC_CREATE
+  business_meaning: 创建VCC
+  source: CODE_DEFAULT
+  known_unknown: false
+  confidence: 0.95
+  source_refs:
+  - repository: ''
+    path: app/model/src/main/java/com/ly/flight/chainsaas/booking/enums/LogTypeEnum.java
+    symbol: com.ly.flight.chainsaas.booking.enums.LogTypeEnum#VCC_CREATE
+    line: 8
+    commit: ''
+    content_digest: ''
+- code: VCC_UPDATE
+  business_meaning: VCC更新
+  source: CODE_DEFAULT
+  known_unknown: false
+  confidence: 0.95
+  source_refs:
+  - repository: ''
+    path: app/model/src/main/java/com/ly/flight/chainsaas/booking/enums/LogTypeEnum.java
+    symbol: com.ly.flight.chainsaas.booking.enums.LogTypeEnum#VCC_UPDATE
+    line: 73
+    commit: ''
+    content_digest: ''
+- code: WALLET_DEDUCT_ERROR
+  business_meaning: 钱包扣款
+  source: CODE_DEFAULT
+  known_unknown: false
+  confidence: 0.95
+  source_refs:
+  - repository: ''
+    path: app/model/src/main/java/com/ly/flight/chainsaas/booking/enums/LogTypeEnum.java
+    symbol: com.ly.flight.chainsaas.booking.enums.LogTypeEnum#WALLET_DEDUCT_ERROR
+    line: 134
+    commit: ''
+    content_digest: ''
+- code: WALLET_DEDUCT_SUCCESS
+  business_meaning: 钱包扣款
+  source: CODE_DEFAULT
+  known_unknown: false
+  confidence: 0.95
+  source_refs:
+  - repository: ''
+    path: app/model/src/main/java/com/ly/flight/chainsaas/booking/enums/LogTypeEnum.java
+    symbol: com.ly.flight.chainsaas.booking.enums.LogTypeEnum#WALLET_DEDUCT_SUCCESS
+    line: 131
+    commit: ''
+    content_digest: ''
+- code: WALLET_REVERSE_ERROR
+  business_meaning: 钱包冲正
+  source: CODE_DEFAULT
+  known_unknown: false
+  confidence: 0.95
+  source_refs:
+  - repository: ''
+    path: app/model/src/main/java/com/ly/flight/chainsaas/booking/enums/LogTypeEnum.java
+    symbol: com.ly.flight.chainsaas.booking.enums.LogTypeEnum#WALLET_REVERSE_ERROR
+    line: 138
+    commit: ''
+    content_digest: ''
+- code: WALLET_REVERSE_SUCCESS
+  business_meaning: 钱包冲正
+  source: CODE_DEFAULT
+  known_unknown: false
+  confidence: 0.95
+  source_refs:
+  - repository: ''
+    path: app/model/src/main/java/com/ly/flight/chainsaas/booking/enums/LogTypeEnum.java
+    symbol: com.ly.flight.chainsaas.booking.enums.LogTypeEnum#WALLET_REVERSE_SUCCESS
+    line: 136
+    commit: ''
+    content_digest: ''
+- code: WALLET_VALIDATE_FAIL
+  business_meaning: 钱包支付前校验失败
+  source: CODE_DEFAULT
+  known_unknown: false
+  confidence: 0.95
+  source_refs:
+  - repository: ''
+    path: app/model/src/main/java/com/ly/flight/chainsaas/booking/enums/LogTypeEnum.java
+    symbol: com.ly.flight.chainsaas.booking.enums.LogTypeEnum#WALLET_VALIDATE_FAIL
+    line: 129
+    commit: ''
+    content_digest: ''
+- code: WALLET_VALIDATE_SUCCESS
+  business_meaning: 钱包支付前校验成功
+  source: CODE_DEFAULT
+  known_unknown: false
+  confidence: 0.95
+  source_refs:
+  - repository: ''
+    path: app/model/src/main/java/com/ly/flight/chainsaas/booking/enums/LogTypeEnum.java
+    symbol: com.ly.flight.chainsaas.booking.enums.LogTypeEnum#WALLET_VALIDATE_SUCCESS
+    line: 127
+    commit: ''
+    content_digest: ''
+suggested_meaning: 枚举名称和值默认采用源码注释；缺少注释时回退代码标识，可再人工修订。
+code_meaning: 已预订（ANCILLARY_OCCUPIED）；已预订（ANCILLARY_OCCUPIED_ERROR）；生单变价（BOOK_ORDER_PRICE_CHANGE）；CHANGE_REFUND_RULE_LOG（CHANGE_REFUND_RULE_LOG）；C端用户确认支付（CLIENT_PAYMENT_CONFIRM）；C端用户支付（CLIENT_PAYMENT_SUCCESS）；优惠券（COUPON_ERROR）；优惠券（COUPON_SUCCESS）；人工添加（CREATE_LOG）；创建VCC失败（CREATE_VCC_FAIL）；CVV查询（CVV_QUERY）；待订座
+  直付供应模式 卡号解密（DECODE_CARD_LOG）；下沉 占编（DEMOTE_OCCUPIED）；失信人（DISHONEST）；下载行程单（DOWNLOAD_JOURNEY）；发生航变（FLIGHT_CHANGE）；GDS
+  占座成功回填（GDS_OCCUPIED_RESET）；拦截出票（INTERCEPT_TICKET）；供应商出票（ISSUETICKET）；锁单（LOCK_ORDER）；已预订（OCCUPIED）；占座变价（OCCUPIED_VALIDATE_PRICE）；预定中（OCCUPYING）；预订失败（OCCUPY_FAIL）；订单退款（ORDER_REFUND）；订单退款完成（ORDER_REFUND_DONE）；支付信息（PAYMENT_LOG）；支付成功（PAYMENT_SUCCESS）；支付回调（PAY_CALLBACK）；待订座（PENDING_OCCUPY）；待订座
+  直付供应模式（PENDING_OCCUPY_DIRECT_SUPPLY_MODE）；待出票（PENDING_TICKET）；ISSUETICKET（PRIVATE_ISSUETICKET）；驳回订单（REBUT_ORDER）；退票成功（REFUND_SUCCESS）；RT更新（RETRIEVE_CALLBACK）；同步C端（SYNCCLIENT）；同步C端退票（SYNCCLIENT_FAIL）；同步C端（SYNCCLIENT_SUCCESS）；出票成功（TICKETED）；发送行程单（TICKETED_JOURNEY）；票号回填（TICKET_CALLBACK）；已取消（TICKET_CANCEL）；已取消（TICKET_CANCEL_FAIL）；编辑订单表头（TICKET_EDIT_HEAD）；编辑订单价格（TICKET_EDIT_PRICE）；出票失败（TICKET_FAIL）；超时已取消（TICKET_TIMEOUT_CANCEL）；超时已取消（TICKET_TIMEOUT_CANCEL_FAIL）；解锁（UN_LOCK_ORDER）；解锁单（UN_LOCK_ORDER_ADMIN）；回填更新（UPDATE_CALLBACK）；支付前校验（VALIDATE_FAIL）；VCC注销（VCC_CLOSE）；创建VCC（VCC_CREATE）；VCC更新（VCC_UPDATE）；钱包扣款（WALLET_DEDUCT_ERROR）；钱包扣款（WALLET_DEDUCT_SUCCESS）；钱包冲正（WALLET_REVERSE_ERROR）；钱包冲正（WALLET_REVERSE_SUCCESS）；钱包支付前校验失败（WALLET_VALIDATE_FAIL）；钱包支付前校验成功（WALLET_VALIDATE_SUCCESS）
+unresolved_codes: []
+business_meaning: ''
+status: CODE_VERIFIED
+merged_into_candidate_id: ''
+source_refs:
+- repository: ''
+  path: app/model/src/main/java/com/ly/flight/chainsaas/booking/enums/LogTypeEnum.java
+  symbol: com.ly.flight.chainsaas.booking.enums.LogTypeEnum
+  line: 3
+  commit: 004c50d90d152f1ef4892679f8b1b322cc7a7405
+  content_digest: cd039faaa664f95f9b9d90b62df45788a502b827a73882b3178afe2c00502641
+- repository: ''
+  path: app/model/src/main/java/com/ly/flight/chainsaas/booking/enums/LogTypeEnum.java
+  symbol: com.ly.flight.chainsaas.booking.enums.LogTypeEnum#ANCILLARY_OCCUPIED
+  line: 14
+  commit: ''
+  content_digest: ''
+- repository: ''
+  path: app/model/src/main/java/com/ly/flight/chainsaas/booking/enums/LogTypeEnum.java
+  symbol: com.ly.flight.chainsaas.booking.enums.LogTypeEnum#ANCILLARY_OCCUPIED_ERROR
+  line: 16
+  commit: ''
+  content_digest: ''
+- repository: ''
+  path: app/model/src/main/java/com/ly/flight/chainsaas/booking/enums/LogTypeEnum.java
+  symbol: com.ly.flight.chainsaas.booking.enums.LogTypeEnum#BOOK_ORDER_PRICE_CHANGE
+  line: 93
+  commit: ''
+  content_digest: ''
+- repository: ''
+  path: app/model/src/main/java/com/ly/flight/chainsaas/booking/enums/LogTypeEnum.java
+  symbol: com.ly.flight.chainsaas.booking.enums.LogTypeEnum#CHANGE_REFUND_RULE_LOG
+  line: 109
+  commit: ''
+  content_digest: ''
+- repository: ''
+  path: app/model/src/main/java/com/ly/flight/chainsaas/booking/enums/LogTypeEnum.java
+  symbol: com.ly.flight.chainsaas.booking.enums.LogTypeEnum#CLIENT_PAYMENT_CONFIRM
+  line: 41
+  commit: ''
+  content_digest: ''
+- repository: ''
+  path: app/model/src/main/java/com/ly/flight/chainsaas/booking/enums/LogTypeEnum.java
+  symbol: com.ly.flight.chainsaas.booking.enums.LogTypeEnum#CLIENT_PAYMENT_SUCCESS
+  line: 39
+  commit: ''
+  content_digest: ''
+- repository: ''
+  path: app/model/src/main/java/com/ly/flight/chainsaas/booking/enums/LogTypeEnum.java
+  symbol: com.ly.flight.chainsaas.booking.enums.LogTypeEnum#COUPON_ERROR
+  line: 67
+  commit: ''
+  content_digest: ''
+- repository: ''
+  path: app/model/src/main/java/com/ly/flight/chainsaas/booking/enums/LogTypeEnum.java
+  symbol: com.ly.flight.chainsaas.booking.enums.LogTypeEnum#COUPON_SUCCESS
+  line: 65
+  commit: ''
+  content_digest: ''
+- repository: ''
+  path: app/model/src/main/java/com/ly/flight/chainsaas/booking/enums/LogTypeEnum.java
+  symbol: com.ly.flight.chainsaas.booking.enums.LogTypeEnum#CREATE_LOG
+  line: 77
+  commit: ''
+  content_digest: ''
+- repository: ''
+  path: app/model/src/main/java/com/ly/flight/chainsaas/booking/enums/LogTypeEnum.java
+  symbol: com.ly.flight.chainsaas.booking.enums.LogTypeEnum#CREATE_VCC_FAIL
+  line: 69
+  commit: ''
+  content_digest: ''
+- repository: ''
+  path: app/model/src/main/java/com/ly/flight/chainsaas/booking/enums/LogTypeEnum.java
+  symbol: com.ly.flight.chainsaas.booking.enums.LogTypeEnum#CVV_QUERY
+  line: 75
+  commit: ''
+  content_digest: ''
+affected_target_ids:
+- facade:com.ly.flight.chainsaas.booking.facade.DistributionFacade#issueTickets
+- facade:com.ly.flight.chainsaas.booking.facade.DistributionFacade#qCallBack
+- facade:com.ly.flight.chainsaas.booking.facade.DistributionFacade#queryOrderByPnr
+- facade:com.ly.flight.chainsaas.booking.facade.DistributionFacade#reportDataProcess
+- facade:com.ly.flight.chainsaas.booking.facade.PayCallBackFacade#payCallBack
+- facade:com.ly.flight.chainsaas.booking.facade.PayCallBackFacade#payOrderDetail
+- facade:com.ly.flight.chainsaas.booking.facade.PayCallBackFacade#payOrderRiskDetail
+- facade:com.ly.flight.chainsaas.booking.facade.PayCallBackFacade#payValidate
+- facade:com.ly.flight.chainsaas.booking.facade.TcplTradeFacade#book
+- facade:com.ly.flight.chainsaas.booking.facade.TcplTradeFacade#bookValidate
+- facade:com.ly.flight.chainsaas.booking.facade.TcplTradeFacade#confirmPayment
+- facade:com.ly.flight.chainsaas.booking.facade.TcplTradeFacade#notifyTicket
+- facade:com.ly.flight.chainsaas.booking.facade.TcplTradeFacade#payValidate
+- facade:com.ly.flight.chainsaas.booking.facade.TcplTradeFacade#payment
+- facade:com.ly.flight.chainsaas.booking.facade.TcplTradeFacade#retrieve
+- facade:com.ly.flight.chainsaas.booking.facade.TcplTradeFacade#searchBook
+- facade:com.ly.flight.chainsaas.booking.facade.TcplTradeFacade#validateCache
+- facade:com.ly.flight.chainsaas.booking.facade.TradeFacade#addErrorCode
+- facade:com.ly.flight.chainsaas.booking.facade.TradeFacade#addVccRecord
+- facade:com.ly.flight.chainsaas.booking.facade.TradeFacade#batchQueryTicketInfo
+- facade:com.ly.flight.chainsaas.booking.facade.TradeFacade#cancel
+- facade:com.ly.flight.chainsaas.booking.facade.TradeFacade#cancelPnrList
+- facade:com.ly.flight.chainsaas.booking.facade.TradeFacade#checkVccCard
+- facade:com.ly.flight.chainsaas.booking.facade.TradeFacade#closeVccCard
+- facade:com.ly.flight.chainsaas.booking.facade.TradeFacade#createDirectOrder
+- facade:com.ly.flight.chainsaas.booking.facade.TradeFacade#createLog
+- facade:com.ly.flight.chainsaas.booking.facade.TradeFacade#createPayment
+- facade:com.ly.flight.chainsaas.booking.facade.TradeFacade#createVcc
+- facade:com.ly.flight.chainsaas.booking.facade.TradeFacade#execute
+- facade:com.ly.flight.chainsaas.booking.facade.TradeFacade#flightChange
+- facade:com.ly.flight.chainsaas.booking.facade.TradeFacade#headerEdit
+- facade:com.ly.flight.chainsaas.booking.facade.TradeFacade#lockOrder
+- facade:com.ly.flight.chainsaas.booking.facade.TradeFacade#marketingOrderList
+- facade:com.ly.flight.chainsaas.booking.facade.TradeFacade#modifyErrorCodeState
+- facade:com.ly.flight.chainsaas.booking.facade.TradeFacade#orderRebut
+- facade:com.ly.flight.chainsaas.booking.facade.TradeFacade#pnrCallback
+- facade:com.ly.flight.chainsaas.booking.facade.TradeFacade#priceEdit
+- facade:com.ly.flight.chainsaas.booking.facade.TradeFacade#queryDetail
+- facade:com.ly.flight.chainsaas.booking.facade.TradeFacade#queryDetailByThird
+- facade:com.ly.flight.chainsaas.booking.facade.TradeFacade#queryErrorCode
+- facade:com.ly.flight.chainsaas.booking.facade.TradeFacade#queryErrorCodeList
+- facade:com.ly.flight.chainsaas.booking.facade.TradeFacade#queryList
+- facade:com.ly.flight.chainsaas.booking.facade.TradeFacade#queryVCCList
+- facade:com.ly.flight.chainsaas.booking.facade.TradeFacade#queryVccDetail
+- facade:com.ly.flight.chainsaas.booking.facade.TradeFacade#queryVccRecordList
+- facade:com.ly.flight.chainsaas.booking.facade.TradeFacade#realCancel
+- facade:com.ly.flight.chainsaas.booking.facade.TradeFacade#refund
+- facade:com.ly.flight.chainsaas.booking.facade.TradeFacade#unLockOrder
+- facade:com.ly.flight.chainsaas.booking.facade.TradeFacade#updateErrorCode
+- facade:com.ly.flight.chainsaas.booking.facade.TradeFacade#updateVccCard
+- facade:com.ly.flight.chainsaas.booking.facade.TradeResourcesFacade#calculate
+- facade:com.ly.flight.chainsaas.booking.facade.TradeResourcesFacade#manualParseCalculate
+- facade:com.ly.flight.chainsaas.booking.facade.TradeResourcesFacade#mappingTaxDetail
+- facade:com.ly.flight.chainsaas.booking.facade.TradeResourcesFacade#paymentValidate
+- facade:com.ly.flight.chainsaas.booking.facade.TradeResourcesFacade#searchDataCalculate
+- facade:com.ly.flight.chainsaas.booking.facade.TradeResourcesFacade#verifyPNR
+- facade:com.ly.flight.chainsaas.booking.facade.TradeResourcesFacade#verifyPrice
+- facade:com.ly.flight.chainsaas.booking.facade.TradeResourcesFacade#verifyPriceAndCabin
+- facade:com.ly.flight.chainsaas.booking.facade.honghu.HonghuApiFacade#booking
+- facade:com.ly.flight.chainsaas.booking.facade.honghu.HonghuApiFacade#cancel
+- facade:com.ly.flight.chainsaas.booking.facade.honghu.HonghuApiFacade#interceptTicket
+- facade:com.ly.flight.chainsaas.booking.facade.honghu.HonghuApiFacade#payment
+- facade:com.ly.flight.chainsaas.booking.facade.honghu.HonghuApiFacade#ticketNotify
+- facade:com.ly.flight.chainsaas.booking.facade.honghu.HonghuApiFacade#verify
+- facade:com.ly.flight.chainsaas.booking.facade.tcpl.TcplApiFacade#book
+- facade:com.ly.flight.chainsaas.booking.facade.tcpl.TcplApiFacade#bookProcessing
+- facade:com.ly.flight.chainsaas.booking.facade.tcpl.TcplApiFacade#flightChange
+- facade:com.ly.flight.chainsaas.booking.facade.tcpl.TcplApiFacade#notifications
+- facade:com.ly.flight.chainsaas.booking.facade.tcpl.TcplApiFacade#verify
+evidence_digest: a321f6c79979c8382bdb3abb38074a553ef14c78104df463412029fd21f380e1
+discovered_at: '2026-08-27T15:21:11.347916Z'
+updated_at: '2026-08-27T20:27:20.154047Z'

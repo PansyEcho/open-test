@@ -1,0 +1,95 @@
+candidate_id: candidate:business_term:b68821fe7e6e6af8
+system_id: ifightchainsaas.java.booking.core
+kind: BUSINESS_TERM
+knowledge_form: BUSINESS_ENUM
+name: WalletUsedEnum
+business_name: 钱包使用标记
+business_name_source: CODE_DEFAULT
+business_name_known_unknown: false
+enum_values:
+- code: 'NO'
+  business_meaning: 未使用钱包
+  source: CODE_VERIFIED
+  known_unknown: false
+  confidence: 1.0
+  source_refs:
+  - repository: ''
+    path: app/model/src/main/java/com/ly/flight/chainsaas/booking/model/enums/WalletUsedEnum.java
+    symbol: com.ly.flight.chainsaas.booking.model.enums.WalletUsedEnum#NO
+    line: 7
+    commit: ''
+    content_digest: ''
+- code: 'YES'
+  business_meaning: 已使用钱包
+  source: CODE_VERIFIED
+  known_unknown: false
+  confidence: 1.0
+  source_refs:
+  - repository: ''
+    path: app/model/src/main/java/com/ly/flight/chainsaas/booking/model/enums/WalletUsedEnum.java
+    symbol: com.ly.flight.chainsaas.booking.model.enums.WalletUsedEnum#YES
+    line: 8
+    commit: ''
+    content_digest: ''
+suggested_meaning: 枚举名称和值默认采用源码注释；缺少注释时回退代码标识，可再人工修订。
+code_meaning: 未使用钱包（NO）；已使用钱包（YES）
+unresolved_codes: []
+business_meaning: ''
+status: CODE_VERIFIED
+merged_into_candidate_id: ''
+source_refs:
+- repository: ''
+  path: app/model/src/main/java/com/ly/flight/chainsaas/booking/model/enums/WalletUsedEnum.java
+  symbol: com.ly.flight.chainsaas.booking.model.enums.WalletUsedEnum
+  line: 6
+  commit: 004c50d90d152f1ef4892679f8b1b322cc7a7405
+  content_digest: bd318b9ef219e7332ec83f76ef97d911187eb9d475b0d0094aaab488830b1fb9
+- repository: ''
+  path: app/model/src/main/java/com/ly/flight/chainsaas/booking/model/enums/WalletUsedEnum.java
+  symbol: com.ly.flight.chainsaas.booking.model.enums.WalletUsedEnum#NO
+  line: 7
+  commit: ''
+  content_digest: ''
+- repository: ''
+  path: app/model/src/main/java/com/ly/flight/chainsaas/booking/model/enums/WalletUsedEnum.java
+  symbol: com.ly.flight.chainsaas.booking.model.enums.WalletUsedEnum#YES
+  line: 8
+  commit: ''
+  content_digest: ''
+affected_target_ids:
+- facade:com.ly.flight.chainsaas.booking.facade.TradeFacade#addErrorCode
+- facade:com.ly.flight.chainsaas.booking.facade.TradeFacade#addVccRecord
+- facade:com.ly.flight.chainsaas.booking.facade.TradeFacade#batchQueryTicketInfo
+- facade:com.ly.flight.chainsaas.booking.facade.TradeFacade#cancel
+- facade:com.ly.flight.chainsaas.booking.facade.TradeFacade#cancelPnrList
+- facade:com.ly.flight.chainsaas.booking.facade.TradeFacade#checkVccCard
+- facade:com.ly.flight.chainsaas.booking.facade.TradeFacade#closeVccCard
+- facade:com.ly.flight.chainsaas.booking.facade.TradeFacade#createDirectOrder
+- facade:com.ly.flight.chainsaas.booking.facade.TradeFacade#createLog
+- facade:com.ly.flight.chainsaas.booking.facade.TradeFacade#createPayment
+- facade:com.ly.flight.chainsaas.booking.facade.TradeFacade#createVcc
+- facade:com.ly.flight.chainsaas.booking.facade.TradeFacade#execute
+- facade:com.ly.flight.chainsaas.booking.facade.TradeFacade#flightChange
+- facade:com.ly.flight.chainsaas.booking.facade.TradeFacade#headerEdit
+- facade:com.ly.flight.chainsaas.booking.facade.TradeFacade#lockOrder
+- facade:com.ly.flight.chainsaas.booking.facade.TradeFacade#marketingOrderList
+- facade:com.ly.flight.chainsaas.booking.facade.TradeFacade#modifyErrorCodeState
+- facade:com.ly.flight.chainsaas.booking.facade.TradeFacade#orderRebut
+- facade:com.ly.flight.chainsaas.booking.facade.TradeFacade#pnrCallback
+- facade:com.ly.flight.chainsaas.booking.facade.TradeFacade#priceEdit
+- facade:com.ly.flight.chainsaas.booking.facade.TradeFacade#queryDetail
+- facade:com.ly.flight.chainsaas.booking.facade.TradeFacade#queryDetailByThird
+- facade:com.ly.flight.chainsaas.booking.facade.TradeFacade#queryErrorCode
+- facade:com.ly.flight.chainsaas.booking.facade.TradeFacade#queryErrorCodeList
+- facade:com.ly.flight.chainsaas.booking.facade.TradeFacade#queryList
+- facade:com.ly.flight.chainsaas.booking.facade.TradeFacade#queryVCCList
+- facade:com.ly.flight.chainsaas.booking.facade.TradeFacade#queryVccDetail
+- facade:com.ly.flight.chainsaas.booking.facade.TradeFacade#queryVccRecordList
+- facade:com.ly.flight.chainsaas.booking.facade.TradeFacade#realCancel
+- facade:com.ly.flight.chainsaas.booking.facade.TradeFacade#refund
+- facade:com.ly.flight.chainsaas.booking.facade.TradeFacade#unLockOrder
+- facade:com.ly.flight.chainsaas.booking.facade.TradeFacade#updateErrorCode
+- facade:com.ly.flight.chainsaas.booking.facade.TradeFacade#updateVccCard
+evidence_digest: 9bade58bf8d9db3ff6fa9e98523d3ced13788db896706d14ad267ac308f67319
+discovered_at: '2026-08-27T15:21:11.349629Z'
+updated_at: '2026-08-27T20:27:20.142585Z'

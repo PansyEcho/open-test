@@ -1845,6 +1845,10 @@ def test_codex_client_snapshots_luna_generation_profiles(
     assert task.client_handoff.reasoning_effort == reasoning_effort
     assert app_server.requests[0]["model"] == "gpt-5.6-luna"
     assert app_server.requests[0]["reasoning_effort"] == reasoning_effort
+    # 首个turn由后台协调线程异步发起；等待可观察回执后再关闭应用，避免测试抢先终止worker。
+    deadline = time.monotonic() + 1
+    while not app_server.started_profiles and time.monotonic() < deadline:
+        time.sleep(0.01)
     application.close()
     assert app_server.started_profiles == [("gpt-5.6-luna", reasoning_effort)]
 

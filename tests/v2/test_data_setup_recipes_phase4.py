@@ -7,6 +7,7 @@ import threading
 import time
 import multiprocessing
 from pathlib import Path
+from types import SimpleNamespace
 from typing import Any
 
 import pytest
@@ -18,6 +19,7 @@ from opentest.adapters.knowledge_store import GitKnowledgeStore
 from opentest.adapters.published_capability_store import PublishedCapabilityStore
 from opentest.adapters.source_analysis import SourceScanArtifactStore
 from opentest.api import create_app
+from opentest.application.data_setup_recipes import DataSetupRecipeService
 from opentest.application.foundation import OpenTestApplication
 from opentest.application.program_case_analysis import ProgramCaseAnalysisBuilder
 from opentest.domain.errors import KnowledgeValidationError
@@ -27,15 +29,25 @@ from opentest.domain.models import (
     CandidateRef,
     DataSetupRecipeSubmission,
     DataSetupStep,
+    EntryFactAssertion,
+    EntryFactKnowledge,
     EntryPoint,
+    KnowledgeConclusionSource,
+    KnowledgeNode,
     KnowledgeNodeKind,
+    KnowledgeStatus,
     OperationMutability,
     ProviderOperationRef,
+    ProducerEntrySourceRef,
     PublishedCapabilityRef,
     PublishedOperationCapability,
+    RecipeFactBinding,
+    RecipeFactRequirement,
     RecipeFactOutputSubmission,
     ScanManifest,
     SetupContractRuleSet,
+    SetupAvailabilityRule,
+    SetupEntityExtractionRule,
     SetupFactConstraintRequirement,
     SetupFactContractDefinition,
     SetupFactOrigin,
@@ -479,6 +491,170 @@ def test_cross_system_recipes_derive_facts_and_keep_cardinality_versions(
     }
     assert single_recipe["setup_rule_revision_id"].startswith("setup-rule-revision:")
     assert not execution_root.exists()
+
+
+def test_entity_producer_rejects_multiple_create_steps(tmp_path: Path) -> None:
+    """一个状态实体节点不得创建多个只能由单一Finalization引用回收的资源。
+
+    Args:
+        tmp_path: Pytest隔离知识、能力和Recipe目录。
+
+    Returns:
+        None；发布结果包含确定的CREATE数量阻塞且没有写入Recipe时通过。
+
+    Side Effects:
+        仅向临时知识目录提交无效草稿，不访问QA。
+    """
+
+    application, manifest, provider, consumer = _prepare_workspace(tmp_path)
+    base = _recipe_submission(manifest, provider, consumer, "multiple-create", "SINGLE")
+    # 原有双步骤均为CREATE；将其标为实体Producer以验证首版单资源边界。
+    submission = base.model_copy(
+        update={
+            "producer_scope": "ENTITY_PRODUCER",
+            "producer_entry_ref": ProducerEntrySourceRef(
+                system_id=CONSUMER_ID,
+                entry_id=manifest.entries[0].entry_id,
+                source_scan_id=manifest.scan_id,
+                source_baseline=manifest.baseline,
+            ),
+            "knowledge_assertion_ids": ["entry-fact:generic-produced-resource"],
+        }
+    )
+
+    result = application.publish_data_setup_recipe(CONSUMER_ID, submission)
+
+    assert "SETUP_ENTITY_PRODUCER_CREATE_COUNT_INVALID" in {
+        issue.code for issue in result.issues
+    }
+    assert application.data_setup_recipe_catalog(CONSUMER_ID).recipes == []
+
+
+def test_query_then_create_accepts_dependency_anchored_final_query_without_create_fact(
+    tmp_path: Path,
+) -> None:
+    """QTC创建只返回成功码时必须用前置身份和末次查询关系闭合实体。
+
+    Args:
+        tmp_path: Pytest隔离的Recipe服务与规则根目录。
+
+    Returns:
+        None；关系锚点完整时无需CREATE实体Fact，缺少关系时仍阻止发布。
+
+    Side Effects:
+        仅创建临时应用并调用纯发布校验函数，不访问QA或写真实业务数据。
+    """
+
+    application, manifest, provider, _consumer = _prepare_workspace(tmp_path)
+    dependency_contract = SetupFactContractDefinition(
+        fact_contract_id="dependency-order/v1",
+        required_origin=SetupFactOrigin.UPSTREAM_PUBLISHED_OUTPUT,
+        required_fields=[
+            SetupFactRequiredField(path="order_no", schema_type="string")
+        ],
+        business_identity_paths=["order_no"],
+    )
+    target_contract = SetupFactContractDefinition(
+        fact_contract_id="created-resource/v1",
+        required_origin=SetupFactOrigin.UPSTREAM_PUBLISHED_OUTPUT,
+        required_fields=[
+            SetupFactRequiredField(path="resource_no", schema_type="string"),
+            SetupFactRequiredField(path="order_no", schema_type="string"),
+        ],
+        business_identity_paths=["resource_no"],
+    )
+    final_query = DataSetupStep(
+        step_id="query-created-resource",
+        capability_ref=PublishedCapabilityRef(
+            system_id=provider.system_id,
+            capability_id=provider.capability_id,
+        ),
+        operation_role="QUERY",
+        input_bindings={
+            "request_id": SetupInputBinding(
+                source="fact",
+                path="dependency_order.order_no",
+            )
+        },
+        availability=SetupAvailabilityRule(type="VALUE_NOT_NULL", path="resource"),
+        entity_extraction=SetupEntityExtractionRule(type="VALUE", path="resource"),
+    )
+    submission = SimpleNamespace(
+        producer_scope="ENTITY_PRODUCER",
+        acquisition_policy="QUERY_THEN_CREATE",
+        steps=[
+            SimpleNamespace(step_id="query-existing", operation_role="QUERY"),
+            SimpleNamespace(step_id="create-resource", operation_role="CREATE"),
+            final_query,
+        ],
+        requires_facts=[
+            RecipeFactRequirement(
+                slot_id="dependency_order",
+                fact_contract_id=dependency_contract.fact_contract_id,
+                required_state="READY",
+                acquisition_policy="QUERY_ONLY",
+            )
+        ],
+    )
+    final_fact = RecipeFactBinding(
+        fact_name="verified_resource",
+        fact_contract_id=target_contract.fact_contract_id,
+        from_step_id=final_query.step_id,
+        output_path="resource",
+        produced_state="READY",
+        relations={"order_no": "${dependency_order.order_no}"},
+        fact_schema={
+            "type": "object",
+            "properties": {
+                "resource_no": {"type": "string"},
+                "order_no": {"type": "string"},
+            },
+            "required": ["resource_no", "order_no"],
+        },
+        origin_policy=SetupFactOrigin.UPSTREAM_PUBLISHED_OUTPUT,
+    )
+    rules = SetupContractRuleSet(
+        system_id=CONSUMER_ID,
+        fact_contracts=[dependency_contract, target_contract],
+    )
+    policy = SetupInputPolicy(
+        capability_ref=final_query.capability_ref,
+        input_path="request_id",
+        allowed_sources=["fact"],
+        business_identity=True,
+    )
+    policies = {
+        (
+            policy.capability_ref.system_id,
+            policy.capability_ref.capability_id,
+            policy.input_path,
+        ): policy
+    }
+
+    identity_issues = application.data_setup_recipes._create_identity_fact_issues(
+        submission,
+        [final_fact],
+        rules,
+    )
+    anchored_issues = application.data_setup_recipes._query_then_create_identity_issues(
+        submission,
+        [final_fact],
+        rules,
+        policies,
+    )
+    unanchored_fact = final_fact.model_copy(update={"relations": {}})
+    unanchored_issues = application.data_setup_recipes._query_then_create_identity_issues(
+        submission,
+        [unanchored_fact],
+        rules,
+        policies,
+    )
+
+    assert identity_issues == []
+    assert anchored_issues == []
+    assert {issue.code for issue in unanchored_issues} == {
+        "SETUP_FINAL_QUERY_CREATE_IDENTITY_MISSING"
+    }
 
 
 def test_recipe_blocks_unpublished_wrong_dependency_and_same_system_origin(
@@ -972,6 +1148,303 @@ def test_required_fact_constraint_and_cross_process_lock_are_enforced(tmp_path: 
     assert lock_holder.exitcode == 0
     assert not worker.is_alive()
     assert [result.status for result in results] == ["PUBLISHED"]
+
+
+def test_query_fact_knowledge_cannot_splice_an_unrelated_entry_assertion(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Query步骤与Fact契约必须由同一真实候选操作断言同时证明。
+
+    Args:
+        tmp_path: Pytest隔离知识、源码和Published资产根目录。
+        monkeypatch: 固定current Candidate所属入口，聚焦知识断言关联校验。
+
+    Returns:
+        None；真实Query操作断言和匹配Fact的伪入口断言不能交叉拼接时通过。
+
+    Side Effects:
+        仅写临时正式知识节点；不发布Recipe、不访问QA。
+    """
+
+    application, consumer_manifest, provider, _consumer = _prepare_workspace(tmp_path)
+    consumer_entry = consumer_manifest.entries[0]
+    provider_manifest = application.source_analysis.artifacts.read(PROVIDER_ID, "latest")
+    evidence = SourceReference(
+        path=consumer_entry.source_path,
+        symbol=consumer_entry.source_id,
+        commit=consumer_manifest.baseline.commit,
+    )
+    actual_query = EntryFactAssertion(
+        assertion_id="entry-fact:generic-query-other-contract",
+        assertion_type="CANDIDATE_OPERATION",
+        fact_contract_id="other-resource/v1",
+        operation_role="QUERY",
+        candidate_system_id=PROVIDER_ID,
+        candidate_operation_id=provider.provider_operation_ref.operation_id,
+        source=KnowledgeConclusionSource.CODE_PROVEN,
+        evidence_refs=[evidence],
+    )
+    unrelated_entry = EntryFactAssertion(
+        assertion_id="entry-fact:generic-query-consumer-entry",
+        assertion_type="CANDIDATE_OPERATION",
+        fact_contract_id=FACT_CONTRACT_ID,
+        operation_role="QUERY",
+        candidate_system_id=PROVIDER_ID,
+        candidate_operation_id=consumer_entry.entry_id,
+        source=KnowledgeConclusionSource.USER_CONFIRMED,
+        evidence_refs=[evidence],
+    )
+    application.store.write_node(
+        KnowledgeNode(
+            node_id=f"entry:{consumer_entry.source_id}",
+            system_id=CONSUMER_ID,
+            kind=KnowledgeNodeKind.FACADE,
+            title=consumer_entry.display_name,
+            aliases=[consumer_entry.entry_id],
+            status=KnowledgeStatus.USER_CONFIRMED,
+            entry_fact_knowledge=EntryFactKnowledge(
+                entry_id=consumer_entry.entry_id,
+                source_scan_id=consumer_manifest.scan_id,
+                source_baseline=consumer_manifest.baseline,
+                candidate_operations=[actual_query, unrelated_entry],
+            ),
+        ),
+        "# Generic query knowledge\n",
+    )
+    query_step = DataSetupStep(
+        step_id="query-resource",
+        capability_ref=PublishedCapabilityRef(
+            system_id=provider.system_id,
+            capability_id=provider.capability_id,
+        ),
+        operation_role="QUERY",
+        availability=SetupAvailabilityRule(
+            type="VALUE_NOT_NULL",
+            path="resource",
+        ),
+        entity_extraction=SetupEntityExtractionRule(
+            type="VALUE",
+            path="resource",
+        ),
+    )
+    submission = DataSetupRecipeSubmission(
+        recipe_id="setup:generic-query-cross-splice",
+        entry_id=consumer_entry.entry_id,
+        entry_source_scan_id=consumer_manifest.scan_id,
+        name="查询通用资源",
+        steps=[query_step],
+        fact_outputs=[
+            RecipeFactOutputSubmission(
+                fact_name="prepared_resource",
+                fact_contract_id=FACT_CONTRACT_ID,
+                from_step_id=query_step.step_id,
+                output_path="resource",
+                produced_state="READY",
+            )
+        ],
+        acquisition_policy="QUERY_ONLY",
+        producer_scope="ENTITY_PRODUCER",
+        producer_entry_ref=ProducerEntrySourceRef(
+            system_id=CONSUMER_ID,
+            entry_id=consumer_entry.entry_id,
+            source_scan_id=consumer_manifest.scan_id,
+            source_baseline=consumer_manifest.baseline,
+        ),
+        knowledge_assertion_ids=[
+            actual_query.assertion_id,
+            unrelated_entry.assertion_id,
+        ],
+    )
+    fact = RecipeFactBinding(
+        **submission.fact_outputs[0].model_dump(),
+        fact_schema={"type": "object"},
+        origin_policy=SetupFactOrigin.UPSTREAM_PUBLISHED_OUTPUT,
+    )
+
+    def resolve_current_candidate(
+        _service: object,
+        _system_id: str,
+        _candidate_id: str,
+    ) -> object:
+        """返回Published能力实际所属的current provider入口。
+
+        Args:
+            _service: Candidate目录服务实例。
+            _system_id: Published能力所属provider系统。
+            _candidate_id: Published冻结的Candidate身份。
+
+        Returns:
+            只含真实provider Entry身份的最小current Candidate视图。
+        """
+
+        return SimpleNamespace(entry_ids=[provider_manifest.entries[0].entry_id])
+
+    monkeypatch.setattr(
+        "opentest.application.data_setup_recipes.CandidateOperationCatalogService.get",
+        resolve_current_candidate,
+    )
+
+    issues = application.data_setup_recipes._producer_knowledge_issues(
+        CONSUMER_ID,
+        submission,
+        [fact],
+        {query_step.step_id: provider},
+    )
+
+    assert "SETUP_PRODUCER_OPERATION_KNOWLEDGE_MISMATCH" not in {
+        issue.code for issue in issues
+    }
+    assert "SETUP_PRODUCER_KNOWLEDGE_MISMATCH" in {
+        issue.code for issue in issues
+    }
+
+
+def test_semantic_query_availability_requires_exact_formal_assertion() -> None:
+    """布尔和结果码miss语义必须冻结并匹配同一条正式查询断言。
+
+    Returns:
+        None；缺断言ID的步骤被模型拒绝且不同断言或规则不能证明miss时通过。
+
+    Side Effects:
+        无；只验证typed模型和Recipe发布判定函数。
+    """
+
+    availability = SetupAvailabilityRule(
+        type="RESULT_CODE_MAP",
+        path="result_code",
+        found_values=["FOUND"],
+        not_found_values=["NOT_FOUND"],
+    )
+    capability_ref = PublishedCapabilityRef(
+        system_id=PROVIDER_ID,
+        capability_id="published:sample-provider:semantic-query",
+    )
+    with pytest.raises(ValidationError, match="formal knowledge assertion"):
+        DataSetupStep(
+            step_id="query-semantic-without-proof",
+            capability_ref=capability_ref,
+            operation_role="QUERY",
+            availability=availability,
+            entity_extraction=SetupEntityExtractionRule(
+                type="VALUE",
+                path="entity",
+            ),
+        )
+    with pytest.raises(ValidationError, match="cannot claim a semantic assertion"):
+        DataSetupStep(
+            step_id="query-structural-with-false-proof",
+            capability_ref=capability_ref,
+            operation_role="QUERY",
+            availability=SetupAvailabilityRule(
+                type="VALUE_NOT_NULL",
+                path="entity",
+            ),
+            availability_assertion_id="entry-fact:structural-query-false-proof",
+            entity_extraction=SetupEntityExtractionRule(
+                type="VALUE",
+                path="entity",
+            ),
+        )
+    assertion = EntryFactAssertion(
+        assertion_id="entry-fact:semantic-query-availability",
+        assertion_type="CANDIDATE_OPERATION",
+        fact_contract_id=FACT_CONTRACT_ID,
+        operation_role="QUERY",
+        candidate_system_id=PROVIDER_ID,
+        candidate_operation_id="facade:sample.ResourceFacade#query",
+        query_availability=availability,
+        source=KnowledgeConclusionSource.USER_CONFIRMED,
+    )
+    step = DataSetupStep(
+        step_id="query-semantic-with-proof",
+        capability_ref=capability_ref,
+        operation_role="QUERY",
+        availability=availability,
+        availability_assertion_id=assertion.assertion_id,
+        entity_extraction=SetupEntityExtractionRule(
+            type="VALUE",
+            path="entity",
+        ),
+    )
+
+    assert DataSetupRecipeService._query_availability_assertion_matches(
+        step,
+        assertion,
+    )
+    assert not DataSetupRecipeService._query_availability_assertion_matches(
+        step,
+        assertion.model_copy(
+            update={"assertion_id": "entry-fact:semantic-query-other-proof"}
+        ),
+    )
+
+
+def test_recipe_semantic_signature_includes_query_and_extraction_protocol(
+    tmp_path: Path,
+) -> None:
+    """相同能力和输入绑定下的不同查询语义不得被判为等价Recipe。
+
+    Args:
+        tmp_path: Pytest隔离正式Recipe、Published能力和编译器根目录。
+
+    Returns:
+        None；operation role、availability和entity extraction变化都会改变语义签名。
+
+    Side Effects:
+        只发布临时ENTRY_ONLY Recipe；不访问QA。
+    """
+
+    application, manifest, provider, consumer = _prepare_workspace(tmp_path)
+    publication = application.publish_data_setup_recipe(
+        CONSUMER_ID,
+        _recipe_submission(manifest, provider, consumer, "signature", "SINGLE"),
+    )
+    assert publication.status == "PUBLISHED"
+    recipe = publication.recipe
+    assert recipe is not None
+    first_step = recipe.steps[0]
+    value_query = first_step.model_copy(
+        update={
+            "operation_role": "QUERY",
+            "availability": SetupAvailabilityRule(
+                type="VALUE_NOT_NULL",
+                path="resource",
+            ),
+            "entity_extraction": SetupEntityExtractionRule(
+                type="VALUE",
+                path="resource",
+            ),
+        }
+    )
+    collection_query = value_query.model_copy(
+        update={
+            "availability": SetupAvailabilityRule(
+                type="COLLECTION_NOT_EMPTY",
+                path="resource.items",
+            ),
+            "entity_extraction": SetupEntityExtractionRule(
+                type="FIRST_ITEM",
+                path="resource.items",
+                max_cardinality=1,
+            ),
+        }
+    )
+    value_recipe = recipe.model_copy(
+        update={"steps": [value_query, *recipe.steps[1:]]}
+    )
+    collection_recipe = recipe.model_copy(
+        update={"steps": [collection_query, *recipe.steps[1:]]}
+    )
+    compiler = application.typed_case_compiler
+
+    create_signature = compiler._recipe_semantic_signature(recipe)
+    value_signature = compiler._recipe_semantic_signature(value_recipe)
+    collection_signature = compiler._recipe_semantic_signature(collection_recipe)
+
+    assert create_signature != value_signature
+    assert value_signature != collection_signature
+    application.close()
 
 
 def test_real_refund_booking_recipe_is_blocked_in_formal_asset_copy(
