@@ -17,6 +17,7 @@ from opentest.adapters.agent_runner import AgentRunner, AgentRunnerConfig
 from opentest.adapters.codex_app_server import (
     CodexAppServerClient,
     CodexAppServerConfig,
+    CodexThreadCreationRequest,
     CodexThreadStartWire,
     _resolve_codex_app_server_executable,
 )
@@ -5369,7 +5370,7 @@ def test_codex_app_server_creates_and_injects_thread_without_starting_a_turn(
         "            continue\n"
         "        result = {'thread':{'id':'01a-client-handoff-test'},'model':'gpt-test','modelProvider':'openai','cwd':request['params']['cwd'],'approvalPolicy':'onRequest','approvalsReviewer':'user','sandbox':{'type':'readOnly'}}\n"
         "    elif method == 'mcpServerStatus/list':\n"
-        "        names = ['get_knowledge_handoff','list_source_files','search_source','read_source','submit_knowledge_candidate']\n"
+        "        names = ['get_knowledge_handoff','list_source_files','search_source','read_source','submit_knowledge_candidate','get_case_generation_handoff','submit_case_generation_drafts']\n"
         "        result = {'data':[{'name':'opentest_knowledge','authStatus':'unsupported','resources':[],'resourceTemplates':[],'tools':{name:{'name':name,'inputSchema':{}} for name in names}}],'nextCursor':None}\n"
         "    else:\n"
         "        result = {}\n"
@@ -5441,6 +5442,165 @@ def test_codex_app_server_creates_and_injects_thread_without_starting_a_turn(
     injected = next(request for request in requests if request.get("method") == "thread/inject_items")
     assert injected["params"]["items"][0]["role"] == "user"
     assert "OpenTest知识目标" in injected["params"]["items"][0]["content"][0]["text"]
+
+
+def test_codex_app_server_case_thread_has_machine_enforced_case_only_tools(
+    tmp_path: Path,
+) -> None:
+    """Case线程必须关闭已安装插件并只注入两个Case MCP工具。
+
+    Args:
+        tmp_path: pytest隔离的假App Server、协议日志和工作目录。
+
+    Returns:
+        None；启动配置只含Case桥接且额外knowledge/QA工具会被线程门禁拒绝时通过。
+
+    Side Effects:
+        只创建假本地线程协议记录，不调用真实Codex、HTTP、QA或模型。
+    """
+
+    executable = tmp_path / "codex"
+    request_log = tmp_path / "case-app-server-requests.jsonl"
+    executable.write_text(
+        "#!/usr/bin/env python3\n"
+        "import json, sys\n"
+        f"log_path = {str(request_log)!r}\n"
+        "for raw in sys.stdin:\n"
+        "    request = json.loads(raw)\n"
+        "    with open(log_path, 'a', encoding='utf-8') as handle:\n"
+        "        handle.write(json.dumps(request, ensure_ascii=False) + '\\n')\n"
+        "    if 'id' not in request:\n"
+        "        continue\n"
+        "    method = request.get('method')\n"
+        "    if method == 'initialize':\n"
+        "        result = {'userAgent':'fake-case-app-server'}\n"
+        "    elif method == 'model/list':\n"
+        "        result = {'data':[{'id':'gpt-5.6-luna','supportedReasoningEfforts':['low','medium']}]}\n"
+        "    elif method == 'thread/start':\n"
+        "        result = {'thread':{'id':'01a-case-only-thread'}}\n"
+        "    elif method == 'mcpServerStatus/list':\n"
+        "        names = ['get_case_generation_handoff','submit_case_generation_drafts']\n"
+        "        result = {'data':[{'name':'opentest_case','tools':{name:{'name':name} for name in names}}]}\n"
+        "    else:\n"
+        "        result = {}\n"
+        "    print(json.dumps({'id':request['id'],'result':result}), flush=True)\n",
+        encoding="utf-8",
+    )
+    executable.chmod(0o755)
+    workspace = tmp_path / "workspace"
+    workspace.mkdir()
+    client = CodexAppServerClient(
+        CodexAppServerConfig(
+            executable=str(executable),
+            thread_start_wire=CodexThreadStartWire(
+                approval_policy="never",
+                sandbox="readOnly",
+            ),
+        )
+    )
+
+    thread = client.create_scoped_thread(
+        CodexThreadCreationRequest(
+            prompt="处理Case handoff。",
+            title="OpenTest Case · cancel",
+            cwd=workspace,
+            developer_instructions="只允许Case typed工具。",
+            model="gpt-5.6-luna",
+            reasoning_effort="low",
+            tool_scope="case_only",
+        )
+    )
+
+    assert thread.thread_id == "01a-case-only-thread"
+    requests = [
+        json.loads(line)
+        for line in request_log.read_text(encoding="utf-8").splitlines()
+        if line.strip()
+    ]
+    started = next(request for request in requests if request.get("method") == "thread/start")
+    config = started["params"]["config"]
+    assert config["features"]["plugins"] is False
+    assert config["features"]["shell_tool"] is False
+    assert set(config["mcp_servers"]) == {"node_repl", "opentest_case"}
+    assert config["mcp_servers"]["node_repl"]["enabled"] is False
+    assert config["mcp_servers"]["opentest_case"]["args"][-1] == "--case-only"
+    with pytest.raises(ExecutionFailure, match="MCP tools are unavailable"):
+        client._require_handoff_tools(
+            {
+                "data": [
+                    {
+                        "name": "opentest_case",
+                        "tools": {
+                            "get_case_generation_handoff": {},
+                            "submit_case_generation_drafts": {},
+                            "execute_case": {},
+                        },
+                    }
+                ]
+            },
+            "case_only",
+        )
+
+
+def test_codex_app_server_case_turn_ignores_user_tools_and_reuses_thread(
+    tmp_path: Path,
+) -> None:
+    """Case模型turn必须复用线程、移除用户工具面并保留延迟退出事实。
+
+    Args:
+        tmp_path: pytest隔离的假Codex CLI、参数记录和工作目录。
+
+    Returns:
+        None；命令复用原线程、只注入Case MCP且延迟失败可被轮询识别时通过。
+
+    Side Effects:
+        启动一个短暂假CLI子进程并等待回收，不调用真实Codex、HTTP、QA或模型。
+    """
+
+    executable = tmp_path / "codex"
+    argument_log = tmp_path / "case-turn-arguments.json"
+    executable.write_text(
+        "#!/usr/bin/env python3\n"
+        "import json, sys, time\n"
+        f"open({str(argument_log)!r}, 'w', encoding='utf-8').write(json.dumps(sys.argv[1:]))\n"
+        "time.sleep(0.8)\n"
+        "sys.exit(17)\n",
+        encoding="utf-8",
+    )
+    executable.chmod(0o755)
+    workspace = tmp_path / "workspace"
+    workspace.mkdir()
+    client = CodexAppServerClient(CodexAppServerConfig(executable=str(executable)))
+
+    process_id = client.start_case_turn(
+        "01a-case-only-existing-thread",
+        "继续Case typed handoff。",
+        workspace,
+        "gpt-5.6-luna",
+        "low",
+    )
+    # 启动窗口之后的失败必须由后台watcher收割并保留，不能成为页面永久运行的假回执。
+    deadline = time.monotonic() + 5
+    process = client.inspect_case_turn_process(process_id)
+    while process.state == "RUNNING" and time.monotonic() < deadline:
+        time.sleep(0.05)
+        process = client.inspect_case_turn_process(process_id)
+    arguments = json.loads(argument_log.read_text(encoding="utf-8"))
+
+    assert arguments[-3:] == [
+        "--json",
+        "01a-case-only-existing-thread",
+        "继续Case typed handoff。",
+    ]
+    assert "--ignore-user-config" in arguments
+    assert "--case-only" in " ".join(arguments)
+    assert 'mcp_servers.opentest_case.env_vars=["OPENTEST_LOCAL_API"]' in arguments
+    assert arguments.count("--disable") == 10
+    assert "plugins" in arguments
+    assert "shell_tool" in arguments
+    assert "unified_exec" in arguments
+    assert process.state == "EXITED"
+    assert process.return_code == 17
 
 
 def test_codex_app_server_inspects_persisted_turn_without_resuming_thread(tmp_path: Path) -> None:
@@ -5640,7 +5800,7 @@ def test_codex_app_server_uses_local_schema_wire_before_side_effectful_thread_st
         "            continue\n"
         "        result = {'thread':{'id':'01a-schema-wire-thread'}}\n"
         "    elif method == 'mcpServerStatus/list':\n"
-        "        names = ['get_knowledge_handoff','list_source_files','search_source','read_source','submit_knowledge_candidate']\n"
+        "        names = ['get_knowledge_handoff','list_source_files','search_source','read_source','submit_knowledge_candidate','get_case_generation_handoff','submit_case_generation_drafts']\n"
         "        result = {'data':[{'name':'opentest_knowledge','tools':{name:{'name':name} for name in names}}]}\n"
         "    else:\n"
         "        result = {}\n"

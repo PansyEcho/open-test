@@ -1310,6 +1310,12 @@ def test_semantic_query_availability_requires_exact_formal_assertion() -> None:
         无；只验证typed模型和Recipe发布判定函数。
     """
 
+    with pytest.raises(ValidationError, match="max cardinality one or stable ordering"):
+        # FIRST_ITEM没有最大基数或稳定排序证明时，typed Draft在服务调用前即失败。
+        SetupEntityExtractionRule(
+            type="FIRST_ITEM",
+            path="entity.items",
+        )
     availability = SetupAvailabilityRule(
         type="RESULT_CODE_MAP",
         path="result_code",
@@ -1378,6 +1384,88 @@ def test_semantic_query_availability_requires_exact_formal_assertion() -> None:
             update={"assertion_id": "entry-fact:semantic-query-other-proof"}
         ),
     )
+
+
+def test_query_recipe_rejects_mutating_capability_and_fixture_scope(
+    tmp_path: Path,
+) -> None:
+    """Query Recipe必须拒绝写能力和Fixture提供的查询身份。
+
+    Args:
+        tmp_path: Pytest隔离Published、规则和Recipe服务根目录。
+
+    Returns:
+        None；非READ_ONLY和Fixture查询分别得到稳定发布问题时通过。
+
+    Side Effects:
+        只创建临时正式资产并调用纯校验边界，不发布Recipe或访问QA。
+    """
+
+    application, manifest, provider, consumer = _prepare_workspace(tmp_path)
+    original = _recipe_submission(
+        manifest,
+        provider,
+        consumer,
+        "unsafe-query",
+        "SINGLE",
+    )
+    fixture_query = original.steps[0].model_copy(
+        update={
+            "operation_role": "QUERY",
+            "input_bindings": {
+                "request_id": SetupInputBinding(
+                    source="fixture",
+                    path="resource_partition",
+                )
+            },
+            "availability": SetupAvailabilityRule(
+                type="VALUE_NOT_NULL",
+                path="resource",
+            ),
+            "entity_extraction": SetupEntityExtractionRule(
+                type="VALUE",
+                path="resource",
+            ),
+        }
+    )
+    submission = original.model_copy(
+        update={
+            "fixture_schema": {
+                "type": "object",
+                "properties": {"resource_partition": {"type": "string"}},
+                "required": ["resource_partition"],
+                "additionalProperties": False,
+            },
+            "steps": [fixture_query, original.steps[1]],
+        }
+    )
+    current_rules = application.setup_contract_rules.read(CONSUMER_ID)
+    fixture_policy = current_rules.input_policies[0].model_copy(
+        update={"allowed_sources": ["fixture"], "allowed_literal_values": []}
+    )
+    rules = current_rules.model_copy(
+        update={
+            "input_policies": [fixture_policy, current_rules.input_policies[1]]
+        }
+    )
+
+    # provider能力本身是WRITE；把它标成Query不得绕过角色与可变性校验。
+    protocol_issues = application.data_setup_recipes._query_step_issues(
+        fixture_query,
+        provider,
+    )
+    scope_issues = application.data_setup_recipes._query_scope_issues(
+        submission,
+        rules,
+    )
+
+    assert "SETUP_QUERY_CAPABILITY_MUTATES" in {
+        issue.code for issue in protocol_issues
+    }
+    assert "SETUP_QUERY_SCOPE_UNPROVEN" in {
+        issue.code for issue in scope_issues
+    }
+    application.close()
 
 
 def test_recipe_semantic_signature_includes_query_and_extraction_protocol(
@@ -1524,7 +1612,10 @@ def test_real_refund_booking_recipe_is_blocked_in_formal_asset_copy(
     isolated_recipe_root = (
         isolated_root / "systems" / refund_system_id / "recipes" / "setup"
     )
-    assert not isolated_recipe_root.exists()
+    # 正式仓库现已包含退款Query Recipe；无效Booking草稿不得新增或改写任何文件。
+    assert sorted(path.name for path in isolated_recipe_root.glob("*.yaml")) == [
+        path.name for path in formal_files_before
+    ]
     assert (
         sorted(formal_recipe_root.glob("*.yaml")) if formal_recipe_root.exists() else []
     ) == formal_files_before

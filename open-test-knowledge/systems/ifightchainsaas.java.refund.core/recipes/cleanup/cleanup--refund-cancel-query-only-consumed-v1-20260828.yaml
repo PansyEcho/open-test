@@ -1,0 +1,44 @@
+contract_version: cleanup-plan/v2
+cleanup_plan_id: cleanup:refund-cancel-query-only-consumed-v1-20260828
+system_id: ifightchainsaas.java.refund.core
+entry_id: facade:com.ly.flight.chainsaas.refund.facade.RefundFacade#cancel
+source_scan_id: scan-20260827223314-a0f437c374-27423ce1
+setup_recipe_ref:
+  system_id: ifightchainsaas.java.refund.core
+  recipe_id: setup:refund-query-list-pending-apply-v3-20260828
+name: 取消接口消费查询到的可取消退票单
+cleanup_contract_id: refund-cancel-consumed/v1
+cleanup_rule_revision_id: cleanup-rule-revision:5f254377f4ec439187708e58ed010f7c
+compilation_rule_revision_id: case-compilation-rule-revision:ff3b24de03f647ac922f068d7bba2861
+action_profile_id: action-profile:refund-cancel-v3
+action_capability_ref:
+  system_id: ifightchainsaas.java.refund.core
+  capability_id: published:ifightchainsaas.java.refund.core:publish-refund-cancel-action-v3-current-20260828
+action_fact_contract_id: ''
+resource_scope: ACTION_EFFECT
+business_identity:
+  source_ref:
+    source: setup_fact
+    slot_id: ''
+    fact_contract_id: refund-order/v3
+    fact_path: refundSerialNo
+  fact_schema:
+    type: string
+  fact_name: refund_order
+primary_strategy: CONSUMED_BY_ACTION
+business_cancel: null
+sql_update: null
+consumed_by_action:
+  state_transition_assertion_id: entry-fact:refund-cancel-current-v3-transition-cancelled
+  fact_contract_id: refund-order/v3
+  from_state: CANCELLABLE
+  to_state: CANCELLED
+  oracle_template_id: oracle:refund-cancel-response-v2
+  oracle_actual_source: action_result
+  oracle_actual_path: success
+  oracle_expected_value: true
+recovery_oracle: null
+isolation_policy:
+  action: QUARANTINE_RESOURCE
+  block_reuse: true
+created_at: '2026-08-28T06:31:33.918585Z'

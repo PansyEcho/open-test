@@ -1,0 +1,4688 @@
+contract_version: hybrid-case-generation/v3
+generation_id: hybrid-generation-64ac887cce6c4bf8b307
+system_id: ifightchainsaas.java.refund.core
+entry_id: facade:com.ly.flight.chainsaas.refund.facade.RefundFacade#cancel
+source_scan_id: scan-20260827223314-a0f437c374-27423ce1
+source_baseline:
+  source_path: /Users/user/data/code/tc/ifightchainsaas.java.refund.core
+  commit: eba0fc72ec39a6883a6ceb1a70c38040ec5ea0bb
+  branch: feature_673598_20260806
+  dirty: false
+  dirty_digest: ''
+  analyzer_version: 0.2.0
+  captured_at: '2026-08-27T22:33:14.750680Z'
+analyzer_version: 3.26.2+typed-field-conversion.1
+status: READY
+coverage_manifest:
+  system_id: ifightchainsaas.java.refund.core
+  entry_id: facade:com.ly.flight.chainsaas.refund.facade.RefundFacade#cancel
+  source_scan_id: scan-20260827223314-a0f437c374-27423ce1
+  analysis_artifact_id: program-analysis:scan-20260827223314-a0f437c374-27423ce1:0017
+  semantic_draft_id: ''
+  status: FROZEN
+  matched_rules: []
+  obligations: []
+  conditions:
+  - condition_id: condition:program:0017:com.ly.flight.chainsaas.refund.facade.impl.AbstractFacade_createErrorResponse_Request_com.ly.flight.chainsaas.refund.facade.exception.APIException_java.lang.Class_Response__:field_influence:185:13:1
+    condition_type: INTERNAL_DIAGNOSTIC
+    title: 内部技术诊断
+    summary: 该可达代码尚未证明由入口请求字段控制，仅保留为技术诊断证据。
+    evidence_ids:
+    - com.ly.flight.chainsaas.refund.facade.impl.AbstractFacade#createErrorResponse(Request,com.ly.flight.chainsaas.refund.facade.exception.APIException,java.lang.Class<Response>):field_influence:185:13:1
+    source_refs:
+    - repository: ''
+      path: app/facade-impl/src/main/java/com/ly/flight/chainsaas/refund/facade/impl/AbstractFacade.java
+      symbol: com.ly.flight.chainsaas.refund.facade.impl.AbstractFacade#createErrorResponse(Request,com.ly.flight.chainsaas.refund.facade.exception.APIException,java.lang.Class<Response>):field_influence
+      line: 185
+      commit: ''
+      content_digest: ''
+    resolution_owner: NONE
+    blocks_generation: false
+    technical_code: ''
+    stateful_requirement: null
+  - condition_id: condition:program:0017:com.ly.flight.chainsaas.refund.facade.impl.AbstractFacade_createErrorResponse_Request_com.ly.flight.chainsaas.refund.facade.exception.APIException_java.lang.Class_Response__:field_influence:186:13:1
+    condition_type: INTERNAL_DIAGNOSTIC
+    title: 内部技术诊断
+    summary: 该可达代码尚未证明由入口请求字段控制，仅保留为技术诊断证据。
+    evidence_ids:
+    - com.ly.flight.chainsaas.refund.facade.impl.AbstractFacade#createErrorResponse(Request,com.ly.flight.chainsaas.refund.facade.exception.APIException,java.lang.Class<Response>):field_influence:186:13:1
+    source_refs:
+    - repository: ''
+      path: app/facade-impl/src/main/java/com/ly/flight/chainsaas/refund/facade/impl/AbstractFacade.java
+      symbol: com.ly.flight.chainsaas.refund.facade.impl.AbstractFacade#createErrorResponse(Request,com.ly.flight.chainsaas.refund.facade.exception.APIException,java.lang.Class<Response>):field_influence
+      line: 186
+      commit: ''
+      content_digest: ''
+    resolution_owner: NONE
+    blocks_generation: false
+    technical_code: ''
+    stateful_requirement: null
+  - condition_id: condition:program:0017:com.ly.flight.chainsaas.refund.facade.impl.AbstractFacade_createErrorResponse_Request_com.ly.flight.chainsaas.refund.facade.exception.APIException_java.lang.Class_Response__:field_influence:188:13:1
+    condition_type: INTERNAL_DIAGNOSTIC
+    title: 内部技术诊断
+    summary: 该可达代码尚未证明由入口请求字段控制，仅保留为技术诊断证据。
+    evidence_ids:
+    - com.ly.flight.chainsaas.refund.facade.impl.AbstractFacade#createErrorResponse(Request,com.ly.flight.chainsaas.refund.facade.exception.APIException,java.lang.Class<Response>):field_influence:188:13:1
+    source_refs:
+    - repository: ''
+      path: app/facade-impl/src/main/java/com/ly/flight/chainsaas/refund/facade/impl/AbstractFacade.java
+      symbol: com.ly.flight.chainsaas.refund.facade.impl.AbstractFacade#createErrorResponse(Request,com.ly.flight.chainsaas.refund.facade.exception.APIException,java.lang.Class<Response>):field_influence
+      line: 188
+      commit: ''
+      content_digest: ''
+    resolution_owner: NONE
+    blocks_generation: false
+    technical_code: ''
+    stateful_requirement: null
+  - condition_id: condition:program:0017:com.ly.flight.chainsaas.refund.facade.impl.RefundFacadeImpl_cancel_com.ly.flight.chainsaas.refund.facade.model.request.RefundCancelRequest_:field_influence:294:13:1
+    condition_type: INTERNAL_DIAGNOSTIC
+    title: 内部技术诊断
+    summary: 该可达代码尚未证明由入口请求字段控制，仅保留为技术诊断证据。
+    evidence_ids:
+    - com.ly.flight.chainsaas.refund.facade.impl.RefundFacadeImpl#cancel(com.ly.flight.chainsaas.refund.facade.model.request.RefundCancelRequest):field_influence:294:13:1
+    source_refs:
+    - repository: ''
+      path: app/facade-impl/src/main/java/com/ly/flight/chainsaas/refund/facade/impl/RefundFacadeImpl.java
+      symbol: com.ly.flight.chainsaas.refund.facade.impl.RefundFacadeImpl#cancel(com.ly.flight.chainsaas.refund.facade.model.request.RefundCancelRequest):field_influence
+      line: 294
+      commit: ''
+      content_digest: ''
+    resolution_owner: NONE
+    blocks_generation: false
+    technical_code: ''
+    stateful_requirement: null
+  - condition_id: condition:program:0017:com.ly.flight.chainsaas.refund.facade.impl.RefundFacadeImpl_cancel_com.ly.flight.chainsaas.refund.facade.model.request.RefundCancelRequest_:field_influence:294:32:1
+    condition_type: INTERNAL_DIAGNOSTIC
+    title: 内部技术诊断
+    summary: 该可达代码尚未证明由入口请求字段控制，仅保留为技术诊断证据。
+    evidence_ids:
+    - com.ly.flight.chainsaas.refund.facade.impl.RefundFacadeImpl#cancel(com.ly.flight.chainsaas.refund.facade.model.request.RefundCancelRequest):field_influence:294:32:1
+    source_refs:
+    - repository: ''
+      path: app/facade-impl/src/main/java/com/ly/flight/chainsaas/refund/facade/impl/RefundFacadeImpl.java
+      symbol: com.ly.flight.chainsaas.refund.facade.impl.RefundFacadeImpl#cancel(com.ly.flight.chainsaas.refund.facade.model.request.RefundCancelRequest):field_influence
+      line: 294
+      commit: ''
+      content_digest: ''
+    resolution_owner: NONE
+    blocks_generation: false
+    technical_code: ''
+    stateful_requirement: null
+  - condition_id: condition:program:0017:com.ly.flight.chainsaas.refund.facade.impl.RefundFacadeImpl_cancel_com.ly.flight.chainsaas.refund.facade.model.request.RefundCancelRequest_:field_influence:295:20:1
+    condition_type: INTERNAL_DIAGNOSTIC
+    title: 内部技术诊断
+    summary: 该可达代码尚未证明由入口请求字段控制，仅保留为技术诊断证据。
+    evidence_ids:
+    - com.ly.flight.chainsaas.refund.facade.impl.RefundFacadeImpl#cancel(com.ly.flight.chainsaas.refund.facade.model.request.RefundCancelRequest):field_influence:295:20:1
+    source_refs:
+    - repository: ''
+      path: app/facade-impl/src/main/java/com/ly/flight/chainsaas/refund/facade/impl/RefundFacadeImpl.java
+      symbol: com.ly.flight.chainsaas.refund.facade.impl.RefundFacadeImpl#cancel(com.ly.flight.chainsaas.refund.facade.model.request.RefundCancelRequest):field_influence
+      line: 295
+      commit: ''
+      content_digest: ''
+    resolution_owner: NONE
+    blocks_generation: false
+    technical_code: ''
+    stateful_requirement: null
+  - condition_id: condition:knowledge:entry-fact:refund-cancel-current-v3-requires-cancellable-order
+    condition_type: STATEFUL_ENTITY_PRECONDITION
+    title: 准备可取消退票单
+    summary: 执行入口前需要准备一项可取消退票单。
+    evidence_ids:
+    - entry-fact:refund-cancel-current-v3-requires-cancellable-order
+    source_refs:
+    - repository: ''
+      path: app/biz/src/main/java/com/ly/flight/chainsaas/refund/biz/actor/post/RefundOrderCancelPostActor.java
+      symbol: RefundOrderCancelPostActor
+      line: 25
+      commit: ''
+      content_digest: ''
+    - repository: ''
+      path: app/biz/src/main/java/com/ly/flight/chainsaas/refund/biz/actor/post/RefundOrderManualCancelPostActor.java
+      symbol: RefundOrderManualCancelPostActor
+      line: 20
+      commit: ''
+      content_digest: ''
+    resolution_owner: PROGRAM
+    blocks_generation: false
+    technical_code: ''
+    stateful_requirement:
+      slot_id: refund_order
+      fact_contract_id: refund-order/v3
+      cardinality: 1
+      required_state: CANCELLABLE
+      entity_display_name: 退票单
+      state_display_name: 可取消
+      acquisition_policy: QUERY_THEN_CREATE
+      constraints: {}
+      relations: {}
+      request_bindings:
+        refund_serial_no: refundSerialNo
+  conflicts: []
+  blockers: []
+compilation_rule_revision_id: case-compilation-rule-revision:ff3b24de03f647ac922f068d7bba2861
+scenarios:
+- scenario_id: scenario-v3-67b85c3f5d5e5be0c4bb39be
+  system_id: ifightchainsaas.java.refund.core
+  entry_id: facade:com.ly.flight.chainsaas.refund.facade.RefundFacade#cancel
+  source_scan_id: scan-20260827223314-a0f437c374-27423ce1
+  title: 真实取消退票Action
+  template_key:
+    compilation_rule_revision_id: case-compilation-rule-revision:ff3b24de03f647ac922f068d7bba2861
+    execution_graph:
+    - role: ACTION
+      capability_ref:
+        system_id: ifightchainsaas.java.refund.core
+        capability_id: published:ifightchainsaas.java.refund.core:publish-refund-cancel-action-v3-current-20260828
+    setup_recipe_ref: null
+    stateful_setup_plan:
+      contract_version: stateful-acquisition-plan/v1
+      nodes:
+      - node_id: stateful-node:0b850acd31dc1df12745a051
+        slot_id: refund_order
+        fact_contract_id: refund-order/v3
+        required_state: CANCELLABLE
+        entity_display_name: 退票单
+        state_display_name: 可取消
+        recipe_ref:
+          system_id: ifightchainsaas.java.refund.core
+          recipe_id: setup:refund-query-list-pending-apply-v3-20260828
+        producer_entry_ref:
+          system_id: ifightchainsaas.java.refund.core
+          entry_id: facade:com.ly.flight.chainsaas.refund.facade.RefundFacade#queryList
+          source_scan_id: scan-20260827223314-a0f437c374-27423ce1
+          source_baseline:
+            source_path: /Users/user/data/code/tc/ifightchainsaas.java.refund.core
+            commit: eba0fc72ec39a6883a6ceb1a70c38040ec5ea0bb
+            branch: feature_673598_20260806
+            dirty: false
+            dirty_digest: ''
+            analyzer_version: 0.2.0
+            captured_at: '2026-08-27T22:33:14.750680Z'
+        output_fact_name: refund_order
+        created_fact_name: ''
+        acquisition_policy: QUERY_ONLY
+        dependency_node_ids: []
+        request_bindings:
+          refund_serial_no: refundSerialNo
+        constraints: {}
+        relations: {}
+        create_relations: {}
+        finalization_ref: null
+      root_slot_ids:
+      - refund_order
+    action_profile_id: action-profile:refund-cancel-v3
+    oracle_template_id: oracle:refund-cancel-response-v2
+    cleanup_plan_ref:
+      system_id: ifightchainsaas.java.refund.core
+      cleanup_plan_id: cleanup:refund-cancel-query-only-consumed-v1-20260828
+    fault_plan_id: ''
+    resource_lifecycle_policy: per_variant
+  action_input_bindings:
+  - input_path: refund_serial_no
+    business_identity: true
+    source_ref:
+      source: setup_fact
+      slot_id: refund_order
+      fact_contract_id: refund-order/v3
+      fact_path: refundSerialNo
+  action_fact_refs: []
+  variant_ids:
+  - variant-v3-15af9089da79a365c203a50f
+variants:
+- variant_id: variant-v3-15af9089da79a365c203a50f
+  scenario_id: scenario-v3-67b85c3f5d5e5be0c4bb39be
+  system_id: ifightchainsaas.java.refund.core
+  factor_values: {}
+  generated_inputs: []
+  oracle_parameters: {}
+  coverage_proof:
+    factor_value_goals: []
+    factor_pair_goals: []
+    boundary_obligation_ids: []
+    decision_proofs: []
+    sequence_proofs: []
+    effect_obligation_ids: []
+    requirement_obligation_ids: []
+fault_plans: []
+expected_factor_value_goals: []
+expected_factor_pair_goals: []
+obligation_resolutions: []
+capability_proofs:
+- role: ACTION
+  capability_ref:
+    system_id: ifightchainsaas.java.refund.core
+    capability_id: published:ifightchainsaas.java.refund.core:publish-refund-cancel-action-v3-current-20260828
+  candidate_ref:
+    source_system_id: ifightchainsaas.java.refund.core
+    candidate_id: candidate:ifightchainsaas.java.refund.core:com.ly.flight.chainsaas.refund.facade.impl.RefundFacadeImpl#cancel(com.ly.flight.chainsaas.refund.facade.model.request.RefundCancelRequest)
+    source_scan_id: scan-20260827223314-a0f437c374-27423ce1
+    source_baseline:
+      source_path: /Users/user/data/code/tc/ifightchainsaas.java.refund.core
+      commit: eba0fc72ec39a6883a6ceb1a70c38040ec5ea0bb
+      branch: feature_673598_20260806
+      dirty: false
+      dirty_digest: ''
+      analyzer_version: 0.2.0
+      captured_at: '2026-08-27T22:33:14.750680Z'
+    candidate_signature: 'com.ly.flight.chainsaas.refund.facade.impl.RefundFacadeImpl#cancel(com.ly.flight.chainsaas.refund.facade.model.request.RefundCancelRequest
+      request): com.ly.flight.chainsaas.refund.facade.model.response.RefundCancelResponse'
+    method_resolution_status: resolved
+    request_dto_types:
+    - com.ly.flight.chainsaas.refund.facade.model.request.RefundCancelRequest
+    response_dto_type: com.ly.flight.chainsaas.refund.facade.model.response.RefundCancelResponse
+    dto_definitions:
+    - qualified_type: com.ly.flight.chainsaas.refund.facade.model.BaseRequest
+      kind: class
+      base_types: []
+      fields:
+      - field_name: traceId
+        declared_type: String
+        referenced_type: ''
+        collection: false
+        annotations: []
+        source_ref:
+          repository: ''
+          path: app/facade/src/main/java/com/ly/flight/chainsaas/refund/facade/model/BaseRequest.java
+          symbol: com.ly.flight.chainsaas.refund.facade.model.BaseRequest#traceId
+          line: 21
+          commit: ''
+          content_digest: ''
+        resolution_status: resolved
+      - field_name: operator
+        declared_type: String
+        referenced_type: ''
+        collection: false
+        annotations: []
+        source_ref:
+          repository: ''
+          path: app/facade/src/main/java/com/ly/flight/chainsaas/refund/facade/model/BaseRequest.java
+          symbol: com.ly.flight.chainsaas.refund.facade.model.BaseRequest#operator
+          line: 26
+          commit: ''
+          content_digest: ''
+        resolution_status: resolved
+      source_ref:
+        repository: ''
+        path: app/facade/src/main/java/com/ly/flight/chainsaas/refund/facade/model/BaseRequest.java
+        symbol: com.ly.flight.chainsaas.refund.facade.model.BaseRequest
+        line: 13
+        commit: ''
+        content_digest: ''
+      resolution_status: resolved
+    - qualified_type: com.ly.flight.chainsaas.refund.facade.model.BaseResponse
+      kind: class
+      base_types: []
+      fields:
+      - field_name: success
+        declared_type: boolean
+        referenced_type: ''
+        collection: false
+        annotations: []
+        source_ref:
+          repository: ''
+          path: app/facade/src/main/java/com/ly/flight/chainsaas/refund/facade/model/BaseResponse.java
+          symbol: com.ly.flight.chainsaas.refund.facade.model.BaseResponse#success
+          line: 20
+          commit: ''
+          content_digest: ''
+        resolution_status: resolved
+      - field_name: code
+        declared_type: String
+        referenced_type: ''
+        collection: false
+        annotations: []
+        source_ref:
+          repository: ''
+          path: app/facade/src/main/java/com/ly/flight/chainsaas/refund/facade/model/BaseResponse.java
+          symbol: com.ly.flight.chainsaas.refund.facade.model.BaseResponse#code
+          line: 25
+          commit: ''
+          content_digest: ''
+        resolution_status: resolved
+      - field_name: message
+        declared_type: String
+        referenced_type: ''
+        collection: false
+        annotations: []
+        source_ref:
+          repository: ''
+          path: app/facade/src/main/java/com/ly/flight/chainsaas/refund/facade/model/BaseResponse.java
+          symbol: com.ly.flight.chainsaas.refund.facade.model.BaseResponse#message
+          line: 30
+          commit: ''
+          content_digest: ''
+        resolution_status: resolved
+      - field_name: data
+        declared_type: T
+        referenced_type: T
+        collection: false
+        annotations: []
+        source_ref:
+          repository: ''
+          path: app/facade/src/main/java/com/ly/flight/chainsaas/refund/facade/model/BaseResponse.java
+          symbol: com.ly.flight.chainsaas.refund.facade.model.BaseResponse#data
+          line: 35
+          commit: ''
+          content_digest: ''
+        resolution_status: resolved
+      - field_name: traceId
+        declared_type: String
+        referenced_type: ''
+        collection: false
+        annotations: []
+        source_ref:
+          repository: ''
+          path: app/facade/src/main/java/com/ly/flight/chainsaas/refund/facade/model/BaseResponse.java
+          symbol: com.ly.flight.chainsaas.refund.facade.model.BaseResponse#traceId
+          line: 40
+          commit: ''
+          content_digest: ''
+        resolution_status: resolved
+      source_ref:
+        repository: ''
+        path: app/facade/src/main/java/com/ly/flight/chainsaas/refund/facade/model/BaseResponse.java
+        symbol: com.ly.flight.chainsaas.refund.facade.model.BaseResponse
+        line: 12
+        commit: ''
+        content_digest: ''
+      resolution_status: resolved
+    - qualified_type: com.ly.flight.chainsaas.refund.facade.model.request.RefundCancelRequest
+      kind: class
+      base_types:
+      - com.ly.flight.chainsaas.refund.facade.model.BaseRequest
+      fields:
+      - field_name: refundSerialNo
+        declared_type: String
+        referenced_type: ''
+        collection: false
+        annotations: []
+        source_ref:
+          repository: ''
+          path: app/facade/src/main/java/com/ly/flight/chainsaas/refund/facade/model/request/RefundCancelRequest.java
+          symbol: com.ly.flight.chainsaas.refund.facade.model.request.RefundCancelRequest#refundSerialNo
+          line: 17
+          commit: ''
+          content_digest: ''
+        resolution_status: resolved
+      - field_name: cancelReasonId
+        declared_type: String
+        referenced_type: ''
+        collection: false
+        annotations: []
+        source_ref:
+          repository: ''
+          path: app/facade/src/main/java/com/ly/flight/chainsaas/refund/facade/model/request/RefundCancelRequest.java
+          symbol: com.ly.flight.chainsaas.refund.facade.model.request.RefundCancelRequest#cancelReasonId
+          line: 22
+          commit: ''
+          content_digest: ''
+        resolution_status: resolved
+      - field_name: cancelReason
+        declared_type: String
+        referenced_type: ''
+        collection: false
+        annotations: []
+        source_ref:
+          repository: ''
+          path: app/facade/src/main/java/com/ly/flight/chainsaas/refund/facade/model/request/RefundCancelRequest.java
+          symbol: com.ly.flight.chainsaas.refund.facade.model.request.RefundCancelRequest#cancelReason
+          line: 27
+          commit: ''
+          content_digest: ''
+        resolution_status: resolved
+      - field_name: cancelRemark
+        declared_type: String
+        referenced_type: ''
+        collection: false
+        annotations: []
+        source_ref:
+          repository: ''
+          path: app/facade/src/main/java/com/ly/flight/chainsaas/refund/facade/model/request/RefundCancelRequest.java
+          symbol: com.ly.flight.chainsaas.refund.facade.model.request.RefundCancelRequest#cancelRemark
+          line: 33
+          commit: ''
+          content_digest: ''
+        resolution_status: resolved
+      source_ref:
+        repository: ''
+        path: app/facade/src/main/java/com/ly/flight/chainsaas/refund/facade/model/request/RefundCancelRequest.java
+        symbol: com.ly.flight.chainsaas.refund.facade.model.request.RefundCancelRequest
+        line: 12
+        commit: ''
+        content_digest: ''
+      resolution_status: resolved
+    - qualified_type: com.ly.flight.chainsaas.refund.facade.model.response.RefundCancelResponse
+      kind: class
+      base_types:
+      - com.ly.flight.chainsaas.refund.facade.model.BaseResponse
+      fields:
+      - field_name: orderSerialNo
+        declared_type: String
+        referenced_type: ''
+        collection: false
+        annotations: []
+        source_ref:
+          repository: ''
+          path: app/facade/src/main/java/com/ly/flight/chainsaas/refund/facade/model/response/RefundCancelResponse.java
+          symbol: com.ly.flight.chainsaas.refund.facade.model.response.RefundCancelResponse#orderSerialNo
+          line: 5
+          commit: ''
+          content_digest: ''
+        resolution_status: resolved
+      source_ref:
+        repository: ''
+        path: app/facade/src/main/java/com/ly/flight/chainsaas/refund/facade/model/response/RefundCancelResponse.java
+        symbol: com.ly.flight.chainsaas.refund.facade.model.response.RefundCancelResponse
+        line: 3
+        commit: ''
+        content_digest: ''
+      resolution_status: resolved
+    field_conversions: []
+  provider_operation_ref:
+    source_system_id: ifightchainsaas.java.refund.core
+    operation_id: facade:com.ly.flight.chainsaas.refund.facade.RefundFacade#cancel
+    source_scan_id: scan-20260827223314-a0f437c374-27423ce1
+  mutability: WRITE
+- role: SETUP
+  capability_ref:
+    system_id: ifightchainsaas.java.refund.core
+    capability_id: published:ifightchainsaas.java.refund.core:publish-refund-query-list-setup-v3-current-20260828
+  candidate_ref:
+    source_system_id: ifightchainsaas.java.refund.core
+    candidate_id: candidate:ifightchainsaas.java.refund.core:com.ly.flight.chainsaas.refund.facade.impl.RefundFacadeImpl#queryList(com.ly.flight.chainsaas.refund.facade.model.request.RefundOrderQueryRequest)
+    source_scan_id: scan-20260827223314-a0f437c374-27423ce1
+    source_baseline:
+      source_path: /Users/user/data/code/tc/ifightchainsaas.java.refund.core
+      commit: eba0fc72ec39a6883a6ceb1a70c38040ec5ea0bb
+      branch: feature_673598_20260806
+      dirty: false
+      dirty_digest: ''
+      analyzer_version: 0.2.0
+      captured_at: '2026-08-27T22:33:14.750680Z'
+    candidate_signature: 'com.ly.flight.chainsaas.refund.facade.impl.RefundFacadeImpl#queryList(com.ly.flight.chainsaas.refund.facade.model.request.RefundOrderQueryRequest
+      request): com.ly.flight.chainsaas.refund.facade.model.response.RefundOrderListResponse'
+    method_resolution_status: resolved
+    request_dto_types:
+    - com.ly.flight.chainsaas.refund.facade.model.request.RefundOrderQueryRequest
+    response_dto_type: com.ly.flight.chainsaas.refund.facade.model.response.RefundOrderListResponse
+    dto_definitions:
+    - qualified_type: com.ly.flight.chainsaas.refund.enums.ApplyToAirlineEnum
+      kind: enum
+      base_types: []
+      fields:
+      - field_name: code
+        declared_type: int
+        referenced_type: ''
+        collection: false
+        annotations: []
+        source_ref:
+          repository: ''
+          path: app/model/src/main/java/com/ly/flight/chainsaas/refund/enums/ApplyToAirlineEnum.java
+          symbol: com.ly.flight.chainsaas.refund.enums.ApplyToAirlineEnum#code
+          line: 19
+          commit: ''
+          content_digest: ''
+        resolution_status: resolved
+      - field_name: name
+        declared_type: String
+        referenced_type: ''
+        collection: false
+        annotations: []
+        source_ref:
+          repository: ''
+          path: app/model/src/main/java/com/ly/flight/chainsaas/refund/enums/ApplyToAirlineEnum.java
+          symbol: com.ly.flight.chainsaas.refund.enums.ApplyToAirlineEnum#name
+          line: 21
+          commit: ''
+          content_digest: ''
+        resolution_status: resolved
+      source_ref:
+        repository: ''
+        path: app/model/src/main/java/com/ly/flight/chainsaas/refund/enums/ApplyToAirlineEnum.java
+        symbol: com.ly.flight.chainsaas.refund.enums.ApplyToAirlineEnum
+        line: 7
+        commit: ''
+        content_digest: ''
+      resolution_status: resolved
+    - qualified_type: com.ly.flight.chainsaas.refund.enums.CommonStateEnum
+      kind: enum
+      base_types: []
+      fields:
+      - field_name: code
+        declared_type: int
+        referenced_type: ''
+        collection: false
+        annotations: []
+        source_ref:
+          repository: ''
+          path: app/model/src/main/java/com/ly/flight/chainsaas/refund/enums/CommonStateEnum.java
+          symbol: com.ly.flight.chainsaas.refund.enums.CommonStateEnum#code
+          line: 18
+          commit: ''
+          content_digest: ''
+        resolution_status: resolved
+      - field_name: valid
+        declared_type: boolean
+        referenced_type: ''
+        collection: false
+        annotations: []
+        source_ref:
+          repository: ''
+          path: app/model/src/main/java/com/ly/flight/chainsaas/refund/enums/CommonStateEnum.java
+          symbol: com.ly.flight.chainsaas.refund.enums.CommonStateEnum#valid
+          line: 21
+          commit: ''
+          content_digest: ''
+        resolution_status: resolved
+      - field_name: name
+        declared_type: String
+        referenced_type: ''
+        collection: false
+        annotations: []
+        source_ref:
+          repository: ''
+          path: app/model/src/main/java/com/ly/flight/chainsaas/refund/enums/CommonStateEnum.java
+          symbol: com.ly.flight.chainsaas.refund.enums.CommonStateEnum#name
+          line: 24
+          commit: ''
+          content_digest: ''
+        resolution_status: resolved
+      source_ref:
+        repository: ''
+        path: app/model/src/main/java/com/ly/flight/chainsaas/refund/enums/CommonStateEnum.java
+        symbol: com.ly.flight.chainsaas.refund.enums.CommonStateEnum
+        line: 10
+        commit: ''
+        content_digest: ''
+      resolution_status: resolved
+    - qualified_type: com.ly.flight.chainsaas.refund.enums.CreditTypeEnum
+      kind: enum
+      base_types: []
+      fields:
+      - field_name: code
+        declared_type: int
+        referenced_type: ''
+        collection: false
+        annotations: []
+        source_ref:
+          repository: ''
+          path: app/model/src/main/java/com/ly/flight/chainsaas/refund/enums/CreditTypeEnum.java
+          symbol: com.ly.flight.chainsaas.refund.enums.CreditTypeEnum#code
+          line: 29
+          commit: ''
+          content_digest: ''
+        resolution_status: resolved
+      - field_name: name
+        declared_type: String
+        referenced_type: ''
+        collection: false
+        annotations: []
+        source_ref:
+          repository: ''
+          path: app/model/src/main/java/com/ly/flight/chainsaas/refund/enums/CreditTypeEnum.java
+          symbol: com.ly.flight.chainsaas.refund.enums.CreditTypeEnum#name
+          line: 30
+          commit: ''
+          content_digest: ''
+        resolution_status: resolved
+      source_ref:
+        repository: ''
+        path: app/model/src/main/java/com/ly/flight/chainsaas/refund/enums/CreditTypeEnum.java
+        symbol: com.ly.flight.chainsaas.refund.enums.CreditTypeEnum
+        line: 10
+        commit: ''
+        content_digest: ''
+      resolution_status: resolved
+    - qualified_type: com.ly.flight.chainsaas.refund.enums.FareTypeEnum
+      kind: enum
+      base_types: []
+      fields:
+      - field_name: code
+        declared_type: int
+        referenced_type: ''
+        collection: false
+        annotations: []
+        source_ref:
+          repository: ''
+          path: app/model/src/main/java/com/ly/flight/chainsaas/refund/enums/FareTypeEnum.java
+          symbol: com.ly.flight.chainsaas.refund.enums.FareTypeEnum#code
+          line: 18
+          commit: ''
+          content_digest: ''
+        resolution_status: resolved
+      - field_name: name
+        declared_type: String
+        referenced_type: ''
+        collection: false
+        annotations: []
+        source_ref:
+          repository: ''
+          path: app/model/src/main/java/com/ly/flight/chainsaas/refund/enums/FareTypeEnum.java
+          symbol: com.ly.flight.chainsaas.refund.enums.FareTypeEnum#name
+          line: 20
+          commit: ''
+          content_digest: ''
+        resolution_status: resolved
+      source_ref:
+        repository: ''
+        path: app/model/src/main/java/com/ly/flight/chainsaas/refund/enums/FareTypeEnum.java
+        symbol: com.ly.flight.chainsaas.refund.enums.FareTypeEnum
+        line: 10
+        commit: ''
+        content_digest: ''
+      resolution_status: resolved
+    - qualified_type: com.ly.flight.chainsaas.refund.enums.GenderEnum
+      kind: enum
+      base_types: []
+      fields:
+      - field_name: code
+        declared_type: int
+        referenced_type: ''
+        collection: false
+        annotations: []
+        source_ref:
+          repository: ''
+          path: app/model/src/main/java/com/ly/flight/chainsaas/refund/enums/GenderEnum.java
+          symbol: com.ly.flight.chainsaas.refund.enums.GenderEnum#code
+          line: 15
+          commit: ''
+          content_digest: ''
+        resolution_status: resolved
+      - field_name: name
+        declared_type: String
+        referenced_type: ''
+        collection: false
+        annotations: []
+        source_ref:
+          repository: ''
+          path: app/model/src/main/java/com/ly/flight/chainsaas/refund/enums/GenderEnum.java
+          symbol: com.ly.flight.chainsaas.refund.enums.GenderEnum#name
+          line: 16
+          commit: ''
+          content_digest: ''
+        resolution_status: resolved
+      source_ref:
+        repository: ''
+        path: app/model/src/main/java/com/ly/flight/chainsaas/refund/enums/GenderEnum.java
+        symbol: com.ly.flight.chainsaas.refund.enums.GenderEnum
+        line: 3
+        commit: ''
+        content_digest: ''
+      resolution_status: resolved
+    - qualified_type: com.ly.flight.chainsaas.refund.enums.InvoluntaryRefundTypeEnum
+      kind: enum
+      base_types: []
+      fields:
+      - field_name: code
+        declared_type: int
+        referenced_type: ''
+        collection: false
+        annotations: []
+        source_ref:
+          repository: ''
+          path: app/model/src/main/java/com/ly/flight/chainsaas/refund/enums/InvoluntaryRefundTypeEnum.java
+          symbol: com.ly.flight.chainsaas.refund.enums.InvoluntaryRefundTypeEnum#code
+          line: 29
+          commit: ''
+          content_digest: ''
+        resolution_status: resolved
+      - field_name: name
+        declared_type: String
+        referenced_type: ''
+        collection: false
+        annotations: []
+        source_ref:
+          repository: ''
+          path: app/model/src/main/java/com/ly/flight/chainsaas/refund/enums/InvoluntaryRefundTypeEnum.java
+          symbol: com.ly.flight.chainsaas.refund.enums.InvoluntaryRefundTypeEnum#name
+          line: 31
+          commit: ''
+          content_digest: ''
+        resolution_status: resolved
+      source_ref:
+        repository: ''
+        path: app/model/src/main/java/com/ly/flight/chainsaas/refund/enums/InvoluntaryRefundTypeEnum.java
+        symbol: com.ly.flight.chainsaas.refund.enums.InvoluntaryRefundTypeEnum
+        line: 8
+        commit: ''
+        content_digest: ''
+      resolution_status: resolved
+    - qualified_type: com.ly.flight.chainsaas.refund.enums.OrderAutoEnum
+      kind: enum
+      base_types: []
+      fields:
+      - field_name: code
+        declared_type: int
+        referenced_type: ''
+        collection: false
+        annotations: []
+        source_ref:
+          repository: ''
+          path: app/model/src/main/java/com/ly/flight/chainsaas/refund/enums/OrderAutoEnum.java
+          symbol: com.ly.flight.chainsaas.refund.enums.OrderAutoEnum#code
+          line: 10
+          commit: ''
+          content_digest: ''
+        resolution_status: resolved
+      - field_name: name
+        declared_type: String
+        referenced_type: ''
+        collection: false
+        annotations: []
+        source_ref:
+          repository: ''
+          path: app/model/src/main/java/com/ly/flight/chainsaas/refund/enums/OrderAutoEnum.java
+          symbol: com.ly.flight.chainsaas.refund.enums.OrderAutoEnum#name
+          line: 12
+          commit: ''
+          content_digest: ''
+        resolution_status: resolved
+      source_ref:
+        repository: ''
+        path: app/model/src/main/java/com/ly/flight/chainsaas/refund/enums/OrderAutoEnum.java
+        symbol: com.ly.flight.chainsaas.refund.enums.OrderAutoEnum
+        line: 7
+        commit: ''
+        content_digest: ''
+      resolution_status: resolved
+    - qualified_type: com.ly.flight.chainsaas.refund.enums.OrderLockEnum
+      kind: enum
+      base_types: []
+      fields:
+      - field_name: code
+        declared_type: int
+        referenced_type: ''
+        collection: false
+        annotations: []
+        source_ref:
+          repository: ''
+          path: app/model/src/main/java/com/ly/flight/chainsaas/refund/enums/OrderLockEnum.java
+          symbol: com.ly.flight.chainsaas.refund.enums.OrderLockEnum#code
+          line: 20
+          commit: ''
+          content_digest: ''
+        resolution_status: resolved
+      - field_name: name
+        declared_type: String
+        referenced_type: ''
+        collection: false
+        annotations: []
+        source_ref:
+          repository: ''
+          path: app/model/src/main/java/com/ly/flight/chainsaas/refund/enums/OrderLockEnum.java
+          symbol: com.ly.flight.chainsaas.refund.enums.OrderLockEnum#name
+          line: 21
+          commit: ''
+          content_digest: ''
+        resolution_status: resolved
+      source_ref:
+        repository: ''
+        path: app/model/src/main/java/com/ly/flight/chainsaas/refund/enums/OrderLockEnum.java
+        symbol: com.ly.flight.chainsaas.refund.enums.OrderLockEnum
+        line: 8
+        commit: ''
+        content_digest: ''
+      resolution_status: resolved
+    - qualified_type: com.ly.flight.chainsaas.refund.enums.OrderRefundTypeEnum
+      kind: enum
+      base_types: []
+      fields:
+      - field_name: code
+        declared_type: int
+        referenced_type: ''
+        collection: false
+        annotations: []
+        source_ref:
+          repository: ''
+          path: app/model/src/main/java/com/ly/flight/chainsaas/refund/enums/OrderRefundTypeEnum.java
+          symbol: com.ly.flight.chainsaas.refund.enums.OrderRefundTypeEnum#code
+          line: 35
+          commit: ''
+          content_digest: ''
+        resolution_status: resolved
+      - field_name: name
+        declared_type: String
+        referenced_type: ''
+        collection: false
+        annotations: []
+        source_ref:
+          repository: ''
+          path: app/model/src/main/java/com/ly/flight/chainsaas/refund/enums/OrderRefundTypeEnum.java
+          symbol: com.ly.flight.chainsaas.refund.enums.OrderRefundTypeEnum#name
+          line: 37
+          commit: ''
+          content_digest: ''
+        resolution_status: resolved
+      source_ref:
+        repository: ''
+        path: app/model/src/main/java/com/ly/flight/chainsaas/refund/enums/OrderRefundTypeEnum.java
+        symbol: com.ly.flight.chainsaas.refund.enums.OrderRefundTypeEnum
+        line: 16
+        commit: ''
+        content_digest: ''
+      resolution_status: resolved
+    - qualified_type: com.ly.flight.chainsaas.refund.enums.PassengerTypeEnum
+      kind: enum
+      base_types: []
+      fields:
+      - field_name: code
+        declared_type: int
+        referenced_type: ''
+        collection: false
+        annotations: []
+        source_ref:
+          repository: ''
+          path: app/model/src/main/java/com/ly/flight/chainsaas/refund/enums/PassengerTypeEnum.java
+          symbol: com.ly.flight.chainsaas.refund.enums.PassengerTypeEnum#code
+          line: 22
+          commit: ''
+          content_digest: ''
+        resolution_status: resolved
+      - field_name: name
+        declared_type: String
+        referenced_type: ''
+        collection: false
+        annotations: []
+        source_ref:
+          repository: ''
+          path: app/model/src/main/java/com/ly/flight/chainsaas/refund/enums/PassengerTypeEnum.java
+          symbol: com.ly.flight.chainsaas.refund.enums.PassengerTypeEnum#name
+          line: 25
+          commit: ''
+          content_digest: ''
+        resolution_status: resolved
+      source_ref:
+        repository: ''
+        path: app/model/src/main/java/com/ly/flight/chainsaas/refund/enums/PassengerTypeEnum.java
+        symbol: com.ly.flight.chainsaas.refund.enums.PassengerTypeEnum
+        line: 6
+        commit: ''
+        content_digest: ''
+      resolution_status: resolved
+    - qualified_type: com.ly.flight.chainsaas.refund.enums.ProductTypeEnum
+      kind: enum
+      base_types: []
+      fields:
+      - field_name: code
+        declared_type: int
+        referenced_type: ''
+        collection: false
+        annotations: []
+        source_ref:
+          repository: ''
+          path: app/model/src/main/java/com/ly/flight/chainsaas/refund/enums/ProductTypeEnum.java
+          symbol: com.ly.flight.chainsaas.refund.enums.ProductTypeEnum#code
+          line: 19
+          commit: ''
+          content_digest: ''
+        resolution_status: resolved
+      - field_name: name
+        declared_type: String
+        referenced_type: ''
+        collection: false
+        annotations: []
+        source_ref:
+          repository: ''
+          path: app/model/src/main/java/com/ly/flight/chainsaas/refund/enums/ProductTypeEnum.java
+          symbol: com.ly.flight.chainsaas.refund.enums.ProductTypeEnum#name
+          line: 22
+          commit: ''
+          content_digest: ''
+        resolution_status: resolved
+      source_ref:
+        repository: ''
+        path: app/model/src/main/java/com/ly/flight/chainsaas/refund/enums/ProductTypeEnum.java
+        symbol: com.ly.flight.chainsaas.refund.enums.ProductTypeEnum
+        line: 13
+        commit: ''
+        content_digest: ''
+      resolution_status: resolved
+    - qualified_type: com.ly.flight.chainsaas.refund.enums.RefundOrderStateEnum
+      kind: enum
+      base_types: []
+      fields:
+      - field_name: code
+        declared_type: int
+        referenced_type: ''
+        collection: false
+        annotations: []
+        source_ref:
+          repository: ''
+          path: app/model/src/main/java/com/ly/flight/chainsaas/refund/enums/RefundOrderStateEnum.java
+          symbol: com.ly.flight.chainsaas.refund.enums.RefundOrderStateEnum#code
+          line: 34
+          commit: ''
+          content_digest: ''
+        resolution_status: resolved
+      - field_name: name
+        declared_type: String
+        referenced_type: ''
+        collection: false
+        annotations: []
+        source_ref:
+          repository: ''
+          path: app/model/src/main/java/com/ly/flight/chainsaas/refund/enums/RefundOrderStateEnum.java
+          symbol: com.ly.flight.chainsaas.refund.enums.RefundOrderStateEnum#name
+          line: 36
+          commit: ''
+          content_digest: ''
+        resolution_status: resolved
+      source_ref:
+        repository: ''
+        path: app/model/src/main/java/com/ly/flight/chainsaas/refund/enums/RefundOrderStateEnum.java
+        symbol: com.ly.flight.chainsaas.refund.enums.RefundOrderStateEnum
+        line: 10
+        commit: ''
+        content_digest: ''
+      resolution_status: resolved
+    - qualified_type: com.ly.flight.chainsaas.refund.enums.TravelTypeEnum
+      kind: enum
+      base_types: []
+      fields:
+      - field_name: code
+        declared_type: String
+        referenced_type: ''
+        collection: false
+        annotations: []
+        source_ref:
+          repository: ''
+          path: app/model/src/main/java/com/ly/flight/chainsaas/refund/enums/TravelTypeEnum.java
+          symbol: com.ly.flight.chainsaas.refund.enums.TravelTypeEnum#code
+          line: 19
+          commit: ''
+          content_digest: ''
+        resolution_status: resolved
+      - field_name: numCode
+        declared_type: int
+        referenced_type: ''
+        collection: false
+        annotations: []
+        source_ref:
+          repository: ''
+          path: app/model/src/main/java/com/ly/flight/chainsaas/refund/enums/TravelTypeEnum.java
+          symbol: com.ly.flight.chainsaas.refund.enums.TravelTypeEnum#numCode
+          line: 21
+          commit: ''
+          content_digest: ''
+        resolution_status: resolved
+      - field_name: name
+        declared_type: String
+        referenced_type: ''
+        collection: false
+        annotations: []
+        source_ref:
+          repository: ''
+          path: app/model/src/main/java/com/ly/flight/chainsaas/refund/enums/TravelTypeEnum.java
+          symbol: com.ly.flight.chainsaas.refund.enums.TravelTypeEnum#name
+          line: 26
+          commit: ''
+          content_digest: ''
+        resolution_status: resolved
+      source_ref:
+        repository: ''
+        path: app/model/src/main/java/com/ly/flight/chainsaas/refund/enums/TravelTypeEnum.java
+        symbol: com.ly.flight.chainsaas.refund.enums.TravelTypeEnum
+        line: 6
+        commit: ''
+        content_digest: ''
+      resolution_status: resolved
+    - qualified_type: com.ly.flight.chainsaas.refund.facade.model.BaseRequest
+      kind: class
+      base_types: []
+      fields:
+      - field_name: traceId
+        declared_type: String
+        referenced_type: ''
+        collection: false
+        annotations: []
+        source_ref:
+          repository: ''
+          path: app/facade/src/main/java/com/ly/flight/chainsaas/refund/facade/model/BaseRequest.java
+          symbol: com.ly.flight.chainsaas.refund.facade.model.BaseRequest#traceId
+          line: 21
+          commit: ''
+          content_digest: ''
+        resolution_status: resolved
+      - field_name: operator
+        declared_type: String
+        referenced_type: ''
+        collection: false
+        annotations: []
+        source_ref:
+          repository: ''
+          path: app/facade/src/main/java/com/ly/flight/chainsaas/refund/facade/model/BaseRequest.java
+          symbol: com.ly.flight.chainsaas.refund.facade.model.BaseRequest#operator
+          line: 26
+          commit: ''
+          content_digest: ''
+        resolution_status: resolved
+      source_ref:
+        repository: ''
+        path: app/facade/src/main/java/com/ly/flight/chainsaas/refund/facade/model/BaseRequest.java
+        symbol: com.ly.flight.chainsaas.refund.facade.model.BaseRequest
+        line: 13
+        commit: ''
+        content_digest: ''
+      resolution_status: resolved
+    - qualified_type: com.ly.flight.chainsaas.refund.facade.model.BaseResponse
+      kind: class
+      base_types: []
+      fields:
+      - field_name: success
+        declared_type: boolean
+        referenced_type: ''
+        collection: false
+        annotations: []
+        source_ref:
+          repository: ''
+          path: app/facade/src/main/java/com/ly/flight/chainsaas/refund/facade/model/BaseResponse.java
+          symbol: com.ly.flight.chainsaas.refund.facade.model.BaseResponse#success
+          line: 20
+          commit: ''
+          content_digest: ''
+        resolution_status: resolved
+      - field_name: code
+        declared_type: String
+        referenced_type: ''
+        collection: false
+        annotations: []
+        source_ref:
+          repository: ''
+          path: app/facade/src/main/java/com/ly/flight/chainsaas/refund/facade/model/BaseResponse.java
+          symbol: com.ly.flight.chainsaas.refund.facade.model.BaseResponse#code
+          line: 25
+          commit: ''
+          content_digest: ''
+        resolution_status: resolved
+      - field_name: message
+        declared_type: String
+        referenced_type: ''
+        collection: false
+        annotations: []
+        source_ref:
+          repository: ''
+          path: app/facade/src/main/java/com/ly/flight/chainsaas/refund/facade/model/BaseResponse.java
+          symbol: com.ly.flight.chainsaas.refund.facade.model.BaseResponse#message
+          line: 30
+          commit: ''
+          content_digest: ''
+        resolution_status: resolved
+      - field_name: data
+        declared_type: T
+        referenced_type: T
+        collection: false
+        annotations: []
+        source_ref:
+          repository: ''
+          path: app/facade/src/main/java/com/ly/flight/chainsaas/refund/facade/model/BaseResponse.java
+          symbol: com.ly.flight.chainsaas.refund.facade.model.BaseResponse#data
+          line: 35
+          commit: ''
+          content_digest: ''
+        resolution_status: resolved
+      - field_name: traceId
+        declared_type: String
+        referenced_type: ''
+        collection: false
+        annotations: []
+        source_ref:
+          repository: ''
+          path: app/facade/src/main/java/com/ly/flight/chainsaas/refund/facade/model/BaseResponse.java
+          symbol: com.ly.flight.chainsaas.refund.facade.model.BaseResponse#traceId
+          line: 40
+          commit: ''
+          content_digest: ''
+        resolution_status: resolved
+      source_ref:
+        repository: ''
+        path: app/facade/src/main/java/com/ly/flight/chainsaas/refund/facade/model/BaseResponse.java
+        symbol: com.ly.flight.chainsaas.refund.facade.model.BaseResponse
+        line: 12
+        commit: ''
+        content_digest: ''
+      resolution_status: resolved
+    - qualified_type: com.ly.flight.chainsaas.refund.facade.model.request.RefundOrderQueryRequest
+      kind: class
+      base_types:
+      - com.ly.flight.chainsaas.refund.facade.model.BaseRequest
+      fields:
+      - field_name: page
+        declared_type: int
+        referenced_type: ''
+        collection: false
+        annotations: []
+        source_ref:
+          repository: ''
+          path: app/facade/src/main/java/com/ly/flight/chainsaas/refund/facade/model/request/RefundOrderQueryRequest.java
+          symbol: com.ly.flight.chainsaas.refund.facade.model.request.RefundOrderQueryRequest#page
+          line: 23
+          commit: ''
+          content_digest: ''
+        resolution_status: resolved
+      - field_name: pageSize
+        declared_type: int
+        referenced_type: ''
+        collection: false
+        annotations: []
+        source_ref:
+          repository: ''
+          path: app/facade/src/main/java/com/ly/flight/chainsaas/refund/facade/model/request/RefundOrderQueryRequest.java
+          symbol: com.ly.flight.chainsaas.refund.facade.model.request.RefundOrderQueryRequest#pageSize
+          line: 27
+          commit: ''
+          content_digest: ''
+        resolution_status: resolved
+      - field_name: lastName
+        declared_type: String
+        referenced_type: ''
+        collection: false
+        annotations: []
+        source_ref:
+          repository: ''
+          path: app/facade/src/main/java/com/ly/flight/chainsaas/refund/facade/model/request/RefundOrderQueryRequest.java
+          symbol: com.ly.flight.chainsaas.refund.facade.model.request.RefundOrderQueryRequest#lastName
+          line: 31
+          commit: ''
+          content_digest: ''
+        resolution_status: resolved
+      - field_name: firstName
+        declared_type: String
+        referenced_type: ''
+        collection: false
+        annotations: []
+        source_ref:
+          repository: ''
+          path: app/facade/src/main/java/com/ly/flight/chainsaas/refund/facade/model/request/RefundOrderQueryRequest.java
+          symbol: com.ly.flight.chainsaas.refund.facade.model.request.RefundOrderQueryRequest#firstName
+          line: 36
+          commit: ''
+          content_digest: ''
+        resolution_status: resolved
+      - field_name: orderSerialNo
+        declared_type: String
+        referenced_type: ''
+        collection: false
+        annotations: []
+        source_ref:
+          repository: ''
+          path: app/facade/src/main/java/com/ly/flight/chainsaas/refund/facade/model/request/RefundOrderQueryRequest.java
+          symbol: com.ly.flight.chainsaas.refund.facade.model.request.RefundOrderQueryRequest#orderSerialNo
+          line: 40
+          commit: ''
+          content_digest: ''
+        resolution_status: resolved
+      - field_name: refundSerialNo
+        declared_type: String
+        referenced_type: ''
+        collection: false
+        annotations: []
+        source_ref:
+          repository: ''
+          path: app/facade/src/main/java/com/ly/flight/chainsaas/refund/facade/model/request/RefundOrderQueryRequest.java
+          symbol: com.ly.flight.chainsaas.refund.facade.model.request.RefundOrderQueryRequest#refundSerialNo
+          line: 44
+          commit: ''
+          content_digest: ''
+        resolution_status: resolved
+      - field_name: refundSerialNoList
+        declared_type: List<String>
+        referenced_type: java.lang.String
+        collection: true
+        annotations: []
+        source_ref:
+          repository: ''
+          path: app/facade/src/main/java/com/ly/flight/chainsaas/refund/facade/model/request/RefundOrderQueryRequest.java
+          symbol: com.ly.flight.chainsaas.refund.facade.model.request.RefundOrderQueryRequest#refundSerialNoList
+          line: 48
+          commit: ''
+          content_digest: ''
+        resolution_status: resolved
+      - field_name: orderSerialNoList
+        declared_type: List<String>
+        referenced_type: java.lang.String
+        collection: true
+        annotations: []
+        source_ref:
+          repository: ''
+          path: app/facade/src/main/java/com/ly/flight/chainsaas/refund/facade/model/request/RefundOrderQueryRequest.java
+          symbol: com.ly.flight.chainsaas.refund.facade.model.request.RefundOrderQueryRequest#orderSerialNoList
+          line: 53
+          commit: ''
+          content_digest: ''
+        resolution_status: resolved
+      - field_name: thirdOrderSerialNo
+        declared_type: String
+        referenced_type: ''
+        collection: false
+        annotations: []
+        source_ref:
+          repository: ''
+          path: app/facade/src/main/java/com/ly/flight/chainsaas/refund/facade/model/request/RefundOrderQueryRequest.java
+          symbol: com.ly.flight.chainsaas.refund.facade.model.request.RefundOrderQueryRequest#thirdOrderSerialNo
+          line: 57
+          commit: ''
+          content_digest: ''
+        resolution_status: resolved
+      - field_name: orderState
+        declared_type: Integer
+        referenced_type: ''
+        collection: false
+        annotations: []
+        source_ref:
+          repository: ''
+          path: app/facade/src/main/java/com/ly/flight/chainsaas/refund/facade/model/request/RefundOrderQueryRequest.java
+          symbol: com.ly.flight.chainsaas.refund.facade.model.request.RefundOrderQueryRequest#orderState
+          line: 61
+          commit: ''
+          content_digest: ''
+        resolution_status: resolved
+      - field_name: refundType
+        declared_type: Integer
+        referenced_type: ''
+        collection: false
+        annotations: []
+        source_ref:
+          repository: ''
+          path: app/facade/src/main/java/com/ly/flight/chainsaas/refund/facade/model/request/RefundOrderQueryRequest.java
+          symbol: com.ly.flight.chainsaas.refund.facade.model.request.RefundOrderQueryRequest#refundType
+          line: 66
+          commit: ''
+          content_digest: ''
+        resolution_status: resolved
+      - field_name: involuntaryRefundType
+        declared_type: Integer
+        referenced_type: ''
+        collection: false
+        annotations: []
+        source_ref:
+          repository: ''
+          path: app/facade/src/main/java/com/ly/flight/chainsaas/refund/facade/model/request/RefundOrderQueryRequest.java
+          symbol: com.ly.flight.chainsaas.refund.facade.model.request.RefundOrderQueryRequest#involuntaryRefundType
+          line: 71
+          commit: ''
+          content_digest: ''
+        resolution_status: resolved
+      - field_name: ticketAirline
+        declared_type: String
+        referenced_type: ''
+        collection: false
+        annotations: []
+        source_ref:
+          repository: ''
+          path: app/facade/src/main/java/com/ly/flight/chainsaas/refund/facade/model/request/RefundOrderQueryRequest.java
+          symbol: com.ly.flight.chainsaas.refund.facade.model.request.RefundOrderQueryRequest#ticketAirline
+          line: 76
+          commit: ''
+          content_digest: ''
+        resolution_status: resolved
+      - field_name: traceId
+        declared_type: String
+        referenced_type: ''
+        collection: false
+        annotations: []
+        source_ref:
+          repository: ''
+          path: app/facade/src/main/java/com/ly/flight/chainsaas/refund/facade/model/request/RefundOrderQueryRequest.java
+          symbol: com.ly.flight.chainsaas.refund.facade.model.request.RefundOrderQueryRequest#traceId
+          line: 80
+          commit: ''
+          content_digest: ''
+        resolution_status: resolved
+      - field_name: depFromDate
+        declared_type: String
+        referenced_type: ''
+        collection: false
+        annotations: []
+        source_ref:
+          repository: ''
+          path: app/facade/src/main/java/com/ly/flight/chainsaas/refund/facade/model/request/RefundOrderQueryRequest.java
+          symbol: com.ly.flight.chainsaas.refund.facade.model.request.RefundOrderQueryRequest#depFromDate
+          line: 84
+          commit: ''
+          content_digest: ''
+        resolution_status: resolved
+      - field_name: depToDate
+        declared_type: String
+        referenced_type: ''
+        collection: false
+        annotations: []
+        source_ref:
+          repository: ''
+          path: app/facade/src/main/java/com/ly/flight/chainsaas/refund/facade/model/request/RefundOrderQueryRequest.java
+          symbol: com.ly.flight.chainsaas.refund.facade.model.request.RefundOrderQueryRequest#depToDate
+          line: 88
+          commit: ''
+          content_digest: ''
+        resolution_status: resolved
+      - field_name: createFromDate
+        declared_type: String
+        referenced_type: ''
+        collection: false
+        annotations: []
+        source_ref:
+          repository: ''
+          path: app/facade/src/main/java/com/ly/flight/chainsaas/refund/facade/model/request/RefundOrderQueryRequest.java
+          symbol: com.ly.flight.chainsaas.refund.facade.model.request.RefundOrderQueryRequest#createFromDate
+          line: 92
+          commit: ''
+          content_digest: ''
+        resolution_status: resolved
+      - field_name: createToDate
+        declared_type: String
+        referenced_type: ''
+        collection: false
+        annotations: []
+        source_ref:
+          repository: ''
+          path: app/facade/src/main/java/com/ly/flight/chainsaas/refund/facade/model/request/RefundOrderQueryRequest.java
+          symbol: com.ly.flight.chainsaas.refund.facade.model.request.RefundOrderQueryRequest#createToDate
+          line: 96
+          commit: ''
+          content_digest: ''
+        resolution_status: resolved
+      - field_name: pnr
+        declared_type: String
+        referenced_type: ''
+        collection: false
+        annotations: []
+        source_ref:
+          repository: ''
+          path: app/facade/src/main/java/com/ly/flight/chainsaas/refund/facade/model/request/RefundOrderQueryRequest.java
+          symbol: com.ly.flight.chainsaas.refund.facade.model.request.RefundOrderQueryRequest#pnr
+          line: 100
+          commit: ''
+          content_digest: ''
+        resolution_status: resolved
+      - field_name: merchantId
+        declared_type: String
+        referenced_type: ''
+        collection: false
+        annotations: []
+        source_ref:
+          repository: ''
+          path: app/facade/src/main/java/com/ly/flight/chainsaas/refund/facade/model/request/RefundOrderQueryRequest.java
+          symbol: com.ly.flight.chainsaas.refund.facade.model.request.RefundOrderQueryRequest#merchantId
+          line: 104
+          commit: ''
+          content_digest: ''
+        resolution_status: resolved
+      - field_name: platFormId
+        declared_type: String
+        referenced_type: ''
+        collection: false
+        annotations: []
+        source_ref:
+          repository: ''
+          path: app/facade/src/main/java/com/ly/flight/chainsaas/refund/facade/model/request/RefundOrderQueryRequest.java
+          symbol: com.ly.flight.chainsaas.refund.facade.model.request.RefundOrderQueryRequest#platFormId
+          line: 110
+          commit: ''
+          content_digest: ''
+        resolution_status: resolved
+      - field_name: ticketNo
+        declared_type: String
+        referenced_type: ''
+        collection: false
+        annotations: []
+        source_ref:
+          repository: ''
+          path: app/facade/src/main/java/com/ly/flight/chainsaas/refund/facade/model/request/RefundOrderQueryRequest.java
+          symbol: com.ly.flight.chainsaas.refund.facade.model.request.RefundOrderQueryRequest#ticketNo
+          line: 114
+          commit: ''
+          content_digest: ''
+        resolution_status: resolved
+      - field_name: buyer
+        declared_type: String
+        referenced_type: ''
+        collection: false
+        annotations: []
+        source_ref:
+          repository: ''
+          path: app/facade/src/main/java/com/ly/flight/chainsaas/refund/facade/model/request/RefundOrderQueryRequest.java
+          symbol: com.ly.flight.chainsaas.refund.facade.model.request.RefundOrderQueryRequest#buyer
+          line: 116
+          commit: ''
+          content_digest: ''
+        resolution_status: resolved
+      - field_name: orderType
+        declared_type: String
+        referenced_type: ''
+        collection: false
+        annotations: []
+        source_ref:
+          repository: ''
+          path: app/facade/src/main/java/com/ly/flight/chainsaas/refund/facade/model/request/RefundOrderQueryRequest.java
+          symbol: com.ly.flight.chainsaas.refund.facade.model.request.RefundOrderQueryRequest#orderType
+          line: 118
+          commit: ''
+          content_digest: ''
+        resolution_status: resolved
+      - field_name: memberId
+        declared_type: String
+        referenced_type: ''
+        collection: false
+        annotations: []
+        source_ref:
+          repository: ''
+          path: app/facade/src/main/java/com/ly/flight/chainsaas/refund/facade/model/request/RefundOrderQueryRequest.java
+          symbol: com.ly.flight.chainsaas.refund.facade.model.request.RefundOrderQueryRequest#memberId
+          line: 121
+          commit: ''
+          content_digest: ''
+        resolution_status: resolved
+      - field_name: applyToAirline
+        declared_type: Integer
+        referenced_type: ''
+        collection: false
+        annotations: []
+        source_ref:
+          repository: ''
+          path: app/facade/src/main/java/com/ly/flight/chainsaas/refund/facade/model/request/RefundOrderQueryRequest.java
+          symbol: com.ly.flight.chainsaas.refund.facade.model.request.RefundOrderQueryRequest#applyToAirline
+          line: 126
+          commit: ''
+          content_digest: ''
+        resolution_status: resolved
+      - field_name: beginUpdateTime
+        declared_type: Date
+        referenced_type: ''
+        collection: false
+        annotations: []
+        source_ref:
+          repository: ''
+          path: app/facade/src/main/java/com/ly/flight/chainsaas/refund/facade/model/request/RefundOrderQueryRequest.java
+          symbol: com.ly.flight.chainsaas.refund.facade.model.request.RefundOrderQueryRequest#beginUpdateTime
+          line: 131
+          commit: ''
+          content_digest: ''
+        resolution_status: resolved
+      - field_name: endUpdateTime
+        declared_type: Date
+        referenced_type: ''
+        collection: false
+        annotations: []
+        source_ref:
+          repository: ''
+          path: app/facade/src/main/java/com/ly/flight/chainsaas/refund/facade/model/request/RefundOrderQueryRequest.java
+          symbol: com.ly.flight.chainsaas.refund.facade.model.request.RefundOrderQueryRequest#endUpdateTime
+          line: 136
+          commit: ''
+          content_digest: ''
+        resolution_status: resolved
+      - field_name: needRetryEvent
+        declared_type: boolean
+        referenced_type: ''
+        collection: false
+        annotations: []
+        source_ref:
+          repository: ''
+          path: app/facade/src/main/java/com/ly/flight/chainsaas/refund/facade/model/request/RefundOrderQueryRequest.java
+          symbol: com.ly.flight.chainsaas.refund.facade.model.request.RefundOrderQueryRequest#needRetryEvent
+          line: 141
+          commit: ''
+          content_digest: ''
+        resolution_status: resolved
+      - field_name: gds
+        declared_type: String
+        referenced_type: ''
+        collection: false
+        annotations: []
+        source_ref:
+          repository: ''
+          path: app/facade/src/main/java/com/ly/flight/chainsaas/refund/facade/model/request/RefundOrderQueryRequest.java
+          symbol: com.ly.flight.chainsaas.refund.facade.model.request.RefundOrderQueryRequest#gds
+          line: 145
+          commit: ''
+          content_digest: ''
+        resolution_status: resolved
+      - field_name: refundOrderType
+        declared_type: String
+        referenced_type: ''
+        collection: false
+        annotations: []
+        source_ref:
+          repository: ''
+          path: app/facade/src/main/java/com/ly/flight/chainsaas/refund/facade/model/request/RefundOrderQueryRequest.java
+          symbol: com.ly.flight.chainsaas.refund.facade.model.request.RefundOrderQueryRequest#refundOrderType
+          line: 151
+          commit: ''
+          content_digest: ''
+        resolution_status: resolved
+      - field_name: refundChannel
+        declared_type: String
+        referenced_type: ''
+        collection: false
+        annotations: []
+        source_ref:
+          repository: ''
+          path: app/facade/src/main/java/com/ly/flight/chainsaas/refund/facade/model/request/RefundOrderQueryRequest.java
+          symbol: com.ly.flight.chainsaas.refund.facade.model.request.RefundOrderQueryRequest#refundChannel
+          line: 157
+          commit: ''
+          content_digest: ''
+        resolution_status: resolved
+      - field_name: supplyChannel
+        declared_type: Integer
+        referenced_type: ''
+        collection: false
+        annotations: []
+        source_ref:
+          repository: ''
+          path: app/facade/src/main/java/com/ly/flight/chainsaas/refund/facade/model/request/RefundOrderQueryRequest.java
+          symbol: com.ly.flight.chainsaas.refund.facade.model.request.RefundOrderQueryRequest#supplyChannel
+          line: 162
+          commit: ''
+          content_digest: ''
+        resolution_status: resolved
+      source_ref:
+        repository: ''
+        path: app/facade/src/main/java/com/ly/flight/chainsaas/refund/facade/model/request/RefundOrderQueryRequest.java
+        symbol: com.ly.flight.chainsaas.refund.facade.model.request.RefundOrderQueryRequest
+        line: 18
+        commit: ''
+        content_digest: ''
+      resolution_status: resolved
+    - qualified_type: com.ly.flight.chainsaas.refund.facade.model.response.RefundOrderListResponse
+      kind: class
+      base_types:
+      - com.ly.flight.chainsaas.refund.facade.model.BaseResponse
+      fields:
+      - field_name: list
+        declared_type: PageVO<SaasRefundOrderVO>
+        referenced_type: com.ly.flight.chainsaas.refund.model.PageVO<com.ly.flight.chainsaas.refund.model.SaasRefundOrderVO>
+        collection: false
+        annotations: []
+        source_ref:
+          repository: ''
+          path: app/facade/src/main/java/com/ly/flight/chainsaas/refund/facade/model/response/RefundOrderListResponse.java
+          symbol: com.ly.flight.chainsaas.refund.facade.model.response.RefundOrderListResponse#list
+          line: 16
+          commit: ''
+          content_digest: ''
+        resolution_status: resolved
+      - field_name: saasOrderStateCounts
+        declared_type: List<SaasOrderStateCountVO>
+        referenced_type: com.ly.flight.chainsaas.refund.model.SaasOrderStateCountVO
+        collection: true
+        annotations: []
+        source_ref:
+          repository: ''
+          path: app/facade/src/main/java/com/ly/flight/chainsaas/refund/facade/model/response/RefundOrderListResponse.java
+          symbol: com.ly.flight.chainsaas.refund.facade.model.response.RefundOrderListResponse#saasOrderStateCounts
+          line: 17
+          commit: ''
+          content_digest: ''
+        resolution_status: resolved
+      source_ref:
+        repository: ''
+        path: app/facade/src/main/java/com/ly/flight/chainsaas/refund/facade/model/response/RefundOrderListResponse.java
+        symbol: com.ly.flight.chainsaas.refund.facade.model.response.RefundOrderListResponse
+        line: 14
+        commit: ''
+        content_digest: ''
+      resolution_status: resolved
+    - qualified_type: com.ly.flight.chainsaas.refund.model.BaseVO<java.lang.Long>
+      kind: class
+      base_types: []
+      fields:
+      - field_name: traceId
+        declared_type: String
+        referenced_type: ''
+        collection: false
+        annotations: []
+        source_ref:
+          repository: ''
+          path: app/model/src/main/java/com/ly/flight/chainsaas/refund/model/BaseVO.java
+          symbol: com.ly.flight.chainsaas.refund.model.BaseVO#traceId
+          line: 24
+          commit: ''
+          content_digest: ''
+        resolution_status: resolved
+      source_ref:
+        repository: ''
+        path: app/model/src/main/java/com/ly/flight/chainsaas/refund/model/BaseVO.java
+        symbol: com.ly.flight.chainsaas.refund.model.BaseVO
+        line: 18
+        commit: ''
+        content_digest: ''
+      resolution_status: resolved
+    - qualified_type: com.ly.flight.chainsaas.refund.model.CoreVO
+      kind: class
+      base_types:
+      - com.ly.flight.chainsaas.refund.model.BaseVO<java.lang.Long>
+      fields:
+      - field_name: id
+        declared_type: Long
+        referenced_type: ''
+        collection: false
+        annotations: []
+        source_ref:
+          repository: ''
+          path: app/model/src/main/java/com/ly/flight/chainsaas/refund/model/CoreVO.java
+          symbol: com.ly.flight.chainsaas.refund.model.CoreVO#id
+          line: 25
+          commit: ''
+          content_digest: ''
+        resolution_status: resolved
+      - field_name: refundSerialNo
+        declared_type: String
+        referenced_type: ''
+        collection: false
+        annotations: []
+        source_ref:
+          repository: ''
+          path: app/model/src/main/java/com/ly/flight/chainsaas/refund/model/CoreVO.java
+          symbol: com.ly.flight.chainsaas.refund.model.CoreVO#refundSerialNo
+          line: 30
+          commit: ''
+          content_digest: ''
+        resolution_status: resolved
+      - field_name: orderSerialNo
+        declared_type: String
+        referenced_type: ''
+        collection: false
+        annotations: []
+        source_ref:
+          repository: ''
+          path: app/model/src/main/java/com/ly/flight/chainsaas/refund/model/CoreVO.java
+          symbol: com.ly.flight.chainsaas.refund.model.CoreVO#orderSerialNo
+          line: 35
+          commit: ''
+          content_digest: ''
+        resolution_status: resolved
+      - field_name: operator
+        declared_type: String
+        referenced_type: ''
+        collection: false
+        annotations: []
+        source_ref:
+          repository: ''
+          path: app/model/src/main/java/com/ly/flight/chainsaas/refund/model/CoreVO.java
+          symbol: com.ly.flight.chainsaas.refund.model.CoreVO#operator
+          line: 38
+          commit: ''
+          content_digest: ''
+        resolution_status: resolved
+      - field_name: createTime
+        declared_type: Date
+        referenced_type: ''
+        collection: false
+        annotations: []
+        source_ref:
+          repository: ''
+          path: app/model/src/main/java/com/ly/flight/chainsaas/refund/model/CoreVO.java
+          symbol: com.ly.flight.chainsaas.refund.model.CoreVO#createTime
+          line: 41
+          commit: ''
+          content_digest: ''
+        resolution_status: resolved
+      - field_name: updateTime
+        declared_type: Date
+        referenced_type: ''
+        collection: false
+        annotations: []
+        source_ref:
+          repository: ''
+          path: app/model/src/main/java/com/ly/flight/chainsaas/refund/model/CoreVO.java
+          symbol: com.ly.flight.chainsaas.refund.model.CoreVO#updateTime
+          line: 44
+          commit: ''
+          content_digest: ''
+        resolution_status: resolved
+      - field_name: delete
+        declared_type: CommonStateEnum
+        referenced_type: com.ly.flight.chainsaas.refund.enums.CommonStateEnum
+        collection: false
+        annotations: []
+        source_ref:
+          repository: ''
+          path: app/model/src/main/java/com/ly/flight/chainsaas/refund/model/CoreVO.java
+          symbol: com.ly.flight.chainsaas.refund.model.CoreVO#delete
+          line: 47
+          commit: ''
+          content_digest: ''
+        resolution_status: resolved
+      - field_name: env
+        declared_type: String
+        referenced_type: ''
+        collection: false
+        annotations: []
+        source_ref:
+          repository: ''
+          path: app/model/src/main/java/com/ly/flight/chainsaas/refund/model/CoreVO.java
+          symbol: com.ly.flight.chainsaas.refund.model.CoreVO#env
+          line: 50
+          commit: ''
+          content_digest: ''
+        resolution_status: resolved
+      source_ref:
+        repository: ''
+        path: app/model/src/main/java/com/ly/flight/chainsaas/refund/model/CoreVO.java
+        symbol: com.ly.flight.chainsaas.refund.model.CoreVO
+        line: 18
+        commit: ''
+        content_digest: ''
+      resolution_status: resolved
+    - qualified_type: com.ly.flight.chainsaas.refund.model.PageVO<com.ly.flight.chainsaas.refund.model.SaasRefundOrderVO>
+      kind: class
+      base_types: []
+      fields:
+      - field_name: totalCount
+        declared_type: int
+        referenced_type: ''
+        collection: false
+        annotations: []
+        source_ref:
+          repository: ''
+          path: app/model/src/main/java/com/ly/flight/chainsaas/refund/model/PageVO.java
+          symbol: com.ly.flight.chainsaas.refund.model.PageVO#totalCount
+          line: 11
+          commit: ''
+          content_digest: ''
+        resolution_status: resolved
+      - field_name: totalPageCount
+        declared_type: int
+        referenced_type: ''
+        collection: false
+        annotations: []
+        source_ref:
+          repository: ''
+          path: app/model/src/main/java/com/ly/flight/chainsaas/refund/model/PageVO.java
+          symbol: com.ly.flight.chainsaas.refund.model.PageVO#totalPageCount
+          line: 12
+          commit: ''
+          content_digest: ''
+        resolution_status: resolved
+      - field_name: pageList
+        declared_type: List<com.ly.flight.chainsaas.refund.model.SaasRefundOrderVO>
+        referenced_type: com.ly.flight.chainsaas.refund.model.SaasRefundOrderVO
+        collection: true
+        annotations: []
+        source_ref:
+          repository: ''
+          path: app/model/src/main/java/com/ly/flight/chainsaas/refund/model/PageVO.java
+          symbol: com.ly.flight.chainsaas.refund.model.PageVO#pageList
+          line: 13
+          commit: ''
+          content_digest: ''
+        resolution_status: resolved
+      source_ref:
+        repository: ''
+        path: app/model/src/main/java/com/ly/flight/chainsaas/refund/model/PageVO.java
+        symbol: com.ly.flight.chainsaas.refund.model.PageVO
+        line: 8
+        commit: ''
+        content_digest: ''
+      resolution_status: resolved
+    - qualified_type: com.ly.flight.chainsaas.refund.model.SaasOrderStateCountVO
+      kind: class
+      base_types: []
+      fields:
+      - field_name: refundState
+        declared_type: RefundOrderStateEnum
+        referenced_type: com.ly.flight.chainsaas.refund.enums.RefundOrderStateEnum
+        collection: false
+        annotations: []
+        source_ref:
+          repository: ''
+          path: app/model/src/main/java/com/ly/flight/chainsaas/refund/model/SaasOrderStateCountVO.java
+          symbol: com.ly.flight.chainsaas.refund.model.SaasOrderStateCountVO#refundState
+          line: 15
+          commit: ''
+          content_digest: ''
+        resolution_status: resolved
+      - field_name: count
+        declared_type: Double
+        referenced_type: ''
+        collection: false
+        annotations: []
+        source_ref:
+          repository: ''
+          path: app/model/src/main/java/com/ly/flight/chainsaas/refund/model/SaasOrderStateCountVO.java
+          symbol: com.ly.flight.chainsaas.refund.model.SaasOrderStateCountVO#count
+          line: 17
+          commit: ''
+          content_digest: ''
+        resolution_status: resolved
+      source_ref:
+        repository: ''
+        path: app/model/src/main/java/com/ly/flight/chainsaas/refund/model/SaasOrderStateCountVO.java
+        symbol: com.ly.flight.chainsaas.refund.model.SaasOrderStateCountVO
+        line: 12
+        commit: ''
+        content_digest: ''
+      resolution_status: resolved
+    - qualified_type: com.ly.flight.chainsaas.refund.model.SaasPaymentPassagerVO
+      kind: class
+      base_types:
+      - com.ly.flight.chainsaas.refund.model.CoreVO
+      fields:
+      - field_name: passagerName
+        declared_type: String
+        referenced_type: ''
+        collection: false
+        annotations: []
+        source_ref:
+          repository: ''
+          path: app/model/src/main/java/com/ly/flight/chainsaas/refund/model/SaasPaymentPassagerVO.java
+          symbol: com.ly.flight.chainsaas.refund.model.SaasPaymentPassagerVO#passagerName
+          line: 17
+          commit: ''
+          content_digest: ''
+        resolution_status: resolved
+      - field_name: isSendBill
+        declared_type: Integer
+        referenced_type: ''
+        collection: false
+        annotations: []
+        source_ref:
+          repository: ''
+          path: app/model/src/main/java/com/ly/flight/chainsaas/refund/model/SaasPaymentPassagerVO.java
+          symbol: com.ly.flight.chainsaas.refund.model.SaasPaymentPassagerVO#isSendBill
+          line: 22
+          commit: ''
+          content_digest: ''
+        resolution_status: resolved
+      - field_name: billBatch
+        declared_type: String
+        referenced_type: ''
+        collection: false
+        annotations: []
+        source_ref:
+          repository: ''
+          path: app/model/src/main/java/com/ly/flight/chainsaas/refund/model/SaasPaymentPassagerVO.java
+          symbol: com.ly.flight.chainsaas.refund.model.SaasPaymentPassagerVO#billBatch
+          line: 27
+          commit: ''
+          content_digest: ''
+        resolution_status: resolved
+      - field_name: paymentAmount
+        declared_type: BigDecimal
+        referenced_type: ''
+        collection: false
+        annotations: []
+        source_ref:
+          repository: ''
+          path: app/model/src/main/java/com/ly/flight/chainsaas/refund/model/SaasPaymentPassagerVO.java
+          symbol: com.ly.flight.chainsaas.refund.model.SaasPaymentPassagerVO#paymentAmount
+          line: 32
+          commit: ''
+          content_digest: ''
+        resolution_status: resolved
+      - field_name: realPaymentAmount
+        declared_type: BigDecimal
+        referenced_type: ''
+        collection: false
+        annotations: []
+        source_ref:
+          repository: ''
+          path: app/model/src/main/java/com/ly/flight/chainsaas/refund/model/SaasPaymentPassagerVO.java
+          symbol: com.ly.flight.chainsaas.refund.model.SaasPaymentPassagerVO#realPaymentAmount
+          line: 37
+          commit: ''
+          content_digest: ''
+        resolution_status: resolved
+      - field_name: paymentCurrency
+        declared_type: String
+        referenced_type: ''
+        collection: false
+        annotations: []
+        source_ref:
+          repository: ''
+          path: app/model/src/main/java/com/ly/flight/chainsaas/refund/model/SaasPaymentPassagerVO.java
+          symbol: com.ly.flight.chainsaas.refund.model.SaasPaymentPassagerVO#paymentCurrency
+          line: 42
+          commit: ''
+          content_digest: ''
+        resolution_status: resolved
+      source_ref:
+        repository: ''
+        path: app/model/src/main/java/com/ly/flight/chainsaas/refund/model/SaasPaymentPassagerVO.java
+        symbol: com.ly.flight.chainsaas.refund.model.SaasPaymentPassagerVO
+        line: 11
+        commit: ''
+        content_digest: ''
+      resolution_status: resolved
+    - qualified_type: com.ly.flight.chainsaas.refund.model.SaasPaymentVO
+      kind: class
+      base_types:
+      - com.ly.flight.chainsaas.refund.model.CoreVO
+      fields:
+      - field_name: paymentStyle
+        declared_type: Integer
+        referenced_type: ''
+        collection: false
+        annotations: []
+        source_ref:
+          repository: ''
+          path: app/model/src/main/java/com/ly/flight/chainsaas/refund/model/SaasPaymentVO.java
+          symbol: com.ly.flight.chainsaas.refund.model.SaasPaymentVO#paymentStyle
+          line: 15
+          commit: ''
+          content_digest: ''
+        resolution_status: resolved
+      - field_name: paymentChannel
+        declared_type: Integer
+        referenced_type: ''
+        collection: false
+        annotations: []
+        source_ref:
+          repository: ''
+          path: app/model/src/main/java/com/ly/flight/chainsaas/refund/model/SaasPaymentVO.java
+          symbol: com.ly.flight.chainsaas.refund.model.SaasPaymentVO#paymentChannel
+          line: 20
+          commit: ''
+          content_digest: ''
+        resolution_status: resolved
+      - field_name: paymentStatement
+        declared_type: String
+        referenced_type: ''
+        collection: false
+        annotations: []
+        source_ref:
+          repository: ''
+          path: app/model/src/main/java/com/ly/flight/chainsaas/refund/model/SaasPaymentVO.java
+          symbol: com.ly.flight.chainsaas.refund.model.SaasPaymentVO#paymentStatement
+          line: 25
+          commit: ''
+          content_digest: ''
+        resolution_status: resolved
+      - field_name: paymentAmount
+        declared_type: Long
+        referenced_type: ''
+        collection: false
+        annotations: []
+        source_ref:
+          repository: ''
+          path: app/model/src/main/java/com/ly/flight/chainsaas/refund/model/SaasPaymentVO.java
+          symbol: com.ly.flight.chainsaas.refund.model.SaasPaymentVO#paymentAmount
+          line: 30
+          commit: ''
+          content_digest: ''
+        resolution_status: resolved
+      - field_name: paymentCurrency
+        declared_type: String
+        referenced_type: ''
+        collection: false
+        annotations: []
+        source_ref:
+          repository: ''
+          path: app/model/src/main/java/com/ly/flight/chainsaas/refund/model/SaasPaymentVO.java
+          symbol: com.ly.flight.chainsaas.refund.model.SaasPaymentVO#paymentCurrency
+          line: 35
+          commit: ''
+          content_digest: ''
+        resolution_status: resolved
+      - field_name: paymentNotes
+        declared_type: String
+        referenced_type: ''
+        collection: false
+        annotations: []
+        source_ref:
+          repository: ''
+          path: app/model/src/main/java/com/ly/flight/chainsaas/refund/model/SaasPaymentVO.java
+          symbol: com.ly.flight.chainsaas.refund.model.SaasPaymentVO#paymentNotes
+          line: 40
+          commit: ''
+          content_digest: ''
+        resolution_status: resolved
+      source_ref:
+        repository: ''
+        path: app/model/src/main/java/com/ly/flight/chainsaas/refund/model/SaasPaymentVO.java
+        symbol: com.ly.flight.chainsaas.refund.model.SaasPaymentVO
+        line: 9
+        commit: ''
+        content_digest: ''
+      resolution_status: resolved
+    - qualified_type: com.ly.flight.chainsaas.refund.model.SaasRefundOrderItemFeeVO
+      kind: class
+      base_types: []
+      fields:
+      - field_name: id
+        declared_type: Long
+        referenced_type: ''
+        collection: false
+        annotations: []
+        source_ref:
+          repository: ''
+          path: app/model/src/main/java/com/ly/flight/chainsaas/refund/model/SaasRefundOrderItemFeeVO.java
+          symbol: com.ly.flight.chainsaas.refund.model.SaasRefundOrderItemFeeVO#id
+          line: 16
+          commit: ''
+          content_digest: ''
+        resolution_status: resolved
+      - field_name: itemId
+        declared_type: String
+        referenced_type: ''
+        collection: false
+        annotations: []
+        source_ref:
+          repository: ''
+          path: app/model/src/main/java/com/ly/flight/chainsaas/refund/model/SaasRefundOrderItemFeeVO.java
+          symbol: com.ly.flight.chainsaas.refund.model.SaasRefundOrderItemFeeVO#itemId
+          line: 21
+          commit: ''
+          content_digest: ''
+        resolution_status: resolved
+      - field_name: refundSerialNo
+        declared_type: String
+        referenced_type: ''
+        collection: false
+        annotations: []
+        source_ref:
+          repository: ''
+          path: app/model/src/main/java/com/ly/flight/chainsaas/refund/model/SaasRefundOrderItemFeeVO.java
+          symbol: com.ly.flight.chainsaas.refund.model.SaasRefundOrderItemFeeVO#refundSerialNo
+          line: 26
+          commit: ''
+          content_digest: ''
+        resolution_status: resolved
+      - field_name: orderSerialNo
+        declared_type: String
+        referenced_type: ''
+        collection: false
+        annotations: []
+        source_ref:
+          repository: ''
+          path: app/model/src/main/java/com/ly/flight/chainsaas/refund/model/SaasRefundOrderItemFeeVO.java
+          symbol: com.ly.flight.chainsaas.refund.model.SaasRefundOrderItemFeeVO#orderSerialNo
+          line: 31
+          commit: ''
+          content_digest: ''
+        resolution_status: resolved
+      - field_name: merchantCurrency
+        declared_type: String
+        referenced_type: ''
+        collection: false
+        annotations: []
+        source_ref:
+          repository: ''
+          path: app/model/src/main/java/com/ly/flight/chainsaas/refund/model/SaasRefundOrderItemFeeVO.java
+          symbol: com.ly.flight.chainsaas.refund.model.SaasRefundOrderItemFeeVO#merchantCurrency
+          line: 36
+          commit: ''
+          content_digest: ''
+        resolution_status: resolved
+      - field_name: merchantCurrencyBuyerPenalty
+        declared_type: BigDecimal
+        referenced_type: ''
+        collection: false
+        annotations: []
+        source_ref:
+          repository: ''
+          path: app/model/src/main/java/com/ly/flight/chainsaas/refund/model/SaasRefundOrderItemFeeVO.java
+          symbol: com.ly.flight.chainsaas.refund.model.SaasRefundOrderItemFeeVO#merchantCurrencyBuyerPenalty
+          line: 41
+          commit: ''
+          content_digest: ''
+        resolution_status: resolved
+      - field_name: merchantCurrencyBuyerUsedFee
+        declared_type: BigDecimal
+        referenced_type: ''
+        collection: false
+        annotations: []
+        source_ref:
+          repository: ''
+          path: app/model/src/main/java/com/ly/flight/chainsaas/refund/model/SaasRefundOrderItemFeeVO.java
+          symbol: com.ly.flight.chainsaas.refund.model.SaasRefundOrderItemFeeVO#merchantCurrencyBuyerUsedFee
+          line: 46
+          commit: ''
+          content_digest: ''
+        resolution_status: resolved
+      - field_name: merchantCurrencyBuyerTaxUsed
+        declared_type: BigDecimal
+        referenced_type: ''
+        collection: false
+        annotations: []
+        source_ref:
+          repository: ''
+          path: app/model/src/main/java/com/ly/flight/chainsaas/refund/model/SaasRefundOrderItemFeeVO.java
+          symbol: com.ly.flight.chainsaas.refund.model.SaasRefundOrderItemFeeVO#merchantCurrencyBuyerTaxUsed
+          line: 51
+          commit: ''
+          content_digest: ''
+        resolution_status: resolved
+      - field_name: merchantCurrencyBuyerIssueTicketFee
+        declared_type: BigDecimal
+        referenced_type: ''
+        collection: false
+        annotations: []
+        source_ref:
+          repository: ''
+          path: app/model/src/main/java/com/ly/flight/chainsaas/refund/model/SaasRefundOrderItemFeeVO.java
+          symbol: com.ly.flight.chainsaas.refund.model.SaasRefundOrderItemFeeVO#merchantCurrencyBuyerIssueTicketFee
+          line: 56
+          commit: ''
+          content_digest: ''
+        resolution_status: resolved
+      - field_name: merchantCurrencyBuyerServiceFee
+        declared_type: BigDecimal
+        referenced_type: ''
+        collection: false
+        annotations: []
+        source_ref:
+          repository: ''
+          path: app/model/src/main/java/com/ly/flight/chainsaas/refund/model/SaasRefundOrderItemFeeVO.java
+          symbol: com.ly.flight.chainsaas.refund.model.SaasRefundOrderItemFeeVO#merchantCurrencyBuyerServiceFee
+          line: 61
+          commit: ''
+          content_digest: ''
+        resolution_status: resolved
+      - field_name: merchantCurrencyBuyerServicePlatFee
+        declared_type: BigDecimal
+        referenced_type: ''
+        collection: false
+        annotations: []
+        source_ref:
+          repository: ''
+          path: app/model/src/main/java/com/ly/flight/chainsaas/refund/model/SaasRefundOrderItemFeeVO.java
+          symbol: com.ly.flight.chainsaas.refund.model.SaasRefundOrderItemFeeVO#merchantCurrencyBuyerServicePlatFee
+          line: 66
+          commit: ''
+          content_digest: ''
+        resolution_status: resolved
+      - field_name: merchantCurrencyBuyerRefundAmount
+        declared_type: BigDecimal
+        referenced_type: ''
+        collection: false
+        annotations: []
+        source_ref:
+          repository: ''
+          path: app/model/src/main/java/com/ly/flight/chainsaas/refund/model/SaasRefundOrderItemFeeVO.java
+          symbol: com.ly.flight.chainsaas.refund.model.SaasRefundOrderItemFeeVO#merchantCurrencyBuyerRefundAmount
+          line: 71
+          commit: ''
+          content_digest: ''
+        resolution_status: resolved
+      - field_name: merchantCurrencyBuyerRefundFee
+        declared_type: BigDecimal
+        referenced_type: ''
+        collection: false
+        annotations: []
+        source_ref:
+          repository: ''
+          path: app/model/src/main/java/com/ly/flight/chainsaas/refund/model/SaasRefundOrderItemFeeVO.java
+          symbol: com.ly.flight.chainsaas.refund.model.SaasRefundOrderItemFeeVO#merchantCurrencyBuyerRefundFee
+          line: 76
+          commit: ''
+          content_digest: ''
+        resolution_status: resolved
+      - field_name: merchantMainCurrencyAmount
+        declared_type: BigDecimal
+        referenced_type: ''
+        collection: false
+        annotations: []
+        source_ref:
+          repository: ''
+          path: app/model/src/main/java/com/ly/flight/chainsaas/refund/model/SaasRefundOrderItemFeeVO.java
+          symbol: com.ly.flight.chainsaas.refund.model.SaasRefundOrderItemFeeVO#merchantMainCurrencyAmount
+          line: 81
+          commit: ''
+          content_digest: ''
+        resolution_status: resolved
+      - field_name: buyerMainCurrencyAmount
+        declared_type: BigDecimal
+        referenced_type: ''
+        collection: false
+        annotations: []
+        source_ref:
+          repository: ''
+          path: app/model/src/main/java/com/ly/flight/chainsaas/refund/model/SaasRefundOrderItemFeeVO.java
+          symbol: com.ly.flight.chainsaas.refund.model.SaasRefundOrderItemFeeVO#buyerMainCurrencyAmount
+          line: 86
+          commit: ''
+          content_digest: ''
+        resolution_status: resolved
+      - field_name: mainCurrency
+        declared_type: String
+        referenced_type: ''
+        collection: false
+        annotations: []
+        source_ref:
+          repository: ''
+          path: app/model/src/main/java/com/ly/flight/chainsaas/refund/model/SaasRefundOrderItemFeeVO.java
+          symbol: com.ly.flight.chainsaas.refund.model.SaasRefundOrderItemFeeVO#mainCurrency
+          line: 91
+          commit: ''
+          content_digest: ''
+        resolution_status: resolved
+      - field_name: gdsPrePriceSettleCurrency
+        declared_type: BigDecimal
+        referenced_type: ''
+        collection: false
+        annotations: []
+        source_ref:
+          repository: ''
+          path: app/model/src/main/java/com/ly/flight/chainsaas/refund/model/SaasRefundOrderItemFeeVO.java
+          symbol: com.ly.flight.chainsaas.refund.model.SaasRefundOrderItemFeeVO#gdsPrePriceSettleCurrency
+          line: 96
+          commit: ''
+          content_digest: ''
+        resolution_status: resolved
+      - field_name: buyerMarkupPrice
+        declared_type: BigDecimal
+        referenced_type: ''
+        collection: false
+        annotations: []
+        source_ref:
+          repository: ''
+          path: app/model/src/main/java/com/ly/flight/chainsaas/refund/model/SaasRefundOrderItemFeeVO.java
+          symbol: com.ly.flight.chainsaas.refund.model.SaasRefundOrderItemFeeVO#buyerMarkupPrice
+          line: 101
+          commit: ''
+          content_digest: ''
+        resolution_status: resolved
+      - field_name: merchantCurrencyBuyerMarkupPrice
+        declared_type: BigDecimal
+        referenced_type: ''
+        collection: false
+        annotations: []
+        source_ref:
+          repository: ''
+          path: app/model/src/main/java/com/ly/flight/chainsaas/refund/model/SaasRefundOrderItemFeeVO.java
+          symbol: com.ly.flight.chainsaas.refund.model.SaasRefundOrderItemFeeVO#merchantCurrencyBuyerMarkupPrice
+          line: 106
+          commit: ''
+          content_digest: ''
+        resolution_status: resolved
+      source_ref:
+        repository: ''
+        path: app/model/src/main/java/com/ly/flight/chainsaas/refund/model/SaasRefundOrderItemFeeVO.java
+        symbol: com.ly.flight.chainsaas.refund.model.SaasRefundOrderItemFeeVO
+        line: 11
+        commit: ''
+        content_digest: ''
+      resolution_status: resolved
+    - qualified_type: com.ly.flight.chainsaas.refund.model.SaasRefundOrderItemVO
+      kind: class
+      base_types:
+      - com.ly.flight.chainsaas.refund.model.CoreVO
+      fields:
+      - field_name: id
+        declared_type: Long
+        referenced_type: ''
+        collection: false
+        annotations: []
+        source_ref:
+          repository: ''
+          path: app/model/src/main/java/com/ly/flight/chainsaas/refund/model/SaasRefundOrderItemVO.java
+          symbol: com.ly.flight.chainsaas.refund.model.SaasRefundOrderItemVO#id
+          line: 31
+          commit: ''
+          content_digest: ''
+        resolution_status: resolved
+      - field_name: itemId
+        declared_type: String
+        referenced_type: ''
+        collection: false
+        annotations: []
+        source_ref:
+          repository: ''
+          path: app/model/src/main/java/com/ly/flight/chainsaas/refund/model/SaasRefundOrderItemVO.java
+          symbol: com.ly.flight.chainsaas.refund.model.SaasRefundOrderItemVO#itemId
+          line: 36
+          commit: ''
+          content_digest: ''
+        resolution_status: resolved
+      - field_name: orderSerialNo
+        declared_type: String
+        referenced_type: ''
+        collection: false
+        annotations: []
+        source_ref:
+          repository: ''
+          path: app/model/src/main/java/com/ly/flight/chainsaas/refund/model/SaasRefundOrderItemVO.java
+          symbol: com.ly.flight.chainsaas.refund.model.SaasRefundOrderItemVO#orderSerialNo
+          line: 41
+          commit: ''
+          content_digest: ''
+        resolution_status: resolved
+      - field_name: unitKey
+        declared_type: String
+        referenced_type: ''
+        collection: false
+        annotations: []
+        source_ref:
+          repository: ''
+          path: app/model/src/main/java/com/ly/flight/chainsaas/refund/model/SaasRefundOrderItemVO.java
+          symbol: com.ly.flight.chainsaas.refund.model.SaasRefundOrderItemVO#unitKey
+          line: 46
+          commit: ''
+          content_digest: ''
+        resolution_status: resolved
+      - field_name: productType
+        declared_type: ProductTypeEnum
+        referenced_type: com.ly.flight.chainsaas.refund.enums.ProductTypeEnum
+        collection: false
+        annotations: []
+        source_ref:
+          repository: ''
+          path: app/model/src/main/java/com/ly/flight/chainsaas/refund/model/SaasRefundOrderItemVO.java
+          symbol: com.ly.flight.chainsaas.refund.model.SaasRefundOrderItemVO#productType
+          line: 51
+          commit: ''
+          content_digest: ''
+        resolution_status: resolved
+      - field_name: buyerSalePrice
+        declared_type: BigDecimal
+        referenced_type: ''
+        collection: false
+        annotations: []
+        source_ref:
+          repository: ''
+          path: app/model/src/main/java/com/ly/flight/chainsaas/refund/model/SaasRefundOrderItemVO.java
+          symbol: com.ly.flight.chainsaas.refund.model.SaasRefundOrderItemVO#buyerSalePrice
+          line: 56
+          commit: ''
+          content_digest: ''
+        resolution_status: resolved
+      - field_name: buyerSaleTax
+        declared_type: BigDecimal
+        referenced_type: ''
+        collection: false
+        annotations: []
+        source_ref:
+          repository: ''
+          path: app/model/src/main/java/com/ly/flight/chainsaas/refund/model/SaasRefundOrderItemVO.java
+          symbol: com.ly.flight.chainsaas.refund.model.SaasRefundOrderItemVO#buyerSaleTax
+          line: 61
+          commit: ''
+          content_digest: ''
+        resolution_status: resolved
+      - field_name: buyerAmount
+        declared_type: BigDecimal
+        referenced_type: ''
+        collection: false
+        annotations: []
+        source_ref:
+          repository: ''
+          path: app/model/src/main/java/com/ly/flight/chainsaas/refund/model/SaasRefundOrderItemVO.java
+          symbol: com.ly.flight.chainsaas.refund.model.SaasRefundOrderItemVO#buyerAmount
+          line: 66
+          commit: ''
+          content_digest: ''
+        resolution_status: resolved
+      - field_name: buyerRefundFee
+        declared_type: BigDecimal
+        referenced_type: ''
+        collection: false
+        annotations: []
+        source_ref:
+          repository: ''
+          path: app/model/src/main/java/com/ly/flight/chainsaas/refund/model/SaasRefundOrderItemVO.java
+          symbol: com.ly.flight.chainsaas.refund.model.SaasRefundOrderItemVO#buyerRefundFee
+          line: 71
+          commit: ''
+          content_digest: ''
+        resolution_status: resolved
+      - field_name: buyerPenalty
+        declared_type: BigDecimal
+        referenced_type: ''
+        collection: false
+        annotations: []
+        source_ref:
+          repository: ''
+          path: app/model/src/main/java/com/ly/flight/chainsaas/refund/model/SaasRefundOrderItemVO.java
+          symbol: com.ly.flight.chainsaas.refund.model.SaasRefundOrderItemVO#buyerPenalty
+          line: 76
+          commit: ''
+          content_digest: ''
+        resolution_status: resolved
+      - field_name: buyerTaxUsed
+        declared_type: BigDecimal
+        referenced_type: ''
+        collection: false
+        annotations: []
+        source_ref:
+          repository: ''
+          path: app/model/src/main/java/com/ly/flight/chainsaas/refund/model/SaasRefundOrderItemVO.java
+          symbol: com.ly.flight.chainsaas.refund.model.SaasRefundOrderItemVO#buyerTaxUsed
+          line: 81
+          commit: ''
+          content_digest: ''
+        resolution_status: resolved
+      - field_name: buyerUsedFee
+        declared_type: BigDecimal
+        referenced_type: ''
+        collection: false
+        annotations: []
+        source_ref:
+          repository: ''
+          path: app/model/src/main/java/com/ly/flight/chainsaas/refund/model/SaasRefundOrderItemVO.java
+          symbol: com.ly.flight.chainsaas.refund.model.SaasRefundOrderItemVO#buyerUsedFee
+          line: 86
+          commit: ''
+          content_digest: ''
+        resolution_status: resolved
+      - field_name: buyerServiceFee
+        declared_type: BigDecimal
+        referenced_type: ''
+        collection: false
+        annotations: []
+        source_ref:
+          repository: ''
+          path: app/model/src/main/java/com/ly/flight/chainsaas/refund/model/SaasRefundOrderItemVO.java
+          symbol: com.ly.flight.chainsaas.refund.model.SaasRefundOrderItemVO#buyerServiceFee
+          line: 91
+          commit: ''
+          content_digest: ''
+        resolution_status: resolved
+      - field_name: buyerCurrency
+        declared_type: String
+        referenced_type: ''
+        collection: false
+        annotations: []
+        source_ref:
+          repository: ''
+          path: app/model/src/main/java/com/ly/flight/chainsaas/refund/model/SaasRefundOrderItemVO.java
+          symbol: com.ly.flight.chainsaas.refund.model.SaasRefundOrderItemVO#buyerCurrency
+          line: 96
+          commit: ''
+          content_digest: ''
+        resolution_status: resolved
+      - field_name: buyerIssueTicketFee
+        declared_type: BigDecimal
+        referenced_type: ''
+        collection: false
+        annotations: []
+        source_ref:
+          repository: ''
+          path: app/model/src/main/java/com/ly/flight/chainsaas/refund/model/SaasRefundOrderItemVO.java
+          symbol: com.ly.flight.chainsaas.refund.model.SaasRefundOrderItemVO#buyerIssueTicketFee
+          line: 101
+          commit: ''
+          content_digest: ''
+        resolution_status: resolved
+      - field_name: merchantIssueTicketFee
+        declared_type: BigDecimal
+        referenced_type: ''
+        collection: false
+        annotations: []
+        source_ref:
+          repository: ''
+          path: app/model/src/main/java/com/ly/flight/chainsaas/refund/model/SaasRefundOrderItemVO.java
+          symbol: com.ly.flight.chainsaas.refund.model.SaasRefundOrderItemVO#merchantIssueTicketFee
+          line: 106
+          commit: ''
+          content_digest: ''
+        resolution_status: resolved
+      - field_name: merchantRefundFee
+        declared_type: BigDecimal
+        referenced_type: ''
+        collection: false
+        annotations: []
+        source_ref:
+          repository: ''
+          path: app/model/src/main/java/com/ly/flight/chainsaas/refund/model/SaasRefundOrderItemVO.java
+          symbol: com.ly.flight.chainsaas.refund.model.SaasRefundOrderItemVO#merchantRefundFee
+          line: 111
+          commit: ''
+          content_digest: ''
+        resolution_status: resolved
+      - field_name: merchantPenalty
+        declared_type: BigDecimal
+        referenced_type: ''
+        collection: false
+        annotations: []
+        source_ref:
+          repository: ''
+          path: app/model/src/main/java/com/ly/flight/chainsaas/refund/model/SaasRefundOrderItemVO.java
+          symbol: com.ly.flight.chainsaas.refund.model.SaasRefundOrderItemVO#merchantPenalty
+          line: 116
+          commit: ''
+          content_digest: ''
+        resolution_status: resolved
+      - field_name: merchantSettlePrice
+        declared_type: BigDecimal
+        referenced_type: ''
+        collection: false
+        annotations: []
+        source_ref:
+          repository: ''
+          path: app/model/src/main/java/com/ly/flight/chainsaas/refund/model/SaasRefundOrderItemVO.java
+          symbol: com.ly.flight.chainsaas.refund.model.SaasRefundOrderItemVO#merchantSettlePrice
+          line: 121
+          commit: ''
+          content_digest: ''
+        resolution_status: resolved
+      - field_name: merchantSettleTax
+        declared_type: BigDecimal
+        referenced_type: ''
+        collection: false
+        annotations: []
+        source_ref:
+          repository: ''
+          path: app/model/src/main/java/com/ly/flight/chainsaas/refund/model/SaasRefundOrderItemVO.java
+          symbol: com.ly.flight.chainsaas.refund.model.SaasRefundOrderItemVO#merchantSettleTax
+          line: 126
+          commit: ''
+          content_digest: ''
+        resolution_status: resolved
+      - field_name: merchantAmount
+        declared_type: BigDecimal
+        referenced_type: ''
+        collection: false
+        annotations: []
+        source_ref:
+          repository: ''
+          path: app/model/src/main/java/com/ly/flight/chainsaas/refund/model/SaasRefundOrderItemVO.java
+          symbol: com.ly.flight.chainsaas.refund.model.SaasRefundOrderItemVO#merchantAmount
+          line: 131
+          commit: ''
+          content_digest: ''
+        resolution_status: resolved
+      - field_name: merchantTaxUsed
+        declared_type: BigDecimal
+        referenced_type: ''
+        collection: false
+        annotations: []
+        source_ref:
+          repository: ''
+          path: app/model/src/main/java/com/ly/flight/chainsaas/refund/model/SaasRefundOrderItemVO.java
+          symbol: com.ly.flight.chainsaas.refund.model.SaasRefundOrderItemVO#merchantTaxUsed
+          line: 136
+          commit: ''
+          content_digest: ''
+        resolution_status: resolved
+      - field_name: merchantUsedFee
+        declared_type: BigDecimal
+        referenced_type: ''
+        collection: false
+        annotations: []
+        source_ref:
+          repository: ''
+          path: app/model/src/main/java/com/ly/flight/chainsaas/refund/model/SaasRefundOrderItemVO.java
+          symbol: com.ly.flight.chainsaas.refund.model.SaasRefundOrderItemVO#merchantUsedFee
+          line: 141
+          commit: ''
+          content_digest: ''
+        resolution_status: resolved
+      - field_name: merchantServiceFee
+        declared_type: BigDecimal
+        referenced_type: ''
+        collection: false
+        annotations: []
+        source_ref:
+          repository: ''
+          path: app/model/src/main/java/com/ly/flight/chainsaas/refund/model/SaasRefundOrderItemVO.java
+          symbol: com.ly.flight.chainsaas.refund.model.SaasRefundOrderItemVO#merchantServiceFee
+          line: 146
+          commit: ''
+          content_digest: ''
+        resolution_status: resolved
+      - field_name: buyerServicePlatFee
+        declared_type: BigDecimal
+        referenced_type: ''
+        collection: false
+        annotations: []
+        source_ref:
+          repository: ''
+          path: app/model/src/main/java/com/ly/flight/chainsaas/refund/model/SaasRefundOrderItemVO.java
+          symbol: com.ly.flight.chainsaas.refund.model.SaasRefundOrderItemVO#buyerServicePlatFee
+          line: 151
+          commit: ''
+          content_digest: ''
+        resolution_status: resolved
+      - field_name: merchantServicePlatFee
+        declared_type: BigDecimal
+        referenced_type: ''
+        collection: false
+        annotations: []
+        source_ref:
+          repository: ''
+          path: app/model/src/main/java/com/ly/flight/chainsaas/refund/model/SaasRefundOrderItemVO.java
+          symbol: com.ly.flight.chainsaas.refund.model.SaasRefundOrderItemVO#merchantServicePlatFee
+          line: 156
+          commit: ''
+          content_digest: ''
+        resolution_status: resolved
+      - field_name: buyerIssuePlatFee
+        declared_type: BigDecimal
+        referenced_type: ''
+        collection: false
+        annotations: []
+        source_ref:
+          repository: ''
+          path: app/model/src/main/java/com/ly/flight/chainsaas/refund/model/SaasRefundOrderItemVO.java
+          symbol: com.ly.flight.chainsaas.refund.model.SaasRefundOrderItemVO#buyerIssuePlatFee
+          line: 161
+          commit: ''
+          content_digest: ''
+        resolution_status: resolved
+      - field_name: merchantCurrency
+        declared_type: String
+        referenced_type: ''
+        collection: false
+        annotations: []
+        source_ref:
+          repository: ''
+          path: app/model/src/main/java/com/ly/flight/chainsaas/refund/model/SaasRefundOrderItemVO.java
+          symbol: com.ly.flight.chainsaas.refund.model.SaasRefundOrderItemVO#merchantCurrency
+          line: 166
+          commit: ''
+          content_digest: ''
+        resolution_status: resolved
+      - field_name: merchantToBuyerRate
+        declared_type: BigDecimal
+        referenced_type: ''
+        collection: false
+        annotations: []
+        source_ref:
+          repository: ''
+          path: app/model/src/main/java/com/ly/flight/chainsaas/refund/model/SaasRefundOrderItemVO.java
+          symbol: com.ly.flight.chainsaas.refund.model.SaasRefundOrderItemVO#merchantToBuyerRate
+          line: 171
+          commit: ''
+          content_digest: ''
+        resolution_status: resolved
+      - field_name: couponMoney
+        declared_type: BigDecimal
+        referenced_type: ''
+        collection: false
+        annotations: []
+        source_ref:
+          repository: ''
+          path: app/model/src/main/java/com/ly/flight/chainsaas/refund/model/SaasRefundOrderItemVO.java
+          symbol: com.ly.flight.chainsaas.refund.model.SaasRefundOrderItemVO#couponMoney
+          line: 176
+          commit: ''
+          content_digest: ''
+        resolution_status: resolved
+      - field_name: gdsPrePrice
+        declared_type: BigDecimal
+        referenced_type: ''
+        collection: false
+        annotations: []
+        source_ref:
+          repository: ''
+          path: app/model/src/main/java/com/ly/flight/chainsaas/refund/model/SaasRefundOrderItemVO.java
+          symbol: com.ly.flight.chainsaas.refund.model.SaasRefundOrderItemVO#gdsPrePrice
+          line: 181
+          commit: ''
+          content_digest: ''
+        resolution_status: resolved
+      - field_name: gdsBackupPrice
+        declared_type: BigDecimal
+        referenced_type: ''
+        collection: false
+        annotations: []
+        source_ref:
+          repository: ''
+          path: app/model/src/main/java/com/ly/flight/chainsaas/refund/model/SaasRefundOrderItemVO.java
+          symbol: com.ly.flight.chainsaas.refund.model.SaasRefundOrderItemVO#gdsBackupPrice
+          line: 186
+          commit: ''
+          content_digest: ''
+        resolution_status: resolved
+      - field_name: ticketNo
+        declared_type: String
+        referenced_type: ''
+        collection: false
+        annotations: []
+        source_ref:
+          repository: ''
+          path: app/model/src/main/java/com/ly/flight/chainsaas/refund/model/SaasRefundOrderItemVO.java
+          symbol: com.ly.flight.chainsaas.refund.model.SaasRefundOrderItemVO#ticketNo
+          line: 191
+          commit: ''
+          content_digest: ''
+        resolution_status: resolved
+      - field_name: ext
+        declared_type: String
+        referenced_type: ''
+        collection: false
+        annotations: []
+        source_ref:
+          repository: ''
+          path: app/model/src/main/java/com/ly/flight/chainsaas/refund/model/SaasRefundOrderItemVO.java
+          symbol: com.ly.flight.chainsaas.refund.model.SaasRefundOrderItemVO#ext
+          line: 196
+          commit: ''
+          content_digest: ''
+        resolution_status: resolved
+      - field_name: baggageInfo
+        declared_type: String
+        referenced_type: ''
+        collection: false
+        annotations: []
+        source_ref:
+          repository: ''
+          path: app/model/src/main/java/com/ly/flight/chainsaas/refund/model/SaasRefundOrderItemVO.java
+          symbol: com.ly.flight.chainsaas.refund.model.SaasRefundOrderItemVO#baggageInfo
+          line: 201
+          commit: ''
+          content_digest: ''
+        resolution_status: resolved
+      - field_name: pnr
+        declared_type: String
+        referenced_type: ''
+        collection: false
+        annotations: []
+        source_ref:
+          repository: ''
+          path: app/model/src/main/java/com/ly/flight/chainsaas/refund/model/SaasRefundOrderItemVO.java
+          symbol: com.ly.flight.chainsaas.refund.model.SaasRefundOrderItemVO#pnr
+          line: 206
+          commit: ''
+          content_digest: ''
+        resolution_status: resolved
+      - field_name: bigCode
+        declared_type: String
+        referenced_type: ''
+        collection: false
+        annotations: []
+        source_ref:
+          repository: ''
+          path: app/model/src/main/java/com/ly/flight/chainsaas/refund/model/SaasRefundOrderItemVO.java
+          symbol: com.ly.flight.chainsaas.refund.model.SaasRefundOrderItemVO#bigCode
+          line: 211
+          commit: ''
+          content_digest: ''
+        resolution_status: resolved
+      - field_name: realPnr
+        declared_type: String
+        referenced_type: ''
+        collection: false
+        annotations: []
+        source_ref:
+          repository: ''
+          path: app/model/src/main/java/com/ly/flight/chainsaas/refund/model/SaasRefundOrderItemVO.java
+          symbol: com.ly.flight.chainsaas.refund.model.SaasRefundOrderItemVO#realPnr
+          line: 216
+          commit: ''
+          content_digest: ''
+        resolution_status: resolved
+      source_ref:
+        repository: ''
+        path: app/model/src/main/java/com/ly/flight/chainsaas/refund/model/SaasRefundOrderItemVO.java
+        symbol: com.ly.flight.chainsaas.refund.model.SaasRefundOrderItemVO
+        line: 13
+        commit: ''
+        content_digest: ''
+      resolution_status: resolved
+    - qualified_type: com.ly.flight.chainsaas.refund.model.SaasRefundOrderPassagerVO
+      kind: class
+      base_types:
+      - com.ly.flight.chainsaas.refund.model.CoreVO
+      fields:
+      - field_name: passengerId
+        declared_type: String
+        referenced_type: ''
+        collection: false
+        annotations: []
+        source_ref:
+          repository: ''
+          path: app/model/src/main/java/com/ly/flight/chainsaas/refund/model/SaasRefundOrderPassagerVO.java
+          symbol: com.ly.flight.chainsaas.refund.model.SaasRefundOrderPassagerVO#passengerId
+          line: 36
+          commit: ''
+          content_digest: ''
+        resolution_status: resolved
+      - field_name: orderPassengerId
+        declared_type: String
+        referenced_type: ''
+        collection: false
+        annotations: []
+        source_ref:
+          repository: ''
+          path: app/model/src/main/java/com/ly/flight/chainsaas/refund/model/SaasRefundOrderPassagerVO.java
+          symbol: com.ly.flight.chainsaas.refund.model.SaasRefundOrderPassagerVO#orderPassengerId
+          line: 41
+          commit: ''
+          content_digest: ''
+        resolution_status: resolved
+      - field_name: lastName
+        declared_type: String
+        referenced_type: ''
+        collection: false
+        annotations: []
+        source_ref:
+          repository: ''
+          path: app/model/src/main/java/com/ly/flight/chainsaas/refund/model/SaasRefundOrderPassagerVO.java
+          symbol: com.ly.flight.chainsaas.refund.model.SaasRefundOrderPassagerVO#lastName
+          line: 46
+          commit: ''
+          content_digest: ''
+        resolution_status: resolved
+      - field_name: firstName
+        declared_type: String
+        referenced_type: ''
+        collection: false
+        annotations: []
+        source_ref:
+          repository: ''
+          path: app/model/src/main/java/com/ly/flight/chainsaas/refund/model/SaasRefundOrderPassagerVO.java
+          symbol: com.ly.flight.chainsaas.refund.model.SaasRefundOrderPassagerVO#firstName
+          line: 51
+          commit: ''
+          content_digest: ''
+        resolution_status: resolved
+      - field_name: gender
+        declared_type: GenderEnum
+        referenced_type: com.ly.flight.chainsaas.refund.enums.GenderEnum
+        collection: false
+        annotations: []
+        source_ref:
+          repository: ''
+          path: app/model/src/main/java/com/ly/flight/chainsaas/refund/model/SaasRefundOrderPassagerVO.java
+          symbol: com.ly.flight.chainsaas.refund.model.SaasRefundOrderPassagerVO#gender
+          line: 56
+          commit: ''
+          content_digest: ''
+        resolution_status: resolved
+      - field_name: passengerType
+        declared_type: PassengerTypeEnum
+        referenced_type: com.ly.flight.chainsaas.refund.enums.PassengerTypeEnum
+        collection: false
+        annotations: []
+        source_ref:
+          repository: ''
+          path: app/model/src/main/java/com/ly/flight/chainsaas/refund/model/SaasRefundOrderPassagerVO.java
+          symbol: com.ly.flight.chainsaas.refund.model.SaasRefundOrderPassagerVO#passengerType
+          line: 61
+          commit: ''
+          content_digest: ''
+        resolution_status: resolved
+      - field_name: birthday
+        declared_type: String
+        referenced_type: ''
+        collection: false
+        annotations: []
+        source_ref:
+          repository: ''
+          path: app/model/src/main/java/com/ly/flight/chainsaas/refund/model/SaasRefundOrderPassagerVO.java
+          symbol: com.ly.flight.chainsaas.refund.model.SaasRefundOrderPassagerVO#birthday
+          line: 66
+          commit: ''
+          content_digest: ''
+        resolution_status: resolved
+      - field_name: nationCode
+        declared_type: String
+        referenced_type: ''
+        collection: false
+        annotations: []
+        source_ref:
+          repository: ''
+          path: app/model/src/main/java/com/ly/flight/chainsaas/refund/model/SaasRefundOrderPassagerVO.java
+          symbol: com.ly.flight.chainsaas.refund.model.SaasRefundOrderPassagerVO#nationCode
+          line: 71
+          commit: ''
+          content_digest: ''
+        resolution_status: resolved
+      - field_name: certIssueNation
+        declared_type: String
+        referenced_type: ''
+        collection: false
+        annotations: []
+        source_ref:
+          repository: ''
+          path: app/model/src/main/java/com/ly/flight/chainsaas/refund/model/SaasRefundOrderPassagerVO.java
+          symbol: com.ly.flight.chainsaas.refund.model.SaasRefundOrderPassagerVO#certIssueNation
+          line: 76
+          commit: ''
+          content_digest: ''
+        resolution_status: resolved
+      - field_name: creditType
+        declared_type: CreditTypeEnum
+        referenced_type: com.ly.flight.chainsaas.refund.enums.CreditTypeEnum
+        collection: false
+        annotations: []
+        source_ref:
+          repository: ''
+          path: app/model/src/main/java/com/ly/flight/chainsaas/refund/model/SaasRefundOrderPassagerVO.java
+          symbol: com.ly.flight.chainsaas.refund.model.SaasRefundOrderPassagerVO#creditType
+          line: 81
+          commit: ''
+          content_digest: ''
+        resolution_status: resolved
+      - field_name: creditNo
+        declared_type: String
+        referenced_type: ''
+        collection: false
+        annotations: []
+        source_ref:
+          repository: ''
+          path: app/model/src/main/java/com/ly/flight/chainsaas/refund/model/SaasRefundOrderPassagerVO.java
+          symbol: com.ly.flight.chainsaas.refund.model.SaasRefundOrderPassagerVO#creditNo
+          line: 86
+          commit: ''
+          content_digest: ''
+        resolution_status: resolved
+      - field_name: gmtCreditValidate
+        declared_type: Date
+        referenced_type: ''
+        collection: false
+        annotations: []
+        source_ref:
+          repository: ''
+          path: app/model/src/main/java/com/ly/flight/chainsaas/refund/model/SaasRefundOrderPassagerVO.java
+          symbol: com.ly.flight.chainsaas.refund.model.SaasRefundOrderPassagerVO#gmtCreditValidate
+          line: 91
+          commit: ''
+          content_digest: ''
+        resolution_status: resolved
+      - field_name: linkPhone
+        declared_type: String
+        referenced_type: ''
+        collection: false
+        annotations: []
+        source_ref:
+          repository: ''
+          path: app/model/src/main/java/com/ly/flight/chainsaas/refund/model/SaasRefundOrderPassagerVO.java
+          symbol: com.ly.flight.chainsaas.refund.model.SaasRefundOrderPassagerVO#linkPhone
+          line: 96
+          commit: ''
+          content_digest: ''
+        resolution_status: resolved
+      source_ref:
+        repository: ''
+        path: app/model/src/main/java/com/ly/flight/chainsaas/refund/model/SaasRefundOrderPassagerVO.java
+        symbol: com.ly.flight.chainsaas.refund.model.SaasRefundOrderPassagerVO
+        line: 15
+        commit: ''
+        content_digest: ''
+      resolution_status: resolved
+    - qualified_type: com.ly.flight.chainsaas.refund.model.SaasRefundOrderPsiVO
+      kind: class
+      base_types:
+      - com.ly.flight.chainsaas.refund.model.CoreVO
+      fields:
+      - field_name: passenger
+        declared_type: SaasRefundOrderPassagerVO
+        referenced_type: com.ly.flight.chainsaas.refund.model.SaasRefundOrderPassagerVO
+        collection: false
+        annotations: []
+        source_ref:
+          repository: ''
+          path: app/model/src/main/java/com/ly/flight/chainsaas/refund/model/SaasRefundOrderPsiVO.java
+          symbol: com.ly.flight.chainsaas.refund.model.SaasRefundOrderPsiVO#passenger
+          line: 15
+          commit: ''
+          content_digest: ''
+        resolution_status: resolved
+      - field_name: segment
+        declared_type: SaasRefundOrderSegmentVO
+        referenced_type: com.ly.flight.chainsaas.refund.model.SaasRefundOrderSegmentVO
+        collection: false
+        annotations: []
+        source_ref:
+          repository: ''
+          path: app/model/src/main/java/com/ly/flight/chainsaas/refund/model/SaasRefundOrderPsiVO.java
+          symbol: com.ly.flight.chainsaas.refund.model.SaasRefundOrderPsiVO#segment
+          line: 20
+          commit: ''
+          content_digest: ''
+        resolution_status: resolved
+      - field_name: item
+        declared_type: SaasRefundOrderItemVO
+        referenced_type: com.ly.flight.chainsaas.refund.model.SaasRefundOrderItemVO
+        collection: false
+        annotations: []
+        source_ref:
+          repository: ''
+          path: app/model/src/main/java/com/ly/flight/chainsaas/refund/model/SaasRefundOrderPsiVO.java
+          symbol: com.ly.flight.chainsaas.refund.model.SaasRefundOrderPsiVO#item
+          line: 23
+          commit: ''
+          content_digest: ''
+        resolution_status: resolved
+      - field_name: itemFee
+        declared_type: SaasRefundOrderItemFeeVO
+        referenced_type: com.ly.flight.chainsaas.refund.model.SaasRefundOrderItemFeeVO
+        collection: false
+        annotations: []
+        source_ref:
+          repository: ''
+          path: app/model/src/main/java/com/ly/flight/chainsaas/refund/model/SaasRefundOrderPsiVO.java
+          symbol: com.ly.flight.chainsaas.refund.model.SaasRefundOrderPsiVO#itemFee
+          line: 27
+          commit: ''
+          content_digest: ''
+        resolution_status: resolved
+      source_ref:
+        repository: ''
+        path: app/model/src/main/java/com/ly/flight/chainsaas/refund/model/SaasRefundOrderPsiVO.java
+        symbol: com.ly.flight.chainsaas.refund.model.SaasRefundOrderPsiVO
+        line: 9
+        commit: ''
+        content_digest: ''
+      resolution_status: resolved
+    - qualified_type: com.ly.flight.chainsaas.refund.model.SaasRefundOrderSegmentVO
+      kind: class
+      base_types:
+      - com.ly.flight.chainsaas.refund.model.CoreVO
+      fields:
+      - field_name: segmentId
+        declared_type: String
+        referenced_type: ''
+        collection: false
+        annotations: []
+        source_ref:
+          repository: ''
+          path: app/model/src/main/java/com/ly/flight/chainsaas/refund/model/SaasRefundOrderSegmentVO.java
+          symbol: com.ly.flight.chainsaas.refund.model.SaasRefundOrderSegmentVO#segmentId
+          line: 32
+          commit: ''
+          content_digest: ''
+        resolution_status: resolved
+      - field_name: sequence
+        declared_type: Integer
+        referenced_type: ''
+        collection: false
+        annotations: []
+        source_ref:
+          repository: ''
+          path: app/model/src/main/java/com/ly/flight/chainsaas/refund/model/SaasRefundOrderSegmentVO.java
+          symbol: com.ly.flight.chainsaas.refund.model.SaasRefundOrderSegmentVO#sequence
+          line: 37
+          commit: ''
+          content_digest: ''
+        resolution_status: resolved
+      - field_name: segmentType
+        declared_type: Integer
+        referenced_type: ''
+        collection: false
+        annotations: []
+        source_ref:
+          repository: ''
+          path: app/model/src/main/java/com/ly/flight/chainsaas/refund/model/SaasRefundOrderSegmentVO.java
+          symbol: com.ly.flight.chainsaas.refund.model.SaasRefundOrderSegmentVO#segmentType
+          line: 42
+          commit: ''
+          content_digest: ''
+        resolution_status: resolved
+      - field_name: departureCity
+        declared_type: String
+        referenced_type: ''
+        collection: false
+        annotations: []
+        source_ref:
+          repository: ''
+          path: app/model/src/main/java/com/ly/flight/chainsaas/refund/model/SaasRefundOrderSegmentVO.java
+          symbol: com.ly.flight.chainsaas.refund.model.SaasRefundOrderSegmentVO#departureCity
+          line: 47
+          commit: ''
+          content_digest: ''
+        resolution_status: resolved
+      - field_name: departureCnCity
+        declared_type: String
+        referenced_type: ''
+        collection: false
+        annotations: []
+        source_ref:
+          repository: ''
+          path: app/model/src/main/java/com/ly/flight/chainsaas/refund/model/SaasRefundOrderSegmentVO.java
+          symbol: com.ly.flight.chainsaas.refund.model.SaasRefundOrderSegmentVO#departureCnCity
+          line: 52
+          commit: ''
+          content_digest: ''
+        resolution_status: resolved
+      - field_name: departureEnCity
+        declared_type: String
+        referenced_type: ''
+        collection: false
+        annotations: []
+        source_ref:
+          repository: ''
+          path: app/model/src/main/java/com/ly/flight/chainsaas/refund/model/SaasRefundOrderSegmentVO.java
+          symbol: com.ly.flight.chainsaas.refund.model.SaasRefundOrderSegmentVO#departureEnCity
+          line: 57
+          commit: ''
+          content_digest: ''
+        resolution_status: resolved
+      - field_name: departureJpCity
+        declared_type: String
+        referenced_type: ''
+        collection: false
+        annotations: []
+        source_ref:
+          repository: ''
+          path: app/model/src/main/java/com/ly/flight/chainsaas/refund/model/SaasRefundOrderSegmentVO.java
+          symbol: com.ly.flight.chainsaas.refund.model.SaasRefundOrderSegmentVO#departureJpCity
+          line: 62
+          commit: ''
+          content_digest: ''
+        resolution_status: resolved
+      - field_name: departureAirport
+        declared_type: String
+        referenced_type: ''
+        collection: false
+        annotations: []
+        source_ref:
+          repository: ''
+          path: app/model/src/main/java/com/ly/flight/chainsaas/refund/model/SaasRefundOrderSegmentVO.java
+          symbol: com.ly.flight.chainsaas.refund.model.SaasRefundOrderSegmentVO#departureAirport
+          line: 67
+          commit: ''
+          content_digest: ''
+        resolution_status: resolved
+      - field_name: departureCnAirport
+        declared_type: String
+        referenced_type: ''
+        collection: false
+        annotations: []
+        source_ref:
+          repository: ''
+          path: app/model/src/main/java/com/ly/flight/chainsaas/refund/model/SaasRefundOrderSegmentVO.java
+          symbol: com.ly.flight.chainsaas.refund.model.SaasRefundOrderSegmentVO#departureCnAirport
+          line: 72
+          commit: ''
+          content_digest: ''
+        resolution_status: resolved
+      - field_name: departureEnAirport
+        declared_type: String
+        referenced_type: ''
+        collection: false
+        annotations: []
+        source_ref:
+          repository: ''
+          path: app/model/src/main/java/com/ly/flight/chainsaas/refund/model/SaasRefundOrderSegmentVO.java
+          symbol: com.ly.flight.chainsaas.refund.model.SaasRefundOrderSegmentVO#departureEnAirport
+          line: 77
+          commit: ''
+          content_digest: ''
+        resolution_status: resolved
+      - field_name: departureJpAirport
+        declared_type: String
+        referenced_type: ''
+        collection: false
+        annotations: []
+        source_ref:
+          repository: ''
+          path: app/model/src/main/java/com/ly/flight/chainsaas/refund/model/SaasRefundOrderSegmentVO.java
+          symbol: com.ly.flight.chainsaas.refund.model.SaasRefundOrderSegmentVO#departureJpAirport
+          line: 82
+          commit: ''
+          content_digest: ''
+        resolution_status: resolved
+      - field_name: departureCityCode
+        declared_type: String
+        referenced_type: ''
+        collection: false
+        annotations: []
+        source_ref:
+          repository: ''
+          path: app/model/src/main/java/com/ly/flight/chainsaas/refund/model/SaasRefundOrderSegmentVO.java
+          symbol: com.ly.flight.chainsaas.refund.model.SaasRefundOrderSegmentVO#departureCityCode
+          line: 87
+          commit: ''
+          content_digest: ''
+        resolution_status: resolved
+      - field_name: departureAirportCode
+        declared_type: String
+        referenced_type: ''
+        collection: false
+        annotations: []
+        source_ref:
+          repository: ''
+          path: app/model/src/main/java/com/ly/flight/chainsaas/refund/model/SaasRefundOrderSegmentVO.java
+          symbol: com.ly.flight.chainsaas.refund.model.SaasRefundOrderSegmentVO#departureAirportCode
+          line: 92
+          commit: ''
+          content_digest: ''
+        resolution_status: resolved
+      - field_name: departureTerminal
+        declared_type: String
+        referenced_type: ''
+        collection: false
+        annotations: []
+        source_ref:
+          repository: ''
+          path: app/model/src/main/java/com/ly/flight/chainsaas/refund/model/SaasRefundOrderSegmentVO.java
+          symbol: com.ly.flight.chainsaas.refund.model.SaasRefundOrderSegmentVO#departureTerminal
+          line: 97
+          commit: ''
+          content_digest: ''
+        resolution_status: resolved
+      - field_name: arrivalCityCode
+        declared_type: String
+        referenced_type: ''
+        collection: false
+        annotations: []
+        source_ref:
+          repository: ''
+          path: app/model/src/main/java/com/ly/flight/chainsaas/refund/model/SaasRefundOrderSegmentVO.java
+          symbol: com.ly.flight.chainsaas.refund.model.SaasRefundOrderSegmentVO#arrivalCityCode
+          line: 102
+          commit: ''
+          content_digest: ''
+        resolution_status: resolved
+      - field_name: arrivalAirportCode
+        declared_type: String
+        referenced_type: ''
+        collection: false
+        annotations: []
+        source_ref:
+          repository: ''
+          path: app/model/src/main/java/com/ly/flight/chainsaas/refund/model/SaasRefundOrderSegmentVO.java
+          symbol: com.ly.flight.chainsaas.refund.model.SaasRefundOrderSegmentVO#arrivalAirportCode
+          line: 107
+          commit: ''
+          content_digest: ''
+        resolution_status: resolved
+      - field_name: arrivalTerminal
+        declared_type: String
+        referenced_type: ''
+        collection: false
+        annotations: []
+        source_ref:
+          repository: ''
+          path: app/model/src/main/java/com/ly/flight/chainsaas/refund/model/SaasRefundOrderSegmentVO.java
+          symbol: com.ly.flight.chainsaas.refund.model.SaasRefundOrderSegmentVO#arrivalTerminal
+          line: 112
+          commit: ''
+          content_digest: ''
+        resolution_status: resolved
+      - field_name: arrivalCity
+        declared_type: String
+        referenced_type: ''
+        collection: false
+        annotations: []
+        source_ref:
+          repository: ''
+          path: app/model/src/main/java/com/ly/flight/chainsaas/refund/model/SaasRefundOrderSegmentVO.java
+          symbol: com.ly.flight.chainsaas.refund.model.SaasRefundOrderSegmentVO#arrivalCity
+          line: 117
+          commit: ''
+          content_digest: ''
+        resolution_status: resolved
+      - field_name: arrivalCnCity
+        declared_type: String
+        referenced_type: ''
+        collection: false
+        annotations: []
+        source_ref:
+          repository: ''
+          path: app/model/src/main/java/com/ly/flight/chainsaas/refund/model/SaasRefundOrderSegmentVO.java
+          symbol: com.ly.flight.chainsaas.refund.model.SaasRefundOrderSegmentVO#arrivalCnCity
+          line: 122
+          commit: ''
+          content_digest: ''
+        resolution_status: resolved
+      - field_name: arrivalEnCity
+        declared_type: String
+        referenced_type: ''
+        collection: false
+        annotations: []
+        source_ref:
+          repository: ''
+          path: app/model/src/main/java/com/ly/flight/chainsaas/refund/model/SaasRefundOrderSegmentVO.java
+          symbol: com.ly.flight.chainsaas.refund.model.SaasRefundOrderSegmentVO#arrivalEnCity
+          line: 127
+          commit: ''
+          content_digest: ''
+        resolution_status: resolved
+      - field_name: arrivalJpCity
+        declared_type: String
+        referenced_type: ''
+        collection: false
+        annotations: []
+        source_ref:
+          repository: ''
+          path: app/model/src/main/java/com/ly/flight/chainsaas/refund/model/SaasRefundOrderSegmentVO.java
+          symbol: com.ly.flight.chainsaas.refund.model.SaasRefundOrderSegmentVO#arrivalJpCity
+          line: 132
+          commit: ''
+          content_digest: ''
+        resolution_status: resolved
+      - field_name: arrivalAirport
+        declared_type: String
+        referenced_type: ''
+        collection: false
+        annotations: []
+        source_ref:
+          repository: ''
+          path: app/model/src/main/java/com/ly/flight/chainsaas/refund/model/SaasRefundOrderSegmentVO.java
+          symbol: com.ly.flight.chainsaas.refund.model.SaasRefundOrderSegmentVO#arrivalAirport
+          line: 137
+          commit: ''
+          content_digest: ''
+        resolution_status: resolved
+      - field_name: arrivalCnAirport
+        declared_type: String
+        referenced_type: ''
+        collection: false
+        annotations: []
+        source_ref:
+          repository: ''
+          path: app/model/src/main/java/com/ly/flight/chainsaas/refund/model/SaasRefundOrderSegmentVO.java
+          symbol: com.ly.flight.chainsaas.refund.model.SaasRefundOrderSegmentVO#arrivalCnAirport
+          line: 142
+          commit: ''
+          content_digest: ''
+        resolution_status: resolved
+      - field_name: arrivalEnAirport
+        declared_type: String
+        referenced_type: ''
+        collection: false
+        annotations: []
+        source_ref:
+          repository: ''
+          path: app/model/src/main/java/com/ly/flight/chainsaas/refund/model/SaasRefundOrderSegmentVO.java
+          symbol: com.ly.flight.chainsaas.refund.model.SaasRefundOrderSegmentVO#arrivalEnAirport
+          line: 147
+          commit: ''
+          content_digest: ''
+        resolution_status: resolved
+      - field_name: arrivalJpAirport
+        declared_type: String
+        referenced_type: ''
+        collection: false
+        annotations: []
+        source_ref:
+          repository: ''
+          path: app/model/src/main/java/com/ly/flight/chainsaas/refund/model/SaasRefundOrderSegmentVO.java
+          symbol: com.ly.flight.chainsaas.refund.model.SaasRefundOrderSegmentVO#arrivalJpAirport
+          line: 152
+          commit: ''
+          content_digest: ''
+        resolution_status: resolved
+      - field_name: gmtTakeOff
+        declared_type: Date
+        referenced_type: ''
+        collection: false
+        annotations: []
+        source_ref:
+          repository: ''
+          path: app/model/src/main/java/com/ly/flight/chainsaas/refund/model/SaasRefundOrderSegmentVO.java
+          symbol: com.ly.flight.chainsaas.refund.model.SaasRefundOrderSegmentVO#gmtTakeOff
+          line: 157
+          commit: ''
+          content_digest: ''
+        resolution_status: resolved
+      - field_name: bjGmtTakeOff
+        declared_type: Date
+        referenced_type: ''
+        collection: false
+        annotations: []
+        source_ref:
+          repository: ''
+          path: app/model/src/main/java/com/ly/flight/chainsaas/refund/model/SaasRefundOrderSegmentVO.java
+          symbol: com.ly.flight.chainsaas.refund.model.SaasRefundOrderSegmentVO#bjGmtTakeOff
+          line: 162
+          commit: ''
+          content_digest: ''
+        resolution_status: resolved
+      - field_name: gmtArrive
+        declared_type: Date
+        referenced_type: ''
+        collection: false
+        annotations: []
+        source_ref:
+          repository: ''
+          path: app/model/src/main/java/com/ly/flight/chainsaas/refund/model/SaasRefundOrderSegmentVO.java
+          symbol: com.ly.flight.chainsaas.refund.model.SaasRefundOrderSegmentVO#gmtArrive
+          line: 167
+          commit: ''
+          content_digest: ''
+        resolution_status: resolved
+      - field_name: bjGmtArrive
+        declared_type: Date
+        referenced_type: ''
+        collection: false
+        annotations: []
+        source_ref:
+          repository: ''
+          path: app/model/src/main/java/com/ly/flight/chainsaas/refund/model/SaasRefundOrderSegmentVO.java
+          symbol: com.ly.flight.chainsaas.refund.model.SaasRefundOrderSegmentVO#bjGmtArrive
+          line: 172
+          commit: ''
+          content_digest: ''
+        resolution_status: resolved
+      - field_name: cabinCode
+        declared_type: String
+        referenced_type: ''
+        collection: false
+        annotations: []
+        source_ref:
+          repository: ''
+          path: app/model/src/main/java/com/ly/flight/chainsaas/refund/model/SaasRefundOrderSegmentVO.java
+          symbol: com.ly.flight.chainsaas.refund.model.SaasRefundOrderSegmentVO#cabinCode
+          line: 177
+          commit: ''
+          content_digest: ''
+        resolution_status: resolved
+      - field_name: cabinClassCode
+        declared_type: String
+        referenced_type: ''
+        collection: false
+        annotations: []
+        source_ref:
+          repository: ''
+          path: app/model/src/main/java/com/ly/flight/chainsaas/refund/model/SaasRefundOrderSegmentVO.java
+          symbol: com.ly.flight.chainsaas.refund.model.SaasRefundOrderSegmentVO#cabinClassCode
+          line: 182
+          commit: ''
+          content_digest: ''
+        resolution_status: resolved
+      - field_name: flightShare
+        declared_type: Integer
+        referenced_type: ''
+        collection: false
+        annotations: []
+        source_ref:
+          repository: ''
+          path: app/model/src/main/java/com/ly/flight/chainsaas/refund/model/SaasRefundOrderSegmentVO.java
+          symbol: com.ly.flight.chainsaas.refund.model.SaasRefundOrderSegmentVO#flightShare
+          line: 187
+          commit: ''
+          content_digest: ''
+        resolution_status: resolved
+      - field_name: flightNo
+        declared_type: String
+        referenced_type: ''
+        collection: false
+        annotations: []
+        source_ref:
+          repository: ''
+          path: app/model/src/main/java/com/ly/flight/chainsaas/refund/model/SaasRefundOrderSegmentVO.java
+          symbol: com.ly.flight.chainsaas.refund.model.SaasRefundOrderSegmentVO#flightNo
+          line: 192
+          commit: ''
+          content_digest: ''
+        resolution_status: resolved
+      - field_name: shareFlightNo
+        declared_type: String
+        referenced_type: ''
+        collection: false
+        annotations: []
+        source_ref:
+          repository: ''
+          path: app/model/src/main/java/com/ly/flight/chainsaas/refund/model/SaasRefundOrderSegmentVO.java
+          symbol: com.ly.flight.chainsaas.refund.model.SaasRefundOrderSegmentVO#shareFlightNo
+          line: 197
+          commit: ''
+          content_digest: ''
+        resolution_status: resolved
+      - field_name: fareBasis
+        declared_type: String
+        referenced_type: ''
+        collection: false
+        annotations: []
+        source_ref:
+          repository: ''
+          path: app/model/src/main/java/com/ly/flight/chainsaas/refund/model/SaasRefundOrderSegmentVO.java
+          symbol: com.ly.flight.chainsaas.refund.model.SaasRefundOrderSegmentVO#fareBasis
+          line: 202
+          commit: ''
+          content_digest: ''
+        resolution_status: resolved
+      - field_name: mainSegment
+        declared_type: Integer
+        referenced_type: ''
+        collection: false
+        annotations: []
+        source_ref:
+          repository: ''
+          path: app/model/src/main/java/com/ly/flight/chainsaas/refund/model/SaasRefundOrderSegmentVO.java
+          symbol: com.ly.flight.chainsaas.refund.model.SaasRefundOrderSegmentVO#mainSegment
+          line: 207
+          commit: ''
+          content_digest: ''
+        resolution_status: resolved
+      - field_name: carrierName
+        declared_type: String
+        referenced_type: ''
+        collection: false
+        annotations: []
+        source_ref:
+          repository: ''
+          path: app/model/src/main/java/com/ly/flight/chainsaas/refund/model/SaasRefundOrderSegmentVO.java
+          symbol: com.ly.flight.chainsaas.refund.model.SaasRefundOrderSegmentVO#carrierName
+          line: 209
+          commit: ''
+          content_digest: ''
+        resolution_status: resolved
+      - field_name: carrier
+        declared_type: String
+        referenced_type: ''
+        collection: false
+        annotations: []
+        source_ref:
+          repository: ''
+          path: app/model/src/main/java/com/ly/flight/chainsaas/refund/model/SaasRefundOrderSegmentVO.java
+          symbol: com.ly.flight.chainsaas.refund.model.SaasRefundOrderSegmentVO#carrier
+          line: 214
+          commit: ''
+          content_digest: ''
+        resolution_status: resolved
+      - field_name: carrierCn
+        declared_type: String
+        referenced_type: ''
+        collection: false
+        annotations: []
+        source_ref:
+          repository: ''
+          path: app/model/src/main/java/com/ly/flight/chainsaas/refund/model/SaasRefundOrderSegmentVO.java
+          symbol: com.ly.flight.chainsaas.refund.model.SaasRefundOrderSegmentVO#carrierCn
+          line: 219
+          commit: ''
+          content_digest: ''
+        resolution_status: resolved
+      - field_name: carrierEn
+        declared_type: String
+        referenced_type: ''
+        collection: false
+        annotations: []
+        source_ref:
+          repository: ''
+          path: app/model/src/main/java/com/ly/flight/chainsaas/refund/model/SaasRefundOrderSegmentVO.java
+          symbol: com.ly.flight.chainsaas.refund.model.SaasRefundOrderSegmentVO#carrierEn
+          line: 224
+          commit: ''
+          content_digest: ''
+        resolution_status: resolved
+      - field_name: carrierJp
+        declared_type: String
+        referenced_type: ''
+        collection: false
+        annotations: []
+        source_ref:
+          repository: ''
+          path: app/model/src/main/java/com/ly/flight/chainsaas/refund/model/SaasRefundOrderSegmentVO.java
+          symbol: com.ly.flight.chainsaas.refund.model.SaasRefundOrderSegmentVO#carrierJp
+          line: 229
+          commit: ''
+          content_digest: ''
+        resolution_status: resolved
+      - field_name: realCarrierName
+        declared_type: String
+        referenced_type: ''
+        collection: false
+        annotations: []
+        source_ref:
+          repository: ''
+          path: app/model/src/main/java/com/ly/flight/chainsaas/refund/model/SaasRefundOrderSegmentVO.java
+          symbol: com.ly.flight.chainsaas.refund.model.SaasRefundOrderSegmentVO#realCarrierName
+          line: 231
+          commit: ''
+          content_digest: ''
+        resolution_status: resolved
+      - field_name: realCarrier
+        declared_type: String
+        referenced_type: ''
+        collection: false
+        annotations: []
+        source_ref:
+          repository: ''
+          path: app/model/src/main/java/com/ly/flight/chainsaas/refund/model/SaasRefundOrderSegmentVO.java
+          symbol: com.ly.flight.chainsaas.refund.model.SaasRefundOrderSegmentVO#realCarrier
+          line: 236
+          commit: ''
+          content_digest: ''
+        resolution_status: resolved
+      - field_name: realCarrierCn
+        declared_type: String
+        referenced_type: ''
+        collection: false
+        annotations: []
+        source_ref:
+          repository: ''
+          path: app/model/src/main/java/com/ly/flight/chainsaas/refund/model/SaasRefundOrderSegmentVO.java
+          symbol: com.ly.flight.chainsaas.refund.model.SaasRefundOrderSegmentVO#realCarrierCn
+          line: 241
+          commit: ''
+          content_digest: ''
+        resolution_status: resolved
+      - field_name: realCarrierEn
+        declared_type: String
+        referenced_type: ''
+        collection: false
+        annotations: []
+        source_ref:
+          repository: ''
+          path: app/model/src/main/java/com/ly/flight/chainsaas/refund/model/SaasRefundOrderSegmentVO.java
+          symbol: com.ly.flight.chainsaas.refund.model.SaasRefundOrderSegmentVO#realCarrierEn
+          line: 246
+          commit: ''
+          content_digest: ''
+        resolution_status: resolved
+      - field_name: realCarrierJp
+        declared_type: String
+        referenced_type: ''
+        collection: false
+        annotations: []
+        source_ref:
+          repository: ''
+          path: app/model/src/main/java/com/ly/flight/chainsaas/refund/model/SaasRefundOrderSegmentVO.java
+          symbol: com.ly.flight.chainsaas.refund.model.SaasRefundOrderSegmentVO#realCarrierJp
+          line: 251
+          commit: ''
+          content_digest: ''
+        resolution_status: resolved
+      source_ref:
+        repository: ''
+        path: app/model/src/main/java/com/ly/flight/chainsaas/refund/model/SaasRefundOrderSegmentVO.java
+        symbol: com.ly.flight.chainsaas.refund.model.SaasRefundOrderSegmentVO
+        line: 11
+        commit: ''
+        content_digest: ''
+      resolution_status: resolved
+    - qualified_type: com.ly.flight.chainsaas.refund.model.SaasRefundOrderVO
+      kind: class
+      base_types:
+      - com.ly.flight.chainsaas.refund.model.CoreVO
+      fields:
+      - field_name: thirdRefundSerialNo
+        declared_type: String
+        referenced_type: ''
+        collection: false
+        annotations: []
+        source_ref:
+          repository: ''
+          path: app/model/src/main/java/com/ly/flight/chainsaas/refund/model/SaasRefundOrderVO.java
+          symbol: com.ly.flight.chainsaas.refund.model.SaasRefundOrderVO#thirdRefundSerialNo
+          line: 25
+          commit: ''
+          content_digest: ''
+        resolution_status: resolved
+      - field_name: thirdOrderSerialNo
+        declared_type: String
+        referenced_type: ''
+        collection: false
+        annotations: []
+        source_ref:
+          repository: ''
+          path: app/model/src/main/java/com/ly/flight/chainsaas/refund/model/SaasRefundOrderVO.java
+          symbol: com.ly.flight.chainsaas.refund.model.SaasRefundOrderVO#thirdOrderSerialNo
+          line: 30
+          commit: ''
+          content_digest: ''
+        resolution_status: resolved
+      - field_name: engineSerialNo
+        declared_type: String
+        referenced_type: ''
+        collection: false
+        annotations: []
+        source_ref:
+          repository: ''
+          path: app/model/src/main/java/com/ly/flight/chainsaas/refund/model/SaasRefundOrderVO.java
+          symbol: com.ly.flight.chainsaas.refund.model.SaasRefundOrderVO#engineSerialNo
+          line: 35
+          commit: ''
+          content_digest: ''
+        resolution_status: resolved
+      - field_name: engineRefundSerialNo
+        declared_type: String
+        referenced_type: ''
+        collection: false
+        annotations: []
+        source_ref:
+          repository: ''
+          path: app/model/src/main/java/com/ly/flight/chainsaas/refund/model/SaasRefundOrderVO.java
+          symbol: com.ly.flight.chainsaas.refund.model.SaasRefundOrderVO#engineRefundSerialNo
+          line: 40
+          commit: ''
+          content_digest: ''
+        resolution_status: resolved
+      - field_name: refundType
+        declared_type: OrderRefundTypeEnum
+        referenced_type: com.ly.flight.chainsaas.refund.enums.OrderRefundTypeEnum
+        collection: false
+        annotations: []
+        source_ref:
+          repository: ''
+          path: app/model/src/main/java/com/ly/flight/chainsaas/refund/model/SaasRefundOrderVO.java
+          symbol: com.ly.flight.chainsaas.refund.model.SaasRefundOrderVO#refundType
+          line: 45
+          commit: ''
+          content_digest: ''
+        resolution_status: resolved
+      - field_name: involuntaryRefundType
+        declared_type: InvoluntaryRefundTypeEnum
+        referenced_type: com.ly.flight.chainsaas.refund.enums.InvoluntaryRefundTypeEnum
+        collection: false
+        annotations: []
+        source_ref:
+          repository: ''
+          path: app/model/src/main/java/com/ly/flight/chainsaas/refund/model/SaasRefundOrderVO.java
+          symbol: com.ly.flight.chainsaas.refund.model.SaasRefundOrderVO#involuntaryRefundType
+          line: 50
+          commit: ''
+          content_digest: ''
+        resolution_status: resolved
+      - field_name: refundState
+        declared_type: RefundOrderStateEnum
+        referenced_type: com.ly.flight.chainsaas.refund.enums.RefundOrderStateEnum
+        collection: false
+        annotations: []
+        source_ref:
+          repository: ''
+          path: app/model/src/main/java/com/ly/flight/chainsaas/refund/model/SaasRefundOrderVO.java
+          symbol: com.ly.flight.chainsaas.refund.model.SaasRefundOrderVO#refundState
+          line: 55
+          commit: ''
+          content_digest: ''
+        resolution_status: resolved
+      - field_name: lockStatus
+        declared_type: OrderLockEnum
+        referenced_type: com.ly.flight.chainsaas.refund.enums.OrderLockEnum
+        collection: false
+        annotations: []
+        source_ref:
+          repository: ''
+          path: app/model/src/main/java/com/ly/flight/chainsaas/refund/model/SaasRefundOrderVO.java
+          symbol: com.ly.flight.chainsaas.refund.model.SaasRefundOrderVO#lockStatus
+          line: 60
+          commit: ''
+          content_digest: ''
+        resolution_status: resolved
+      - field_name: orderType
+        declared_type: String
+        referenced_type: ''
+        collection: false
+        annotations: []
+        source_ref:
+          repository: ''
+          path: app/model/src/main/java/com/ly/flight/chainsaas/refund/model/SaasRefundOrderVO.java
+          symbol: com.ly.flight.chainsaas.refund.model.SaasRefundOrderVO#orderType
+          line: 62
+          commit: ''
+          content_digest: ''
+        resolution_status: resolved
+      - field_name: orderChannelSource
+        declared_type: Integer
+        referenced_type: ''
+        collection: false
+        annotations: []
+        source_ref:
+          repository: ''
+          path: app/model/src/main/java/com/ly/flight/chainsaas/refund/model/SaasRefundOrderVO.java
+          symbol: com.ly.flight.chainsaas.refund.model.SaasRefundOrderVO#orderChannelSource
+          line: 67
+          commit: ''
+          content_digest: ''
+        resolution_status: resolved
+      - field_name: supplyChannel
+        declared_type: Integer
+        referenced_type: ''
+        collection: false
+        annotations: []
+        source_ref:
+          repository: ''
+          path: app/model/src/main/java/com/ly/flight/chainsaas/refund/model/SaasRefundOrderVO.java
+          symbol: com.ly.flight.chainsaas.refund.model.SaasRefundOrderVO#supplyChannel
+          line: 72
+          commit: ''
+          content_digest: ''
+        resolution_status: resolved
+      - field_name: isAuto
+        declared_type: OrderAutoEnum
+        referenced_type: com.ly.flight.chainsaas.refund.enums.OrderAutoEnum
+        collection: false
+        annotations: []
+        source_ref:
+          repository: ''
+          path: app/model/src/main/java/com/ly/flight/chainsaas/refund/model/SaasRefundOrderVO.java
+          symbol: com.ly.flight.chainsaas.refund.model.SaasRefundOrderVO#isAuto
+          line: 77
+          commit: ''
+          content_digest: ''
+        resolution_status: resolved
+      - field_name: lockOperator
+        declared_type: String
+        referenced_type: ''
+        collection: false
+        annotations: []
+        source_ref:
+          repository: ''
+          path: app/model/src/main/java/com/ly/flight/chainsaas/refund/model/SaasRefundOrderVO.java
+          symbol: com.ly.flight.chainsaas.refund.model.SaasRefundOrderVO#lockOperator
+          line: 82
+          commit: ''
+          content_digest: ''
+        resolution_status: resolved
+      - field_name: buyerId
+        declared_type: String
+        referenced_type: ''
+        collection: false
+        annotations: []
+        source_ref:
+          repository: ''
+          path: app/model/src/main/java/com/ly/flight/chainsaas/refund/model/SaasRefundOrderVO.java
+          symbol: com.ly.flight.chainsaas.refund.model.SaasRefundOrderVO#buyerId
+          line: 87
+          commit: ''
+          content_digest: ''
+        resolution_status: resolved
+      - field_name: buyerMoney
+        declared_type: BigDecimal
+        referenced_type: ''
+        collection: false
+        annotations: []
+        source_ref:
+          repository: ''
+          path: app/model/src/main/java/com/ly/flight/chainsaas/refund/model/SaasRefundOrderVO.java
+          symbol: com.ly.flight.chainsaas.refund.model.SaasRefundOrderVO#buyerMoney
+          line: 92
+          commit: ''
+          content_digest: ''
+        resolution_status: resolved
+      - field_name: totalCouponMoney
+        declared_type: BigDecimal
+        referenced_type: ''
+        collection: false
+        annotations: []
+        source_ref:
+          repository: ''
+          path: app/model/src/main/java/com/ly/flight/chainsaas/refund/model/SaasRefundOrderVO.java
+          symbol: com.ly.flight.chainsaas.refund.model.SaasRefundOrderVO#totalCouponMoney
+          line: 97
+          commit: ''
+          content_digest: ''
+        resolution_status: resolved
+      - field_name: buyerCurrency
+        declared_type: String
+        referenced_type: ''
+        collection: false
+        annotations: []
+        source_ref:
+          repository: ''
+          path: app/model/src/main/java/com/ly/flight/chainsaas/refund/model/SaasRefundOrderVO.java
+          symbol: com.ly.flight.chainsaas.refund.model.SaasRefundOrderVO#buyerCurrency
+          line: 102
+          commit: ''
+          content_digest: ''
+        resolution_status: resolved
+      - field_name: platFormId
+        declared_type: String
+        referenced_type: ''
+        collection: false
+        annotations: []
+        source_ref:
+          repository: ''
+          path: app/model/src/main/java/com/ly/flight/chainsaas/refund/model/SaasRefundOrderVO.java
+          symbol: com.ly.flight.chainsaas.refund.model.SaasRefundOrderVO#platFormId
+          line: 107
+          commit: ''
+          content_digest: ''
+        resolution_status: resolved
+      - field_name: merchantId
+        declared_type: String
+        referenced_type: ''
+        collection: false
+        annotations: []
+        source_ref:
+          repository: ''
+          path: app/model/src/main/java/com/ly/flight/chainsaas/refund/model/SaasRefundOrderVO.java
+          symbol: com.ly.flight.chainsaas.refund.model.SaasRefundOrderVO#merchantId
+          line: 112
+          commit: ''
+          content_digest: ''
+        resolution_status: resolved
+      - field_name: merchantMoney
+        declared_type: BigDecimal
+        referenced_type: ''
+        collection: false
+        annotations: []
+        source_ref:
+          repository: ''
+          path: app/model/src/main/java/com/ly/flight/chainsaas/refund/model/SaasRefundOrderVO.java
+          symbol: com.ly.flight.chainsaas.refund.model.SaasRefundOrderVO#merchantMoney
+          line: 117
+          commit: ''
+          content_digest: ''
+        resolution_status: resolved
+      - field_name: merchantCurrency
+        declared_type: String
+        referenced_type: ''
+        collection: false
+        annotations: []
+        source_ref:
+          repository: ''
+          path: app/model/src/main/java/com/ly/flight/chainsaas/refund/model/SaasRefundOrderVO.java
+          symbol: com.ly.flight.chainsaas.refund.model.SaasRefundOrderVO#merchantCurrency
+          line: 122
+          commit: ''
+          content_digest: ''
+        resolution_status: resolved
+      - field_name: ticketAirline
+        declared_type: String
+        referenced_type: ''
+        collection: false
+        annotations: []
+        source_ref:
+          repository: ''
+          path: app/model/src/main/java/com/ly/flight/chainsaas/refund/model/SaasRefundOrderVO.java
+          symbol: com.ly.flight.chainsaas.refund.model.SaasRefundOrderVO#ticketAirline
+          line: 127
+          commit: ''
+          content_digest: ''
+        resolution_status: resolved
+      - field_name: officeNo
+        declared_type: String
+        referenced_type: ''
+        collection: false
+        annotations: []
+        source_ref:
+          repository: ''
+          path: app/model/src/main/java/com/ly/flight/chainsaas/refund/model/SaasRefundOrderVO.java
+          symbol: com.ly.flight.chainsaas.refund.model.SaasRefundOrderVO#officeNo
+          line: 132
+          commit: ''
+          content_digest: ''
+        resolution_status: resolved
+      - field_name: bigCode
+        declared_type: String
+        referenced_type: ''
+        collection: false
+        annotations: []
+        source_ref:
+          repository: ''
+          path: app/model/src/main/java/com/ly/flight/chainsaas/refund/model/SaasRefundOrderVO.java
+          symbol: com.ly.flight.chainsaas.refund.model.SaasRefundOrderVO#bigCode
+          line: 137
+          commit: ''
+          content_digest: ''
+        resolution_status: resolved
+      - field_name: pnr
+        declared_type: String
+        referenced_type: ''
+        collection: false
+        annotations: []
+        source_ref:
+          repository: ''
+          path: app/model/src/main/java/com/ly/flight/chainsaas/refund/model/SaasRefundOrderVO.java
+          symbol: com.ly.flight.chainsaas.refund.model.SaasRefundOrderVO#pnr
+          line: 142
+          commit: ''
+          content_digest: ''
+        resolution_status: resolved
+      - field_name: gds
+        declared_type: String
+        referenced_type: ''
+        collection: false
+        annotations: []
+        source_ref:
+          repository: ''
+          path: app/model/src/main/java/com/ly/flight/chainsaas/refund/model/SaasRefundOrderVO.java
+          symbol: com.ly.flight.chainsaas.refund.model.SaasRefundOrderVO#gds
+          line: 147
+          commit: ''
+          content_digest: ''
+        resolution_status: resolved
+      - field_name: fareType
+        declared_type: FareTypeEnum
+        referenced_type: com.ly.flight.chainsaas.refund.enums.FareTypeEnum
+        collection: false
+        annotations: []
+        source_ref:
+          repository: ''
+          path: app/model/src/main/java/com/ly/flight/chainsaas/refund/model/SaasRefundOrderVO.java
+          symbol: com.ly.flight.chainsaas.refund.model.SaasRefundOrderVO#fareType
+          line: 152
+          commit: ''
+          content_digest: ''
+        resolution_status: resolved
+      - field_name: cancelReason
+        declared_type: String
+        referenced_type: ''
+        collection: false
+        annotations: []
+        source_ref:
+          repository: ''
+          path: app/model/src/main/java/com/ly/flight/chainsaas/refund/model/SaasRefundOrderVO.java
+          symbol: com.ly.flight.chainsaas.refund.model.SaasRefundOrderVO#cancelReason
+          line: 157
+          commit: ''
+          content_digest: ''
+        resolution_status: resolved
+      - field_name: cancelRemark
+        declared_type: String
+        referenced_type: ''
+        collection: false
+        annotations: []
+        source_ref:
+          repository: ''
+          path: app/model/src/main/java/com/ly/flight/chainsaas/refund/model/SaasRefundOrderVO.java
+          symbol: com.ly.flight.chainsaas.refund.model.SaasRefundOrderVO#cancelRemark
+          line: 162
+          commit: ''
+          content_digest: ''
+        resolution_status: resolved
+      - field_name: traceId
+        declared_type: String
+        referenced_type: ''
+        collection: false
+        annotations: []
+        source_ref:
+          repository: ''
+          path: app/model/src/main/java/com/ly/flight/chainsaas/refund/model/SaasRefundOrderVO.java
+          symbol: com.ly.flight.chainsaas.refund.model.SaasRefundOrderVO#traceId
+          line: 167
+          commit: ''
+          content_digest: ''
+        resolution_status: resolved
+      - field_name: contactName
+        declared_type: String
+        referenced_type: ''
+        collection: false
+        annotations: []
+        source_ref:
+          repository: ''
+          path: app/model/src/main/java/com/ly/flight/chainsaas/refund/model/SaasRefundOrderVO.java
+          symbol: com.ly.flight.chainsaas.refund.model.SaasRefundOrderVO#contactName
+          line: 172
+          commit: ''
+          content_digest: ''
+        resolution_status: resolved
+      - field_name: contactPhone
+        declared_type: String
+        referenced_type: ''
+        collection: false
+        annotations: []
+        source_ref:
+          repository: ''
+          path: app/model/src/main/java/com/ly/flight/chainsaas/refund/model/SaasRefundOrderVO.java
+          symbol: com.ly.flight.chainsaas.refund.model.SaasRefundOrderVO#contactPhone
+          line: 177
+          commit: ''
+          content_digest: ''
+        resolution_status: resolved
+      - field_name: tripType
+        declared_type: TravelTypeEnum
+        referenced_type: com.ly.flight.chainsaas.refund.enums.TravelTypeEnum
+        collection: false
+        annotations: []
+        source_ref:
+          repository: ''
+          path: app/model/src/main/java/com/ly/flight/chainsaas/refund/model/SaasRefundOrderVO.java
+          symbol: com.ly.flight.chainsaas.refund.model.SaasRefundOrderVO#tripType
+          line: 182
+          commit: ''
+          content_digest: ''
+        resolution_status: resolved
+      - field_name: gmtTakeOff
+        declared_type: Date
+        referenced_type: ''
+        collection: false
+        annotations: []
+        source_ref:
+          repository: ''
+          path: app/model/src/main/java/com/ly/flight/chainsaas/refund/model/SaasRefundOrderVO.java
+          symbol: com.ly.flight.chainsaas.refund.model.SaasRefundOrderVO#gmtTakeOff
+          line: 187
+          commit: ''
+          content_digest: ''
+        resolution_status: resolved
+      - field_name: gmtApply
+        declared_type: Date
+        referenced_type: ''
+        collection: false
+        annotations: []
+        source_ref:
+          repository: ''
+          path: app/model/src/main/java/com/ly/flight/chainsaas/refund/model/SaasRefundOrderVO.java
+          symbol: com.ly.flight.chainsaas.refund.model.SaasRefundOrderVO#gmtApply
+          line: 192
+          commit: ''
+          content_digest: ''
+        resolution_status: resolved
+      - field_name: gmtMerchantAudit
+        declared_type: Date
+        referenced_type: ''
+        collection: false
+        annotations: []
+        source_ref:
+          repository: ''
+          path: app/model/src/main/java/com/ly/flight/chainsaas/refund/model/SaasRefundOrderVO.java
+          symbol: com.ly.flight.chainsaas.refund.model.SaasRefundOrderVO#gmtMerchantAudit
+          line: 197
+          commit: ''
+          content_digest: ''
+        resolution_status: resolved
+      - field_name: gmtBuyerConfirm
+        declared_type: Date
+        referenced_type: ''
+        collection: false
+        annotations: []
+        source_ref:
+          repository: ''
+          path: app/model/src/main/java/com/ly/flight/chainsaas/refund/model/SaasRefundOrderVO.java
+          symbol: com.ly.flight.chainsaas.refund.model.SaasRefundOrderVO#gmtBuyerConfirm
+          line: 202
+          commit: ''
+          content_digest: ''
+        resolution_status: resolved
+      - field_name: auditOperator
+        declared_type: String
+        referenced_type: ''
+        collection: false
+        annotations: []
+        source_ref:
+          repository: ''
+          path: app/model/src/main/java/com/ly/flight/chainsaas/refund/model/SaasRefundOrderVO.java
+          symbol: com.ly.flight.chainsaas.refund.model.SaasRefundOrderVO#auditOperator
+          line: 207
+          commit: ''
+          content_digest: ''
+        resolution_status: resolved
+      - field_name: refundOperator
+        declared_type: String
+        referenced_type: ''
+        collection: false
+        annotations: []
+        source_ref:
+          repository: ''
+          path: app/model/src/main/java/com/ly/flight/chainsaas/refund/model/SaasRefundOrderVO.java
+          symbol: com.ly.flight.chainsaas.refund.model.SaasRefundOrderVO#refundOperator
+          line: 212
+          commit: ''
+          content_digest: ''
+        resolution_status: resolved
+      - field_name: gmtRefunded
+        declared_type: Date
+        referenced_type: ''
+        collection: false
+        annotations: []
+        source_ref:
+          repository: ''
+          path: app/model/src/main/java/com/ly/flight/chainsaas/refund/model/SaasRefundOrderVO.java
+          symbol: com.ly.flight.chainsaas.refund.model.SaasRefundOrderVO#gmtRefunded
+          line: 217
+          commit: ''
+          content_digest: ''
+        resolution_status: resolved
+      - field_name: gmtRefundedPrice
+        declared_type: Date
+        referenced_type: ''
+        collection: false
+        annotations: []
+        source_ref:
+          repository: ''
+          path: app/model/src/main/java/com/ly/flight/chainsaas/refund/model/SaasRefundOrderVO.java
+          symbol: com.ly.flight.chainsaas.refund.model.SaasRefundOrderVO#gmtRefundedPrice
+          line: 222
+          commit: ''
+          content_digest: ''
+        resolution_status: resolved
+      - field_name: confirmSync
+        declared_type: Integer
+        referenced_type: ''
+        collection: false
+        annotations: []
+        source_ref:
+          repository: ''
+          path: app/model/src/main/java/com/ly/flight/chainsaas/refund/model/SaasRefundOrderVO.java
+          symbol: com.ly.flight.chainsaas.refund.model.SaasRefundOrderVO#confirmSync
+          line: 227
+          commit: ''
+          content_digest: ''
+        resolution_status: resolved
+      - field_name: auditPassSync
+        declared_type: Integer
+        referenced_type: ''
+        collection: false
+        annotations: []
+        source_ref:
+          repository: ''
+          path: app/model/src/main/java/com/ly/flight/chainsaas/refund/model/SaasRefundOrderVO.java
+          symbol: com.ly.flight.chainsaas.refund.model.SaasRefundOrderVO#auditPassSync
+          line: 232
+          commit: ''
+          content_digest: ''
+        resolution_status: resolved
+      - field_name: ext
+        declared_type: String
+        referenced_type: ''
+        collection: false
+        annotations: []
+        source_ref:
+          repository: ''
+          path: app/model/src/main/java/com/ly/flight/chainsaas/refund/model/SaasRefundOrderVO.java
+          symbol: com.ly.flight.chainsaas.refund.model.SaasRefundOrderVO#ext
+          line: 237
+          commit: ''
+          content_digest: ''
+        resolution_status: resolved
+      - field_name: gmtOrderCreate
+        declared_type: Date
+        referenced_type: ''
+        collection: false
+        annotations: []
+        source_ref:
+          repository: ''
+          path: app/model/src/main/java/com/ly/flight/chainsaas/refund/model/SaasRefundOrderVO.java
+          symbol: com.ly.flight.chainsaas.refund.model.SaasRefundOrderVO#gmtOrderCreate
+          line: 242
+          commit: ''
+          content_digest: ''
+        resolution_status: resolved
+      - field_name: gmtRefundCreate
+        declared_type: Date
+        referenced_type: ''
+        collection: false
+        annotations: []
+        source_ref:
+          repository: ''
+          path: app/model/src/main/java/com/ly/flight/chainsaas/refund/model/SaasRefundOrderVO.java
+          symbol: com.ly.flight.chainsaas.refund.model.SaasRefundOrderVO#gmtRefundCreate
+          line: 247
+          commit: ''
+          content_digest: ''
+        resolution_status: resolved
+      - field_name: saasPaymentVO
+        declared_type: SaasPaymentVO
+        referenced_type: com.ly.flight.chainsaas.refund.model.SaasPaymentVO
+        collection: false
+        annotations: []
+        source_ref:
+          repository: ''
+          path: app/model/src/main/java/com/ly/flight/chainsaas/refund/model/SaasRefundOrderVO.java
+          symbol: com.ly.flight.chainsaas.refund.model.SaasRefundOrderVO#saasPaymentVO
+          line: 249
+          commit: ''
+          content_digest: ''
+        resolution_status: resolved
+      - field_name: saasPaymentPassagerVOS
+        declared_type: List<SaasPaymentPassagerVO>
+        referenced_type: com.ly.flight.chainsaas.refund.model.SaasPaymentPassagerVO
+        collection: true
+        annotations: []
+        source_ref:
+          repository: ''
+          path: app/model/src/main/java/com/ly/flight/chainsaas/refund/model/SaasRefundOrderVO.java
+          symbol: com.ly.flight.chainsaas.refund.model.SaasRefundOrderVO#saasPaymentPassagerVOS
+          line: 251
+          commit: ''
+          content_digest: ''
+        resolution_status: resolved
+      - field_name: psis
+        declared_type: List<SaasRefundOrderPsiVO>
+        referenced_type: com.ly.flight.chainsaas.refund.model.SaasRefundOrderPsiVO
+        collection: true
+        annotations: []
+        source_ref:
+          repository: ''
+          path: app/model/src/main/java/com/ly/flight/chainsaas/refund/model/SaasRefundOrderVO.java
+          symbol: com.ly.flight.chainsaas.refund.model.SaasRefundOrderVO#psis
+          line: 256
+          commit: ''
+          content_digest: ''
+        resolution_status: resolved
+      - field_name: departureCityCode
+        declared_type: String
+        referenced_type: ''
+        collection: false
+        annotations: []
+        source_ref:
+          repository: ''
+          path: app/model/src/main/java/com/ly/flight/chainsaas/refund/model/SaasRefundOrderVO.java
+          symbol: com.ly.flight.chainsaas.refund.model.SaasRefundOrderVO#departureCityCode
+          line: 263
+          commit: ''
+          content_digest: ''
+        resolution_status: resolved
+      - field_name: arrivalCityCode
+        declared_type: String
+        referenced_type: ''
+        collection: false
+        annotations: []
+        source_ref:
+          repository: ''
+          path: app/model/src/main/java/com/ly/flight/chainsaas/refund/model/SaasRefundOrderVO.java
+          symbol: com.ly.flight.chainsaas.refund.model.SaasRefundOrderVO#arrivalCityCode
+          line: 268
+          commit: ''
+          content_digest: ''
+        resolution_status: resolved
+      - field_name: gmtArrive
+        declared_type: Date
+        referenced_type: ''
+        collection: false
+        annotations: []
+        source_ref:
+          repository: ''
+          path: app/model/src/main/java/com/ly/flight/chainsaas/refund/model/SaasRefundOrderVO.java
+          symbol: com.ly.flight.chainsaas.refund.model.SaasRefundOrderVO#gmtArrive
+          line: 273
+          commit: ''
+          content_digest: ''
+        resolution_status: resolved
+      - field_name: buyer
+        declared_type: String
+        referenced_type: ''
+        collection: false
+        annotations: []
+        source_ref:
+          repository: ''
+          path: app/model/src/main/java/com/ly/flight/chainsaas/refund/model/SaasRefundOrderVO.java
+          symbol: com.ly.flight.chainsaas.refund.model.SaasRefundOrderVO#buyer
+          line: 278
+          commit: ''
+          content_digest: ''
+        resolution_status: resolved
+      - field_name: flightNo
+        declared_type: String
+        referenced_type: ''
+        collection: false
+        annotations: []
+        source_ref:
+          repository: ''
+          path: app/model/src/main/java/com/ly/flight/chainsaas/refund/model/SaasRefundOrderVO.java
+          symbol: com.ly.flight.chainsaas.refund.model.SaasRefundOrderVO#flightNo
+          line: 280
+          commit: ''
+          content_digest: ''
+        resolution_status: resolved
+      - field_name: memberId
+        declared_type: String
+        referenced_type: ''
+        collection: false
+        annotations: []
+        source_ref:
+          repository: ''
+          path: app/model/src/main/java/com/ly/flight/chainsaas/refund/model/SaasRefundOrderVO.java
+          symbol: com.ly.flight.chainsaas.refund.model.SaasRefundOrderVO#memberId
+          line: 285
+          commit: ''
+          content_digest: ''
+        resolution_status: resolved
+      - field_name: isVcc
+        declared_type: Integer
+        referenced_type: ''
+        collection: false
+        annotations: []
+        source_ref:
+          repository: ''
+          path: app/model/src/main/java/com/ly/flight/chainsaas/refund/model/SaasRefundOrderVO.java
+          symbol: com.ly.flight.chainsaas.refund.model.SaasRefundOrderVO#isVcc
+          line: 290
+          commit: ''
+          content_digest: ''
+        resolution_status: resolved
+      - field_name: isVoucher
+        declared_type: Integer
+        referenced_type: ''
+        collection: false
+        annotations: []
+        source_ref:
+          repository: ''
+          path: app/model/src/main/java/com/ly/flight/chainsaas/refund/model/SaasRefundOrderVO.java
+          symbol: com.ly.flight.chainsaas.refund.model.SaasRefundOrderVO#isVoucher
+          line: 295
+          commit: ''
+          content_digest: ''
+        resolution_status: resolved
+      - field_name: voucherDetailList
+        declared_type: List<SaasRefundOrderVoucherVO>
+        referenced_type: com.ly.flight.chainsaas.refund.model.SaasRefundOrderVoucherVO
+        collection: true
+        annotations: []
+        source_ref:
+          repository: ''
+          path: app/model/src/main/java/com/ly/flight/chainsaas/refund/model/SaasRefundOrderVO.java
+          symbol: com.ly.flight.chainsaas.refund.model.SaasRefundOrderVO#voucherDetailList
+          line: 300
+          commit: ''
+          content_digest: ''
+        resolution_status: resolved
+      - field_name: departureCity
+        declared_type: String
+        referenced_type: ''
+        collection: false
+        annotations: []
+        source_ref:
+          repository: ''
+          path: app/model/src/main/java/com/ly/flight/chainsaas/refund/model/SaasRefundOrderVO.java
+          symbol: com.ly.flight.chainsaas.refund.model.SaasRefundOrderVO#departureCity
+          line: 305
+          commit: ''
+          content_digest: ''
+        resolution_status: resolved
+      - field_name: arrivalCity
+        declared_type: String
+        referenced_type: ''
+        collection: false
+        annotations: []
+        source_ref:
+          repository: ''
+          path: app/model/src/main/java/com/ly/flight/chainsaas/refund/model/SaasRefundOrderVO.java
+          symbol: com.ly.flight.chainsaas.refund.model.SaasRefundOrderVO#arrivalCity
+          line: 310
+          commit: ''
+          content_digest: ''
+        resolution_status: resolved
+      - field_name: applyToAirline
+        declared_type: ApplyToAirlineEnum
+        referenced_type: com.ly.flight.chainsaas.refund.enums.ApplyToAirlineEnum
+        collection: false
+        annotations: []
+        source_ref:
+          repository: ''
+          path: app/model/src/main/java/com/ly/flight/chainsaas/refund/model/SaasRefundOrderVO.java
+          symbol: com.ly.flight.chainsaas.refund.model.SaasRefundOrderVO#applyToAirline
+          line: 315
+          commit: ''
+          content_digest: ''
+        resolution_status: resolved
+      - field_name: fopType
+        declared_type: String
+        referenced_type: ''
+        collection: false
+        annotations: []
+        source_ref:
+          repository: ''
+          path: app/model/src/main/java/com/ly/flight/chainsaas/refund/model/SaasRefundOrderVO.java
+          symbol: com.ly.flight.chainsaas.refund.model.SaasRefundOrderVO#fopType
+          line: 320
+          commit: ''
+          content_digest: ''
+        resolution_status: resolved
+      - field_name: eventState
+        declared_type: Integer
+        referenced_type: ''
+        collection: false
+        annotations: []
+        source_ref:
+          repository: ''
+          path: app/model/src/main/java/com/ly/flight/chainsaas/refund/model/SaasRefundOrderVO.java
+          symbol: com.ly.flight.chainsaas.refund.model.SaasRefundOrderVO#eventState
+          line: 325
+          commit: ''
+          content_digest: ''
+        resolution_status: resolved
+      - field_name: refundOrderType
+        declared_type: String
+        referenced_type: ''
+        collection: false
+        annotations: []
+        source_ref:
+          repository: ''
+          path: app/model/src/main/java/com/ly/flight/chainsaas/refund/model/SaasRefundOrderVO.java
+          symbol: com.ly.flight.chainsaas.refund.model.SaasRefundOrderVO#refundOrderType
+          line: 331
+          commit: ''
+          content_digest: ''
+        resolution_status: resolved
+      - field_name: refundChannel
+        declared_type: String
+        referenced_type: ''
+        collection: false
+        annotations: []
+        source_ref:
+          repository: ''
+          path: app/model/src/main/java/com/ly/flight/chainsaas/refund/model/SaasRefundOrderVO.java
+          symbol: com.ly.flight.chainsaas.refund.model.SaasRefundOrderVO#refundChannel
+          line: 337
+          commit: ''
+          content_digest: ''
+        resolution_status: resolved
+      - field_name: refundMonitorKey
+        declared_type: String
+        referenced_type: ''
+        collection: false
+        annotations: []
+        source_ref:
+          repository: ''
+          path: app/model/src/main/java/com/ly/flight/chainsaas/refund/model/SaasRefundOrderVO.java
+          symbol: com.ly.flight.chainsaas.refund.model.SaasRefundOrderVO#refundMonitorKey
+          line: 342
+          commit: ''
+          content_digest: ''
+        resolution_status: resolved
+      - field_name: walletId
+        declared_type: String
+        referenced_type: ''
+        collection: false
+        annotations: []
+        source_ref:
+          repository: ''
+          path: app/model/src/main/java/com/ly/flight/chainsaas/refund/model/SaasRefundOrderVO.java
+          symbol: com.ly.flight.chainsaas.refund.model.SaasRefundOrderVO#walletId
+          line: 347
+          commit: ''
+          content_digest: ''
+        resolution_status: resolved
+      source_ref:
+        repository: ''
+        path: app/model/src/main/java/com/ly/flight/chainsaas/refund/model/SaasRefundOrderVO.java
+        symbol: com.ly.flight.chainsaas.refund.model.SaasRefundOrderVO
+        line: 19
+        commit: ''
+        content_digest: ''
+      resolution_status: resolved
+    - qualified_type: com.ly.flight.chainsaas.refund.model.SaasRefundOrderVoucherVO
+      kind: class
+      base_types:
+      - com.ly.flight.chainsaas.refund.model.CoreVO
+      fields:
+      - field_name: passengerId
+        declared_type: String
+        referenced_type: ''
+        collection: false
+        annotations: []
+        source_ref:
+          repository: ''
+          path: app/model/src/main/java/com/ly/flight/chainsaas/refund/model/SaasRefundOrderVoucherVO.java
+          symbol: com.ly.flight.chainsaas.refund.model.SaasRefundOrderVoucherVO#passengerId
+          line: 16
+          commit: ''
+          content_digest: ''
+        resolution_status: resolved
+      - field_name: segmentId
+        declared_type: String
+        referenced_type: ''
+        collection: false
+        annotations: []
+        source_ref:
+          repository: ''
+          path: app/model/src/main/java/com/ly/flight/chainsaas/refund/model/SaasRefundOrderVoucherVO.java
+          symbol: com.ly.flight.chainsaas.refund.model.SaasRefundOrderVoucherVO#segmentId
+          line: 18
+          commit: ''
+          content_digest: ''
+        resolution_status: resolved
+      - field_name: itemId
+        declared_type: String
+        referenced_type: ''
+        collection: false
+        annotations: []
+        source_ref:
+          repository: ''
+          path: app/model/src/main/java/com/ly/flight/chainsaas/refund/model/SaasRefundOrderVoucherVO.java
+          symbol: com.ly.flight.chainsaas.refund.model.SaasRefundOrderVoucherVO#itemId
+          line: 20
+          commit: ''
+          content_digest: ''
+        resolution_status: resolved
+      - field_name: ticketNo
+        declared_type: String
+        referenced_type: ''
+        collection: false
+        annotations: []
+        source_ref:
+          repository: ''
+          path: app/model/src/main/java/com/ly/flight/chainsaas/refund/model/SaasRefundOrderVoucherVO.java
+          symbol: com.ly.flight.chainsaas.refund.model.SaasRefundOrderVoucherVO#ticketNo
+          line: 22
+          commit: ''
+          content_digest: ''
+        resolution_status: resolved
+      - field_name: voucherCode
+        declared_type: String
+        referenced_type: ''
+        collection: false
+        annotations: []
+        source_ref:
+          repository: ''
+          path: app/model/src/main/java/com/ly/flight/chainsaas/refund/model/SaasRefundOrderVoucherVO.java
+          symbol: com.ly.flight.chainsaas.refund.model.SaasRefundOrderVoucherVO#voucherCode
+          line: 24
+          commit: ''
+          content_digest: ''
+        resolution_status: resolved
+      - field_name: voucherAmount
+        declared_type: BigDecimal
+        referenced_type: ''
+        collection: false
+        annotations: []
+        source_ref:
+          repository: ''
+          path: app/model/src/main/java/com/ly/flight/chainsaas/refund/model/SaasRefundOrderVoucherVO.java
+          symbol: com.ly.flight.chainsaas.refund.model.SaasRefundOrderVoucherVO#voucherAmount
+          line: 26
+          commit: ''
+          content_digest: ''
+        resolution_status: resolved
+      - field_name: currency
+        declared_type: String
+        referenced_type: ''
+        collection: false
+        annotations: []
+        source_ref:
+          repository: ''
+          path: app/model/src/main/java/com/ly/flight/chainsaas/refund/model/SaasRefundOrderVoucherVO.java
+          symbol: com.ly.flight.chainsaas.refund.model.SaasRefundOrderVoucherVO#currency
+          line: 28
+          commit: ''
+          content_digest: ''
+        resolution_status: resolved
+      - field_name: validDate
+        declared_type: Date
+        referenced_type: ''
+        collection: false
+        annotations: []
+        source_ref:
+          repository: ''
+          path: app/model/src/main/java/com/ly/flight/chainsaas/refund/model/SaasRefundOrderVoucherVO.java
+          symbol: com.ly.flight.chainsaas.refund.model.SaasRefundOrderVoucherVO#validDate
+          line: 30
+          commit: ''
+          content_digest: ''
+        resolution_status: resolved
+      - field_name: traceId
+        declared_type: String
+        referenced_type: ''
+        collection: false
+        annotations: []
+        source_ref:
+          repository: ''
+          path: app/model/src/main/java/com/ly/flight/chainsaas/refund/model/SaasRefundOrderVoucherVO.java
+          symbol: com.ly.flight.chainsaas.refund.model.SaasRefundOrderVoucherVO#traceId
+          line: 32
+          commit: ''
+          content_digest: ''
+        resolution_status: resolved
+      source_ref:
+        repository: ''
+        path: app/model/src/main/java/com/ly/flight/chainsaas/refund/model/SaasRefundOrderVoucherVO.java
+        symbol: com.ly.flight.chainsaas.refund.model.SaasRefundOrderVoucherVO
+        line: 11
+        commit: ''
+        content_digest: ''
+      resolution_status: resolved
+    field_conversions: []
+  provider_operation_ref:
+    source_system_id: ifightchainsaas.java.refund.core
+    operation_id: facade:com.ly.flight.chainsaas.refund.facade.RefundFacade#queryList
+    source_scan_id: scan-20260827223314-a0f437c374-27423ce1
+  mutability: READ_ONLY
+dependency_proofs: []
+blockers: []
+handoff_id: ''
+legacy_assets: read_only
+generated_at: '2026-08-28T06:33:17.592805Z'

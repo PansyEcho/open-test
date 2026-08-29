@@ -1,0 +1,22 @@
+contract_version: cleanup-contract-rules/v1
+rule_revision_id: cleanup-rule-revision:5f254377f4ec439187708e58ed010f7c
+system_id: ifightchainsaas.java.refund.core
+classifiers: []
+contracts:
+- cleanup_contract_id: refund-cancel-consumed/v1
+  entry_id: facade:com.ly.flight.chainsaas.refund.facade.RefundFacade#cancel
+  action_profile_id: action-profile:refund-cancel-v3
+  resource_scope: ACTION_EFFECT
+  identity:
+    required_source: setup_fact
+    fact_contract_id: refund-order/v3
+    fact_path: refundSerialNo
+    fact_name: refund_order
+  cancel_classifier_ids: []
+  cancel_input_bindings: {}
+  sql_contract: null
+  recovery_oracle: null
+  consumed_by_action:
+    state_transition_assertion_id: entry-fact:refund-cancel-current-v3-transition-cancelled
+    oracle_actual_source: action_result
+    oracle_actual_path: success

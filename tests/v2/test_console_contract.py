@@ -18,9 +18,13 @@ def test_console_static_client_uses_versioned_routes_and_safe_rendering() -> Non
 
     assert "OpenTest V2 Console" in html
     assert 'const API_ROOT = "/api/v2"' in script
-    assert '<meta name="opentest-page-version" content="20260828-02">' in html
-    assert '/assets/app.js?v=20260828-02' in html
+    assert '<meta name="opentest-page-version" content="20260828-03">' in html
+    assert '/assets/app.js?v=20260828-03' in html
     assert '/assets/styles.css?v=20260828-02' in html
+    assert 'id="case-generation-profile"' in html
+    assert "仅在程序无法完成Case生成时用于Codex补全" in html
+    for profile_label in ("Luna · Low", "Luna · Medium", "Sol · Low", "Sol · Medium"):
+        assert profile_label in html
     assert 'id="stale-page-warning"' in html
     assert html.index('id="stale-page-warning"') < html.index('id="workspace-workbench"')
     assert "verifyCurrentPageVersion" in script
@@ -168,10 +172,16 @@ def test_console_static_client_uses_versioned_routes_and_safe_rendering() -> Non
     assert "appendLegacyCaseDetails" not in script
     assert "variant.can_execute === true" in script
     assert "startHybridCaseGeneration" in script
-    assert "JSON.stringify({ entry_id: entryId })" in script
+    assert "selectedCaseGenerationProfile" in script
+    assert "entry_id: entryId," in script
+    assert "codex_model: generationProfile.codexModel" in script
+    assert "reasoning_effort: generationProfile.reasoningEffort" in script
     assert "generation_progress" in script
-    assert 'phase === "AGENT_RUNNING" || phase === "VALIDATING"' in script
-    assert 'WAITING_TO_START: "待补充"' in script
+    assert '["WAITING_TO_START", "AGENT_RUNNING", "VALIDATING"].includes(phase)' in script
+    assert 'WAITING_TO_START: "等待Codex补全"' in script
+    assert 'AGENT_RUNNING: "Codex正在设计Recipe"' in script
+    assert 'VALIDATING: "正在校验草稿"' in script
+    assert 'READY: "已生成"' in script
     assert "scheduleCaseGenerationProgressPolling" in script
     assert "CASE_PROGRESS_POLL_INTERVAL_MS" in script
     assert "stopCaseGenerationProgressPolling();" in script[

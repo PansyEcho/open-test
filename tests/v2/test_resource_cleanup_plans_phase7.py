@@ -979,7 +979,7 @@ def _copy_refund_truth(source_root: Path, target_root: Path, scan_id: str) -> No
     dependencies = source_root / "systems" / system_id / "dependencies.yaml"
     if dependencies.exists():
         shutil.copy2(dependencies, target_system / "dependencies.yaml")
-    for directory_name in ("capabilities", "recipes", "rules"):
+    for directory_name in ("capabilities", "recipes", "rules", "references"):
         source_directory = source_root / "systems" / system_id / directory_name
         if source_directory.exists():
             # 正式资产目录若出现，必须原样进入副本，禁止选择性省略以制造BLOCKED。

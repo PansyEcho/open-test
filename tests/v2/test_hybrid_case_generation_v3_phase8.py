@@ -667,14 +667,18 @@ def test_entry_only_api_generates_complete_factor_accounting(
 
     monkeypatch.setattr(
         harness.application.codex_app_server,
-        "create_thread",
+        "create_scoped_thread",
         reject_codex_thread_creation,
     )
 
     with TestClient(create_app(harness.application), client=("127.0.0.1", 50000)) as client:
         response = client.post(
             f"/api/v3/systems/{SYSTEM_ID}/case-generations",
-            json={"entry_id": ENTRY_ID},
+            json={
+                "entry_id": ENTRY_ID,
+                "codex_model": "gpt-5.6-sol",
+                "reasoning_effort": "medium",
+            },
         )
 
     assert response.status_code == 201
@@ -1234,6 +1238,7 @@ def test_identityless_create_uses_verified_final_query_entity_for_cleanup(
                     },
                     "required": ["id", "order_no", "state"],
                 },
+                constraints=[],
             )
         ],
     )
@@ -1285,6 +1290,112 @@ def test_identityless_create_uses_verified_final_query_entity_for_cleanup(
     assert mismatch is not None
     assert mismatch.code == "SETUP_STATEFUL_ENTITY_VERIFICATION_FAILED"
     assert node.slot_id not in mismatch_context.stateful_cleanup_facts_by_slot
+
+
+def test_query_entity_must_match_frozen_recipe_state_constraint(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """宽泛业务谓词内的其他状态也不得绕过Recipe精确输出约束。
+
+    Args:
+        tmp_path: Pytest隔离的执行服务和规则根目录。
+        monkeypatch: 注入允许两个真实状态的宽泛CANCELLABLE Fact契约。
+
+    Returns:
+        None；PENDING_APPLY通过而WAIT_REFUND在Setup验证边界失败时通过。
+
+    Side Effects:
+        只写内存Setup上下文，不调用Action、Oracle或任何QA provider。
+    """
+
+    harness = _compiler_harness(tmp_path, [])
+    service = harness.application.case_execution_v3
+    contract = SimpleNamespace(
+        fact_contract_id="refund-order/v3",
+        state_path="refundState",
+        state_predicates=[
+            SimpleNamespace(
+                name="CANCELLABLE",
+                allowed_values=["PENDING_APPLY", "WAIT_REFUND"],
+            )
+        ],
+        business_identity_paths=["refundSerialNo"],
+    )
+    rules = SimpleNamespace(fact_contracts=[contract])
+    output_fact = SimpleNamespace(
+        fact_name="refund_order",
+        fact_schema={
+            "type": "object",
+            "properties": {
+                "refundSerialNo": {"type": "string"},
+                "refundState": {"type": "string"},
+            },
+            "required": ["refundSerialNo", "refundState"],
+        },
+        constraints=[
+            SimpleNamespace(
+                path="refundState",
+                operator="eq",
+                expected="PENDING_APPLY",
+            )
+        ],
+    )
+    recipe = SimpleNamespace(
+        system_id=SYSTEM_ID,
+        setup_rule_revision_id="setup-rule-revision:refund-state-constraint",
+        fact_outputs=[output_fact],
+    )
+    node = SimpleNamespace(
+        slot_id="refund_order",
+        fact_contract_id=contract.fact_contract_id,
+        output_fact_name=output_fact.fact_name,
+        created_fact_name="",
+        required_state="CANCELLABLE",
+        constraints={},
+        relations={},
+        create_relations={},
+    )
+    pending_context = CaseExecutionContext(
+        attempt_id="attempt-refund-pending-apply",
+        environment="qa",
+        timeout_seconds=30,
+        fixture={},
+    )
+    drifted_context = CaseExecutionContext(
+        attempt_id="attempt-refund-wait-refund",
+        environment="qa",
+        timeout_seconds=30,
+        fixture={},
+    )
+    monkeypatch.setattr(
+        service.catalog.recipes.rules,
+        "read_revision",
+        lambda *_args: rules,
+    )
+
+    # 同一宽泛CANCELLABLE谓词中，只有Recipe冻结的精确状态可进入Action上下文。
+    accepted = service._verify_and_store_stateful_entity(
+        node,
+        recipe,
+        {"refundSerialNo": "refund-1", "refundState": "PENDING_APPLY"},
+        pending_context,
+    )
+    rejected = service._verify_and_store_stateful_entity(
+        node,
+        recipe,
+        {"refundSerialNo": "refund-2", "refundState": "WAIT_REFUND"},
+        drifted_context,
+    )
+
+    assert accepted is None
+    assert (
+        pending_context.setup_facts_by_slot[node.slot_id]["refundState"]
+        == "PENDING_APPLY"
+    )
+    assert rejected is not None
+    assert rejected.code == "SETUP_STATEFUL_ENTITY_VERIFICATION_FAILED"
+    assert node.slot_id not in drifted_context.setup_facts_by_slot
 
 
 def test_query_only_miss_is_setup_blocked_before_action(
@@ -2058,18 +2169,18 @@ def test_quarantine_add_is_serialized_across_processes(tmp_path: Path) -> None:
     }
 
 
-def test_real_refund_cancel_truth_stays_blocked_and_handoff_resumes_same_scope(
+def test_real_refund_historical_blocked_handoff_resumes_same_scope(
     tmp_path: Path,
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    """真实Refund未闭合入口保持具体BLOCKED且handoff不改写既有正式资产。
+    """真实Refund历史BLOCKED handoff必须按同一范围恢复且不改写正式资产。
 
     Args:
         tmp_path: 正式知识仓库完整副本与私有handoff目录。
-        monkeypatch: 复用已验真的BLOCKED Generation检查handoff状态机，避免重复扫描真实仓库。
+        monkeypatch: 复用历史BLOCKED Generation检查handoff状态机，避免重复扫描真实仓库。
 
     Returns:
-        None；生成只新增自身历史记录，不发布能力、Recipe、Cleanup或Attempt。
+        None；恢复只推进同一handoff，不发布能力、Recipe、Cleanup或Attempt。
 
     Side Effects:
         在临时知识副本创建BLOCKED Generation与handoff，不访问QA。
@@ -2099,20 +2210,31 @@ def test_real_refund_cancel_truth_stays_blocked_and_handoff_resumes_same_scope(
         == {"BLOCKED_STATEFUL_ENTITY_PRODUCER_REQUIRED"}
     )
 
-    def skip_redundant_provider_candidate_rebuild(_provider_system_id: str) -> None:
+    candidate_service = application.hybrid_case_handoffs.capabilities.candidates
+    current_catalog = candidate_service.catalog
+
+    def skip_redundant_provider_candidate_rebuild(provider_system_id: str) -> Any:
         """让handoff状态机测试跳过已由Candidate专项测试覆盖的Booking重扫。
 
         Args:
-            _provider_system_id: Handoff尝试冻结的直接provider系统。
+            provider_system_id: Handoff或Recipe尝试读取的current系统。
+
+        Returns:
+            非Booking系统仍使用真实current Candidate目录。
 
         Raises:
             KnowledgeNotFoundError: 按生产降级语义保留provider绑定但不附Candidate快照。
         """
 
-        raise KnowledgeNotFoundError("provider candidate snapshot omitted by handoff unit boundary")
+        if provider_system_id == "ifightchainsaas.java.booking.core":
+            # Booking目录与当前Query-only闭环无关；Refund目录仍必须支撑真实Recipe重证。
+            raise KnowledgeNotFoundError(
+                "provider candidate snapshot omitted by handoff unit boundary"
+            )
+        return current_catalog(provider_system_id)
 
     monkeypatch.setattr(
-        application.hybrid_case_handoffs.capabilities.candidates,
+        candidate_service,
         "catalog",
         skip_redundant_provider_candidate_rebuild,
     )
@@ -2186,7 +2308,7 @@ def test_real_refund_cancel_truth_stays_blocked_and_handoff_resumes_same_scope(
             resumed_handoff.model_copy(update={"safe_error": "stale overwrite"})
         )
 
-    # 进程退出遗留的VALIDATING状态可恢复同一handoff，但无合法AI输入时必须终止等待。
+    # 进程退出遗留的VALIDATING状态恢复后，current Query输入仍合法，因此继续等待同一Agent。
     latest_handoff = application.hybrid_case_handoffs.get(handoff.handoff_id)
     application.hybrid_case_handoffs.handoffs.write(
         latest_handoff.model_copy(
@@ -2197,7 +2319,7 @@ def test_real_refund_cancel_truth_stays_blocked_and_handoff_resumes_same_scope(
     assert recovered_generation.status == "BLOCKED"
     assert (
         application.hybrid_case_handoffs.get(handoff.handoff_id).status
-        == CaseGenerationHandoffStatus.BLOCKED
+        == CaseGenerationHandoffStatus.WAITING_FOR_AGENT
     )
 
     # Handoff创建后新增直接provider会扩大Candidate范围，因此必须终止旧任务而非纳入新系统。

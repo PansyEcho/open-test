@@ -19197,4 +19197,301 @@ capabilities:
   required_local_bindings:
   - values.tool_environment.LABRADOR_TOKEN
   published_at: '2026-08-27T22:38:51.989355Z'
+- contract_version: published-operation-capability/v2
+  capability_id: published:ifightchainsaas.java.refund.core:case-handoff-c9b538369bb74094b09aac41-cap-1
+  publication_request_id: case-handoff-c9b538369bb74094b09aac41-cap-1
+  draft_id: capability-draft:case-handoff-c9b538369bb74094b09aac41-cap-1
+  system_id: ifightchainsaas.java.refund.core
+  candidate_ref:
+    source_system_id: ifightchainsaas.java.refund.core
+    candidate_id: candidate:ifightchainsaas.java.refund.core:com.ly.flight.chainsaas.refund.facade.impl.OuterRefundFacadeImpl#cancel(com.ly.flight.chainsaas.refund.facade.model.outer.request.RefundOuterCancelRequest)
+    source_scan_id: scan-20260827223314-a0f437c374-27423ce1
+    source_baseline:
+      source_path: /Users/user/data/code/tc/ifightchainsaas.java.refund.core
+      commit: eba0fc72ec39a6883a6ceb1a70c38040ec5ea0bb
+      branch: feature_673598_20260806
+      dirty: false
+      dirty_digest: ''
+      analyzer_version: 0.2.0
+      captured_at: '2026-08-27T22:33:14.750680Z'
+    candidate_signature: 'com.ly.flight.chainsaas.refund.facade.impl.OuterRefundFacadeImpl#cancel(com.ly.flight.chainsaas.refund.facade.model.outer.request.RefundOuterCancelRequest
+      request): com.ly.flight.chainsaas.refund.facade.model.outer.response.RefundOuterCancelResponse'
+    method_resolution_status: resolved
+    request_dto_types:
+    - com.ly.flight.chainsaas.refund.facade.model.outer.request.RefundOuterCancelRequest
+    response_dto_type: com.ly.flight.chainsaas.refund.facade.model.outer.response.RefundOuterCancelResponse
+    dto_definitions:
+    - qualified_type: com.ly.flight.chainsaas.refund.facade.model.BaseRequest
+      kind: class
+      base_types: []
+      fields:
+      - field_name: traceId
+        declared_type: String
+        referenced_type: ''
+        collection: false
+        annotations: []
+        source_ref:
+          repository: ''
+          path: app/facade/src/main/java/com/ly/flight/chainsaas/refund/facade/model/BaseRequest.java
+          symbol: com.ly.flight.chainsaas.refund.facade.model.BaseRequest#traceId
+          line: 21
+          commit: ''
+          content_digest: ''
+        resolution_status: resolved
+      - field_name: operator
+        declared_type: String
+        referenced_type: ''
+        collection: false
+        annotations: []
+        source_ref:
+          repository: ''
+          path: app/facade/src/main/java/com/ly/flight/chainsaas/refund/facade/model/BaseRequest.java
+          symbol: com.ly.flight.chainsaas.refund.facade.model.BaseRequest#operator
+          line: 26
+          commit: ''
+          content_digest: ''
+        resolution_status: resolved
+      source_ref:
+        repository: ''
+        path: app/facade/src/main/java/com/ly/flight/chainsaas/refund/facade/model/BaseRequest.java
+        symbol: com.ly.flight.chainsaas.refund.facade.model.BaseRequest
+        line: 13
+        commit: ''
+        content_digest: ''
+      resolution_status: resolved
+    - qualified_type: com.ly.flight.chainsaas.refund.facade.model.BaseResponse
+      kind: class
+      base_types: []
+      fields:
+      - field_name: success
+        declared_type: boolean
+        referenced_type: ''
+        collection: false
+        annotations: []
+        source_ref:
+          repository: ''
+          path: app/facade/src/main/java/com/ly/flight/chainsaas/refund/facade/model/BaseResponse.java
+          symbol: com.ly.flight.chainsaas.refund.facade.model.BaseResponse#success
+          line: 20
+          commit: ''
+          content_digest: ''
+        resolution_status: resolved
+      - field_name: code
+        declared_type: String
+        referenced_type: ''
+        collection: false
+        annotations: []
+        source_ref:
+          repository: ''
+          path: app/facade/src/main/java/com/ly/flight/chainsaas/refund/facade/model/BaseResponse.java
+          symbol: com.ly.flight.chainsaas.refund.facade.model.BaseResponse#code
+          line: 25
+          commit: ''
+          content_digest: ''
+        resolution_status: resolved
+      - field_name: message
+        declared_type: String
+        referenced_type: ''
+        collection: false
+        annotations: []
+        source_ref:
+          repository: ''
+          path: app/facade/src/main/java/com/ly/flight/chainsaas/refund/facade/model/BaseResponse.java
+          symbol: com.ly.flight.chainsaas.refund.facade.model.BaseResponse#message
+          line: 30
+          commit: ''
+          content_digest: ''
+        resolution_status: resolved
+      - field_name: data
+        declared_type: T
+        referenced_type: T
+        collection: false
+        annotations: []
+        source_ref:
+          repository: ''
+          path: app/facade/src/main/java/com/ly/flight/chainsaas/refund/facade/model/BaseResponse.java
+          symbol: com.ly.flight.chainsaas.refund.facade.model.BaseResponse#data
+          line: 35
+          commit: ''
+          content_digest: ''
+        resolution_status: resolved
+      - field_name: traceId
+        declared_type: String
+        referenced_type: ''
+        collection: false
+        annotations: []
+        source_ref:
+          repository: ''
+          path: app/facade/src/main/java/com/ly/flight/chainsaas/refund/facade/model/BaseResponse.java
+          symbol: com.ly.flight.chainsaas.refund.facade.model.BaseResponse#traceId
+          line: 40
+          commit: ''
+          content_digest: ''
+        resolution_status: resolved
+      source_ref:
+        repository: ''
+        path: app/facade/src/main/java/com/ly/flight/chainsaas/refund/facade/model/BaseResponse.java
+        symbol: com.ly.flight.chainsaas.refund.facade.model.BaseResponse
+        line: 12
+        commit: ''
+        content_digest: ''
+      resolution_status: resolved
+    - qualified_type: com.ly.flight.chainsaas.refund.facade.model.outer.request.RefundOuterCancelRequest
+      kind: class
+      base_types:
+      - com.ly.flight.chainsaas.refund.facade.model.BaseRequest
+      fields:
+      - field_name: refundSerialNo
+        declared_type: String
+        referenced_type: ''
+        collection: false
+        annotations: []
+        source_ref:
+          repository: ''
+          path: app/facade/src/main/java/com/ly/flight/chainsaas/refund/facade/model/outer/request/RefundOuterCancelRequest.java
+          symbol: com.ly.flight.chainsaas.refund.facade.model.outer.request.RefundOuterCancelRequest#refundSerialNo
+          line: 11
+          commit: ''
+          content_digest: ''
+        resolution_status: resolved
+      - field_name: cancelReasonId
+        declared_type: String
+        referenced_type: ''
+        collection: false
+        annotations: []
+        source_ref:
+          repository: ''
+          path: app/facade/src/main/java/com/ly/flight/chainsaas/refund/facade/model/outer/request/RefundOuterCancelRequest.java
+          symbol: com.ly.flight.chainsaas.refund.facade.model.outer.request.RefundOuterCancelRequest#cancelReasonId
+          line: 16
+          commit: ''
+          content_digest: ''
+        resolution_status: resolved
+      - field_name: cancelReason
+        declared_type: String
+        referenced_type: ''
+        collection: false
+        annotations: []
+        source_ref:
+          repository: ''
+          path: app/facade/src/main/java/com/ly/flight/chainsaas/refund/facade/model/outer/request/RefundOuterCancelRequest.java
+          symbol: com.ly.flight.chainsaas.refund.facade.model.outer.request.RefundOuterCancelRequest#cancelReason
+          line: 21
+          commit: ''
+          content_digest: ''
+        resolution_status: resolved
+      - field_name: cancelRemark
+        declared_type: String
+        referenced_type: ''
+        collection: false
+        annotations: []
+        source_ref:
+          repository: ''
+          path: app/facade/src/main/java/com/ly/flight/chainsaas/refund/facade/model/outer/request/RefundOuterCancelRequest.java
+          symbol: com.ly.flight.chainsaas.refund.facade.model.outer.request.RefundOuterCancelRequest#cancelRemark
+          line: 27
+          commit: ''
+          content_digest: ''
+        resolution_status: resolved
+      - field_name: memberId
+        declared_type: String
+        referenced_type: ''
+        collection: false
+        annotations: []
+        source_ref:
+          repository: ''
+          path: app/facade/src/main/java/com/ly/flight/chainsaas/refund/facade/model/outer/request/RefundOuterCancelRequest.java
+          symbol: com.ly.flight.chainsaas.refund.facade.model.outer.request.RefundOuterCancelRequest#memberId
+          line: 29
+          commit: ''
+          content_digest: ''
+        resolution_status: resolved
+      source_ref:
+        repository: ''
+        path: app/facade/src/main/java/com/ly/flight/chainsaas/refund/facade/model/outer/request/RefundOuterCancelRequest.java
+        symbol: com.ly.flight.chainsaas.refund.facade.model.outer.request.RefundOuterCancelRequest
+        line: 6
+        commit: ''
+        content_digest: ''
+      resolution_status: resolved
+    - qualified_type: com.ly.flight.chainsaas.refund.facade.model.outer.response.RefundOuterCancelResponse
+      kind: class
+      base_types:
+      - com.ly.flight.chainsaas.refund.facade.model.BaseResponse
+      fields: []
+      source_ref:
+        repository: ''
+        path: app/facade/src/main/java/com/ly/flight/chainsaas/refund/facade/model/outer/response/RefundOuterCancelResponse.java
+        symbol: com.ly.flight.chainsaas.refund.facade.model.outer.response.RefundOuterCancelResponse
+        line: 5
+        commit: ''
+        content_digest: ''
+      resolution_status: resolved
+    field_conversions: []
+  provider_operation_ref:
+    source_system_id: ifightchainsaas.java.refund.core
+    operation_id: facade:com.ly.flight.chainsaas.refund.facade.OuterRefundFacade#cancel
+    source_scan_id: scan-20260827223314-a0f437c374-27423ce1
+  business_name: OuterRefundFacade#cancel
+  business_purpose: 订单取消
+  input_schema:
+    type: object
+    properties:
+      traceId:
+        type: string
+      operator:
+        type: string
+      refundSerialNo:
+        type: string
+      cancelReasonId:
+        type: string
+      cancelReason:
+        type: string
+      cancelRemark:
+        type: string
+      memberId:
+        type: string
+    additionalProperties: false
+    required:
+    - traceId
+    - operator
+    - refundSerialNo
+    - cancelReasonId
+    - cancelReason
+    - cancelRemark
+    - memberId
+  input_mapping:
+    traceId: traceId
+    operator: operator
+    refundSerialNo: refundSerialNo
+    cancelReasonId: cancelReasonId
+    cancelReason: cancelReason
+    cancelRemark: cancelRemark
+    memberId: memberId
+  output_fact_schema:
+    type: object
+    properties:
+      success:
+        type: boolean
+      code:
+        type: string
+      message:
+        type: string
+      traceId:
+        type: string
+    additionalProperties: false
+    required:
+    - success
+    - code
+    - message
+    - traceId
+  output_mapping:
+    success: output.success
+    code: output.code
+    message: output.message
+    traceId: output.traceId
+  mutability: WRITE
+  required_local_bindings:
+  - values.tool_environment.LABRADOR_TOKEN
+  published_at: '2026-08-28T21:13:50.200278Z'
 legacy_capabilities: []

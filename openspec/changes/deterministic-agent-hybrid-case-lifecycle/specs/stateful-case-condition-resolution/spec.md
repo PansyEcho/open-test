@@ -12,6 +12,22 @@
 
 系统 SHALL 按Fact、状态、策略、约束和关系递归选择唯一最低优先级Producer，在活动解析栈发现环并阻塞同优先级歧义。
 
+#### Scenario: QTC优先完整QTC
+- **WHEN** 同一状态需求同时存在完整QUERY_THEN_CREATE与QUERY_ONLY Recipe
+- **THEN** 系统先选择完整QUERY_THEN_CREATE，再在该策略内按优先级选择唯一Recipe
+
+#### Scenario: QTC降级完整Query-only
+- **WHEN** QUERY_THEN_CREATE需求没有完整同策略Recipe但存在完整QUERY_ONLY Recipe
+- **THEN** Coverage保留QUERY_THEN_CREATE需求，冻结Setup Plan选择QUERY_ONLY且不要求CREATE链闭合
+
+#### Scenario: QTC不得降级Create-only
+- **WHEN** QUERY_THEN_CREATE需求只有CREATE_ONLY Recipe
+- **THEN** 系统保持缺少兼容Producer的Blocked，不得把CREATE_ONLY作为隐式降级
+
+#### Scenario: 单策略必须精确匹配
+- **WHEN** 需求策略为QUERY_ONLY或CREATE_ONLY
+- **THEN** 系统只选择同名策略Recipe
+
 #### Scenario: 编译退款取消链
 - **WHEN** 正式资产证明 `TicketOrder -> createOrder -> RefundOrder(CANCELLABLE)`
 - **THEN** Generation冻结每个Producer、依赖、状态、关系、Action绑定和Finalization引用且不访问QA
@@ -52,6 +68,14 @@
 - **WHEN** Published查询返回 `List<RefundOrder>`
 - **THEN** Recipe使用集合非空和有唯一性或稳定排序证明的实体提取，而不要求provider新增available字段
 
+#### Scenario: 当前退款Query Recipe
+- **WHEN** `RefundFacade#cancel` 需要 `refund-order/v3(CANCELLABLE)` 且current queryList Recipe可用
+- **THEN** 系统以READ_ONLY queryList、`page=1`、`page_size=1`、`order_state=0`、`COLLECTION_NOT_EMPTY`和`FIRST_ITEM(max_cardinality=1)`取得并验证`PENDING_APPLY`退票单
+
+#### Scenario: 查询输入安全边界
+- **WHEN** Query不是READ_ONLY、身份来自Fixture、`page_size`不是服务器白名单1或FIRST_ITEM没有确定性证明
+- **THEN** DataSetupRecipeService拒绝发布且不访问QA
+
 #### Scenario: 结果码尝试触发创建
 - **WHEN** QUERY调用成功并返回一个被Recipe列为not-found但未由exact正式操作知识证明的业务结果码
 - **THEN** Setup以查询协议失败结束且不得执行依赖或CREATE
@@ -67,6 +91,10 @@
 #### Scenario: QUERY_ONLY无数据
 - **WHEN** 查询明确未找到受控实体
 - **THEN** Attempt为BLOCKED、stage为SETUP且Action/Oracle证据为零
+
+#### Scenario: Query Provider失败
+- **WHEN** queryList返回Provider失败、超时或协议失败
+- **THEN** Attempt为SETUP FAILED且不进入CREATE、Action或Oracle
 
 ### Requirement: 同主机查询实体必须在Attempt期间串行保护
 

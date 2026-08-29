@@ -1,0 +1,90 @@
+contract_version: data-setup-recipe/v3
+system_id: ifightchainsaas.java.refund.core
+recipe_id: setup:refund-query-list-pending-apply-v3-20260828
+entry_id: facade:com.ly.flight.chainsaas.refund.facade.RefundFacade#cancel
+entry_source_scan_id: scan-20260827223314-a0f437c374-27423ce1
+name: 查询一条待申请退票单
+description: 通过current只读queryList查询一条PENDING_APPLY退票单并确定性提取首项。
+setup_rule_revision_id: setup-rule-revision:2e3b784fc35649049bab7a90f3a1a4e2
+fixture_schema:
+  type: object
+  properties: {}
+  required: []
+  additionalProperties: false
+steps:
+- step_id: query-refund-order
+  capability_ref:
+    system_id: ifightchainsaas.java.refund.core
+    capability_id: published:ifightchainsaas.java.refund.core:publish-refund-query-list-setup-v3-current-20260828
+  input_bindings:
+    page:
+      source: literal
+      path: ''
+      value: 1
+    page_size:
+      source: literal
+      path: ''
+      value: 1
+    order_state:
+      source: literal
+      path: ''
+      value: 0
+  operation_role: QUERY
+  availability:
+    type: COLLECTION_NOT_EMPTY
+    path: refund_order_page.pageList
+    expected_boolean: null
+    found_values: []
+    not_found_values: []
+  entity_extraction:
+    type: FIRST_ITEM
+    path: refund_order_page.pageList
+    max_cardinality: 1
+    stable_ordering_path: ''
+  availability_assertion_id: ''
+fact_outputs:
+- fact_name: refund_order
+  fact_contract_id: refund-order/v3
+  from_step_id: query-refund-order
+  output_path: refund_order_page.pageList.0
+  constraints:
+  - path: refundState
+    operator: eq
+    expected: PENDING_APPLY
+  produced_state: PENDING_APPLY
+  relations: {}
+  fact_schema:
+    type: object
+    properties:
+      refundSerialNo:
+        type: string
+      orderSerialNo:
+        type: string
+      refundState:
+        type: string
+    required:
+    - refundSerialNo
+    - orderSerialNo
+    - refundState
+    additionalProperties: false
+  origin_policy: PUBLISHED_OUTPUT
+requires_facts: []
+acquisition_policy: QUERY_ONLY
+producer_scope: ENTITY_PRODUCER
+producer_entry_ref:
+  system_id: ifightchainsaas.java.refund.core
+  entry_id: facade:com.ly.flight.chainsaas.refund.facade.RefundFacade#queryList
+  source_scan_id: scan-20260827223314-a0f437c374-27423ce1
+  source_baseline:
+    source_path: /Users/user/data/code/tc/ifightchainsaas.java.refund.core
+    commit: eba0fc72ec39a6883a6ceb1a70c38040ec5ea0bb
+    branch: feature_673598_20260806
+    dirty: false
+    dirty_digest: ''
+    analyzer_version: 0.2.0
+    captured_at: '2026-08-27T22:33:14.750680Z'
+knowledge_assertion_ids:
+- entry-fact:refund-query-current-v3-query-operation
+selection_priority: 100
+dependency_proofs: []
+created_at: '2026-08-28T06:31:24.874887Z'

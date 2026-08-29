@@ -92,6 +92,7 @@ from opentest.domain.models import (
     SystemDependencyPurpose,
     SystemDependencyRole,
     TypedCaseCompileRequest,
+    compatible_setup_acquisition_policies,
 )
 
 
@@ -736,6 +737,179 @@ def test_stateful_recipe_resolution_builds_recursive_dag_and_detects_cycle(
     assert {blocker.code for blocker in cycle_blockers} == {
         "BLOCKED_STATEFUL_ENTITY_DEPENDENCY_CYCLE"
     }
+    harness.application.close()
+
+
+def test_stateful_recipe_policy_compatibility_prefers_complete_policy_then_query_fallback(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """QTC需求必须优先完整QTC，并只允许完整Query-only作为降级。
+
+    Args:
+        tmp_path: Pytest隔离的编译、扫描和Published资产根目录。
+        monkeypatch: 隔离current Recipe重验，使测试聚焦通用策略兼容和选择顺序。
+
+    Returns:
+        None；QTC优先、Query-only降级以及Create-only拒绝均满足时通过。
+
+    Side Effects:
+        仅创建临时通用编译资产，不发布Recipe、不访问AI或QA。
+    """
+
+    assert compatible_setup_acquisition_policies("QUERY_THEN_CREATE") == (
+        "QUERY_THEN_CREATE",
+        "QUERY_ONLY",
+    )
+    assert compatible_setup_acquisition_policies("QUERY_ONLY") == ("QUERY_ONLY",)
+    assert compatible_setup_acquisition_policies("CREATE_ONLY") == ("CREATE_ONLY",)
+    with pytest.raises(ValueError, match="unsupported setup acquisition policy"):
+        compatible_setup_acquisition_policies("UNSAFE_FALLBACK")
+
+    harness = _compiler_harness(tmp_path, [])
+    compiler = harness.application.typed_case_compiler
+    current_manifest = harness.application.source_analysis.artifacts.read(
+        SYSTEM_ID,
+        "latest",
+    )
+    contract = SetupFactContractDefinition(
+        fact_contract_id="generic-stateful/v1",
+        required_origin=SetupFactOrigin.PUBLISHED_OUTPUT,
+        required_fields=[
+            SetupFactRequiredField(path="entity_id", schema_type="string"),
+            SetupFactRequiredField(path="state", schema_type="string"),
+        ],
+        business_identity_paths=["entity_id"],
+        state_path="state",
+        state_predicates=[
+            SetupStatePredicateDefinition(
+                name="READY",
+                allowed_values=["READY"],
+            )
+        ],
+    )
+    producer_entry_ref = ProducerEntrySourceRef(
+        system_id=SYSTEM_ID,
+        entry_id=ENTRY_ID,
+        source_scan_id=harness.scan_id,
+        source_baseline=current_manifest.baseline,
+    )
+    output = SimpleNamespace(
+        fact_name="generic_entity",
+        fact_contract_id=contract.fact_contract_id,
+        from_step_id="query-generic",
+        produced_state="READY",
+        constraints=[],
+        relations={},
+        fact_schema={
+            "type": "object",
+            "properties": {
+                "entity_id": {"type": "string"},
+                "state": {"type": "string"},
+            },
+            "required": ["entity_id", "state"],
+        },
+    )
+    query_recipe = SimpleNamespace(
+        system_id=SYSTEM_ID,
+        recipe_id="setup:generic-query-only",
+        entry_source_scan_id=harness.scan_id,
+        producer_scope="ENTITY_PRODUCER",
+        acquisition_policy="QUERY_ONLY",
+        selection_priority=1,
+        steps=[SimpleNamespace(step_id="query-generic", operation_role="QUERY")],
+        fact_outputs=[output],
+        requires_facts=[],
+        producer_entry_ref=producer_entry_ref,
+    )
+    qtc_recipe = SimpleNamespace(
+        **{
+            **vars(query_recipe),
+            "recipe_id": "setup:generic-query-then-create",
+            "acquisition_policy": "QUERY_THEN_CREATE",
+            "selection_priority": 100,
+        }
+    )
+    create_recipe = SimpleNamespace(
+        **{
+            **vars(query_recipe),
+            "recipe_id": "setup:generic-create-only",
+            "acquisition_policy": "CREATE_ONLY",
+            "steps": [
+                SimpleNamespace(step_id="query-generic", operation_role="CREATE")
+            ],
+        }
+    )
+    requirement = StatefulEntityRequirement(
+        slot_id="generic_entity",
+        fact_contract_id=contract.fact_contract_id,
+        required_state="READY",
+        acquisition_policy="QUERY_THEN_CREATE",
+    )
+
+    def accept_current_recipe(_system_id: str, _recipe: object) -> list[object]:
+        """让策略测试只验证选择顺序，不重复执行current资产重验。
+
+        Args:
+            _system_id: 固定通用consumer系统。
+            _recipe: 当前内存Recipe。
+
+        Returns:
+            空问题列表，表示外层current验证已通过。
+        """
+
+        return []
+
+    monkeypatch.setattr(compiler, "_recipe_current_issues", accept_current_recipe)
+
+    def resolve(recipes: tuple[object, ...]) -> tuple[object | None, list[object], object]:
+        """使用同一QTC需求解析指定Recipe集合。
+
+        Args:
+            recipes: 本轮允许参与选择的完整Recipe集合。
+
+        Returns:
+            解析节点、阻塞列表和包含最终选择的共享解析状态。
+
+        Side Effects:
+            解析器会向返回的状态追加冻结节点和选择结果。
+        """
+
+        # 每个断言使用全新状态，避免上一轮选择缓存影响策略判断。
+        state = StatefulPlanResolutionState(
+            system_id=SYSTEM_ID,
+            manifest=SimpleNamespace(source_scan_id=harness.scan_id),
+            recipes=recipes,
+            contracts={contract.fact_contract_id: contract},
+            nodes=[],
+            selected_recipes={},
+            visiting=set(),
+            resolved_nodes={},
+        )
+        blockers: list[object] = []
+        node = compiler._resolve_stateful_requirement(state, requirement, blockers)
+        return node, blockers, state
+
+    preferred_node, preferred_blockers, preferred_state = resolve(
+        (query_recipe, qtc_recipe)
+    )
+    assert preferred_node is not None
+    assert preferred_blockers == []
+    assert next(iter(preferred_state.selected_recipes.values())).recipe_id == (
+        qtc_recipe.recipe_id
+    )
+
+    fallback_node, fallback_blockers, fallback_state = resolve((query_recipe,))
+    assert fallback_node is not None
+    assert fallback_blockers == []
+    assert next(iter(fallback_state.selected_recipes.values())).recipe_id == (
+        query_recipe.recipe_id
+    )
+
+    rejected_node, rejected_blockers, rejected_state = resolve((create_recipe,))
+    assert rejected_node is None
+    assert rejected_blockers == []
+    assert rejected_state.selected_recipes == {}
     harness.application.close()
 
 

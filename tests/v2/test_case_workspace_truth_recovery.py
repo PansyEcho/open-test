@@ -3,6 +3,8 @@
 from __future__ import annotations
 
 import shutil
+import threading
+from concurrent.futures import ThreadPoolExecutor
 from urllib.parse import quote
 from datetime import UTC, datetime, timedelta
 from pathlib import Path
@@ -45,6 +47,7 @@ from opentest.domain.models import (
     OracleEffectObservationTemplate,
     OracleExpression,
     OracleTemplate,
+    ProducerEntrySourceRef,
     PublishedCapabilityRef,
     DataSetupRecipeRef,
     ScanManifest,
@@ -53,8 +56,9 @@ from opentest.domain.models import (
     StatefulAcquisitionPlan,
     StatefulAcquisitionPlanNode,
     StatefulEntityRequirement,
+    TaskStatus,
 )
-from opentest.domain.errors import KnowledgeValidationError
+from opentest.domain.errors import ExecutionFailure, KnowledgeValidationError
 from test_typed_case_compiler_phase5 import (
     ENTRY_ID as GENERIC_ENTRY_ID,
     SYSTEM_ID as GENERIC_SYSTEM_ID,
@@ -1492,6 +1496,160 @@ def test_workspace_directory_defers_inventory_until_target_detail(
         harness.application.close()
 
 
+def test_case_handoff_read_exposes_current_typed_assets_and_draft_schema(
+    tmp_path: Path,
+) -> None:
+    """Case专用读取必须返回冻结入口的current资产和服务端真实Draft Schema。
+
+    Args:
+        tmp_path: Pytest隔离Candidate、Published、规则、Generation和handoff目录。
+
+    Returns:
+        None；Case Agent无需知识handoff或QA工具即可取得合法typed设计输入时通过。
+
+    Side Effects:
+        只在Pytest临时目录写一个WAITING handoff并通过本机TestClient读取，不访问QA。
+    """
+
+    harness = _compiler_harness(tmp_path, [])
+    try:
+        generation = harness.application.hybrid_case_generation.generate(
+            GENERIC_SYSTEM_ID,
+            HybridCaseGenerationRequest(entry_id=GENERIC_ENTRY_ID),
+        )
+        handoff = harness.application.hybrid_case_handoffs.handoffs.write(
+            CaseGenerationHandoff(
+                handoff_id="case-handoff-dddddddddddddddddddddddd",
+                system_id=GENERIC_SYSTEM_ID,
+                entry_id=GENERIC_ENTRY_ID,
+                source_scan_id=generation.source_scan_id,
+                source_baseline=generation.source_baseline,
+                generation_ids=[generation.generation_id],
+            )
+        )
+
+        with TestClient(
+            create_app(harness.application),
+            client=("127.0.0.1", 50000),
+        ) as client:
+            response = client.get(
+                f"/api/v3/case-generation-handoffs/{handoff.handoff_id}"
+            )
+
+        assert response.status_code == 200
+        payload = response.json()
+        assert payload["handoff"]["handoff_id"] == handoff.handoff_id
+        assert payload["target"]["entry_id"] == GENERIC_ENTRY_ID
+        assert payload["draft_schema"]["title"] == "CaseGenerationDraftBundle"
+        assert payload["draft_schema"]["additionalProperties"] is False
+        entry_assets = payload["current_assets"]["entry_assets"]
+        assert len(entry_assets) == 1
+        assert entry_assets[0]["entry_id"] == GENERIC_ENTRY_ID
+        assert entry_assets[0]["candidate_operations"]
+        assert entry_assets[0]["operation_capabilities"]
+        assert payload["current_assets"]["generation"]["generation_id"] == (
+            generation.generation_id
+        )
+    finally:
+        harness.application.close()
+
+
+def test_case_handoff_agent_catalog_excludes_historical_recipe_sources(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Case Agent目录必须排除旧consumer scan和旧Producer baseline的Recipe。
+
+    Args:
+        tmp_path: Pytest隔离Candidate、Generation和handoff目录。
+        monkeypatch: 注入current与两种历史Recipe目录记录。
+
+    Returns:
+        None；只有consumer scan和Producer四元组均精确冻结的Recipe被返回时通过。
+
+    Side Effects:
+        只写Pytest临时Generation并替换内存Recipe读取，不发布资产或访问QA。
+    """
+
+    harness = _compiler_harness(tmp_path, [])
+    try:
+        generation = harness.application.hybrid_case_generation.generate(
+            GENERIC_SYSTEM_ID,
+            HybridCaseGenerationRequest(entry_id=GENERIC_ENTRY_ID),
+        )
+        handoff = CaseGenerationHandoff(
+            handoff_id="case-handoff-abababababababababababab",
+            system_id=GENERIC_SYSTEM_ID,
+            entry_id=GENERIC_ENTRY_ID,
+            source_scan_id=generation.source_scan_id,
+            source_baseline=generation.source_baseline,
+            generation_ids=[generation.generation_id],
+        )
+        exact_ref = ProducerEntrySourceRef(
+            system_id=GENERIC_SYSTEM_ID,
+            entry_id=GENERIC_ENTRY_ID,
+            source_scan_id=generation.source_scan_id,
+            source_baseline=generation.source_baseline,
+        )
+        old_baseline_ref = exact_ref.model_copy(
+            update={
+                "source_baseline": generation.source_baseline.model_copy(
+                    update={"branch": "historical-branch"}
+                )
+            }
+        )
+        recipes = [
+            SimpleNamespace(
+                recipe_id="setup:current-recipe",
+                system_id=GENERIC_SYSTEM_ID,
+                entry_id=GENERIC_ENTRY_ID,
+                entry_source_scan_id=generation.source_scan_id,
+                producer_entry_ref=exact_ref,
+            ),
+            SimpleNamespace(
+                recipe_id="setup:old-consumer-scan",
+                system_id=GENERIC_SYSTEM_ID,
+                entry_id=GENERIC_ENTRY_ID,
+                entry_source_scan_id="scan-historical-consumer",
+                producer_entry_ref=exact_ref,
+            ),
+            SimpleNamespace(
+                recipe_id="setup:old-producer-baseline",
+                system_id=GENERIC_SYSTEM_ID,
+                entry_id=GENERIC_ENTRY_ID,
+                entry_source_scan_id=generation.source_scan_id,
+                producer_entry_ref=old_baseline_ref,
+            ),
+        ]
+
+        def list_recipes(system_id: str) -> object:
+            """返回混合current和历史来源的隔离Recipe目录。
+
+            Args:
+                system_id: 必须保持当前consumer系统。
+
+            Returns:
+                供Agent目录过滤的三个固定Recipe记录。
+            """
+
+            assert system_id == GENERIC_SYSTEM_ID
+            return SimpleNamespace(recipes=recipes)
+
+        monkeypatch.setattr(
+            harness.application.hybrid_case_handoffs.recipes,
+            "list",
+            list_recipes,
+        )
+
+        catalog = harness.application.hybrid_case_handoffs.agent_input_catalog(handoff)
+
+        assert [recipe.recipe_id for recipe in catalog["setup_recipes"]] == [
+            "setup:current-recipe"
+        ]
+    finally:
+        harness.application.close()
+
+
 def test_workspace_progress_stops_when_case_agent_turn_reaches_terminal_state(
     tmp_path: Path,
     monkeypatch: pytest.MonkeyPatch,
@@ -1539,6 +1697,7 @@ def test_workspace_progress_stops_when_case_agent_turn_reaches_terminal_state(
             status=CaseGenerationHandoffStatus.WAITING_FOR_AGENT,
             generation_ids=[ready_generation.generation_id],
             thread_id="01a-case-progress-thread",
+            deep_link="codex://threads/01a-case-progress-thread",
         )
         task = SimpleNamespace(
             result={"start_state": "started", "turn_id": "turn-case-progress"}
@@ -1616,6 +1775,18 @@ def test_workspace_progress_stops_when_case_agent_turn_reaches_terminal_state(
             reject_candidate_catalog_rebuild,
         )
 
+        task.result = {"start_state": "manual_required", "turn_id": ""}
+        manual = harness.application._workspace_generation_progress(
+            blocked_generation,
+            handoff,
+        )
+        assert manual is not None
+        assert manual.phase == "WAITING_TO_START"
+        assert manual.agent_action.can_start
+        assert "同一个Codex任务" in manual.summary
+
+        # Case-only CLI启动成功后，进度必须切换为真实turn状态而不是继续显示人工恢复。
+        task.result = {"start_state": "started", "turn_id": "turn-case-progress"}
         running = harness.application._workspace_generation_progress(
             blocked_generation,
             handoff,
@@ -1630,6 +1801,7 @@ def test_workspace_progress_stops_when_case_agent_turn_reaches_terminal_state(
         )
         assert completed is not None
         assert completed.phase == "NEEDS_INPUT"
+        assert completed.agent_action.can_start
         assert "已结束" in completed.summary
 
         turn_status["value"] = "failed"
@@ -1682,6 +1854,390 @@ def test_workspace_progress_stops_when_case_agent_turn_reaches_terminal_state(
         )
         assert terminal is not None
         assert terminal.phase == "BLOCKED"
+    finally:
+        harness.application.close()
+
+
+def test_case_handoff_manual_recovery_starts_first_turn_once_under_concurrency(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """同一线程的并发首次恢复和completed继续都必须幂等。
+
+    Args:
+        tmp_path: Pytest隔离handoff、任务和Generation持久状态。
+        monkeypatch: 暂停首次Case-only CLI请求并记录并发窗口中的启动次数。
+
+    Returns:
+        None；首次并发只启动一次，completed显式继续复用原线程且重复请求不再启动时通过。
+
+    Side Effects:
+        只写Pytest临时handoff与任务，并以测试替身模拟Codex CLI；不访问QA或模型。
+    """
+
+    harness = _compiler_harness(tmp_path, [])
+    first_start_entered = threading.Event()
+    second_request_entered = threading.Event()
+    release_first_start = threading.Event()
+    start_calls: list[str] = []
+    try:
+        generation = harness.application.hybrid_case_generation.generate(
+            GENERIC_SYSTEM_ID,
+            HybridCaseGenerationRequest(entry_id=GENERIC_ENTRY_ID),
+        )
+        handoff = CaseGenerationHandoff(
+            handoff_id="case-handoff-cccccccccccccccccccccccc",
+            system_id=GENERIC_SYSTEM_ID,
+            entry_id=GENERIC_ENTRY_ID,
+            source_scan_id=generation.source_scan_id,
+            source_baseline=generation.source_baseline,
+            status=CaseGenerationHandoffStatus.WAITING_FOR_AGENT,
+            generation_ids=[generation.generation_id],
+        )
+        handoff = harness.application.hybrid_case_handoffs.handoffs.write(handoff)
+        task = harness.application.tasks.create_case_generation_waiting_task(handoff)
+        handoff = harness.application.hybrid_case_handoffs.bind_task(
+            handoff.handoff_id,
+            task.task_id,
+        )
+        handoff = harness.application.hybrid_case_handoffs.bind_thread(
+            handoff.handoff_id,
+            "01a-case-concurrent-start",
+            "codex://threads/01a-case-concurrent-start",
+        )
+        harness.application.tasks.transition_case_generation_task(
+            handoff,
+            TaskStatus.WAITING_FOR_INPUT,
+            {"start_state": "manual_required", "turn_id": ""},
+        )
+
+        def inspect_empty_thread(thread_id: str) -> object:
+            """返回尚无turn的同一持久Codex线程。
+
+            Args:
+                thread_id: Handoff已冻结的线程身份。
+
+            Returns:
+                turn数量为零的只读线程摘要。
+            """
+
+            assert thread_id == handoff.thread_id
+            return SimpleNamespace(
+                turn_count=0,
+                latest_turn_id="",
+                latest_turn_status="",
+            )
+
+        def start_paused_turn(
+            thread_id: str,
+            _prompt: str,
+            _cwd: Path,
+            _model: str,
+            _reasoning_effort: str,
+        ) -> str:
+            """暂停首次Case-only CLI调用以制造第二个恢复请求的并发窗口。
+
+            Args:
+                thread_id: Handoff已冻结的线程身份。
+                _prompt: 生产恢复提示词，本测试不解释其内容。
+                _cwd: Case-only CLI使用的项目工作目录。
+                _model: Handoff已冻结的模型。
+                _reasoning_effort: Handoff已冻结的推理档位。
+
+            Returns:
+                释放后返回已启动的固定CLI进程身份。
+
+            Side Effects:
+                记录桌面启动次数，并等待测试显式释放首次请求。
+            """
+
+            assert thread_id == handoff.thread_id
+            start_calls.append(thread_id)
+            first_start_entered.set()
+            assert second_request_entered.wait(timeout=10)
+            assert release_first_start.wait(timeout=10)
+            return "process-one"
+
+        def start_second_request() -> dict[str, object]:
+            """标记第二个请求已进入执行器并调用同一恢复入口。
+
+            Returns:
+                同一handoff首次turn的幂等恢复结果。
+
+            Side Effects:
+                触发第二个并发应用调用，但不创建线程。
+            """
+
+            second_request_entered.set()
+            return harness.application.start_case_generation_handoff_turn(
+                handoff.handoff_id
+            )
+
+        monkeypatch.setattr(
+            harness.application.codex_app_server,
+            "inspect_thread",
+            inspect_empty_thread,
+        )
+        monkeypatch.setattr(
+            harness.application.codex_app_server,
+            "start_case_turn",
+            start_paused_turn,
+        )
+
+        # 第一个请求持锁暂停后启动第二个请求，确保check/start/write窗口真实重叠。
+        with ThreadPoolExecutor(max_workers=2) as executor:
+            first_future = executor.submit(
+                harness.application.start_case_generation_handoff_turn,
+                handoff.handoff_id,
+            )
+            assert first_start_entered.wait(timeout=10)
+            second_future = executor.submit(start_second_request)
+            assert second_request_entered.wait(timeout=10)
+            release_first_start.set()
+            first = first_future.result(timeout=10)
+            second = second_future.result(timeout=10)
+
+        assert first["state"] == "started"
+        assert second["state"] == "already_started"
+        assert start_calls == [handoff.thread_id]
+        assert harness.application.hybrid_case_handoffs.get(
+            handoff.handoff_id
+        ).thread_id == handoff.thread_id
+
+        def inspect_completed_first_turn(thread_id: str) -> object:
+            """返回与任务回执一致且已经完成的首次turn。
+
+            Args:
+                thread_id: Handoff已冻结的线程身份。
+
+            Returns:
+                允许用户在同一线程显式继续一次的只读摘要。
+            """
+
+            assert thread_id == handoff.thread_id
+            return SimpleNamespace(
+                turn_count=1,
+                latest_turn_id="turn-once",
+                latest_turn_status="completed",
+            )
+
+        continuation_states = ["manual_required", "started"]
+
+        def continue_same_thread(
+            thread_id: str,
+            prompt: str,
+            _cwd: Path,
+            _model: str,
+            _reasoning_effort: str,
+        ) -> str:
+            """记录完成turn后的Case专用继续消息并返回新turn回执。
+
+            Args:
+                thread_id: 必须保持不变的原线程身份。
+                prompt: 必须携带Case工具路由和handoff身份的继续消息。
+                _cwd: Case-only CLI使用的项目工作目录。
+                _model: Handoff冻结模型。
+                _reasoning_effort: Handoff冻结推理档位。
+
+            Returns:
+                重试时返回同一线程的新CLI进程身份。
+
+            Raises:
+                ExecutionFailure: 首次模拟Case-only CLI尚不可用。
+
+            Side Effects:
+                仅向局部调用列表追加一次，不调用真实桌面或模型。
+            """
+
+            assert thread_id == handoff.thread_id
+            assert handoff.handoff_id in prompt
+            assert "get_case_generation_handoff" in prompt
+            assert "禁止调用get_knowledge_handoff" in prompt
+            start_calls.append(thread_id)
+            state = continuation_states.pop(0)
+            if state == "manual_required":
+                raise ExecutionFailure("Case CLI temporarily unavailable")
+            return "process-two"
+
+        monkeypatch.setattr(
+            harness.application.codex_app_server,
+            "inspect_thread",
+            inspect_completed_first_turn,
+        )
+        monkeypatch.setattr(
+            harness.application.codex_app_server,
+            "start_case_turn",
+            continue_same_thread,
+        )
+        manual_continuation = harness.application.start_case_generation_handoff_turn(
+            handoff.handoff_id
+        )
+        continued = harness.application.start_case_generation_handoff_turn(
+            handoff.handoff_id
+        )
+        repeated_continue = harness.application.start_case_generation_handoff_turn(
+            handoff.handoff_id
+        )
+
+        assert manual_continuation["state"] == "manual_required"
+        assert manual_continuation["task"].result["turn_id"] == ""
+        assert continued["state"] == "started"
+        assert continued["task"].result["turn_id"] == ""
+        assert continued["task"].result["previous_turn_id"] == "turn-once"
+        assert repeated_continue["state"] == "already_started"
+        assert start_calls == [handoff.thread_id, handoff.thread_id, handoff.thread_id]
+    finally:
+        release_first_start.set()
+        harness.application.close()
+
+
+def test_case_handoff_delayed_cli_failure_restores_same_thread_retry(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Case CLI延迟退出且没有新turn时应恢复同一handoff供再次启动。
+
+    Args:
+        tmp_path: Pytest隔离handoff、Generation和本地任务状态。
+        monkeypatch: 提供旧线程快照、CLI进程事实和不调用模型的启动替身。
+
+    Returns:
+        None；失败后页面可重试、第二次启动成功且始终复用原线程时通过。
+
+    Side Effects:
+        只写Pytest临时状态并模拟Case-only CLI；不创建真实线程、不访问QA或模型。
+    """
+
+    harness = _compiler_harness(tmp_path, [])
+    start_calls: list[str] = []
+    process_states = {
+        "": "UNKNOWN",
+        "process-delayed-failure": "EXITED",
+        "process-retry": "RUNNING",
+    }
+    try:
+        generation = harness.application.hybrid_case_generation.generate(
+            GENERIC_SYSTEM_ID,
+            HybridCaseGenerationRequest(entry_id=GENERIC_ENTRY_ID),
+        )
+        handoff = CaseGenerationHandoff(
+            handoff_id="case-handoff-dddddddddddddddddddddddd",
+            system_id=GENERIC_SYSTEM_ID,
+            entry_id=GENERIC_ENTRY_ID,
+            source_scan_id=generation.source_scan_id,
+            source_baseline=generation.source_baseline,
+            status=CaseGenerationHandoffStatus.WAITING_FOR_AGENT,
+            generation_ids=[generation.generation_id],
+        )
+        handoff = harness.application.hybrid_case_handoffs.handoffs.write(handoff)
+        task = harness.application.tasks.create_case_generation_waiting_task(handoff)
+        handoff = harness.application.hybrid_case_handoffs.bind_task(
+            handoff.handoff_id,
+            task.task_id,
+        )
+        handoff = harness.application.hybrid_case_handoffs.bind_thread(
+            handoff.handoff_id,
+            "01a-case-delayed-failure",
+            "codex://threads/01a-case-delayed-failure",
+        )
+        harness.application.tasks.transition_case_generation_task(
+            handoff,
+            TaskStatus.WAITING_FOR_INPUT,
+            {"start_state": "manual_required", "turn_id": ""},
+        )
+
+        def inspect_unchanged_thread(thread_id: str) -> object:
+            """返回始终没有产生新turn的原持久线程。
+
+            Args:
+                thread_id: Handoff冻结且两次启动都必须复用的线程身份。
+
+            Returns:
+                turn数量为零的只读线程摘要。
+            """
+
+            assert thread_id == handoff.thread_id
+            return SimpleNamespace(turn_count=0, latest_turn_id="", latest_turn_status="")
+
+        def inspect_launch_process(process_id: str) -> object:
+            """返回测试冻结的CLI活动或延迟退出事实。
+
+            Args:
+                process_id: 任务中持久化的CLI启动回执。
+
+            Returns:
+                与生产进程快照一致的state字段。
+            """
+
+            return SimpleNamespace(state=process_states[process_id])
+
+        launch_process_ids = iter(["process-delayed-failure", "process-retry"])
+
+        def start_same_thread(
+            thread_id: str,
+            _prompt: str,
+            _cwd: Path,
+            _model: str,
+            _reasoning_effort: str,
+        ) -> str:
+            """记录Case-only CLI启动并依次返回失败与重试进程身份。
+
+            Args:
+                thread_id: 必须保持不变的原Codex线程身份。
+                _prompt: 生产Case继续提示词，本测试不解释其文本。
+                _cwd: CLI使用的OpenTest工作目录。
+                _model: Handoff冻结模型。
+                _reasoning_effort: Handoff冻结推理档位。
+
+            Returns:
+                当前模拟启动的唯一进程身份。
+
+            Side Effects:
+                只记录线程调用次数，不启动真实Codex进程。
+            """
+
+            assert thread_id == handoff.thread_id
+            start_calls.append(thread_id)
+            return next(launch_process_ids)
+
+        monkeypatch.setattr(
+            harness.application.codex_app_server,
+            "inspect_thread",
+            inspect_unchanged_thread,
+        )
+        monkeypatch.setattr(
+            harness.application.codex_app_server,
+            "inspect_case_turn_process",
+            inspect_launch_process,
+        )
+        monkeypatch.setattr(
+            harness.application.codex_app_server,
+            "start_case_turn",
+            start_same_thread,
+        )
+
+        first = harness.application.start_case_generation_handoff_turn(handoff.handoff_id)
+        assert first["state"] == "started"
+
+        # 页面投影观察到延迟退出且线程未前进后，必须把原任务恢复为可点击状态。
+        progress = harness.application._workspace_generation_progress(generation, handoff)
+        recovered_task = harness.application.tasks.get(task.task_id)
+        assert progress is not None
+        assert progress.phase == "WAITING_TO_START"
+        assert progress.agent_action.can_start
+        assert recovered_task.result["start_state"] == "manual_required"
+        assert recovered_task.result["launch_process_id"] == "process-delayed-failure"
+
+        retried = harness.application.start_case_generation_handoff_turn(handoff.handoff_id)
+        duplicate = harness.application.start_case_generation_handoff_turn(handoff.handoff_id)
+
+        assert retried["state"] == "started"
+        assert retried["task"].result["launch_process_id"] == "process-retry"
+        assert duplicate["state"] == "already_started"
+        assert start_calls == [handoff.thread_id, handoff.thread_id]
+        assert harness.application.hybrid_case_handoffs.get(
+            handoff.handoff_id
+        ).thread_id == handoff.thread_id
     finally:
         harness.application.close()
 

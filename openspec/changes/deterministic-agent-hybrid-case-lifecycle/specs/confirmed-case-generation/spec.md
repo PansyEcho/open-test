@@ -20,6 +20,26 @@
 - **WHEN** 当前正式知识、Published能力和Recipe已能确定性编译READY Generation
 - **THEN** 系统直接返回Scenario和Variant，不创建或启动Codex任务
 
+#### Scenario: 程序缺Recipe但Query typed输入完整
+- **WHEN** QTC前置条件尚无Recipe，但兼容的Query入口已有current Candidate、READ_ONLY Published、正式availability和全部服务器输入策略
+- **THEN** 系统创建Case Codex handoff，允许Agent只提交Query-only typed Recipe Draft，并由现有正式服务校验和发布
+
+#### Scenario: 创建链不完整不阻塞Query Draft
+- **WHEN** QTC需求的Query路径完整而CREATE路径仍缺少上游状态事实或typed输入
+- **THEN** Codex合法输入判断按兼容策略接受完整Query-only路径，不要求Agent发明CREATE依赖
+
+#### Scenario: 缺少Query正式输入
+- **WHEN** Candidate、Published、typed Schema、availability或任一必需Input Policy缺失
+- **THEN** 系统友好Blocked且Codex调用数为零，不得发明Provider、接口或字段
+
+#### Scenario: Case生成模型仅冻结到新handoff
+- **WHEN** 用户以Luna或Sol的Low/Medium档位发起Case生成
+- **THEN** READY路径忽略该档位；只有首次新建handoff冻结所选模型和推理档位
+
+#### Scenario: 重复生成复用活动handoff
+- **WHEN** 多个请求具有相同system、canonical Entry、scan和baseline且首个handoff仍处于活动状态
+- **THEN** 系统原子复用同一handoff和thread、只调用一次create_thread并保留首次模型；终态handoff不得复用
+
 #### Scenario: 剩余缺口没有合法AI输入
 - **WHEN** 缺口来自未完整扫描、未确认知识或所选路径仍不完整的Candidate Schema
 - **THEN** 系统返回具体待补充或阻塞，不得反复调用Codex猜测程序事实

@@ -1,0 +1,145 @@
+contract_version: hybrid-case-generation/v3
+generation_id: hybrid-generation-cfbbb850b931408b891a
+system_id: ifightchainsaas.java.refund.core
+entry_id: facade:com.ly.flight.chainsaas.refund.facade.OuterRefundFacade#cancel
+source_scan_id: scan-20260827223314-a0f437c374-27423ce1
+source_baseline:
+  source_path: /Users/user/data/code/tc/ifightchainsaas.java.refund.core
+  commit: eba0fc72ec39a6883a6ceb1a70c38040ec5ea0bb
+  branch: feature_673598_20260806
+  dirty: false
+  dirty_digest: ''
+  analyzer_version: 0.2.0
+  captured_at: '2026-08-27T22:33:14.750680Z'
+analyzer_version: 3.26.2+typed-field-conversion.1
+status: BLOCKED
+coverage_manifest:
+  system_id: ifightchainsaas.java.refund.core
+  entry_id: facade:com.ly.flight.chainsaas.refund.facade.OuterRefundFacade#cancel
+  source_scan_id: scan-20260827223314-a0f437c374-27423ce1
+  analysis_artifact_id: program-analysis:scan-20260827223314-a0f437c374-27423ce1:0006
+  semantic_draft_id: ''
+  status: FROZEN
+  matched_rules: []
+  obligations: []
+  conditions:
+  - condition_id: condition:program:0006:com.ly.flight.chainsaas.refund.facade.impl.AbstractFacade_createErrorResponse_Request_com.ly.flight.chainsaas.refund.facade.exception.APIException_java.lang.Class_Response__:field_influence:185:13:1
+    condition_type: INTERNAL_DIAGNOSTIC
+    title: 内部技术诊断
+    summary: 该可达代码尚未证明由入口请求字段控制，仅保留为技术诊断证据。
+    evidence_ids:
+    - com.ly.flight.chainsaas.refund.facade.impl.AbstractFacade#createErrorResponse(Request,com.ly.flight.chainsaas.refund.facade.exception.APIException,java.lang.Class<Response>):field_influence:185:13:1
+    source_refs:
+    - repository: ''
+      path: app/facade-impl/src/main/java/com/ly/flight/chainsaas/refund/facade/impl/AbstractFacade.java
+      symbol: com.ly.flight.chainsaas.refund.facade.impl.AbstractFacade#createErrorResponse(Request,com.ly.flight.chainsaas.refund.facade.exception.APIException,java.lang.Class<Response>):field_influence
+      line: 185
+      commit: ''
+      content_digest: ''
+    resolution_owner: NONE
+    blocks_generation: false
+    technical_code: ''
+    stateful_requirement: null
+  - condition_id: condition:program:0006:com.ly.flight.chainsaas.refund.facade.impl.AbstractFacade_createErrorResponse_Request_com.ly.flight.chainsaas.refund.facade.exception.APIException_java.lang.Class_Response__:field_influence:186:13:1
+    condition_type: INTERNAL_DIAGNOSTIC
+    title: 内部技术诊断
+    summary: 该可达代码尚未证明由入口请求字段控制，仅保留为技术诊断证据。
+    evidence_ids:
+    - com.ly.flight.chainsaas.refund.facade.impl.AbstractFacade#createErrorResponse(Request,com.ly.flight.chainsaas.refund.facade.exception.APIException,java.lang.Class<Response>):field_influence:186:13:1
+    source_refs:
+    - repository: ''
+      path: app/facade-impl/src/main/java/com/ly/flight/chainsaas/refund/facade/impl/AbstractFacade.java
+      symbol: com.ly.flight.chainsaas.refund.facade.impl.AbstractFacade#createErrorResponse(Request,com.ly.flight.chainsaas.refund.facade.exception.APIException,java.lang.Class<Response>):field_influence
+      line: 186
+      commit: ''
+      content_digest: ''
+    resolution_owner: NONE
+    blocks_generation: false
+    technical_code: ''
+    stateful_requirement: null
+  - condition_id: condition:program:0006:com.ly.flight.chainsaas.refund.facade.impl.AbstractFacade_createErrorResponse_Request_com.ly.flight.chainsaas.refund.facade.exception.APIException_java.lang.Class_Response__:field_influence:188:13:1
+    condition_type: INTERNAL_DIAGNOSTIC
+    title: 内部技术诊断
+    summary: 该可达代码尚未证明由入口请求字段控制，仅保留为技术诊断证据。
+    evidence_ids:
+    - com.ly.flight.chainsaas.refund.facade.impl.AbstractFacade#createErrorResponse(Request,com.ly.flight.chainsaas.refund.facade.exception.APIException,java.lang.Class<Response>):field_influence:188:13:1
+    source_refs:
+    - repository: ''
+      path: app/facade-impl/src/main/java/com/ly/flight/chainsaas/refund/facade/impl/AbstractFacade.java
+      symbol: com.ly.flight.chainsaas.refund.facade.impl.AbstractFacade#createErrorResponse(Request,com.ly.flight.chainsaas.refund.facade.exception.APIException,java.lang.Class<Response>):field_influence
+      line: 188
+      commit: ''
+      content_digest: ''
+    resolution_owner: NONE
+    blocks_generation: false
+    technical_code: ''
+    stateful_requirement: null
+  - condition_id: condition:program:0006:com.ly.flight.chainsaas.refund.facade.impl.OuterRefundFacadeImpl_cancel_com.ly.flight.chainsaas.refund.facade.model.outer.request.RefundOuterCancelRequest_:field_influence:95:13:1
+    condition_type: INTERNAL_DIAGNOSTIC
+    title: 内部技术诊断
+    summary: 该可达代码尚未证明由入口请求字段控制，仅保留为技术诊断证据。
+    evidence_ids:
+    - com.ly.flight.chainsaas.refund.facade.impl.OuterRefundFacadeImpl#cancel(com.ly.flight.chainsaas.refund.facade.model.outer.request.RefundOuterCancelRequest):field_influence:95:13:1
+    source_refs:
+    - repository: ''
+      path: app/facade-impl/src/main/java/com/ly/flight/chainsaas/refund/facade/impl/OuterRefundFacadeImpl.java
+      symbol: com.ly.flight.chainsaas.refund.facade.impl.OuterRefundFacadeImpl#cancel(com.ly.flight.chainsaas.refund.facade.model.outer.request.RefundOuterCancelRequest):field_influence
+      line: 95
+      commit: ''
+      content_digest: ''
+    resolution_owner: NONE
+    blocks_generation: false
+    technical_code: ''
+    stateful_requirement: null
+  - condition_id: condition:program:0006:com.ly.flight.chainsaas.refund.facade.impl.OuterRefundFacadeImpl_cancel_com.ly.flight.chainsaas.refund.facade.model.outer.request.RefundOuterCancelRequest_:field_influence:95:32:1
+    condition_type: INTERNAL_DIAGNOSTIC
+    title: 内部技术诊断
+    summary: 该可达代码尚未证明由入口请求字段控制，仅保留为技术诊断证据。
+    evidence_ids:
+    - com.ly.flight.chainsaas.refund.facade.impl.OuterRefundFacadeImpl#cancel(com.ly.flight.chainsaas.refund.facade.model.outer.request.RefundOuterCancelRequest):field_influence:95:32:1
+    source_refs:
+    - repository: ''
+      path: app/facade-impl/src/main/java/com/ly/flight/chainsaas/refund/facade/impl/OuterRefundFacadeImpl.java
+      symbol: com.ly.flight.chainsaas.refund.facade.impl.OuterRefundFacadeImpl#cancel(com.ly.flight.chainsaas.refund.facade.model.outer.request.RefundOuterCancelRequest):field_influence
+      line: 95
+      commit: ''
+      content_digest: ''
+    resolution_owner: NONE
+    blocks_generation: false
+    technical_code: ''
+    stateful_requirement: null
+  - condition_id: condition:program:0006:com.ly.flight.chainsaas.refund.facade.impl.OuterRefundFacadeImpl_cancel_com.ly.flight.chainsaas.refund.facade.model.outer.request.RefundOuterCancelRequest_:field_influence:96:20:1
+    condition_type: INTERNAL_DIAGNOSTIC
+    title: 内部技术诊断
+    summary: 该可达代码尚未证明由入口请求字段控制，仅保留为技术诊断证据。
+    evidence_ids:
+    - com.ly.flight.chainsaas.refund.facade.impl.OuterRefundFacadeImpl#cancel(com.ly.flight.chainsaas.refund.facade.model.outer.request.RefundOuterCancelRequest):field_influence:96:20:1
+    source_refs:
+    - repository: ''
+      path: app/facade-impl/src/main/java/com/ly/flight/chainsaas/refund/facade/impl/OuterRefundFacadeImpl.java
+      symbol: com.ly.flight.chainsaas.refund.facade.impl.OuterRefundFacadeImpl#cancel(com.ly.flight.chainsaas.refund.facade.model.outer.request.RefundOuterCancelRequest):field_influence
+      line: 96
+      commit: ''
+      content_digest: ''
+    resolution_owner: NONE
+    blocks_generation: false
+    technical_code: ''
+    stateful_requirement: null
+  conflicts: []
+  blockers: []
+compilation_rule_revision_id: ''
+scenarios: []
+variants: []
+fault_plans: []
+expected_factor_value_goals: []
+expected_factor_pair_goals: []
+obligation_resolutions: []
+capability_proofs: []
+dependency_proofs: []
+blockers:
+- code: BLOCKED_ACTION_PROFILE_MISSING
+  subject_id: ''
+  message: 当前入口与scan没有唯一服务器Action Profile。
+handoff_id: case-handoff-c9b538369bb74094b09aac41
+legacy_assets: read_only
+generated_at: '2026-08-28T21:12:23.886293Z'
