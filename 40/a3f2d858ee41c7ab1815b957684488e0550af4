@@ -1,0 +1,437 @@
+tests/v2/test_knowledge_tracing.py
+  s_e3e4bd4c1f59cb::t_78ec1c8b960947 5573-5578,5611-5676
+  s_e3e4bd4c1f59cb::t_5ceaa8078b81f4 5677-5678
+opentest/application/operations.py
+  s_e3e4bd4c1f59cb::t_3d23ea725b9fa7 292
+  s_e3e4bd4c1f59cb::t_8961371146219f 556-562
+  s_520debbfbc73ef::t_455c0c26995e62 113-114,118,126,128
+  s_520debbfbc73ef::t_cce6dd6d5de99d 88
+  s_e3e4bd4c1f59cb::t_3bd7d0acd74211 243
+  s_e3e4bd4c1f59cb::t_339664e3c69835 549
+open-test-knowledge/systems/ifightchainsaas.java.refund.core/references/facades/entry-com.ly.flight.chainsaas.refund.facade.RefundFacade-cancel-6fa6a8840ae7.md
+  s_520debbfbc73ef::t_1818585000795f 115-221
+opentest-plugin-marketplace/plugins/open-test-knowledge/scripts/opentest_handoff_mcp.py
+  s_e3e4bd4c1f59cb::t_f6355bcae4ed93 79,85,100,106,159-178
+  s_e3e4bd4c1f59cb::t_e7feea94ceaf9d 1111,1119,1131-1140,1145-1176,1213,1221,1236-1242,1244-1246,1264,1276
+  s_e3e4bd4c1f59cb::t_6c6559b206b49a 1286,1296,1299,1307
+  s_e3e4bd4c1f59cb::t_2d2f4d3efa7bf1 457-460,464-465,479-583
+  s_e3e4bd4c1f59cb::t_6c5c53ff8bf469 179-180
+tests/fixtures/case-template-v4/refund-cancel-golden.json
+  s_e3e4bd4c1f59cb::t_9bfa4e0f20aac4 1-330
+opentest/application/case_template_v4.py
+  s_520debbfbc73ef::t_7754d65bfef317 26,105-106,736-738,740-742,748
+  s_e3e4bd4c1f59cb::t_aa8fa4294c8bb5 224,245,258-259
+  s_520debbfbc73ef::t_89cc72e9e9e67b 1-6,11,13-18,20,22-23,25,27-32,47-49,75-77,79-85,87-94,96-104,115-120,122-124,126-133,135-137,139,141,146-147,149-152,154-156,158-162,164-165,168,287-297,299-300,318,320-327,358-359,388,603-629,631-644,646-655,657-668,670-671,698-700,702-711,728-729,743-744,747,749-770,808-809,811,813-818,820,822-827,830-838,1051-1076,1211-1230,1232-1234,1236-1239,1254-1286,1289-1299
+  s_e3e4bd4c1f59cb::t_20bdc2948d68e7 301,303-309,311,328,330-343,346-354,356-357,360-364,380-387,500-501,503-508,510-515,517-518,520-523
+  s_e3e4bd4c1f59cb::t_5e71f9642a2bec 731,745,828-829,944,950,954,970-979
+  s_e3e4bd4c1f59cb::t_ff768e73abb669 52-65
+  s_e3e4bd4c1f59cb::t_8eaf44460fa093 41
+  s_e3e4bd4c1f59cb::t_8574e00508cb65 220-221,377-378
+  s_e3e4bd4c1f59cb::t_daa185a03781c4 656,669,694,712,717-719,721-727,773-775,777-782,810,819,821,1011-1029
+  s_e3e4bd4c1f59cb::t_39543e66ed86b7 732-733,735,746,943,945-947,949,951-953,956-969,980-985,988-1000,1002-1003,1010
+  s_e3e4bd4c1f59cb::t_7f2ffcc7c4ac5a 1006,1008
+  s_e3e4bd4c1f59cb::t_20c6f31d3b218c 121,125,134,140,142-145,153,157,163,166-167,169-202,206-207,210-211,215,223,225,227-231,234-244,247-249,252-257,260-286
+  s_520debbfbc73ef::t_539b4a5ae8ba1c 9,645,1287-1288
+  s_520debbfbc73ef::t_d52ccba1b4d1b0 138,148
+  s_e3e4bd4c1f59cb::t_fbb67c2d5189a5 481-493
+  s_e3e4bd4c1f59cb::t_852181085339ef 713-716,720
+  s_e3e4bd4c1f59cb::t_f34cc75853a1de 730,734,948,955,986-987,1001,1004-1005,1007,1009
+  s_e3e4bd4c1f59cb::t_b0242980f0f979 329,739,1113-1154,1157-1209
+  s_e3e4bd4c1f59cb::t_4259331a29dab5 776,783
+  s_e3e4bd4c1f59cb::t_1e52b19f38310d 44,531-535
+  s_e3e4bd4c1f59cb::t_c2f4314e5679d8 218,372
+  s_520debbfbc73ef::t_c2f94157e79174 19,107,630,672-693,695-697,701,1030-1050
+  s_e3e4bd4c1f59cb::t_1a77d6d75eafe8 298,422,456-480,494-499
+  s_e3e4bd4c1f59cb::t_ef63432127e70c 8,74,784-807,812,839-942
+  s_520debbfbc73ef::t_4c57879fedff94 313-317,319
+  s_e3e4bd4c1f59cb::t_bbf4859246f714 216-217,302,310,312,344-345,355,365-371,379,389-421
+  s_e3e4bd4c1f59cb::t_a53032c8f33cb9 771-772
+  s_e3e4bd4c1f59cb::t_cf6a6629a18895 1240-1245,1248
+  s_e3e4bd4c1f59cb::t_fab836088954b2 219,373
+  s_e3e4bd4c1f59cb::t_1aea94234e2694 203-205,226,246
+  s_e3e4bd4c1f59cb::t_4f5b33522f5d12 208-209,212-214,222,232-233,250-251,374-376,502,509,516,519,524-530,536-602
+  s_e3e4bd4c1f59cb::t_34b666e8dc90c5 1155-1156
+  s_e3e4bd4c1f59cb::t_3a5e9aca4b4b8b 7,10,12,21,33-40,42-43,45-46,50-51,66-73,78,86,95,109-114
+  s_e3e4bd4c1f59cb::t_a20098c17589ee 24,108,1231,1235,1246-1247,1249-1253
+  s_e3e4bd4c1f59cb::t_b93698765dea3c 423-455
+  s_e3e4bd4c1f59cb::t_0bf3863797ea2c 1077-1112,1210
+opentest/application/foundation.py
+  s_e3e4bd4c1f59cb::t_4e991d02d86a7f 9188-9204
+  s_520debbfbc73ef::t_a15f09af577abe 49-52,124-128
+  s_e3e4bd4c1f59cb::t_ef63432127e70c 468
+  s_e3e4bd4c1f59cb::t_7084b8679b37d3 102-106,129,457-467,469
+  s_520debbfbc73ef::t_cfb0eadd6eb893 470,9126-9130,9132-9140,9142-9187,9205-9209,9211-9219,9221-9255
+  s_e3e4bd4c1f59cb::t_a53032c8f33cb9 9131,9141,9210,9220
+tests/v2/test_opentest_plugin.py
+  s_e3e4bd4c1f59cb::t_16ae5f0e73bdfe 182-221
+opentest/adapters/registered_source_mcp.py
+  s_e3e4bd4c1f59cb::t_717ccaea3e7c70 366,389,415-430
+  s_e3e4bd4c1f59cb::t_f3d41822b2c337 431
+opentest/domain/models.py
+  s_520debbfbc73ef::t_f00fd96d47e63f 364-423,431,479-480,2855,3176
+  s_520debbfbc73ef::t_c50f8303612cc9 424-430,432-478
+opentest/adapters/case_template_v4_store.py
+  s_520debbfbc73ef::t_8c64b2600c1ca7 5,7,9,11,170-199
+  s_e3e4bd4c1f59cb::t_7fc9b970494ded 55-59
+  s_e3e4bd4c1f59cb::t_2ba27ad0458ed3 54,60
+  s_e3e4bd4c1f59cb::t_5e71f9642a2bec 39,61-62,64,295-345
+  s_520debbfbc73ef::t_9b6fffb3c01d5d 48,80,100,150,214,236,262,280
+  s_520debbfbc73ef::t_affa90324b487d 164-166
+  s_520debbfbc73ef::t_fc5d838a8768d4 1-4,6,8,10,12-38,40-47,49-53,63,65-79,81-99,101-149,151-163,167-169,200-213,215-235,237-261,263-279,281-294,346-347,406-416
+  s_e3e4bd4c1f59cb::t_3b0fb50a4df911 348-405
+opentest/domain/case_template_v4.py
+  s_e3e4bd4c1f59cb::t_95e3e177d1ba7d 154,271-272,291-295,304-307
+  s_520debbfbc73ef::t_e1d968cbc51e8c 1-27,29,32,35-36,40-41,47-58,68,88-119,121-131,133,136,149-153,158,160-171,173,175-176,186,191-198,200,203-209,211-216,218,220-246,264-268,275,277-288,297-299,308-316,318-319,321,324-333,335-339,343-347,349-357,359-364,366-382,384-394,410-415,436,444,458-473,476-481,484-485,492-506,521,523-525
+  s_520debbfbc73ef::t_539b4a5ae8ba1c 217
+  s_520debbfbc73ef::t_11423e85e522f9 395-399,401-405,408-409
+  s_e3e4bd4c1f59cb::t_39543e66ed86b7 407
+  s_520debbfbc73ef::t_7cf21081158f83 120,172,289
+  s_e3e4bd4c1f59cb::t_3bd7d0acd74211 358
+  s_e3e4bd4c1f59cb::t_b85b467c221a44 486-491
+  s_e3e4bd4c1f59cb::t_5e71f9642a2bec 406
+  s_e3e4bd4c1f59cb::t_cf2fc5b42caf43 28,30-31,33-34,37-39,42-46,59-67,69-87,132,134-135,137-148,155,159,174,184-185,187-190,201,269-270,274,276,290,296,300-303,348,400,420-435,437-443,445-457,482-483,507-515,517-520,522
+  s_520debbfbc73ef::t_9936211736f5b8 156,199,202,210,219,273,317,320,322-323,334,340-342,365,383,416-419,474-475,516
+  s_520debbfbc73ef::t_46b538d9bc4781 247-263
+  s_e3e4bd4c1f59cb::t_4a8b02fcfdbb81 157,177-183
+pyproject.toml
+  s_520debbfbc73ef::t_ff3a20b4303af6 28
+tests/v2/test_api_cli.py
+  s_520debbfbc73ef::t_f71bbd27972c11 150-153,155-156
+  s_e3e4bd4c1f59cb::t_15f4d0c2c58363 154
+  s_e3e4bd4c1f59cb::t_9de1bebc72647e 14,16,183-248
+  s_e3e4bd4c1f59cb::t_0e4fab814abbe0 249-250
+opentest/application/case_template_executor_v4.py
+  s_e3e4bd4c1f59cb::t_31e7968257b2fd 181-195
+  s_e3e4bd4c1f59cb::t_b70d03a46ce744 46-59,61,246,519-521,592,594
+  s_e3e4bd4c1f59cb::t_28047514a89493 6,169,171,491-498
+  s_e3e4bd4c1f59cb::t_24293dc0d193b9 1-5,8-10,16-39,41-45,60,81-168,170,172-180,196-198,200-219,221-233,235-241,243-245,248-250,262,264-271,273-285,287-301,306-318,321-329,332-358,391-449,453-490,499-517,522-591,595-740
+  s_e3e4bd4c1f59cb::t_2c7bc03366cd27 7,62-80,251-261,319-320,360-390,518
+  s_e3e4bd4c1f59cb::t_dcd297f244a895 593
+  s_e3e4bd4c1f59cb::t_7129974aed4e82 40,199,220,234,242,247,263,272,286,302-305,330-331,359
+  s_e3e4bd4c1f59cb::t_269f22f83fc5a7 450-452
+  s_e3e4bd4c1f59cb::t_769ce304db4095 11-15
+opentest/application/knowledge_discovery.py
+  s_520debbfbc73ef::t_c0a8b87d722a5a 1066,1079-1081,1187
+opentest/assets/runtime-functions.v1.json
+  s_520debbfbc73ef::t_ff3a20b4303af6 1-2,4
+  s_e3e4bd4c1f59cb::t_ad4fb2e2c6227c 3
+opentest/assets/value-functions.v1.json
+  s_520debbfbc73ef::t_ff3a20b4303af6 1-4,6-12,15-18
+  s_e3e4bd4c1f59cb::t_ad4fb2e2c6227c 5,13-14
+opentest/adapters/codex_app_server.py
+  s_e3e4bd4c1f59cb::t_40e70441510436 525-589,597
+  s_e3e4bd4c1f59cb::t_38628c22c0d5a2 994,1019-1026,1051-1054
+  s_e3e4bd4c1f59cb::t_a23576138c3ca9 114,349,501-506
+  s_e3e4bd4c1f59cb::t_b11c21eb63a8b7 289,346,596,625
+  s_e3e4bd4c1f59cb::t_78ec1c8b960947 9,13,17,46-58,74,653-670,730-793,1055
+  s_e3e4bd4c1f59cb::t_8f0333b4c0fff9 794
+  s_e3e4bd4c1f59cb::t_bfc78ba3eab4f8 1056
+tests/v2/test_case_template_v4.py
+  s_e3e4bd4c1f59cb::t_6c3992c32285dd 1706,1734
+  s_e3e4bd4c1f59cb::t_5878e720f76e68 1990
+  s_e3e4bd4c1f59cb::t_1f2d2b07a57fc1 2260-2345,2347-2377
+  s_e3e4bd4c1f59cb::t_a7d38cdd7bbb1e 964-1021
+  s_e3e4bd4c1f59cb::t_d02ebd562b3729 903-930,959-960,962-963
+  s_e3e4bd4c1f59cb::t_93cfe739757998 707-715,717-749,788-798,800-830
+  s_e3e4bd4c1f59cb::t_fd3077730401d9 524-529,531
+  s_e3e4bd4c1f59cb::t_fab836088954b2 1493-1505,1508-1535,1537-1544
+  s_e3e4bd4c1f59cb::t_e3f105e2fa66ec 1319-1320,1333-1334,1336,1345-1352
+  s_e3e4bd4c1f59cb::t_2c7bc03366cd27 1736,1738
+  s_e3e4bd4c1f59cb::t_16b646eb60a2c3 1924
+  s_e3e4bd4c1f59cb::t_738e4a4659141b 931-954,956-958,961
+  s_e3e4bd4c1f59cb::t_1e1459a83e696f 495,698,862,955,1192,1239,1302,1330,1399,1485,1536,1570,1607,1649,1696,1947
+  s_e3e4bd4c1f59cb::t_258d47b7f26f47 2012-2061
+  s_e3e4bd4c1f59cb::t_1a77d6d75eafe8 14-17,2258-2259,2426-2438,2446-2454,2457-2474
+  s_e3e4bd4c1f59cb::t_8abe18092fc61b 18-21,471-475,1110-1171,2346
+  s_e3e4bd4c1f59cb::t_2f28c8dc406f68 304,330,396,523,716,799,1768
+  s_e3e4bd4c1f59cb::t_0e1defc5e2c807 32-36,2073-2074,2207-2247,2250-2253
+  s_e3e4bd4c1f59cb::t_dd19dcc0fad476 639-640,643-646
+  s_e3e4bd4c1f59cb::t_350492d84968e1 162,165-173,182,184,198-207
+  s_e3e4bd4c1f59cb::t_f2011d232f5620 1266-1269,1360-1398,1400-1410,1449-1484,1486-1492,1743-1744,1819-1857
+  s_e3e4bd4c1f59cb::t_88ad92862010d2 1582-1589
+  s_e3e4bd4c1f59cb::t_c2f7f137b0e68a 1506-1507
+  s_e3e4bd4c1f59cb::t_7e0f3401150055 1779
+  s_e3e4bd4c1f59cb::t_2ba27ad0458ed3 1858-1895
+  s_e3e4bd4c1f59cb::t_93f6e2969c40e2 568-584,586-595
+  s_e3e4bd4c1f59cb::t_b0242980f0f979 1977-1989,1991-1998,2000-2011
+  s_e3e4bd4c1f59cb::t_34b666e8dc90c5 1999
+  s_e3e4bd4c1f59cb::t_a88621051674c6 242-291
+  s_e3e4bd4c1f59cb::t_17b53e80b3d75b 1929-1934
+  s_e3e4bd4c1f59cb::t_445acb8ffa34f9 292-303,305-329,331-395,397-470,476-477
+  s_e3e4bd4c1f59cb::t_a53032c8f33cb9 671-697,699-706,833-834,836-861,863-869,871-872
+  s_e3e4bd4c1f59cb::t_0699428ee18bb4 6,750-787
+  s_e3e4bd4c1f59cb::t_53d5f1c84f3c30 51
+  s_e3e4bd4c1f59cb::t_cf6a6629a18895 2075-2144,2205-2206
+  s_e3e4bd4c1f59cb::t_aa8fa4294c8bb5 2378-2425
+  s_e3e4bd4c1f59cb::t_0f9a9eea56aee1 1745-1767,1769-1778,1780-1782
+  s_e3e4bd4c1f59cb::t_4923addc835807 596-622
+  s_e3e4bd4c1f59cb::t_7ac0998e8b8821 2248-2249,2254-2257
+  s_e3e4bd4c1f59cb::t_ce83f6bd9ea1ca 1057-1109,1173-1174
+  s_e3e4bd4c1f59cb::t_339664e3c69835 37,64-66,68
+  s_e3e4bd4c1f59cb::t_763df37ac7c1d0 1172
+  s_e3e4bd4c1f59cb::t_f6ba8a8feb6c49 2439-2445
+  s_e3e4bd4c1f59cb::t_2e2cfe3a0cbc68 1-5,8-13,23-31,39-50,52-57,59-62,67,69-72,74-78,80-161,163-164,174-178,181,183,185-197,208-241,478-494,496-522,530,532-567,623-638,641-642,647-670,873-902,1022-1056,1175-1191,1193-1199,1545-1569,1571-1581,1590-1604,1647-1648,1650-1655,1703-1705,1707-1733,1741-1742,1896-1923,1925-1928,1935-1946,1948-1976,2062-2072,2475-2504
+  s_e3e4bd4c1f59cb::t_6119a591fd57cb 58,63
+  s_e3e4bd4c1f59cb::t_4155a603558af7 1411-1448
+  s_e3e4bd4c1f59cb::t_5bd8f409f3bb2b 831-832,835,870
+  s_e3e4bd4c1f59cb::t_02bbb92c794e4d 22,73,79
+  s_e3e4bd4c1f59cb::t_cc7bfd1adcb820 179-180
+  s_e3e4bd4c1f59cb::t_e27089ddfa8546 585
+  s_e3e4bd4c1f59cb::t_8d0f7427dd6d1d 1200-1238,1240-1246
+  s_e3e4bd4c1f59cb::t_c2b854abd321b4 1735,1737,1739-1740
+  s_e3e4bd4c1f59cb::t_329b8acfdd8267 1247-1265,1270-1301,1303-1318,1321-1329,1331-1332,1335,1337-1344,1353-1359,1605-1606,1608-1646,1656-1695,1697-1702
+  s_e3e4bd4c1f59cb::t_fbb67c2d5189a5 7,2455-2456
+  s_e3e4bd4c1f59cb::t_ce44f74e36829e 38,2145-2204
+  s_e3e4bd4c1f59cb::t_57f2beecea1344 1783-1818
+opentest/application/knowledge_conversation.py
+  s_520debbfbc73ef::t_640a759950fe29 447-450
+opentest/application/knowledge.py
+  s_520debbfbc73ef::t_bae00da038706b 44,141
+  s_520debbfbc73ef::t_3a270764f17395 4152-4153,4158,4179-4183,4202-4225
+  s_520debbfbc73ef::t_07195ebc984f6f 1558-1560,1565,1626-1630,1654-1658
+  s_520debbfbc73ef::t_455c0c26995e62 1561-1564,4154-4157
+  s_520debbfbc73ef::t_9f27a361334722 4226
+opentest/application/operation_input_knowledge.py
+  s_520debbfbc73ef::t_4fdd98a83d3597 262-264
+  s_520debbfbc73ef::t_532f9564b6c6f3 46-50,64-67,93-96,265-284,297,302-306,308
+  s_520debbfbc73ef::t_72996ff7e7e6c7 83-91,201-245
+  s_520debbfbc73ef::t_08cc890a5f7faa 1-45,51-63,68-82,92,97-106,108-112,114-115,141-142,144-174,177-200,246-256,258-261,285-296,298-301,307,309-341,343-351
+  s_e3e4bd4c1f59cb::t_ce44f74e36829e 107,113,116-138,140,143,175-176
+  s_520debbfbc73ef::t_b48415090c4ae0 139,257,342
+opentest/application/case_template_compiler_v4.py
+  s_e3e4bd4c1f59cb::t_64335eb7af4c56 313-325,728-740,742-755
+  s_e3e4bd4c1f59cb::t_c249f584851be1 38
+  s_e3e4bd4c1f59cb::t_dcd297f244a895 237-239,808-810
+  s_e3e4bd4c1f59cb::t_54c75a7f59fffc 170-172,1224-1225
+  s_e3e4bd4c1f59cb::t_b0049cb4c7f088 343-344,347-349,390-391,394-396
+  s_e3e4bd4c1f59cb::t_3bd7d0acd74211 858-875
+  s_e3e4bd4c1f59cb::t_e1fa74fce4f3d3 1096-1192
+  s_e3e4bd4c1f59cb::t_58617941a38439 1363,1366-1369,1371-1372
+  s_e3e4bd4c1f59cb::t_dc86cebbf2e7a7 962-966,1697-1702,1707-1709
+  s_e3e4bd4c1f59cb::t_3535d32d805641 392-393,397,401-412,1227-1246,1249-1256,1258-1264,1272-1273
+  s_e3e4bd4c1f59cb::t_e3f105e2fa66ec 846-857,1013-1014,1018-1019,1037-1058
+  s_e3e4bd4c1f59cb::t_79f7f052212779 290,473,551,564,623,631,663,692
+  s_e3e4bd4c1f59cb::t_a53032c8f33cb9 416-423,439-467,472,474-483,497-501,503-511,516,519-525,591-592,1603,1605,1611-1616,1662
+  s_e3e4bd4c1f59cb::t_2e6f2f7d791ae3 10,27,50-53,427-438,517-518,1553-1571,1588,1596,1644-1650,1681,1689,1694-1695,1703-1705,1711,1714-1735,1737-1743,1745,1747-1749,1752-1817
+  s_e3e4bd4c1f59cb::t_fffd6d7cbd4593 884
+  s_e3e4bd4c1f59cb::t_7f2ffcc7c4ac5a 1318-1322,1327-1332,1345-1362,1364-1365,1370
+  s_e3e4bd4c1f59cb::t_b161222a44a939 28-37,169,291-312,360-361,363,365-368,468-471,484-496,526-531,533,535-540,542,544-550,563,565-590,594-622,624-630,632-662,664-691,693-727
+  s_e3e4bd4c1f59cb::t_fab836088954b2 1630-1635
+  s_e3e4bd4c1f59cb::t_28047514a89493 1604,1606-1610
+  s_e3e4bd4c1f59cb::t_82f2204e2a81fc 502,512-515
+  s_e3e4bd4c1f59cb::t_769ce304db4095 961
+  s_e3e4bd4c1f59cb::t_109b79a039ef18 1300-1317,1323-1326,1333-1343
+  s_e3e4bd4c1f59cb::t_4a8b02fcfdbb81 178-182,842-843
+  s_e3e4bd4c1f59cb::t_dcab15183cf08a 328,336-337,340-342,345-346,350-359,369,398-400,1247-1248
+  s_e3e4bd4c1f59cb::t_b03b3a26810ed6 1-9,11-26,48-49,54-168,173-177,183-236,240-289,326-327,329-335,338-339,370-389,413-415,424-426,593,796-807,811-834,844-845,877-882,921-928,936-937,939-947,968-970,1008-1010,1061-1095,1193-1223,1226,1274-1299,1344,1373-1552,1572-1587,1589-1595,1597-1602,1617-1629,1636-1643,1651-1661,1663-1680,1682-1688,1690-1693,1696,1706,1710,1712-1713,1736,1744,1746,1750-1751,1818-1988
+  s_e3e4bd4c1f59cb::t_5c98a0964367a6 741,756-795
+  s_e3e4bd4c1f59cb::t_41f2ce6ef26b9d 362,364,532,534,541,543,552-562
+  s_e3e4bd4c1f59cb::t_374bdf391b5742 835-841
+  s_e3e4bd4c1f59cb::t_86a4f189efb19a 883,885-920
+  s_e3e4bd4c1f59cb::t_22b9ea6bebca9c 1257,1265-1271
+  s_e3e4bd4c1f59cb::t_39543e66ed86b7 39-47,876,929-935,938,948-960,967,971-1007,1011-1012,1015-1017,1020-1036,1059-1060
+opentest/application/case_template_registries.py
+  s_520debbfbc73ef::t_539b4a5ae8ba1c 378,384,398
+  s_520debbfbc73ef::t_b14e71715a5b9a 307-309,320,503-508,533-539
+  s_e3e4bd4c1f59cb::t_a88621051674c6 112-113
+  s_520debbfbc73ef::t_65b3fa34f02ce4 1-6,8-12,14-17,19-36,38-45,47-52,54-61,72-73,75,77-79,216-279,281-302,305-306,321-377,379-383,385-391,401-402,448-470,472-501,509-532,540,542-571,573-602,604-631,633-719
+  s_e3e4bd4c1f59cb::t_3400b09feba981 173,179,204,211
+  s_e3e4bd4c1f59cb::t_3bd7d0acd74211 135-137
+  s_e3e4bd4c1f59cb::t_964b0e347bb7a8 120
+  s_e3e4bd4c1f59cb::t_c96292aea5fb65 303-304,310-319,392-397,399-400,403-447
+  s_e3e4bd4c1f59cb::t_c801d0ab1f4827 7,106,141-172,174-178,180-203,205-210,212-215
+  s_e3e4bd4c1f59cb::t_54c75a7f59fffc 100-101
+  s_e3e4bd4c1f59cb::t_9df8edfb784365 13,18,46,53,62-71,74,76,80-99,102-105,107-111,114-119,121-134,138-140
+  s_520debbfbc73ef::t_956dc0f0a08e05 37,280,471,502,541,572,603,632
+opentest/api.py
+  s_e3e4bd4c1f59cb::t_47a64b9800b77e 40,1693,1698,1702,1705,1708,1715-1721,1768-1790,1808
+  s_520debbfbc73ef::t_fd0077f37b2d78 1697,1711-1714
+  s_520debbfbc73ef::t_035a24d4979980 37-39,41-42,1694-1696,1699-1701,1703-1704,1706-1707,1709-1710,1722-1767,1791-1807,1809-1848
+  s_520debbfbc73ef::t_9916074ab04e65 1849
+open-test-knowledge/systems/ifightchainsaas.java.refund.core/cases/v4/generations/case-template-generation-80ee85158c8e4927b1e7.json
+  s_e3e4bd4c1f59cb::t_66106bd6425a6f 1-859
+open-test-knowledge/systems/ifightchainsaas.java.refund.core/cases/v4/generations/case-template-generation-8d76f6a915da42d5ab96.json
+  s_e3e4bd4c1f59cb::t_8ea5287416c087 1-825
+open-test-knowledge/systems/ifightchainsaas.java.refund.core/cases/v4/generations/case-template-generation-ae86024e9dc94f90a989.json
+  s_e3e4bd4c1f59cb::t_0a5c0ddade1723 1-1284
+open-test-knowledge/systems/ifightchainsaas.java.refund.core/cases/v4/generations/case-template-generation-db6efe55cb9444bc9525.json
+  s_e3e4bd4c1f59cb::t_68582a080bf629 1-1956
+open-test-knowledge/systems/ifightchainsaas.java.refund.core/cases/v4/generations/case-template-generation-df5c5c986225425d9792.json
+  s_e3e4bd4c1f59cb::t_a9c8181f7f1d1e 1-1449
+open-test-knowledge/systems/ifightchainsaas.java.refund.core/cases/v4/generations/case-template-generation-fee6974cd0ce4f8085e2.json
+  s_e3e4bd4c1f59cb::t_48e8f969557c08 1-1844
+open-test-knowledge/systems/ifightchainsaas.java.refund.core/context.yaml
+  s_e3e4bd4c1f59cb::t_e301e6a4cb2201 40,43
+open-test-knowledge/systems/ifightchainsaas.java.refund.core/references/external-applications/BaseDataClient-ae0bcb7a5e5702b6.yaml
+  s_e3e4bd4c1f59cb::t_76c35685edff9f 32
+open-test-knowledge/systems/ifightchainsaas.java.refund.core/references/external-applications/BookOrderClient-b6b509254eaee3de.yaml
+  s_e3e4bd4c1f59cb::t_a99adcf883471a 21,27,33,39,45,51,57,63,69,75,81,87,124
+open-test-knowledge/systems/ifightchainsaas.java.refund.core/references/external-applications/BusinessLogFacadeProxy-34e629143f8db5f6.yaml
+  s_e3e4bd4c1f59cb::t_949604e8acb2bf 21,31
+open-test-knowledge/systems/ifightchainsaas.java.refund.core/references/external-applications/ChangeFacadeProxy-bf56b6560941321c.yaml
+  s_e3e4bd4c1f59cb::t_09ef8ab0dcdc24 21,27,55
+open-test-knowledge/systems/ifightchainsaas.java.refund.core/references/external-applications/DmsClient-f4d92311b841056a.yaml
+  s_e3e4bd4c1f59cb::t_f7ebbfbcb952d3 26
+open-test-knowledge/systems/ifightchainsaas.java.refund.core/references/external-applications/LockClient-840a9781b2509dbe.yaml
+  s_e3e4bd4c1f59cb::t_672fd4a006d179 21,27,64
+open-test-knowledge/systems/ifightchainsaas.java.refund.core/references/external-applications/OrderFacadeProxy-678accf6fdd0eb1c.yaml
+  s_e3e4bd4c1f59cb::t_39f859ecd1820b 21,27,33,39,45,51,57,63,91
+open-test-knowledge/systems/ifightchainsaas.java.refund.core/references/external-applications/PayInfoSender-5204619151dfe5a4.yaml
+  s_e3e4bd4c1f59cb::t_aa1a3ccb1683c5 26
+open-test-knowledge/systems/ifightchainsaas.java.refund.core/references/external-applications/PlatformFeeClient-dd074bf8255dc06c.yaml
+  s_e3e4bd4c1f59cb::t_d1ee9347ff363b 32
+open-test-knowledge/systems/ifightchainsaas.java.refund.core/references/external-applications/PlatformFeePolicyFacadeProxy-282a1c58df7c4a73.yaml
+  s_e3e4bd4c1f59cb::t_59b9bc48b1788f 26
+open-test-knowledge/systems/ifightchainsaas.java.refund.core/references/external-applications/RedisClient-eb3b37e45e8f1b98.yaml
+  s_e3e4bd4c1f59cb::t_1e7dc65cccfc74 32
+open-test-knowledge/systems/ifightchainsaas.java.refund.core/references/external-applications/RefundResourcesFacadeProxy-5a5eccf27c296849.yaml
+  s_e3e4bd4c1f59cb::t_d5fbc9f9908684 26
+open-test-knowledge/systems/ifightchainsaas.java.refund.core/references/external-applications/ResourcesClient-8182daf6ed758949.yaml
+  s_e3e4bd4c1f59cb::t_84c571b1340297 22,28,34,40,46,74
+open-test-knowledge/systems/ifightchainsaas.java.refund.core/references/external-applications/ReverseCommonFacadeProxy-7504c0063c3047cf.yaml
+  s_e3e4bd4c1f59cb::t_4c6c53171e700a 26
+open-test-knowledge/systems/ifightchainsaas.java.refund.core/references/external-applications/SupplementCallbackFacadeProxy-501ca688b0083d0a.yaml
+  s_e3e4bd4c1f59cb::t_95848bcf092bc2 26
+open-test-knowledge/systems/ifightchainsaas.java.refund.core/references/external-applications/WalletFacadeProxy-4fa2c3eb8b110f91.yaml
+  s_e3e4bd4c1f59cb::t_2e08e32d300e55 32
+open-test-knowledge/systems/ifightchainsaas.java.refund.core/references/terms/ActorType-c65d93f9f5b39f95.yaml
+  s_e3e4bd4c1f59cb::t_d2d49eaec69c1f 38
+open-test-knowledge/systems/ifightchainsaas.java.refund.core/references/terms/ApplicationEnum-c3ad1e4b51dfa3a9.yaml
+  s_e3e4bd4c1f59cb::t_30f26c66095935 33,49
+open-test-knowledge/systems/ifightchainsaas.java.refund.core/references/terms/ApplyToAirlineEnum-4aefea677cfacfc7.yaml
+  s_e3e4bd4c1f59cb::t_7aa20182317493 45,83
+open-test-knowledge/systems/ifightchainsaas.java.refund.core/references/terms/AutoPricingEnum-faf1982fb161222e.yaml
+  s_e3e4bd4c1f59cb::t_a32a83106fbbf5 38
+open-test-knowledge/systems/ifightchainsaas.java.refund.core/references/terms/AutoPricingResultEnum-da5fd352d4df873e.yaml
+  s_e3e4bd4c1f59cb::t_d521b31ba26a40 38
+open-test-knowledge/systems/ifightchainsaas.java.refund.core/references/terms/AutoRefundEnum-9f53fce1a5edeae2.yaml
+  s_e3e4bd4c1f59cb::t_ee09e6f223a3b3 38
+open-test-knowledge/systems/ifightchainsaas.java.refund.core/references/terms/AutoRefundResultEnum-2c99cddbdd0da87a.yaml
+  s_e3e4bd4c1f59cb::t_4fc0e9892df4f7 38
+open-test-knowledge/systems/ifightchainsaas.java.refund.core/references/terms/AutoVoidEnum-1dafdb288f41c6d4.yaml
+  s_e3e4bd4c1f59cb::t_36fa950b697a1b 38
+open-test-knowledge/systems/ifightchainsaas.java.refund.core/references/terms/AutoVoidResultEnum-9ea2ec02947a0efb.yaml
+  s_e3e4bd4c1f59cb::t_aba733d83d7371 38
+open-test-knowledge/systems/ifightchainsaas.java.refund.core/references/terms/BitOperareTypeEnum-523787b6ec7a8d2d.yaml
+  s_e3e4bd4c1f59cb::t_df2d325c608210 38
+open-test-knowledge/systems/ifightchainsaas.java.refund.core/references/terms/BuyerTypeEnum-0d7507e1d9c6fbb6.yaml
+  s_e3e4bd4c1f59cb::t_1a6729e17b45de 45,96
+open-test-knowledge/systems/ifightchainsaas.java.refund.core/references/terms/CacheEnum-d4a17b26f2f8688f.yaml
+  s_e3e4bd4c1f59cb::t_86872259960d3a 38
+open-test-knowledge/systems/ifightchainsaas.java.refund.core/references/terms/CallbackErrorCodeEnum-b57337869a2a576a.yaml
+  s_e3e4bd4c1f59cb::t_6c43e19fd25326 129,190
+open-test-knowledge/systems/ifightchainsaas.java.refund.core/references/terms/CallbackStatusEnum-a3f8e7c9ed6c6c65.yaml
+  s_e3e4bd4c1f59cb::t_ecfbb45684c725 45,64
+open-test-knowledge/systems/ifightchainsaas.java.refund.core/references/terms/CommonStateEnum-364adf1a391a06b5.yaml
+  s_e3e4bd4c1f59cb::t_a801cfea341d2a 45,85
+open-test-knowledge/systems/ifightchainsaas.java.refund.core/references/terms/CreditTypeEnum-151ab13ac8fd6c2e.yaml
+  s_e3e4bd4c1f59cb::t_20f25aa19a66d5 38
+open-test-knowledge/systems/ifightchainsaas.java.refund.core/references/terms/DefaultState-ec38ec7d04cc0816.yaml
+  s_e3e4bd4c1f59cb::t_d45559f56838aa 38
+open-test-knowledge/systems/ifightchainsaas.java.refund.core/references/terms/EmailSceneEnum-5294d092c7cc34d1.yaml
+  s_e3e4bd4c1f59cb::t_1dc1377cf75f38 38
+open-test-knowledge/systems/ifightchainsaas.java.refund.core/references/terms/ErrorMessageEnum-55b2bcb707757803.yaml
+  s_e3e4bd4c1f59cb::t_bf3fc7da679c26 297,303,400
+open-test-knowledge/systems/ifightchainsaas.java.refund.core/references/terms/EventStateEnum-00972134af499ca3.yaml
+  s_e3e4bd4c1f59cb::t_217492ce15095b 38
+open-test-knowledge/systems/ifightchainsaas.java.refund.core/references/terms/EventType-a9f82981867d69e3.yaml
+  s_e3e4bd4c1f59cb::t_6d6fdd6f1be1b5 38
+open-test-knowledge/systems/ifightchainsaas.java.refund.core/references/terms/FareTypeEnum-ef91d8ede0a4bb5a.yaml
+  s_e3e4bd4c1f59cb::t_73ff224e062a80 45,83
+open-test-knowledge/systems/ifightchainsaas.java.refund.core/references/terms/FeeTypeEnum-ff55b037cd227360.yaml
+  s_e3e4bd4c1f59cb::t_c5593b7b1231f9 45,94
+open-test-knowledge/systems/ifightchainsaas.java.refund.core/references/terms/ForceUnlockEnum-3615b79c055749d3.yaml
+  s_e3e4bd4c1f59cb::t_4a7d3753b23d6d 45,83
+open-test-knowledge/systems/ifightchainsaas.java.refund.core/references/terms/GenderEnum-3df53133de790130.yaml
+  s_e3e4bd4c1f59cb::t_11b4079f6439f8 38
+open-test-knowledge/systems/ifightchainsaas.java.refund.core/references/terms/IntegrationErrorCodeEnum-81e7ee475d17ffb1.yaml
+  s_e3e4bd4c1f59cb::t_d76f20a4692321 38
+open-test-knowledge/systems/ifightchainsaas.java.refund.core/references/terms/InvoluntaryRefundTypeEnum-c5929198d1e3de47.yaml
+  s_e3e4bd4c1f59cb::t_5fbc63b53324d9 69,123
+open-test-knowledge/systems/ifightchainsaas.java.refund.core/references/terms/LogEnum-6ac01ead9e1e066b.yaml
+  s_e3e4bd4c1f59cb::t_9ec42bad84021a 765,838
+open-test-knowledge/systems/ifightchainsaas.java.refund.core/references/terms/LogModuleEnum-dcc9905efdedf6da.yaml
+  s_e3e4bd4c1f59cb::t_8a143b1879db2a 38
+open-test-knowledge/systems/ifightchainsaas.java.refund.core/references/terms/LogTypeEnum-ddc262638100286d.yaml
+  s_e3e4bd4c1f59cb::t_580286aaa08fe1 490,586
+open-test-knowledge/systems/ifightchainsaas.java.refund.core/references/terms/MonitorCategoryEnum-9d36d7680bb79514.yaml
+  s_e3e4bd4c1f59cb::t_94a4c63a4131ed 38
+open-test-knowledge/systems/ifightchainsaas.java.refund.core/references/terms/MsgOrderTypeEnum-ec599b7ef5812e06.yaml
+  s_e3e4bd4c1f59cb::t_75b63bd00350b4 69,121
+open-test-knowledge/systems/ifightchainsaas.java.refund.core/references/terms/OrderAutoEnum-73ec120f9357322e.yaml
+  s_e3e4bd4c1f59cb::t_81bf2f4a07757d 57,103
+open-test-knowledge/systems/ifightchainsaas.java.refund.core/references/terms/OrderLockEnum-3980f38308da1dcb.yaml
+  s_e3e4bd4c1f59cb::t_7caaee674fef0b 45,83
+open-test-knowledge/systems/ifightchainsaas.java.refund.core/references/terms/OrderRefundTypeEnum-b81826e253d58f34.yaml
+  s_e3e4bd4c1f59cb::t_46c4dd9d9fbcf2 57,112
+open-test-knowledge/systems/ifightchainsaas.java.refund.core/references/terms/OrderSourceEnum-61bf25f14ef069f9.yaml
+  s_e3e4bd4c1f59cb::t_f7013e45422dcb 57,114
+open-test-knowledge/systems/ifightchainsaas.java.refund.core/references/terms/POST-506f201e68c7e3e2.yaml
+  s_e3e4bd4c1f59cb::t_7c68f3352b9eb1 126
+open-test-knowledge/systems/ifightchainsaas.java.refund.core/references/terms/PassengerTypeEnum-c5831f0be41e49f3.yaml
+  s_e3e4bd4c1f59cb::t_9e799beeabcae2 117,123,208
+open-test-knowledge/systems/ifightchainsaas.java.refund.core/references/terms/PayNotifyEnum-9d8c32435aa96353.yaml
+  s_e3e4bd4c1f59cb::t_ed56fe02bd3e08 38
+open-test-knowledge/systems/ifightchainsaas.java.refund.core/references/terms/ProductTypeEnum-f24d1dc9bc8ce51e.yaml
+  s_e3e4bd4c1f59cb::t_993b81336cf4dc 33,46
+open-test-knowledge/systems/ifightchainsaas.java.refund.core/references/terms/RefundChannelEnum-cbc72f196a0f25be.yaml
+  s_e3e4bd4c1f59cb::t_569001f3a559b9 105,177
+open-test-knowledge/systems/ifightchainsaas.java.refund.core/references/terms/RefundCheckTypeEnum-982db5c763198366.yaml
+  s_e3e4bd4c1f59cb::t_cd1d7c8d9fe28e 45,83
+open-test-knowledge/systems/ifightchainsaas.java.refund.core/references/terms/RefundFeeTypeEnum-838ff1a5818df5c8.yaml
+  s_e3e4bd4c1f59cb::t_c8e12b80e844f9 45,94
+open-test-knowledge/systems/ifightchainsaas.java.refund.core/references/terms/RefundMonitorSourceEnum-32caccc9111eac62.yaml
+  s_e3e4bd4c1f59cb::t_a59c59c5f2eedd 57,105
+open-test-knowledge/systems/ifightchainsaas.java.refund.core/references/terms/RefundNodeEnum-d5f8bf4d9a2b91e9.yaml
+  s_e3e4bd4c1f59cb::t_d04785717b7505 105,177
+open-test-knowledge/systems/ifightchainsaas.java.refund.core/references/terms/RefundOperateTypeEnum-7cde921ba5973054.yaml
+  s_e3e4bd4c1f59cb::t_7614c99308d535 93,159
+open-test-knowledge/systems/ifightchainsaas.java.refund.core/references/terms/RefundOrderServiceEnum-e08ee17215dde0e9.yaml
+  s_e3e4bd4c1f59cb::t_439d6bec05fce2 429,534
+open-test-knowledge/systems/ifightchainsaas.java.refund.core/references/terms/RefundOrderStateEnum-7eda536df67e3114.yaml
+  s_e3e4bd4c1f59cb::t_f2a839ab3ebc3f 141,240
+open-test-knowledge/systems/ifightchainsaas.java.refund.core/references/terms/RefundOrderTaskStateEnum-0946c36e4305b486.yaml
+  s_e3e4bd4c1f59cb::t_75ff61b171c454 57,101
+open-test-knowledge/systems/ifightchainsaas.java.refund.core/references/terms/RefundSearchEnum-65b1eebd52174f3a.yaml
+  s_e3e4bd4c1f59cb::t_ba2d0b25972d55 45,94
+open-test-knowledge/systems/ifightchainsaas.java.refund.core/references/terms/RefundSourceEnum-3296dee0efb6ec9e.yaml
+  s_e3e4bd4c1f59cb::t_a23e3b7ec7408c 33,67
+open-test-knowledge/systems/ifightchainsaas.java.refund.core/references/terms/RefundTaskTypeEnum-6f1b9d8b2add1391.yaml
+  s_e3e4bd4c1f59cb::t_98dee9533dc454 141,227
+open-test-knowledge/systems/ifightchainsaas.java.refund.core/references/terms/ResponseResultEnum-4afd44ca02f8ab37.yaml
+  s_e3e4bd4c1f59cb::t_8b2ec0af2cfa2b 45,64
+open-test-knowledge/systems/ifightchainsaas.java.refund.core/references/terms/TravelTypeEnum-f8d66fc24174850a.yaml
+  s_e3e4bd4c1f59cb::t_68c991bf7fe2c9 57,103
+open-test-knowledge/systems/ifightchainsaas.java.refund.core/references/terms/UTF-c2db2330824484e7.yaml
+  s_e3e4bd4c1f59cb::t_02377a29b5342c 126
+open-test-knowledge/systems/ifightchainsaas.java.refund.core/references/terms/VoucherFlagEnum-f7e6079540bf0083.yaml
+  s_e3e4bd4c1f59cb::t_c9a0763d07e855 45,94
+open-test-knowledge/systems/ifightchainsaas.java.refund.core/references/terms/WalletRefundStatusEnum-3e6277eb8378428a.yaml
+  s_e3e4bd4c1f59cb::t_a76e7427fe9e11 57,101
+open-test-knowledge/systems/ifightchainsaas.java.refund.core/source.yaml
+  s_e3e4bd4c1f59cb::t_6bae27019b1c96 8-9,13
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.24",
+  "base_commit_sha": "40a3f2d858ee41c7ab1815b957684488e0550af4",
+  "prompts": {},
+  "sessions": {
+    "s_520debbfbc73ef": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a05181-d696-71d0-b3b7-af0aaafdd571",
+        "model": "gpt-5.6-sol"
+      },
+      "human_author": "shizhen <yuuu.shizhen@gmail.com>"
+    },
+    "s_e3e4bd4c1f59cb": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a05aeb-8bea-7652-b8ff-6e5e7ece97f0",
+        "model": "gpt-5.6-sol"
+      },
+      "human_author": "shizhen <yuuu.shizhen@gmail.com>"
+    }
+  }
+}
