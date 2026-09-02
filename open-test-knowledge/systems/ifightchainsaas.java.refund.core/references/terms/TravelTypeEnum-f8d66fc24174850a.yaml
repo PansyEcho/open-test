@@ -54,7 +54,7 @@ source_refs:
   path: app/model/src/main/java/com/ly/flight/chainsaas/refund/enums/TravelTypeEnum.java
   symbol: com.ly.flight.chainsaas.refund.enums.TravelTypeEnum
   line: 6
-  commit: eba0fc72ec39a6883a6ceb1a70c38040ec5ea0bb
+  commit: 189d1bf98e1388b5ede350672147c8e00bc39c7f
   content_digest: 9997d3eeecbd5e53cfa35772431fb2543ff04dbaff486bdaa19e6c16bf1df187
 - repository: ''
   path: app/model/src/main/java/com/ly/flight/chainsaas/refund/enums/TravelTypeEnum.java
@@ -100,4 +100,4 @@ affected_target_ids:
 - facade:com.ly.flight.chainsaas.refund.facade.RefundFacade#walletRefundRetry
 evidence_digest: 5dc3e427a98cd3104d0628effce9dc0fbbce5b5fa81ee2dd0fae6cf8a55a5939
 discovered_at: '2026-08-21T06:19:51.512270Z'
-updated_at: '2026-08-27T22:34:23.138737Z'
+updated_at: '2026-09-01T06:43:43.411362Z'

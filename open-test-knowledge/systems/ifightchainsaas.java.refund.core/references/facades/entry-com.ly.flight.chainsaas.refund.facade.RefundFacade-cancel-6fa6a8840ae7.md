@@ -112,6 +112,113 @@ metadata:
   - com.ly.flight.chainsaas.refund.biz.manager.refund.RefundCancelServiceInvoker#invoke
   - com.ly.flight.chainsaas.refund.facade.validator.trade.RefundCancelValidator#validate
 invocation_contract: null
+input_contract:
+  contract_version: operation-input-knowledge/v1
+  target_id: facade:com.ly.flight.chainsaas.refund.facade.RefundFacade#cancel
+  request_type: com.ly.flight.chainsaas.refund.facade.model.request.RefundCancelRequest
+  source_scan_id: scan-20260827223314-a0f437c374-27423ce1
+  status: READY
+  request_schema:
+    type: object
+    properties:
+      traceId:
+        type: string
+      operator:
+        type: string
+      refundSerialNo:
+        type: string
+      cancelReasonId:
+        type: string
+      cancelReason:
+        type: string
+      cancelRemark:
+        type: string
+    additionalProperties: false
+    required:
+    - cancelReason
+    - cancelReasonId
+    - cancelRemark
+    - refundSerialNo
+  fields:
+  - path: refundSerialNo
+    field_name: refundSerialNo
+    schema:
+      type: string
+    description: 退票订单号
+    required: true
+    business_identity: true
+    requirement_marker: '@required'
+    source_ref:
+      repository: ''
+      path: app/facade/src/main/java/com/ly/flight/chainsaas/refund/facade/model/request/RefundCancelRequest.java
+      symbol: com.ly.flight.chainsaas.refund.facade.model.request.RefundCancelRequest#refundSerialNo
+      line: 17
+      commit: ''
+      content_digest: ''
+  - path: cancelReasonId
+    field_name: cancelReasonId
+    schema:
+      type: string
+    description: 取消原因Id
+    required: true
+    business_identity: false
+    requirement_marker: '@required'
+    source_ref:
+      repository: ''
+      path: app/facade/src/main/java/com/ly/flight/chainsaas/refund/facade/model/request/RefundCancelRequest.java
+      symbol: com.ly.flight.chainsaas.refund.facade.model.request.RefundCancelRequest#cancelReasonId
+      line: 22
+      commit: ''
+      content_digest: ''
+  - path: cancelReason
+    field_name: cancelReason
+    schema:
+      type: string
+    description: 取消原因
+    required: true
+    business_identity: false
+    requirement_marker: '@required'
+    source_ref:
+      repository: ''
+      path: app/facade/src/main/java/com/ly/flight/chainsaas/refund/facade/model/request/RefundCancelRequest.java
+      symbol: com.ly.flight.chainsaas.refund.facade.model.request.RefundCancelRequest#cancelReason
+      line: 27
+      commit: ''
+      content_digest: ''
+  - path: cancelRemark
+    field_name: cancelRemark
+    schema:
+      type: string
+    description: 取消原因备注
+    required: true
+    business_identity: false
+    requirement_marker: '@required'
+    source_ref:
+      repository: ''
+      path: app/facade/src/main/java/com/ly/flight/chainsaas/refund/facade/model/request/RefundCancelRequest.java
+      symbol: com.ly.flight.chainsaas.refund.facade.model.request.RefundCancelRequest#cancelRemark
+      line: 33
+      commit: ''
+      content_digest: ''
+  - path: traceId
+    field_name: traceId
+    schema:
+      type: string
+    description: ''
+    required: false
+    business_identity: false
+    requirement_marker: ''
+    source_ref: null
+  - path: operator
+    field_name: operator
+    schema:
+      type: string
+    description: ''
+    required: false
+    business_identity: false
+    requirement_marker: ''
+    source_ref: null
+  blocked_reason: ''
 entry_fact_knowledge:
   entry_id: facade:com.ly.flight.chainsaas.refund.facade.RefundFacade#cancel
   source_scan_id: scan-20260827223314-a0f437c374-27423ce1

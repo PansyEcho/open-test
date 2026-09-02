@@ -42,7 +42,7 @@ source_refs:
   path: app/model/src/main/java/com/ly/flight/chainsaas/refund/enums/BuyerTypeEnum.java
   symbol: com.ly.flight.chainsaas.refund.enums.BuyerTypeEnum
   line: 12
-  commit: eba0fc72ec39a6883a6ceb1a70c38040ec5ea0bb
+  commit: 189d1bf98e1388b5ede350672147c8e00bc39c7f
   content_digest: 47bae7b20dc998e269aacbf1b30f3ecb0c18beb0c6ad99753e547d16ed960548
 - repository: ''
   path: app/model/src/main/java/com/ly/flight/chainsaas/refund/enums/BuyerTypeEnum.java
@@ -93,4 +93,4 @@ affected_target_ids:
 - facade:com.ly.flight.chainsaas.refund.facade.ToolFacade#syncOrder
 evidence_digest: 84898c6704f6ff32babe1c040b587e9c85380ca7d426a41efdce8071144f537d
 discovered_at: '2026-08-13T10:23:54.669282Z'
-updated_at: '2026-08-27T22:34:23.134117Z'
+updated_at: '2026-09-01T06:43:43.408918Z'

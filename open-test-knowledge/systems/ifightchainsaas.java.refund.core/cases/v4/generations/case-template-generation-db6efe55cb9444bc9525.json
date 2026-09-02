@@ -1,0 +1,1956 @@
+{
+  "generation_id": "case-template-generation-db6efe55cb9444bc9525",
+  "system_id": "ifightchainsaas.java.refund.core",
+  "operation_id": "facade:com.ly.flight.chainsaas.refund.facade.RefundFacade#cancel",
+  "source_scan_id": "scan-20260901064309-ff191dafc3-c1c4fe91",
+  "coverage_id": "coverage:facade:com.ly.flight.chainsaas.refund.facade.RefundFacade#cancel",
+  "runtime_registry_version": "runtime-functions/v1",
+  "value_registry_version": "value-functions/v1",
+  "compiler_seed": 1,
+  "status": "READY",
+  "input_contract": {
+    "target_id": "facade:com.ly.flight.chainsaas.refund.facade.RefundFacade#cancel",
+    "request_type": "com.ly.flight.chainsaas.refund.facade.model.request.RefundCancelRequest",
+    "source_scan_id": "scan-20260901064309-ff191dafc3-c1c4fe91",
+    "status": "READY",
+    "request_schema": {
+      "type": "object",
+      "properties": {
+        "traceId": {
+          "type": "string"
+        },
+        "operator": {
+          "type": "string"
+        },
+        "refundSerialNo": {
+          "type": "string"
+        },
+        "cancelReasonId": {
+          "type": "string"
+        },
+        "cancelReason": {
+          "type": "string"
+        },
+        "cancelRemark": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": false,
+      "required": [
+        "cancelReason",
+        "cancelReasonId",
+        "cancelRemark",
+        "refundSerialNo"
+      ]
+    },
+    "fields": [
+      {
+        "path": "refundSerialNo",
+        "field_name": "refundSerialNo",
+        "schema": {
+          "type": "string"
+        },
+        "description": "退票订单号",
+        "required": true,
+        "business_identity": true,
+        "requirement_marker": "@required",
+        "source_ref": {
+          "repository": "",
+          "path": "app/facade/src/main/java/com/ly/flight/chainsaas/refund/facade/model/request/RefundCancelRequest.java",
+          "symbol": "com.ly.flight.chainsaas.refund.facade.model.request.RefundCancelRequest#refundSerialNo",
+          "line": 17,
+          "commit": "",
+          "content_digest": ""
+        }
+      },
+      {
+        "path": "cancelReasonId",
+        "field_name": "cancelReasonId",
+        "schema": {
+          "type": "string"
+        },
+        "description": "取消原因Id",
+        "required": true,
+        "business_identity": false,
+        "requirement_marker": "@required",
+        "source_ref": {
+          "repository": "",
+          "path": "app/facade/src/main/java/com/ly/flight/chainsaas/refund/facade/model/request/RefundCancelRequest.java",
+          "symbol": "com.ly.flight.chainsaas.refund.facade.model.request.RefundCancelRequest#cancelReasonId",
+          "line": 22,
+          "commit": "",
+          "content_digest": ""
+        }
+      },
+      {
+        "path": "cancelReason",
+        "field_name": "cancelReason",
+        "schema": {
+          "type": "string"
+        },
+        "description": "取消原因",
+        "required": true,
+        "business_identity": false,
+        "requirement_marker": "@required",
+        "source_ref": {
+          "repository": "",
+          "path": "app/facade/src/main/java/com/ly/flight/chainsaas/refund/facade/model/request/RefundCancelRequest.java",
+          "symbol": "com.ly.flight.chainsaas.refund.facade.model.request.RefundCancelRequest#cancelReason",
+          "line": 27,
+          "commit": "",
+          "content_digest": ""
+        }
+      },
+      {
+        "path": "cancelRemark",
+        "field_name": "cancelRemark",
+        "schema": {
+          "type": "string"
+        },
+        "description": "取消原因备注",
+        "required": true,
+        "business_identity": false,
+        "requirement_marker": "@required",
+        "source_ref": {
+          "repository": "",
+          "path": "app/facade/src/main/java/com/ly/flight/chainsaas/refund/facade/model/request/RefundCancelRequest.java",
+          "symbol": "com.ly.flight.chainsaas.refund.facade.model.request.RefundCancelRequest#cancelRemark",
+          "line": 33,
+          "commit": "",
+          "content_digest": ""
+        }
+      },
+      {
+        "path": "traceId",
+        "field_name": "traceId",
+        "schema": {
+          "type": "string"
+        },
+        "description": "",
+        "required": false,
+        "business_identity": false,
+        "requirement_marker": "",
+        "source_ref": null
+      },
+      {
+        "path": "operator",
+        "field_name": "operator",
+        "schema": {
+          "type": "string"
+        },
+        "description": "",
+        "required": false,
+        "business_identity": false,
+        "requirement_marker": "",
+        "source_ref": null
+      }
+    ]
+  },
+  "submission": {
+    "data_functions": [
+      {
+        "name": "find_refund_serial_no",
+        "description": "根据真实原订单号查询关联退票单列表，并选取首个退票单号供取消接口测试使用。",
+        "inputs": [
+          {
+            "name": "order_serial_no",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "steps": [
+          {
+            "step_id": "query_refund_list",
+            "operation": "runtime_call",
+            "function_id": "facade:com.ly.flight.chainsaas.refund.facade.RefundFacade#queryListByOrderNo",
+            "arguments": {
+              "traceId": {
+                "kind": "literal",
+                "value": "case-template-trace"
+              },
+              "operator": {
+                "kind": "literal",
+                "value": "case-template-generator"
+              },
+              "orderSerialNo": {
+                "kind": "function_input",
+                "name": "order_serial_no"
+              }
+            },
+            "output_schema": {
+              "type": "object",
+              "properties": {
+                "success": {
+                  "type": "boolean"
+                },
+                "code": {
+                  "type": "string"
+                },
+                "message": {
+                  "type": "string"
+                },
+                "traceId": {
+                  "type": "string"
+                },
+                "list": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "refundSerialNo": {
+                        "type": "string"
+                      }
+                    },
+                    "additionalProperties": true
+                  }
+                }
+              },
+              "additionalProperties": true
+            }
+          },
+          {
+            "step_id": "first_refund_order",
+            "operation": "first",
+            "input_source": {
+              "kind": "step_output",
+              "path": "list",
+              "step_id": "query_refund_list"
+            }
+          },
+          {
+            "step_id": "project_refund_identity",
+            "operation": "project",
+            "input_source": {
+              "kind": "step_output",
+              "step_id": "first_refund_order"
+            },
+            "fields": [
+              {
+                "output_name": "refund_serial_no",
+                "source_path": "refundSerialNo"
+              }
+            ]
+          }
+        ],
+        "outputs": [
+          {
+            "output_name": "refund_serial_no",
+            "step_id": "project_refund_identity",
+            "path": "refund_serial_no"
+          }
+        ],
+        "evidence": [
+          {
+            "source_system_id": "ifightchainsaas.java.refund.core",
+            "path": "app/facade/src/main/java/com/ly/flight/chainsaas/refund/facade/RefundFacade.java",
+            "symbol": "RefundFacade#queryListByOrderNo",
+            "line": 72
+          },
+          {
+            "source_system_id": "ifightchainsaas.java.refund.core",
+            "path": "app/facade/src/main/java/com/ly/flight/chainsaas/refund/facade/model/response/OrderRefundInfoListResponse.java",
+            "symbol": "OrderRefundInfoListResponse#list",
+            "line": 15
+          },
+          {
+            "source_system_id": "ifightchainsaas.java.refund.core",
+            "path": "app/model/src/main/java/com/ly/flight/chainsaas/refund/model/CoreVO.java",
+            "symbol": "CoreVO#refundSerialNo",
+            "line": 30
+          }
+        ]
+      }
+    ],
+    "case_templates": [
+      {
+        "template_id": "cancel-business-success",
+        "title": "使用真实退票单号取消订单并校验成功响应",
+        "coverage_kind": "business",
+        "data_calls": [
+          {
+            "call_id": "refund_data",
+            "function_name": "find_refund_serial_no",
+            "arguments": {
+              "order_serial_no": {
+                "kind": "literal",
+                "value": "runtime-provided-order-serial-no"
+              }
+            }
+          }
+        ],
+        "parameters": [
+          {
+            "name": "cancel_reason_id",
+            "target_field": "cancelReasonId",
+            "function_id": "string.boundary",
+            "arguments": {
+              "min_length": 1,
+              "max_length": 32
+            }
+          },
+          {
+            "name": "cancel_reason",
+            "target_field": "cancelReason",
+            "function_id": "string.boundary",
+            "arguments": {
+              "min_length": 1,
+              "max_length": 128
+            }
+          },
+          {
+            "name": "cancel_remark",
+            "target_field": "cancelRemark",
+            "function_id": "string.boundary",
+            "arguments": {
+              "min_length": 1,
+              "max_length": 256
+            }
+          }
+        ],
+        "request_bindings": [
+          {
+            "field": "refundSerialNo",
+            "source": {
+              "kind": "data_output",
+              "call_id": "refund_data",
+              "output_name": "refund_serial_no"
+            }
+          },
+          {
+            "field": "cancelReasonId",
+            "source": {
+              "kind": "parameter",
+              "name": "cancel_reason_id"
+            }
+          },
+          {
+            "field": "cancelReason",
+            "source": {
+              "kind": "parameter",
+              "name": "cancel_reason"
+            }
+          },
+          {
+            "field": "cancelRemark",
+            "source": {
+              "kind": "parameter",
+              "name": "cancel_remark"
+            }
+          },
+          {
+            "field": "operator",
+            "source": {
+              "kind": "literal",
+              "value": "case-template-generator"
+            }
+          }
+        ],
+        "combination": "each",
+        "oracles": [
+          {
+            "oracle_id": "cancel-success-response",
+            "channel": "response",
+            "assertions": [
+              {
+                "actual_path": "success",
+                "operator": "eq",
+                "expected": {
+                  "kind": "literal",
+                  "value": true
+                }
+              },
+              {
+                "actual_path": "orderSerialNo",
+                "operator": "eq",
+                "expected": {
+                  "kind": "request_field",
+                  "path": "refundSerialNo"
+                }
+              },
+              {
+                "actual_path": "traceId",
+                "operator": "not_null"
+              }
+            ]
+          }
+        ],
+        "evidence": [
+          {
+            "source_system_id": "ifightchainsaas.java.refund.core",
+            "path": "app/facade-impl/src/main/java/com/ly/flight/chainsaas/refund/facade/impl/RefundFacadeImpl.java",
+            "symbol": "RefundFacadeImpl#cancel",
+            "line": 292
+          },
+          {
+            "source_system_id": "ifightchainsaas.java.refund.core",
+            "path": "app/biz/src/main/java/com/ly/flight/chainsaas/refund/biz/manager/refund/RefundCancelServiceInvoker.java",
+            "symbol": "RefundCancelServiceInvoker#buildSuccessResp",
+            "line": 163
+          },
+          {
+            "source_system_id": "ifightchainsaas.java.refund.core",
+            "path": "app/facade/src/main/java/com/ly/flight/chainsaas/refund/facade/model/response/RefundCancelResponse.java",
+            "symbol": "RefundCancelResponse#orderSerialNo",
+            "line": 5
+          }
+        ]
+      },
+      {
+        "template_id": "cancel-required-fields",
+        "title": "取消订单请求必填字段缺失与空值校验",
+        "coverage_kind": "required_validation",
+        "parameters": [
+          {
+            "name": "refund_serial_no",
+            "target_field": "refundSerialNo",
+            "function_id": "nullability.all",
+            "arguments": {
+              "include_omit": true
+            },
+            "base_source": {
+              "kind": "literal",
+              "value": "refund-serial-no"
+            }
+          },
+          {
+            "name": "cancel_reason_id",
+            "target_field": "cancelReasonId",
+            "function_id": "nullability.all",
+            "arguments": {
+              "include_omit": true
+            },
+            "base_source": {
+              "kind": "literal",
+              "value": "cancel-reason-id"
+            }
+          },
+          {
+            "name": "cancel_reason",
+            "target_field": "cancelReason",
+            "function_id": "nullability.all",
+            "arguments": {
+              "include_omit": true
+            },
+            "base_source": {
+              "kind": "literal",
+              "value": "cancel-reason"
+            }
+          },
+          {
+            "name": "cancel_remark",
+            "target_field": "cancelRemark",
+            "function_id": "nullability.all",
+            "arguments": {
+              "include_omit": true
+            },
+            "base_source": {
+              "kind": "literal",
+              "value": "cancel-remark"
+            }
+          }
+        ],
+        "request_bindings": [
+          {
+            "field": "refundSerialNo",
+            "source": {
+              "kind": "parameter",
+              "name": "refund_serial_no"
+            }
+          },
+          {
+            "field": "cancelReasonId",
+            "source": {
+              "kind": "parameter",
+              "name": "cancel_reason_id"
+            }
+          },
+          {
+            "field": "cancelReason",
+            "source": {
+              "kind": "parameter",
+              "name": "cancel_reason"
+            }
+          },
+          {
+            "field": "cancelRemark",
+            "source": {
+              "kind": "parameter",
+              "name": "cancel_remark"
+            }
+          }
+        ],
+        "combination": "each",
+        "oracles": [
+          {
+            "oracle_id": "cancel-required-rejected",
+            "channel": "response",
+            "assertions": [
+              {
+                "actual_path": "success",
+                "operator": "eq",
+                "expected": {
+                  "kind": "literal",
+                  "value": false
+                }
+              }
+            ]
+          }
+        ],
+        "evidence": [
+          {
+            "source_system_id": "ifightchainsaas.java.refund.core",
+            "path": "app/facade/src/main/java/com/ly/flight/chainsaas/refund/facade/model/request/RefundCancelRequest.java",
+            "symbol": "RefundCancelRequest#refundSerialNo",
+            "line": 13
+          },
+          {
+            "source_system_id": "ifightchainsaas.java.refund.core",
+            "path": "app/facade/src/main/java/com/ly/flight/chainsaas/refund/facade/model/request/RefundCancelRequest.java",
+            "symbol": "RefundCancelRequest#cancelReasonId",
+            "line": 22
+          },
+          {
+            "source_system_id": "ifightchainsaas.java.refund.core",
+            "path": "app/facade/src/main/java/com/ly/flight/chainsaas/refund/facade/model/request/RefundCancelRequest.java",
+            "symbol": "RefundCancelRequest#cancelReason",
+            "line": 27
+          },
+          {
+            "source_system_id": "ifightchainsaas.java.refund.core",
+            "path": "app/facade/src/main/java/com/ly/flight/chainsaas/refund/facade/model/request/RefundCancelRequest.java",
+            "symbol": "RefundCancelRequest#cancelRemark",
+            "line": 33
+          }
+        ]
+      }
+    ],
+    "unresolved": []
+  },
+  "issues": [],
+  "variants": [
+    {
+      "variant_id": "case-variant-v4-b93031b5e181485e0e29",
+      "template_id": "cancel-business-success",
+      "ordinal": 1,
+      "parameter_values": {
+        "cancel_reason_id": "",
+        "cancel_reason": "",
+        "cancel_remark": ""
+      },
+      "request_values": {
+        "refundSerialNo": {
+          "kind": "data_output",
+          "call_id": "refund_data",
+          "output_name": "refund_serial_no"
+        },
+        "cancelReasonId": "",
+        "cancelReason": "",
+        "cancelRemark": "",
+        "operator": "case-template-generator"
+      },
+      "data_calls": [
+        {
+          "call_id": "refund_data",
+          "function_name": "find_refund_serial_no",
+          "arguments": {
+            "order_serial_no": {
+              "kind": "literal",
+              "value": "runtime-provided-order-serial-no"
+            }
+          }
+        }
+      ],
+      "oracles": [
+        {
+          "oracle_id": "cancel-success-response",
+          "channel": "response",
+          "assertions": [
+            {
+              "actual_path": "success",
+              "operator": "eq",
+              "expected": {
+                "kind": "literal",
+                "value": true
+              }
+            },
+            {
+              "actual_path": "orderSerialNo",
+              "operator": "eq",
+              "expected": {
+                "kind": "request_field",
+                "path": "refundSerialNo"
+              }
+            },
+            {
+              "actual_path": "traceId",
+              "operator": "not_null"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "variant_id": "case-variant-v4-9c266969602a550a78e0",
+      "template_id": "cancel-business-success",
+      "ordinal": 2,
+      "parameter_values": {
+        "cancel_reason_id": "a",
+        "cancel_reason": "",
+        "cancel_remark": ""
+      },
+      "request_values": {
+        "refundSerialNo": {
+          "kind": "data_output",
+          "call_id": "refund_data",
+          "output_name": "refund_serial_no"
+        },
+        "cancelReasonId": "a",
+        "cancelReason": "",
+        "cancelRemark": "",
+        "operator": "case-template-generator"
+      },
+      "data_calls": [
+        {
+          "call_id": "refund_data",
+          "function_name": "find_refund_serial_no",
+          "arguments": {
+            "order_serial_no": {
+              "kind": "literal",
+              "value": "runtime-provided-order-serial-no"
+            }
+          }
+        }
+      ],
+      "oracles": [
+        {
+          "oracle_id": "cancel-success-response",
+          "channel": "response",
+          "assertions": [
+            {
+              "actual_path": "success",
+              "operator": "eq",
+              "expected": {
+                "kind": "literal",
+                "value": true
+              }
+            },
+            {
+              "actual_path": "orderSerialNo",
+              "operator": "eq",
+              "expected": {
+                "kind": "request_field",
+                "path": "refundSerialNo"
+              }
+            },
+            {
+              "actual_path": "traceId",
+              "operator": "not_null"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "variant_id": "case-variant-v4-e5779fc723dfa45be18d",
+      "template_id": "cancel-business-success",
+      "ordinal": 3,
+      "parameter_values": {
+        "cancel_reason_id": "aa",
+        "cancel_reason": "",
+        "cancel_remark": ""
+      },
+      "request_values": {
+        "refundSerialNo": {
+          "kind": "data_output",
+          "call_id": "refund_data",
+          "output_name": "refund_serial_no"
+        },
+        "cancelReasonId": "aa",
+        "cancelReason": "",
+        "cancelRemark": "",
+        "operator": "case-template-generator"
+      },
+      "data_calls": [
+        {
+          "call_id": "refund_data",
+          "function_name": "find_refund_serial_no",
+          "arguments": {
+            "order_serial_no": {
+              "kind": "literal",
+              "value": "runtime-provided-order-serial-no"
+            }
+          }
+        }
+      ],
+      "oracles": [
+        {
+          "oracle_id": "cancel-success-response",
+          "channel": "response",
+          "assertions": [
+            {
+              "actual_path": "success",
+              "operator": "eq",
+              "expected": {
+                "kind": "literal",
+                "value": true
+              }
+            },
+            {
+              "actual_path": "orderSerialNo",
+              "operator": "eq",
+              "expected": {
+                "kind": "request_field",
+                "path": "refundSerialNo"
+              }
+            },
+            {
+              "actual_path": "traceId",
+              "operator": "not_null"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "variant_id": "case-variant-v4-436baf1511a14c1193bc",
+      "template_id": "cancel-business-success",
+      "ordinal": 4,
+      "parameter_values": {
+        "cancel_reason_id": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "cancel_reason": "",
+        "cancel_remark": ""
+      },
+      "request_values": {
+        "refundSerialNo": {
+          "kind": "data_output",
+          "call_id": "refund_data",
+          "output_name": "refund_serial_no"
+        },
+        "cancelReasonId": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "cancelReason": "",
+        "cancelRemark": "",
+        "operator": "case-template-generator"
+      },
+      "data_calls": [
+        {
+          "call_id": "refund_data",
+          "function_name": "find_refund_serial_no",
+          "arguments": {
+            "order_serial_no": {
+              "kind": "literal",
+              "value": "runtime-provided-order-serial-no"
+            }
+          }
+        }
+      ],
+      "oracles": [
+        {
+          "oracle_id": "cancel-success-response",
+          "channel": "response",
+          "assertions": [
+            {
+              "actual_path": "success",
+              "operator": "eq",
+              "expected": {
+                "kind": "literal",
+                "value": true
+              }
+            },
+            {
+              "actual_path": "orderSerialNo",
+              "operator": "eq",
+              "expected": {
+                "kind": "request_field",
+                "path": "refundSerialNo"
+              }
+            },
+            {
+              "actual_path": "traceId",
+              "operator": "not_null"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "variant_id": "case-variant-v4-d8bc50cfec0cfd1f0cd0",
+      "template_id": "cancel-business-success",
+      "ordinal": 5,
+      "parameter_values": {
+        "cancel_reason_id": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "cancel_reason": "",
+        "cancel_remark": ""
+      },
+      "request_values": {
+        "refundSerialNo": {
+          "kind": "data_output",
+          "call_id": "refund_data",
+          "output_name": "refund_serial_no"
+        },
+        "cancelReasonId": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "cancelReason": "",
+        "cancelRemark": "",
+        "operator": "case-template-generator"
+      },
+      "data_calls": [
+        {
+          "call_id": "refund_data",
+          "function_name": "find_refund_serial_no",
+          "arguments": {
+            "order_serial_no": {
+              "kind": "literal",
+              "value": "runtime-provided-order-serial-no"
+            }
+          }
+        }
+      ],
+      "oracles": [
+        {
+          "oracle_id": "cancel-success-response",
+          "channel": "response",
+          "assertions": [
+            {
+              "actual_path": "success",
+              "operator": "eq",
+              "expected": {
+                "kind": "literal",
+                "value": true
+              }
+            },
+            {
+              "actual_path": "orderSerialNo",
+              "operator": "eq",
+              "expected": {
+                "kind": "request_field",
+                "path": "refundSerialNo"
+              }
+            },
+            {
+              "actual_path": "traceId",
+              "operator": "not_null"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "variant_id": "case-variant-v4-5624aae1bbd7773cd96b",
+      "template_id": "cancel-business-success",
+      "ordinal": 6,
+      "parameter_values": {
+        "cancel_reason_id": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "cancel_reason": "",
+        "cancel_remark": ""
+      },
+      "request_values": {
+        "refundSerialNo": {
+          "kind": "data_output",
+          "call_id": "refund_data",
+          "output_name": "refund_serial_no"
+        },
+        "cancelReasonId": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "cancelReason": "",
+        "cancelRemark": "",
+        "operator": "case-template-generator"
+      },
+      "data_calls": [
+        {
+          "call_id": "refund_data",
+          "function_name": "find_refund_serial_no",
+          "arguments": {
+            "order_serial_no": {
+              "kind": "literal",
+              "value": "runtime-provided-order-serial-no"
+            }
+          }
+        }
+      ],
+      "oracles": [
+        {
+          "oracle_id": "cancel-success-response",
+          "channel": "response",
+          "assertions": [
+            {
+              "actual_path": "success",
+              "operator": "eq",
+              "expected": {
+                "kind": "literal",
+                "value": true
+              }
+            },
+            {
+              "actual_path": "orderSerialNo",
+              "operator": "eq",
+              "expected": {
+                "kind": "request_field",
+                "path": "refundSerialNo"
+              }
+            },
+            {
+              "actual_path": "traceId",
+              "operator": "not_null"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "variant_id": "case-variant-v4-772563150c41274c37d8",
+      "template_id": "cancel-business-success",
+      "ordinal": 7,
+      "parameter_values": {
+        "cancel_reason_id": "",
+        "cancel_reason": "a",
+        "cancel_remark": ""
+      },
+      "request_values": {
+        "refundSerialNo": {
+          "kind": "data_output",
+          "call_id": "refund_data",
+          "output_name": "refund_serial_no"
+        },
+        "cancelReasonId": "",
+        "cancelReason": "a",
+        "cancelRemark": "",
+        "operator": "case-template-generator"
+      },
+      "data_calls": [
+        {
+          "call_id": "refund_data",
+          "function_name": "find_refund_serial_no",
+          "arguments": {
+            "order_serial_no": {
+              "kind": "literal",
+              "value": "runtime-provided-order-serial-no"
+            }
+          }
+        }
+      ],
+      "oracles": [
+        {
+          "oracle_id": "cancel-success-response",
+          "channel": "response",
+          "assertions": [
+            {
+              "actual_path": "success",
+              "operator": "eq",
+              "expected": {
+                "kind": "literal",
+                "value": true
+              }
+            },
+            {
+              "actual_path": "orderSerialNo",
+              "operator": "eq",
+              "expected": {
+                "kind": "request_field",
+                "path": "refundSerialNo"
+              }
+            },
+            {
+              "actual_path": "traceId",
+              "operator": "not_null"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "variant_id": "case-variant-v4-99269ee6ae1cbd03d659",
+      "template_id": "cancel-business-success",
+      "ordinal": 8,
+      "parameter_values": {
+        "cancel_reason_id": "",
+        "cancel_reason": "aa",
+        "cancel_remark": ""
+      },
+      "request_values": {
+        "refundSerialNo": {
+          "kind": "data_output",
+          "call_id": "refund_data",
+          "output_name": "refund_serial_no"
+        },
+        "cancelReasonId": "",
+        "cancelReason": "aa",
+        "cancelRemark": "",
+        "operator": "case-template-generator"
+      },
+      "data_calls": [
+        {
+          "call_id": "refund_data",
+          "function_name": "find_refund_serial_no",
+          "arguments": {
+            "order_serial_no": {
+              "kind": "literal",
+              "value": "runtime-provided-order-serial-no"
+            }
+          }
+        }
+      ],
+      "oracles": [
+        {
+          "oracle_id": "cancel-success-response",
+          "channel": "response",
+          "assertions": [
+            {
+              "actual_path": "success",
+              "operator": "eq",
+              "expected": {
+                "kind": "literal",
+                "value": true
+              }
+            },
+            {
+              "actual_path": "orderSerialNo",
+              "operator": "eq",
+              "expected": {
+                "kind": "request_field",
+                "path": "refundSerialNo"
+              }
+            },
+            {
+              "actual_path": "traceId",
+              "operator": "not_null"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "variant_id": "case-variant-v4-9b75809e24047bba3e34",
+      "template_id": "cancel-business-success",
+      "ordinal": 9,
+      "parameter_values": {
+        "cancel_reason_id": "",
+        "cancel_reason": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "cancel_remark": ""
+      },
+      "request_values": {
+        "refundSerialNo": {
+          "kind": "data_output",
+          "call_id": "refund_data",
+          "output_name": "refund_serial_no"
+        },
+        "cancelReasonId": "",
+        "cancelReason": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "cancelRemark": "",
+        "operator": "case-template-generator"
+      },
+      "data_calls": [
+        {
+          "call_id": "refund_data",
+          "function_name": "find_refund_serial_no",
+          "arguments": {
+            "order_serial_no": {
+              "kind": "literal",
+              "value": "runtime-provided-order-serial-no"
+            }
+          }
+        }
+      ],
+      "oracles": [
+        {
+          "oracle_id": "cancel-success-response",
+          "channel": "response",
+          "assertions": [
+            {
+              "actual_path": "success",
+              "operator": "eq",
+              "expected": {
+                "kind": "literal",
+                "value": true
+              }
+            },
+            {
+              "actual_path": "orderSerialNo",
+              "operator": "eq",
+              "expected": {
+                "kind": "request_field",
+                "path": "refundSerialNo"
+              }
+            },
+            {
+              "actual_path": "traceId",
+              "operator": "not_null"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "variant_id": "case-variant-v4-72e14a5c55c26ba73750",
+      "template_id": "cancel-business-success",
+      "ordinal": 10,
+      "parameter_values": {
+        "cancel_reason_id": "",
+        "cancel_reason": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "cancel_remark": ""
+      },
+      "request_values": {
+        "refundSerialNo": {
+          "kind": "data_output",
+          "call_id": "refund_data",
+          "output_name": "refund_serial_no"
+        },
+        "cancelReasonId": "",
+        "cancelReason": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "cancelRemark": "",
+        "operator": "case-template-generator"
+      },
+      "data_calls": [
+        {
+          "call_id": "refund_data",
+          "function_name": "find_refund_serial_no",
+          "arguments": {
+            "order_serial_no": {
+              "kind": "literal",
+              "value": "runtime-provided-order-serial-no"
+            }
+          }
+        }
+      ],
+      "oracles": [
+        {
+          "oracle_id": "cancel-success-response",
+          "channel": "response",
+          "assertions": [
+            {
+              "actual_path": "success",
+              "operator": "eq",
+              "expected": {
+                "kind": "literal",
+                "value": true
+              }
+            },
+            {
+              "actual_path": "orderSerialNo",
+              "operator": "eq",
+              "expected": {
+                "kind": "request_field",
+                "path": "refundSerialNo"
+              }
+            },
+            {
+              "actual_path": "traceId",
+              "operator": "not_null"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "variant_id": "case-variant-v4-e907d5b468081097ac1e",
+      "template_id": "cancel-business-success",
+      "ordinal": 11,
+      "parameter_values": {
+        "cancel_reason_id": "",
+        "cancel_reason": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "cancel_remark": ""
+      },
+      "request_values": {
+        "refundSerialNo": {
+          "kind": "data_output",
+          "call_id": "refund_data",
+          "output_name": "refund_serial_no"
+        },
+        "cancelReasonId": "",
+        "cancelReason": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "cancelRemark": "",
+        "operator": "case-template-generator"
+      },
+      "data_calls": [
+        {
+          "call_id": "refund_data",
+          "function_name": "find_refund_serial_no",
+          "arguments": {
+            "order_serial_no": {
+              "kind": "literal",
+              "value": "runtime-provided-order-serial-no"
+            }
+          }
+        }
+      ],
+      "oracles": [
+        {
+          "oracle_id": "cancel-success-response",
+          "channel": "response",
+          "assertions": [
+            {
+              "actual_path": "success",
+              "operator": "eq",
+              "expected": {
+                "kind": "literal",
+                "value": true
+              }
+            },
+            {
+              "actual_path": "orderSerialNo",
+              "operator": "eq",
+              "expected": {
+                "kind": "request_field",
+                "path": "refundSerialNo"
+              }
+            },
+            {
+              "actual_path": "traceId",
+              "operator": "not_null"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "variant_id": "case-variant-v4-c07a07e00f64701ab0d4",
+      "template_id": "cancel-business-success",
+      "ordinal": 12,
+      "parameter_values": {
+        "cancel_reason_id": "",
+        "cancel_reason": "",
+        "cancel_remark": "a"
+      },
+      "request_values": {
+        "refundSerialNo": {
+          "kind": "data_output",
+          "call_id": "refund_data",
+          "output_name": "refund_serial_no"
+        },
+        "cancelReasonId": "",
+        "cancelReason": "",
+        "cancelRemark": "a",
+        "operator": "case-template-generator"
+      },
+      "data_calls": [
+        {
+          "call_id": "refund_data",
+          "function_name": "find_refund_serial_no",
+          "arguments": {
+            "order_serial_no": {
+              "kind": "literal",
+              "value": "runtime-provided-order-serial-no"
+            }
+          }
+        }
+      ],
+      "oracles": [
+        {
+          "oracle_id": "cancel-success-response",
+          "channel": "response",
+          "assertions": [
+            {
+              "actual_path": "success",
+              "operator": "eq",
+              "expected": {
+                "kind": "literal",
+                "value": true
+              }
+            },
+            {
+              "actual_path": "orderSerialNo",
+              "operator": "eq",
+              "expected": {
+                "kind": "request_field",
+                "path": "refundSerialNo"
+              }
+            },
+            {
+              "actual_path": "traceId",
+              "operator": "not_null"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "variant_id": "case-variant-v4-2a44441effc2848fea75",
+      "template_id": "cancel-business-success",
+      "ordinal": 13,
+      "parameter_values": {
+        "cancel_reason_id": "",
+        "cancel_reason": "",
+        "cancel_remark": "aa"
+      },
+      "request_values": {
+        "refundSerialNo": {
+          "kind": "data_output",
+          "call_id": "refund_data",
+          "output_name": "refund_serial_no"
+        },
+        "cancelReasonId": "",
+        "cancelReason": "",
+        "cancelRemark": "aa",
+        "operator": "case-template-generator"
+      },
+      "data_calls": [
+        {
+          "call_id": "refund_data",
+          "function_name": "find_refund_serial_no",
+          "arguments": {
+            "order_serial_no": {
+              "kind": "literal",
+              "value": "runtime-provided-order-serial-no"
+            }
+          }
+        }
+      ],
+      "oracles": [
+        {
+          "oracle_id": "cancel-success-response",
+          "channel": "response",
+          "assertions": [
+            {
+              "actual_path": "success",
+              "operator": "eq",
+              "expected": {
+                "kind": "literal",
+                "value": true
+              }
+            },
+            {
+              "actual_path": "orderSerialNo",
+              "operator": "eq",
+              "expected": {
+                "kind": "request_field",
+                "path": "refundSerialNo"
+              }
+            },
+            {
+              "actual_path": "traceId",
+              "operator": "not_null"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "variant_id": "case-variant-v4-bee3fca7ab8f220d11a3",
+      "template_id": "cancel-business-success",
+      "ordinal": 14,
+      "parameter_values": {
+        "cancel_reason_id": "",
+        "cancel_reason": "",
+        "cancel_remark": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+      },
+      "request_values": {
+        "refundSerialNo": {
+          "kind": "data_output",
+          "call_id": "refund_data",
+          "output_name": "refund_serial_no"
+        },
+        "cancelReasonId": "",
+        "cancelReason": "",
+        "cancelRemark": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "operator": "case-template-generator"
+      },
+      "data_calls": [
+        {
+          "call_id": "refund_data",
+          "function_name": "find_refund_serial_no",
+          "arguments": {
+            "order_serial_no": {
+              "kind": "literal",
+              "value": "runtime-provided-order-serial-no"
+            }
+          }
+        }
+      ],
+      "oracles": [
+        {
+          "oracle_id": "cancel-success-response",
+          "channel": "response",
+          "assertions": [
+            {
+              "actual_path": "success",
+              "operator": "eq",
+              "expected": {
+                "kind": "literal",
+                "value": true
+              }
+            },
+            {
+              "actual_path": "orderSerialNo",
+              "operator": "eq",
+              "expected": {
+                "kind": "request_field",
+                "path": "refundSerialNo"
+              }
+            },
+            {
+              "actual_path": "traceId",
+              "operator": "not_null"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "variant_id": "case-variant-v4-4aaae796ff92ded8439b",
+      "template_id": "cancel-business-success",
+      "ordinal": 15,
+      "parameter_values": {
+        "cancel_reason_id": "",
+        "cancel_reason": "",
+        "cancel_remark": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+      },
+      "request_values": {
+        "refundSerialNo": {
+          "kind": "data_output",
+          "call_id": "refund_data",
+          "output_name": "refund_serial_no"
+        },
+        "cancelReasonId": "",
+        "cancelReason": "",
+        "cancelRemark": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "operator": "case-template-generator"
+      },
+      "data_calls": [
+        {
+          "call_id": "refund_data",
+          "function_name": "find_refund_serial_no",
+          "arguments": {
+            "order_serial_no": {
+              "kind": "literal",
+              "value": "runtime-provided-order-serial-no"
+            }
+          }
+        }
+      ],
+      "oracles": [
+        {
+          "oracle_id": "cancel-success-response",
+          "channel": "response",
+          "assertions": [
+            {
+              "actual_path": "success",
+              "operator": "eq",
+              "expected": {
+                "kind": "literal",
+                "value": true
+              }
+            },
+            {
+              "actual_path": "orderSerialNo",
+              "operator": "eq",
+              "expected": {
+                "kind": "request_field",
+                "path": "refundSerialNo"
+              }
+            },
+            {
+              "actual_path": "traceId",
+              "operator": "not_null"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "variant_id": "case-variant-v4-6cb62f16cefa7caedbc1",
+      "template_id": "cancel-business-success",
+      "ordinal": 16,
+      "parameter_values": {
+        "cancel_reason_id": "",
+        "cancel_reason": "",
+        "cancel_remark": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+      },
+      "request_values": {
+        "refundSerialNo": {
+          "kind": "data_output",
+          "call_id": "refund_data",
+          "output_name": "refund_serial_no"
+        },
+        "cancelReasonId": "",
+        "cancelReason": "",
+        "cancelRemark": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "operator": "case-template-generator"
+      },
+      "data_calls": [
+        {
+          "call_id": "refund_data",
+          "function_name": "find_refund_serial_no",
+          "arguments": {
+            "order_serial_no": {
+              "kind": "literal",
+              "value": "runtime-provided-order-serial-no"
+            }
+          }
+        }
+      ],
+      "oracles": [
+        {
+          "oracle_id": "cancel-success-response",
+          "channel": "response",
+          "assertions": [
+            {
+              "actual_path": "success",
+              "operator": "eq",
+              "expected": {
+                "kind": "literal",
+                "value": true
+              }
+            },
+            {
+              "actual_path": "orderSerialNo",
+              "operator": "eq",
+              "expected": {
+                "kind": "request_field",
+                "path": "refundSerialNo"
+              }
+            },
+            {
+              "actual_path": "traceId",
+              "operator": "not_null"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "variant_id": "case-variant-v4-c62e4280284a93da81b8",
+      "template_id": "cancel-required-fields",
+      "ordinal": 1,
+      "parameter_values": {
+        "refund_serial_no": "refund-serial-no",
+        "cancel_reason_id": "cancel-reason-id",
+        "cancel_reason": "cancel-reason",
+        "cancel_remark": "cancel-remark"
+      },
+      "request_values": {
+        "refundSerialNo": "refund-serial-no",
+        "cancelReasonId": "cancel-reason-id",
+        "cancelReason": "cancel-reason",
+        "cancelRemark": "cancel-remark"
+      },
+      "data_calls": [],
+      "oracles": [
+        {
+          "oracle_id": "cancel-required-rejected",
+          "channel": "response",
+          "assertions": [
+            {
+              "actual_path": "success",
+              "operator": "eq",
+              "expected": {
+                "kind": "literal",
+                "value": false
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "variant_id": "case-variant-v4-ee2f48e234053c729bde",
+      "template_id": "cancel-required-fields",
+      "ordinal": 2,
+      "parameter_values": {
+        "refund_serial_no": "",
+        "cancel_reason_id": "cancel-reason-id",
+        "cancel_reason": "cancel-reason",
+        "cancel_remark": "cancel-remark"
+      },
+      "request_values": {
+        "refundSerialNo": "",
+        "cancelReasonId": "cancel-reason-id",
+        "cancelReason": "cancel-reason",
+        "cancelRemark": "cancel-remark"
+      },
+      "data_calls": [],
+      "oracles": [
+        {
+          "oracle_id": "cancel-required-rejected",
+          "channel": "response",
+          "assertions": [
+            {
+              "actual_path": "success",
+              "operator": "eq",
+              "expected": {
+                "kind": "literal",
+                "value": false
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "variant_id": "case-variant-v4-fd992229d2bc1727602f",
+      "template_id": "cancel-required-fields",
+      "ordinal": 3,
+      "parameter_values": {
+        "refund_serial_no": null,
+        "cancel_reason_id": "cancel-reason-id",
+        "cancel_reason": "cancel-reason",
+        "cancel_remark": "cancel-remark"
+      },
+      "request_values": {
+        "refundSerialNo": null,
+        "cancelReasonId": "cancel-reason-id",
+        "cancelReason": "cancel-reason",
+        "cancelRemark": "cancel-remark"
+      },
+      "data_calls": [],
+      "oracles": [
+        {
+          "oracle_id": "cancel-required-rejected",
+          "channel": "response",
+          "assertions": [
+            {
+              "actual_path": "success",
+              "operator": "eq",
+              "expected": {
+                "kind": "literal",
+                "value": false
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "variant_id": "case-variant-v4-8f5accf97f13b2392b56",
+      "template_id": "cancel-required-fields",
+      "ordinal": 4,
+      "parameter_values": {
+        "refund_serial_no": {
+          "$omit": true
+        },
+        "cancel_reason_id": "cancel-reason-id",
+        "cancel_reason": "cancel-reason",
+        "cancel_remark": "cancel-remark"
+      },
+      "request_values": {
+        "cancelReasonId": "cancel-reason-id",
+        "cancelReason": "cancel-reason",
+        "cancelRemark": "cancel-remark"
+      },
+      "data_calls": [],
+      "oracles": [
+        {
+          "oracle_id": "cancel-required-rejected",
+          "channel": "response",
+          "assertions": [
+            {
+              "actual_path": "success",
+              "operator": "eq",
+              "expected": {
+                "kind": "literal",
+                "value": false
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "variant_id": "case-variant-v4-d8f0d0620d4c7a949fc5",
+      "template_id": "cancel-required-fields",
+      "ordinal": 5,
+      "parameter_values": {
+        "refund_serial_no": "refund-serial-no",
+        "cancel_reason_id": "",
+        "cancel_reason": "cancel-reason",
+        "cancel_remark": "cancel-remark"
+      },
+      "request_values": {
+        "refundSerialNo": "refund-serial-no",
+        "cancelReasonId": "",
+        "cancelReason": "cancel-reason",
+        "cancelRemark": "cancel-remark"
+      },
+      "data_calls": [],
+      "oracles": [
+        {
+          "oracle_id": "cancel-required-rejected",
+          "channel": "response",
+          "assertions": [
+            {
+              "actual_path": "success",
+              "operator": "eq",
+              "expected": {
+                "kind": "literal",
+                "value": false
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "variant_id": "case-variant-v4-b260cb1a2f9f998c9096",
+      "template_id": "cancel-required-fields",
+      "ordinal": 6,
+      "parameter_values": {
+        "refund_serial_no": "refund-serial-no",
+        "cancel_reason_id": null,
+        "cancel_reason": "cancel-reason",
+        "cancel_remark": "cancel-remark"
+      },
+      "request_values": {
+        "refundSerialNo": "refund-serial-no",
+        "cancelReasonId": null,
+        "cancelReason": "cancel-reason",
+        "cancelRemark": "cancel-remark"
+      },
+      "data_calls": [],
+      "oracles": [
+        {
+          "oracle_id": "cancel-required-rejected",
+          "channel": "response",
+          "assertions": [
+            {
+              "actual_path": "success",
+              "operator": "eq",
+              "expected": {
+                "kind": "literal",
+                "value": false
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "variant_id": "case-variant-v4-bb34e961fb1eb5661877",
+      "template_id": "cancel-required-fields",
+      "ordinal": 7,
+      "parameter_values": {
+        "refund_serial_no": "refund-serial-no",
+        "cancel_reason_id": {
+          "$omit": true
+        },
+        "cancel_reason": "cancel-reason",
+        "cancel_remark": "cancel-remark"
+      },
+      "request_values": {
+        "refundSerialNo": "refund-serial-no",
+        "cancelReason": "cancel-reason",
+        "cancelRemark": "cancel-remark"
+      },
+      "data_calls": [],
+      "oracles": [
+        {
+          "oracle_id": "cancel-required-rejected",
+          "channel": "response",
+          "assertions": [
+            {
+              "actual_path": "success",
+              "operator": "eq",
+              "expected": {
+                "kind": "literal",
+                "value": false
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "variant_id": "case-variant-v4-91beebf0c81d61c4ddbf",
+      "template_id": "cancel-required-fields",
+      "ordinal": 8,
+      "parameter_values": {
+        "refund_serial_no": "refund-serial-no",
+        "cancel_reason_id": "cancel-reason-id",
+        "cancel_reason": "",
+        "cancel_remark": "cancel-remark"
+      },
+      "request_values": {
+        "refundSerialNo": "refund-serial-no",
+        "cancelReasonId": "cancel-reason-id",
+        "cancelReason": "",
+        "cancelRemark": "cancel-remark"
+      },
+      "data_calls": [],
+      "oracles": [
+        {
+          "oracle_id": "cancel-required-rejected",
+          "channel": "response",
+          "assertions": [
+            {
+              "actual_path": "success",
+              "operator": "eq",
+              "expected": {
+                "kind": "literal",
+                "value": false
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "variant_id": "case-variant-v4-5edbc006ec15532590c6",
+      "template_id": "cancel-required-fields",
+      "ordinal": 9,
+      "parameter_values": {
+        "refund_serial_no": "refund-serial-no",
+        "cancel_reason_id": "cancel-reason-id",
+        "cancel_reason": null,
+        "cancel_remark": "cancel-remark"
+      },
+      "request_values": {
+        "refundSerialNo": "refund-serial-no",
+        "cancelReasonId": "cancel-reason-id",
+        "cancelReason": null,
+        "cancelRemark": "cancel-remark"
+      },
+      "data_calls": [],
+      "oracles": [
+        {
+          "oracle_id": "cancel-required-rejected",
+          "channel": "response",
+          "assertions": [
+            {
+              "actual_path": "success",
+              "operator": "eq",
+              "expected": {
+                "kind": "literal",
+                "value": false
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "variant_id": "case-variant-v4-d9c30fde0f564c13b1a4",
+      "template_id": "cancel-required-fields",
+      "ordinal": 10,
+      "parameter_values": {
+        "refund_serial_no": "refund-serial-no",
+        "cancel_reason_id": "cancel-reason-id",
+        "cancel_reason": {
+          "$omit": true
+        },
+        "cancel_remark": "cancel-remark"
+      },
+      "request_values": {
+        "refundSerialNo": "refund-serial-no",
+        "cancelReasonId": "cancel-reason-id",
+        "cancelRemark": "cancel-remark"
+      },
+      "data_calls": [],
+      "oracles": [
+        {
+          "oracle_id": "cancel-required-rejected",
+          "channel": "response",
+          "assertions": [
+            {
+              "actual_path": "success",
+              "operator": "eq",
+              "expected": {
+                "kind": "literal",
+                "value": false
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "variant_id": "case-variant-v4-ea51ba79a1e3f452b3a9",
+      "template_id": "cancel-required-fields",
+      "ordinal": 11,
+      "parameter_values": {
+        "refund_serial_no": "refund-serial-no",
+        "cancel_reason_id": "cancel-reason-id",
+        "cancel_reason": "cancel-reason",
+        "cancel_remark": ""
+      },
+      "request_values": {
+        "refundSerialNo": "refund-serial-no",
+        "cancelReasonId": "cancel-reason-id",
+        "cancelReason": "cancel-reason",
+        "cancelRemark": ""
+      },
+      "data_calls": [],
+      "oracles": [
+        {
+          "oracle_id": "cancel-required-rejected",
+          "channel": "response",
+          "assertions": [
+            {
+              "actual_path": "success",
+              "operator": "eq",
+              "expected": {
+                "kind": "literal",
+                "value": false
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "variant_id": "case-variant-v4-09e101b659423c5d52e1",
+      "template_id": "cancel-required-fields",
+      "ordinal": 12,
+      "parameter_values": {
+        "refund_serial_no": "refund-serial-no",
+        "cancel_reason_id": "cancel-reason-id",
+        "cancel_reason": "cancel-reason",
+        "cancel_remark": null
+      },
+      "request_values": {
+        "refundSerialNo": "refund-serial-no",
+        "cancelReasonId": "cancel-reason-id",
+        "cancelReason": "cancel-reason",
+        "cancelRemark": null
+      },
+      "data_calls": [],
+      "oracles": [
+        {
+          "oracle_id": "cancel-required-rejected",
+          "channel": "response",
+          "assertions": [
+            {
+              "actual_path": "success",
+              "operator": "eq",
+              "expected": {
+                "kind": "literal",
+                "value": false
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "variant_id": "case-variant-v4-cb7f072ace522c8b0aa2",
+      "template_id": "cancel-required-fields",
+      "ordinal": 13,
+      "parameter_values": {
+        "refund_serial_no": "refund-serial-no",
+        "cancel_reason_id": "cancel-reason-id",
+        "cancel_reason": "cancel-reason",
+        "cancel_remark": {
+          "$omit": true
+        }
+      },
+      "request_values": {
+        "refundSerialNo": "refund-serial-no",
+        "cancelReasonId": "cancel-reason-id",
+        "cancelReason": "cancel-reason"
+      },
+      "data_calls": [],
+      "oracles": [
+        {
+          "oracle_id": "cancel-required-rejected",
+          "channel": "response",
+          "assertions": [
+            {
+              "actual_path": "success",
+              "operator": "eq",
+              "expected": {
+                "kind": "literal",
+                "value": false
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "created_at": "2026-09-01T07:26:05.231108+00:00"
+}

@@ -1,0 +1,330 @@
+{
+  "data_functions": [
+    {
+      "name": "get_booking_owner_id",
+      "description": "调用booking订单列表并投影一张真实订单的ownerId，作为refund平台查询条件。",
+      "inputs": [],
+      "steps": [
+        {
+          "step_id": "query_booking_orders",
+          "operation": "runtime_call",
+          "function_id": "facade:com.ly.flight.chainsaas.booking.facade.TradeFacade#queryList",
+          "arguments": {},
+          "output_schema": {
+            "type": "object",
+            "properties": {
+              "success": {"type": "boolean"},
+              "list": {
+                "type": "object",
+                "properties": {
+                  "pageList": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {"ownerId": {"type": "string"}},
+                      "required": ["ownerId"],
+                      "additionalProperties": true
+                    }
+                  }
+                },
+                "required": ["pageList"],
+                "additionalProperties": true
+              }
+            },
+            "required": ["success", "list"],
+            "additionalProperties": true
+          }
+        },
+        {
+          "step_id": "first_booking_order",
+          "operation": "first",
+          "input_source": {"kind": "step_output", "step_id": "query_booking_orders", "path": "list.pageList"}
+        },
+        {
+          "step_id": "booking_owner",
+          "operation": "project",
+          "input_source": {"kind": "step_output", "step_id": "first_booking_order"},
+          "fields": [
+            {"output_name": "owner_id", "source_path": "ownerId"}
+          ]
+        }
+      ],
+      "outputs": [
+        {"output_name": "owner_id", "step_id": "booking_owner", "path": "owner_id"}
+      ],
+      "evidence": [
+        {
+          "source_system_id": "ifightchainsaas.java.booking.core",
+          "path": "app/facade/src/main/java/com/ly/flight/chainsaas/booking/facade/TradeFacade.java",
+          "symbol": "TradeFacade#queryList",
+          "line": 26
+        },
+        {
+          "source_system_id": "ifightchainsaas.java.booking.core",
+          "path": "app/model/src/main/java/com/ly/flight/chainsaas/booking/model/SaasOrderVO.java",
+          "symbol": "SaasOrderVO#ownerId",
+          "line": 247
+        }
+      ]
+    },
+    {
+      "name": "get_refund_order_in_state",
+      "description": "使用真实ownerId和状态code查询退票单，并按响应中的枚举name筛选一张真实可取消退票单。",
+      "inputs": [
+        {"name": "platform_id", "schema": {"type": "string"}},
+        {"name": "order_state_code", "schema": {"type": "integer"}},
+        {"name": "order_state_name", "schema": {"type": "string"}}
+      ],
+      "steps": [
+        {
+          "step_id": "query_refund_orders",
+          "operation": "runtime_call",
+          "function_id": "facade:com.ly.flight.chainsaas.refund.facade.RefundFacade#queryList",
+          "arguments": {
+            "platFormId": {"kind": "function_input", "name": "platform_id"},
+            "orderState": {"kind": "function_input", "name": "order_state_code"}
+          },
+          "output_schema": {
+            "type": "object",
+            "properties": {
+              "success": {"type": "boolean"},
+              "list": {
+                "type": "object",
+                "properties": {
+                  "pageList": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "refundSerialNo": {"type": "string"},
+                        "refundState": {"type": "string"}
+                      },
+                      "required": ["refundSerialNo", "refundState"],
+                      "additionalProperties": true
+                    }
+                  }
+                },
+                "required": ["pageList"],
+                "additionalProperties": true
+              }
+            },
+            "required": ["success", "list"],
+            "additionalProperties": true
+          }
+        },
+        {
+          "step_id": "matching_refund_orders",
+          "operation": "filter",
+          "input_source": {"kind": "step_output", "step_id": "query_refund_orders", "path": "list.pageList"},
+          "predicates": [
+            {
+              "left": {"kind": "current_item", "path": "refundState"},
+              "operator": "eq",
+              "right": {"kind": "function_input", "name": "order_state_name"}
+            }
+          ]
+        },
+        {
+          "step_id": "first_refund_order",
+          "operation": "first",
+          "input_source": {"kind": "step_output", "step_id": "matching_refund_orders"}
+        },
+        {
+          "step_id": "refund_order",
+          "operation": "project",
+          "input_source": {"kind": "step_output", "step_id": "first_refund_order"},
+          "fields": [
+            {"output_name": "refund_serial_no", "source_path": "refundSerialNo"},
+            {"output_name": "refund_state_name", "source_path": "refundState"}
+          ]
+        }
+      ],
+      "outputs": [
+        {"output_name": "refund_serial_no", "step_id": "refund_order", "path": "refund_serial_no"},
+        {"output_name": "refund_state_name", "step_id": "refund_order", "path": "refund_state_name"}
+      ],
+      "evidence": [
+        {
+          "source_system_id": "ifightchainsaas.java.refund.core",
+          "path": "app/facade/src/main/java/com/ly/flight/chainsaas/refund/facade/RefundFacade.java",
+          "symbol": "RefundFacade#queryList",
+          "line": 24
+        },
+        {
+          "source_system_id": "ifightchainsaas.java.refund.core",
+          "path": "app/facade/src/main/java/com/ly/flight/chainsaas/refund/facade/model/request/RefundOrderQueryRequest.java",
+          "symbol": "RefundOrderQueryRequest#platFormId",
+          "line": 110
+        },
+        {
+          "source_system_id": "ifightchainsaas.java.refund.core",
+          "path": "app/model/src/main/java/com/ly/flight/chainsaas/refund/enums/RefundOrderStateEnum.java",
+          "symbol": "RefundOrderStateEnum",
+          "line": 12
+        }
+      ]
+    }
+  ],
+  "case_templates": [
+    {
+      "template_id": "refund.cancel.success",
+      "title": "五种可取消状态均可动态选单并取消成功",
+      "coverage_kind": "business",
+      "data_calls": [
+        {
+          "call_id": "booking_owner",
+          "function_name": "get_booking_owner_id",
+          "arguments": {}
+        },
+        {
+          "call_id": "cancellable_refund_order",
+          "function_name": "get_refund_order_in_state",
+          "arguments": {
+            "platform_id": {"kind": "data_output", "call_id": "booking_owner", "output_name": "owner_id"},
+            "order_state_code": {"kind": "parameter", "name": "cancellable_state", "path": "code"},
+            "order_state_name": {"kind": "parameter", "name": "cancellable_state", "path": "name"}
+          }
+        }
+      ],
+      "parameters": [
+        {
+          "name": "cancellable_state",
+          "function_id": "enum.values",
+          "arguments": {
+            "values": [
+              {"code": 0, "name": "PENDING_APPLY"},
+              {"code": 1, "name": "AUDITED"},
+              {"code": 2, "name": "WAIT_REFUND"},
+              {"code": 5, "name": "REFUND_FAIL"},
+              {"code": 8, "name": "RESHOPING"}
+            ]
+          }
+        }
+      ],
+      "constraints": [],
+      "request_bindings": [
+        {"field": "traceId", "source": {"kind": "runtime_context", "name": "trace_id"}},
+        {"field": "operator", "source": {"kind": "literal", "value": "opentest-v4"}},
+        {"field": "refundSerialNo", "source": {"kind": "data_output", "call_id": "cancellable_refund_order", "output_name": "refund_serial_no"}},
+        {"field": "cancelReasonId", "source": {"kind": "literal", "value": "OPENTEST_CANCEL"}},
+        {"field": "cancelReason", "source": {"kind": "literal", "value": "OpenTest自动化取消"}},
+        {"field": "cancelRemark", "source": {"kind": "literal", "value": "OpenTest V4 Golden Case"}}
+      ],
+      "combination": "each",
+      "oracles": [
+        {
+          "oracle_id": "cancel_response",
+          "channel": "response",
+          "assertions": [
+            {"actual_path": "success", "operator": "eq", "expected": {"kind": "literal", "value": true}},
+            {"actual_path": "orderSerialNo", "operator": "eq", "expected": {"kind": "data_output", "call_id": "cancellable_refund_order", "output_name": "refund_serial_no"}}
+          ]
+        },
+        {
+          "oracle_id": "refund_detail",
+          "channel": "operation",
+          "function_id": "facade:com.ly.flight.chainsaas.refund.facade.RefundFacade#queryDetailByRefundNo",
+          "arguments": {
+            "traceId": {"kind": "runtime_context", "name": "trace_id"},
+            "operator": {"kind": "literal", "value": "opentest-v4"},
+            "refundSerialNo": {"kind": "data_output", "call_id": "cancellable_refund_order", "output_name": "refund_serial_no"}
+          },
+          "observer_output_schema": {
+            "type": "object",
+            "properties": {
+              "success": {"type": "boolean"},
+              "saasRefundOrderVO": {
+                "type": "object",
+                "properties": {"refundState": {"type": "string"}},
+                "required": ["refundState"],
+                "additionalProperties": true
+              }
+            },
+            "required": ["success", "saasRefundOrderVO"],
+            "additionalProperties": true
+          },
+          "assertions": [
+            {"actual_path": "success", "operator": "eq", "expected": {"kind": "literal", "value": true}},
+            {"actual_path": "saasRefundOrderVO.refundState", "operator": "eq", "expected": {"kind": "literal", "value": "REFUND_CANCEL"}}
+          ],
+          "evidence": [
+            {
+              "source_system_id": "ifightchainsaas.java.refund.core",
+              "path": "app/facade/src/main/java/com/ly/flight/chainsaas/refund/facade/model/response/RefundOrderDetailResponse.java",
+              "symbol": "RefundOrderDetailResponse",
+              "line": 15
+            }
+          ]
+        },
+        {
+          "oracle_id": "refund_order_mysql",
+          "channel": "mysql",
+          "function_id": "database:ifightchainsaas.java.refund.core:itradecoredatasource",
+          "statement": "SELECT refund_state, cancel_reason, cancel_remark, operator FROM saas_refund_order WHERE refund_serial_no = :refund_serial_no AND env = :env AND is_delete = 0 LIMIT 2",
+          "arguments": {
+            "refund_serial_no": {"kind": "data_output", "call_id": "cancellable_refund_order", "output_name": "refund_serial_no"},
+            "env": {"kind": "environment", "name": "env"}
+          },
+          "observer_output_schema": {
+            "type": "object",
+            "properties": {
+              "rows": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "refund_state": {"type": "integer"},
+                    "cancel_reason": {"type": ["string", "null"]},
+                    "cancel_remark": {"type": ["string", "null"]},
+                    "operator": {"type": ["string", "null"]}
+                  },
+                  "required": ["refund_state", "cancel_reason", "cancel_remark", "operator"],
+                  "additionalProperties": false
+                }
+              },
+              "row_count": {"type": "integer"}
+            },
+            "required": ["rows", "row_count"],
+            "additionalProperties": false
+          },
+          "assertions": [
+            {"actual_path": "row_count", "operator": "eq", "expected": {"kind": "literal", "value": 1}},
+            {"actual_path": "rows.0.refund_state", "operator": "eq", "expected": {"kind": "literal", "value": 6}},
+            {"actual_path": "rows.0.cancel_reason", "operator": "eq", "expected": {"kind": "request_field", "path": "cancelReasonId"}},
+            {"actual_path": "rows.0.cancel_remark", "operator": "eq", "expected": {"kind": "request_field", "path": "cancelRemark"}},
+            {"actual_path": "rows.0.operator", "operator": "eq", "expected": {"kind": "request_field", "path": "operator"}}
+          ],
+          "evidence": [
+            {
+              "source_system_id": "ifightchainsaas.java.refund.core",
+              "path": "app/biz/src/main/java/com/ly/flight/chainsaas/refund/biz/actor/post/RefundOrderCancelPostActor.java",
+              "symbol": "RefundOrderCancelPostActor#addCancelReasonUpdateTask",
+              "line": 39
+            },
+            {
+              "source_system_id": "ifightchainsaas.java.refund.core",
+              "path": "app/dal/src/main/java/com/ly/flight/chainsaas/refund/dal/model/SaasRefundOrderDO.java",
+              "symbol": "SaasRefundOrderDO",
+              "line": 14
+            }
+          ]
+        }
+      ],
+      "evidence": [
+        {
+          "source_system_id": "ifightchainsaas.java.refund.core",
+          "path": "app/facade-impl/src/main/java/com/ly/flight/chainsaas/refund/facade/impl/RefundFacadeImpl.java",
+          "symbol": "RefundFacadeImpl#cancel",
+          "line": 292
+        },
+        {
+          "source_system_id": "ifightchainsaas.java.refund.core",
+          "path": "app/biz/src/main/java/com/ly/flight/chainsaas/refund/biz/manager/refund/RefundCancelServiceInvoker.java",
+          "symbol": "RefundCancelServiceInvoker#doInvoke",
+          "line": 114
+        }
+      ]
+    }
+  ],
+  "unresolved": []
+}

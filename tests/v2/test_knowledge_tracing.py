@@ -5570,7 +5570,12 @@ def test_codex_app_server_case_turn_ignores_user_tools_and_reuses_thread(
     executable.chmod(0o755)
     workspace = tmp_path / "workspace"
     workspace.mkdir()
-    client = CodexAppServerClient(CodexAppServerConfig(executable=str(executable)))
+    client = CodexAppServerClient(
+        CodexAppServerConfig(
+            executable=str(executable),
+            user_config_path=tmp_path / "missing-codex-config.toml",
+        )
+    )
 
     process_id = client.start_case_turn(
         "01a-case-only-existing-thread",
@@ -5601,6 +5606,74 @@ def test_codex_app_server_case_turn_ignores_user_tools_and_reuses_thread(
     assert "unified_exec" in arguments
     assert process.state == "EXITED"
     assert process.return_code == 17
+
+
+def test_codex_app_server_case_turn_inherits_only_safe_model_provider_fields(
+    tmp_path: Path,
+) -> None:
+    """隔离Case turn应继承连接Provider但不得复制用户工具或凭据配置。
+
+    Args:
+        tmp_path: pytest隔离的Codex配置、假CLI和参数记录目录。
+
+    Returns:
+        None；命令只包含白名单Provider字段且仍忽略其余用户配置时通过。
+
+    Side Effects:
+        启动一个短暂假CLI子进程并读取其参数记录，不访问真实模型或网络。
+    """
+
+    executable = tmp_path / "codex"
+    argument_log = tmp_path / "provider-turn-arguments.json"
+    executable.write_text(
+        "#!/usr/bin/env python3\n"
+        "import json, sys, time\n"
+        f"open({str(argument_log)!r}, 'w', encoding='utf-8').write(json.dumps(sys.argv[1:]))\n"
+        "time.sleep(0.8)\n",
+        encoding="utf-8",
+    )
+    executable.chmod(0o755)
+    user_config = tmp_path / "config.toml"
+    user_config.write_text(
+        'model_provider = "company"\n'
+        '[model_providers.company]\n'
+        'name = "Company Gateway"\n'
+        'wire_api = "responses"\n'
+        'requires_openai_auth = true\n'
+        'base_url = "https://gateway.example.test/v1"\n'
+        '[mcp_servers.forbidden]\n'
+        'command = "must-not-be-inherited"\n',
+        encoding="utf-8",
+    )
+    workspace = tmp_path / "workspace"
+    workspace.mkdir()
+    client = CodexAppServerClient(
+        CodexAppServerConfig(
+            executable=str(executable),
+            user_config_path=user_config,
+        )
+    )
+
+    process_id = client.start_case_turn(
+        "01a-case-provider-existing-thread",
+        "继续Case typed handoff。",
+        workspace,
+        "gpt-5.6-luna",
+        "low",
+    )
+    deadline = time.monotonic() + 5
+    process = client.inspect_case_turn_process(process_id)
+    while process.state == "RUNNING" and time.monotonic() < deadline:
+        time.sleep(0.05)
+        process = client.inspect_case_turn_process(process_id)
+    arguments = json.loads(argument_log.read_text(encoding="utf-8"))
+
+    assert 'model_provider="company"' in arguments
+    assert 'model_providers.company.name="Company Gateway"' in arguments
+    assert 'model_providers.company.base_url="https://gateway.example.test/v1"' in arguments
+    assert "model_providers.company.requires_openai_auth=true" in arguments
+    assert "must-not-be-inherited" not in " ".join(arguments)
+    assert "--ignore-user-config" in arguments
 
 
 def test_codex_app_server_inspects_persisted_turn_without_resuming_thread(tmp_path: Path) -> None:

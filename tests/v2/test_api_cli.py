@@ -11,8 +11,9 @@ from fastapi.testclient import TestClient
 from opentest.api import create_app
 from opentest.application.foundation import OpenTestApplication
 from opentest.application.tasks import report_task_progress
+from opentest.domain.case_template_v4 import CaseTemplateHandoffV4, CaseTemplateSourceScope
 from opentest.domain.errors import TaskPartialFailureError
-from opentest.domain.models import AgentRunEvent, TaskProgressUpdate, TaskStatus
+from opentest.domain.models import AgentRunEvent, SourceBaseline, TaskProgressUpdate, TaskStatus
 
 
 def test_fastapi_registers_multiple_systems_without_overwrite(tmp_path: Path, monkeypatch) -> None:
@@ -146,7 +147,13 @@ def test_v2_openapi_contains_complete_single_system_workflow(tmp_path: Path) -> 
         "/api/v3/systems/{system_id}/case-generations/{generation_id}",
         "/api/v3/systems/{system_id}/case-generations/{generation_id}/variants/{variant_id}/attempts",
         "/api/v3/systems/{system_id}/case-attempts",
-            "/api/v3/systems/{system_id}/case-workspace",
+        "/api/v3/systems/{system_id}/case-workspace",
+        "/api/v4/systems/{system_id}/case-generations",
+        "/api/v4/systems/{system_id}/case-generations/{generation_id}",
+        "/api/v4/case-template-handoffs/{handoff_id}",
+        "/api/v4/case-template-handoffs/{handoff_id}/outer-api-info",
+        "/api/v4/case-template-handoffs/{handoff_id}/sources/{source_system_id}/tools/{tool_name}",
+        "/api/v4/case-template-handoffs/{handoff_id}/dsl",
         "/api/v2/systems/{system_id}/case-fixture-bindings",
         "/api/v2/systems/{system_id}/case-fixture-bindings/{entry_id}",
         "/api/v2/systems/{system_id}/cases/catalog",
@@ -171,6 +178,74 @@ def test_v2_openapi_contains_complete_single_system_workflow(tmp_path: Path) -> 
         "/api/v2/tasks/{task_id}/cancel-agent",
         "/api/v2/console/activity",
     } <= paths
+
+
+def test_v4_start_returns_202_thread_link_and_poll_url(
+    tmp_path: Path,
+    monkeypatch,
+) -> None:
+    """确认V4通用入口接收operation_id并返回Codex线程和轮询地址。
+
+    Args:
+        tmp_path: Pytest隔离应用根。
+        monkeypatch: 替换真实Codex线程创建，验证HTTP契约而不调用模型。
+
+    Returns:
+        None；POST状态、深链和GET终态投影完整时通过。
+    """
+
+    application = OpenTestApplication(tmp_path / "knowledge")
+    handoff_id = f"case-template-handoff-{'a' * 20}"
+    handoff = CaseTemplateHandoffV4(
+        handoff_id=handoff_id,
+        system_id="sample.java.system",
+        entry_id="facade:sample.RefundFacade#cancel",
+        source_scan_id="scan-v4-api",
+        status="WAITING_FOR_AGENT",
+        source_scopes=[
+            CaseTemplateSourceScope(
+                source_system_id="sample.java.system",
+                source_scan_id="scan-v4-api",
+                source_baseline=SourceBaseline(source_path="/private/sample"),
+            )
+        ],
+        thread_id="thread-v4-api",
+        codex_deep_link="codex://threads/thread-v4-api",
+    )
+
+    def start_v4(_system_id, _request):
+        """返回已绑定Codex线程的V4 handoff而不启动真实模型。"""
+
+        return handoff
+
+    def poll_v4(_handoff_id):
+        """返回同一handoff轮询投影。"""
+
+        return {"handoff": handoff.model_dump(mode="json"), "generation": None}
+
+    monkeypatch.setattr(application, "start_case_template_generation_v4", start_v4)
+    monkeypatch.setattr(application, "get_case_template_handoff_v4", poll_v4)
+
+    with TestClient(create_app(application), client=("127.0.0.1", 50000)) as client:
+        response = client.post(
+            "/api/v4/systems/sample.java.system/case-generations",
+            json={
+                "operation_id": "sample.RefundFacade#cancel",
+                "execution_mode": "QA_AFTER_GENERATION",
+            },
+        )
+        polled = client.get(f"/api/v4/case-template-handoffs/{handoff_id}")
+
+    assert response.status_code == 202
+    assert response.json() == {
+        "handoff_id": handoff_id,
+        "status": "WAITING_FOR_AGENT",
+        "thread_id": "thread-v4-api",
+        "codex_deep_link": "codex://threads/thread-v4-api",
+        "poll_url": f"/api/v4/case-template-handoffs/{handoff_id}",
+    }
+    assert polled.status_code == 200
+    assert polled.json()["handoff"]["thread_id"] == "thread-v4-api"
 
 
 def test_codex_client_handoff_bridge_is_loopback_only_and_preserves_tool_scope(
