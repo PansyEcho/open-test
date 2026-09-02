@@ -1,0 +1,29 @@
+open-test-knowledge/systems/ifightchainsaas.java.refund.core/cases/v4/generations/case-template-generation-8b831ac443a849928498.json
+  s_fe0ff1a3477bfb::t_65a3fa4c592ae9 1-1373
+open-test-knowledge/systems/ifightchainsaas.java.refund.core/cases/v4/generations/case-template-generation-a9a8cd659eae43669880.json
+  s_f483903e58f9b6::t_d62b082ca24c9d 1-2660
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.24",
+  "base_commit_sha": "5c6417a560f60ac11ba89a6fe4d216560fbc868a",
+  "prompts": {},
+  "sessions": {
+    "s_f483903e58f9b6": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a06107-8651-7aa2-ae73-da64205cb3d4",
+        "model": "unknown"
+      },
+      "human_author": "shizhen <yuuu.shizhen@gmail.com>"
+    },
+    "s_fe0ff1a3477bfb": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a060d7-3481-7252-9dbe-2fd96407e2be",
+        "model": "unknown"
+      },
+      "human_author": "shizhen <yuuu.shizhen@gmail.com>"
+    }
+  }
+}
