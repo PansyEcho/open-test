@@ -12,7 +12,7 @@ from opentest.api import create_app
 from opentest.application.foundation import OpenTestApplication
 from opentest.application.tasks import report_task_progress
 from opentest.domain.case_template_v4 import CaseTemplateHandoffV4, CaseTemplateSourceScope
-from opentest.domain.errors import TaskPartialFailureError
+from opentest.domain.errors import ModelProfileValidationError, TaskPartialFailureError
 from opentest.domain.models import AgentRunEvent, SourceBaseline, TaskProgressUpdate, TaskStatus
 
 
@@ -45,7 +45,7 @@ def test_fastapi_registers_multiple_systems_without_overwrite(tmp_path: Path, mo
     with TestClient(create_app(application), client=("127.0.0.1", 50000)) as client:
         health = client.get("/api/v2/health").json()
         assert health["status"] == "ok"
-        assert health["page_version"] == "20260828-03"
+        assert health["page_version"] == "20260902-01"
         first_response = client.post(
             "/api/v2/systems",
             json={
@@ -90,8 +90,8 @@ def test_console_is_served_and_references_only_versioned_api(tmp_path: Path) -> 
 
     assert console_response.status_code == 200
     assert "OpenTest V2 Console" in console_response.text
-    assert '<meta name="opentest-page-version" content="20260828-03">' in console_response.text
-    assert '/assets/app.js?v=20260828-03' in console_response.text
+    assert '<meta name="opentest-page-version" content="20260902-01">' in console_response.text
+    assert '/assets/app.js?v=20260902-01' in console_response.text
     assert script_response.status_code == 200
     assert 'const API_ROOT = "/api/v2"' in script_response.text
     assert 'const API_V3_ROOT = "/api/v3"' in script_response.text
@@ -154,6 +154,7 @@ def test_v2_openapi_contains_complete_single_system_workflow(tmp_path: Path) -> 
         "/api/v4/case-template-handoffs/{handoff_id}/outer-api-info",
         "/api/v4/case-template-handoffs/{handoff_id}/sources/{source_system_id}/tools/{tool_name}",
         "/api/v4/case-template-handoffs/{handoff_id}/dsl",
+        "/api/v2/local-settings/codex-model-catalog",
         "/api/v2/systems/{system_id}/case-fixture-bindings",
         "/api/v2/systems/{system_id}/case-fixture-bindings/{entry_id}",
         "/api/v2/systems/{system_id}/cases/catalog",
@@ -211,11 +212,19 @@ def test_v4_start_returns_202_thread_link_and_poll_url(
         ],
         thread_id="thread-v4-api",
         codex_deep_link="codex://threads/thread-v4-api",
+        turn_id="turn-v4-api",
+        turn_status="inProgress",
+        model_provider="custom",
+        codex_model="company-case-model",
+        reasoning_effort="high",
     )
 
-    def start_v4(_system_id, _request):
+    received_request = {}
+
+    def start_v4(_system_id, request):
         """返回已绑定Codex线程的V4 handoff而不启动真实模型。"""
 
+        received_request["value"] = request
         return handoff
 
     def poll_v4(_handoff_id):
@@ -225,6 +234,23 @@ def test_v4_start_returns_202_thread_link_and_poll_url(
 
     monkeypatch.setattr(application, "start_case_template_generation_v4", start_v4)
     monkeypatch.setattr(application, "get_case_template_handoff_v4", poll_v4)
+    monkeypatch.setattr(
+        application,
+        "get_codex_model_catalog",
+        lambda: {
+            "provider_id": "custom",
+            "default_model": "company-case-model",
+            "models": [
+                {
+                    "id": "company-case-model",
+                    "display_name": "Company Case Model",
+                    "is_default": True,
+                    "default_reasoning_effort": "high",
+                    "supported_reasoning_efforts": ["medium", "high"],
+                }
+            ],
+        },
+    )
 
     with TestClient(create_app(application), client=("127.0.0.1", 50000)) as client:
         response = client.post(
@@ -232,20 +258,69 @@ def test_v4_start_returns_202_thread_link_and_poll_url(
             json={
                 "operation_id": "sample.RefundFacade#cancel",
                 "execution_mode": "QA_AFTER_GENERATION",
+                "codex_model": "company-case-model",
+                "reasoning_effort": "high",
             },
         )
         polled = client.get(f"/api/v4/case-template-handoffs/{handoff_id}")
+        catalog = client.get("/api/v2/local-settings/codex-model-catalog")
 
     assert response.status_code == 202
     assert response.json() == {
         "handoff_id": handoff_id,
         "status": "WAITING_FOR_AGENT",
         "thread_id": "thread-v4-api",
+        "turn_id": "turn-v4-api",
+        "turn_status": "inProgress",
+        "model_provider": "custom",
+        "codex_model": "company-case-model",
+        "reasoning_effort": "high",
         "codex_deep_link": "codex://threads/thread-v4-api",
         "poll_url": f"/api/v4/case-template-handoffs/{handoff_id}",
     }
     assert polled.status_code == 200
     assert polled.json()["handoff"]["thread_id"] == "thread-v4-api"
+    assert received_request["value"].codex_model == "company-case-model"
+    assert received_request["value"].reasoning_effort == "high"
+    assert catalog.status_code == 200
+    assert catalog.json()["provider_id"] == "custom"
+    assert catalog.json()["models"][0]["supported_reasoning_efforts"] == ["medium", "high"]
+
+
+def test_v4_start_rejects_unavailable_user_model_before_thread_creation(
+    tmp_path: Path,
+    monkeypatch,
+) -> None:
+    """V4模型或档位不在当前用户目录时应返回明确422。
+
+    Args:
+        tmp_path: pytest隔离应用根。
+        monkeypatch: 令应用层模拟模型目录校验失败，不调用真实Codex。
+
+    Returns:
+        None；HTTP状态和稳定错误码可供配置页直接展示时通过。
+    """
+
+    application = OpenTestApplication(tmp_path / "knowledge")
+
+    def reject_profile(_system_id, _request):
+        """模拟当前Provider没有用户提交的模型。"""
+
+        raise ModelProfileValidationError("Codex模型不在当前用户目录中: missing-model")
+
+    monkeypatch.setattr(application, "start_case_template_generation_v4", reject_profile)
+
+    with TestClient(create_app(application), client=("127.0.0.1", 50000)) as client:
+        response = client.post(
+            "/api/v4/systems/sample.java.system/case-generations",
+            json={
+                "operation_id": "sample.RefundFacade#cancel",
+                "codex_model": "missing-model",
+            },
+        )
+
+    assert response.status_code == 422
+    assert response.json()["error"]["code"] == "model_profile_validation_error"
 
 
 def test_codex_client_handoff_bridge_is_loopback_only_and_preserves_tool_scope(

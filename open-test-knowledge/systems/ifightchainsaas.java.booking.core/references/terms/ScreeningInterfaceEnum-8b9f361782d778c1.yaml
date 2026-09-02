@@ -514,4 +514,4 @@ affected_target_ids:
 - facade:com.ly.flight.chainsaas.booking.facade.external.ExternalApiTradeFacade#verify
 evidence_digest: e840ab09a62182f5da348b2eeed2737642bed85eb9814d52204444dd35c41d76
 discovered_at: '2026-08-27T15:21:11.348693Z'
-updated_at: '2026-08-27T20:27:20.156012Z'
+updated_at: '2026-09-02T07:29:27.669585Z'

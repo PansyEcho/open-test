@@ -63,4 +63,4 @@ affected_target_ids:
 - facade:com.ly.flight.chainsaas.booking.facade.DistributionFacade#reportDataProcess
 evidence_digest: aeeafaf71ae57d0791b489209c8ab9bd35010a8403eb411d792ba3748cac1f0b
 discovered_at: '2026-08-27T15:21:11.348632Z'
-updated_at: '2026-08-27T20:27:20.155411Z'
+updated_at: '2026-09-02T07:29:27.669080Z'

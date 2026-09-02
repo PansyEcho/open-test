@@ -35,4 +35,4 @@ affected_target_ids:
 - facade:com.ly.flight.chainsaas.refund.facade.RefundDistributionFacade#queryList
 evidence_digest: f83f188ede96faddd377136b05496b1542896f2418260250fa6a8e0ce76690fc
 discovered_at: '2026-08-13T10:23:54.669216Z'
-updated_at: '2026-09-01T06:43:43.411582Z'
+updated_at: '2026-09-02T07:26:12.784620Z'

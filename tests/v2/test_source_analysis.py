@@ -206,6 +206,24 @@ class ChangingBaselineRepository:
             return self.baselines.pop(0)
         return self.baselines[0]
 
+    def capture_revision(
+        self,
+        source_path: Path | str,
+        revision: str = "",
+    ) -> SourceBaseline:
+        """兼容新版扫描入口并继续模拟非Git目录前后变化。
+
+        Args:
+            source_path: 测试源码目录；由``capture``忽略其具体值。
+            revision: 测试未选择Git revision，保留参数以匹配生产接口。
+
+        Returns:
+            ``capture``队列中的下一项预设基线。
+        """
+
+        del revision
+        return self.capture(source_path)
+
 
 class FailingGitRepository(GitSourceRepository):
     """模拟Git因权限而非非仓库原因失败的基线捕获器。"""
@@ -289,6 +307,145 @@ def test_non_git_baseline_uses_directory_digest(tmp_path: Path) -> None:
     assert baseline.branch == ""
     assert baseline.dirty is True
     assert baseline.dirty_digest
+
+
+def test_git_revision_snapshot_ignores_working_tree_changes(tmp_path: Path) -> None:
+    """Git扫描应按branch/tag/commit展开快照且不读取后续working tree修改。
+
+    Args:
+        tmp_path: pytest隔离的Git仓库和知识缓存目录。
+
+    Returns:
+        None；tag固定旧提交、HEAD固定新提交且两个快照内容都不随工作区变化。
+
+    Side Effects:
+        在临时目录创建Git提交、tag和OpenTest托管源码快照。
+    """
+
+    repository = tmp_path / "repository"
+    repository.mkdir()
+    _run_git(repository, "init", "-q")
+    _run_git(repository, "config", "user.email", "opentest@example.invalid")
+    _run_git(repository, "config", "user.name", "OpenTest")
+    source_file = repository / "TradeFacade.java"
+    source_file.write_text("class TradeFacade { int version = 1; }\n", encoding="utf-8")
+    _run_git(repository, "add", "TradeFacade.java")
+    _run_git(repository, "commit", "-q", "-m", "version one")
+    _run_git(repository, "tag", "case-baseline-v1")
+    # 保存tag应固定的真实提交，避免仅比较文件内容而漏掉revision解析错误。
+    first_commit_process = subprocess.run(
+        ["git", "-C", str(repository), "rev-parse", "HEAD"],
+        check=True,
+        capture_output=True,
+        text=True,
+    )
+    first_commit = first_commit_process.stdout.strip()
+
+    source_file.write_text("class TradeFacade { int version = 2; }\n", encoding="utf-8")
+    _run_git(repository, "add", "TradeFacade.java")
+    _run_git(repository, "commit", "-q", "-m", "version two")
+    source_file.write_text("class TradeFacade { int version = 3; }\n", encoding="utf-8")
+
+    source_repository = GitSourceRepository()
+    artifacts = SourceScanArtifactStore(tmp_path / "knowledge")
+    tagged = source_repository.capture_revision(repository, "case-baseline-v1")
+    current = source_repository.capture_revision(repository)
+    tagged_snapshot = source_repository.materialize_revision(
+        tagged,
+        artifacts.source_snapshot_path("train-booking-core", tagged.commit),
+        artifacts.source_snapshot_root,
+    )
+    current_snapshot = source_repository.materialize_revision(
+        current,
+        artifacts.source_snapshot_path("train-booking-core", current.commit),
+        artifacts.source_snapshot_root,
+    )
+
+    assert tagged.commit == first_commit
+    assert tagged.revision == "case-baseline-v1"
+    assert tagged.dirty is False
+    assert current.revision == "HEAD"
+    assert "version = 1" in (tagged_snapshot / "TradeFacade.java").read_text(encoding="utf-8")
+    assert "version = 2" in (current_snapshot / "TradeFacade.java").read_text(encoding="utf-8")
+    assert "version = 3" in source_file.read_text(encoding="utf-8")
+
+
+def test_git_revision_snapshot_rejects_prebuilt_empty_directory(tmp_path: Path) -> None:
+    """预建空目录不能冒充一个已经完整展开的commit快照。
+
+    Args:
+        tmp_path: pytest隔离的Git仓库、托管快照根和伪造目录。
+
+    Returns:
+        None；缺少原子发布完成标记的目录被拒绝时通过。
+
+    Side Effects:
+        在临时目录创建Git提交和一个不可信的预建快照目录。
+    """
+
+    repository = tmp_path / "source"
+    repository.mkdir()
+    _run_git(repository, "init", "-q")
+    _run_git(repository, "config", "user.email", "opentest@example.invalid")
+    _run_git(repository, "config", "user.name", "OpenTest")
+    (repository / "TradeFacade.java").write_text("interface TradeFacade {}\n", encoding="utf-8")
+    _run_git(repository, "add", "TradeFacade.java")
+    _run_git(repository, "commit", "-q", "-m", "source")
+
+    source_repository = GitSourceRepository()
+    artifacts = SourceScanArtifactStore(tmp_path / "knowledge")
+    baseline = source_repository.capture_revision(repository)
+    snapshot_path = artifacts.source_snapshot_path("train-booking-core", baseline.commit)
+    # 模拟外部进程抢先创建同名空目录；仅凭is_dir不得把它当成commit内容。
+    snapshot_path.mkdir(parents=True)
+
+    with pytest.raises(KnowledgeValidationError, match="completion marker"):
+        source_repository.materialize_revision(
+            baseline,
+            snapshot_path,
+            artifacts.source_snapshot_root,
+        )
+
+
+def test_git_revision_snapshot_rejects_symlink_target(tmp_path: Path) -> None:
+    """托管快照目标为符号链接时不得跟随到OpenTest目录之外。
+
+    Args:
+        tmp_path: pytest隔离的Git仓库、托管快照根和外部伪造目录。
+
+    Returns:
+        None；快照路径符号链接被归属门禁拒绝时通过。
+
+    Side Effects:
+        在临时目录创建Git提交、外部目录和指向该目录的符号链接。
+    """
+
+    repository = tmp_path / "source"
+    repository.mkdir()
+    _run_git(repository, "init", "-q")
+    _run_git(repository, "config", "user.email", "opentest@example.invalid")
+    _run_git(repository, "config", "user.name", "OpenTest")
+    (repository / "TradeFacade.java").write_text("interface TradeFacade {}\n", encoding="utf-8")
+    _run_git(repository, "add", "TradeFacade.java")
+    _run_git(repository, "commit", "-q", "-m", "source")
+
+    source_repository = GitSourceRepository()
+    artifacts = SourceScanArtifactStore(tmp_path / "knowledge")
+    baseline = source_repository.capture_revision(repository)
+    snapshot_path = artifacts.source_snapshot_path("train-booking-core", baseline.commit)
+    external_source = tmp_path / "forged-source"
+    external_source.mkdir()
+    (external_source / "Wrong.java").write_text("class Wrong {}\n", encoding="utf-8")
+    snapshot_path.parent.mkdir(parents=True)
+    # 复现审查发现的逃逸：canonical system/commit路径实际指向不受控目录。
+    snapshot_path.symlink_to(external_source, target_is_directory=True)
+
+    with pytest.raises(KnowledgeValidationError, match="symbolic links"):
+        source_repository.materialize_revision(
+            baseline,
+            snapshot_path,
+            artifacts.source_snapshot_root,
+        )
 
 
 def test_git_operational_failure_is_not_treated_as_non_git_directory(tmp_path: Path) -> None:
@@ -655,6 +812,62 @@ def test_source_analysis_persists_manifest_and_updates_baseline(tmp_path: Path) 
     assert updated_system.baseline == manifest.baseline
     assert manifest.entries[0].source_id == "TradeFacade#createOrder"
     assert manifest.tools[0].script_path.startswith(manifest.tool_root)
+
+
+def test_source_analysis_scans_selected_commit_instead_of_dirty_working_tree(
+    tmp_path: Path,
+) -> None:
+    """Git源码扫描应固定HEAD commit并让全部扫描器读取托管快照。
+
+    Args:
+        tmp_path: pytest隔离的Git源码仓库、知识根和扫描产物目录。
+
+    Returns:
+        None；Manifest绑定commit快照且入口证据未读取未提交改动时通过。
+
+    Side Effects:
+        在临时Git仓库创建一次提交和未提交修改，并发布一份扫描Manifest。
+    """
+
+    source = tmp_path / "source"
+    source.mkdir()
+    _run_git(source, "init", "-q")
+    _run_git(source, "config", "user.email", "opentest@example.invalid")
+    _run_git(source, "config", "user.name", "OpenTest")
+    source_file = source / "TradeFacade.java"
+    source_file.write_text("class TradeFacade { int committed = 1; }\n", encoding="utf-8")
+    _run_git(source, "add", "TradeFacade.java")
+    _run_git(source, "commit", "-q", "-m", "committed source")
+    source_file.write_text("class TradeFacade { int uncommitted = 2; }\n", encoding="utf-8")
+    store = GitKnowledgeStore(tmp_path / "knowledge")
+    store.register_system(
+        SystemDefinition(
+            system_id="train-booking-core",
+            name="火车票预订",
+            source_path=str(source),
+        )
+    )
+    artifacts = SourceScanArtifactStore(store.root)
+    service = SourceAnalysisService(
+        store,
+        artifacts,
+        FakeScriptgenScanner(),  # type: ignore[arg-type]
+    )
+
+    manifest = service.analyze(SourceScanRequest(system_id="train-booking-core"))
+    snapshot_source = Path(manifest.baseline.readable_source_path)
+
+    assert manifest.baseline.commit
+    assert manifest.baseline.revision == "HEAD"
+    assert manifest.baseline.snapshot_path == str(snapshot_source)
+    assert manifest.baseline.dirty is False
+    assert snapshot_source.is_relative_to(artifacts.source_snapshot_root)
+    committed_source = (snapshot_source / "TradeFacade.java").read_text(
+        encoding="utf-8"
+    )
+    assert "committed = 1" in committed_source
+    assert "uncommitted = 2" in source_file.read_text(encoding="utf-8")
+    assert Path(manifest.entries[0].source_path).is_relative_to(snapshot_source)
 
 
 def test_source_analysis_rejects_source_changes_before_publishing_latest(tmp_path: Path) -> None:

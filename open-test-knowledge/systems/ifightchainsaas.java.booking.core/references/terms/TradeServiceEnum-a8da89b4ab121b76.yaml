@@ -1396,4 +1396,4 @@ affected_target_ids:
 - facade:com.ly.flight.chainsaas.booking.facade.tcpl.TcplApiFacade#verify
 evidence_digest: 13ea7bf94aacc11d1e0e55fc8e8044050df8b21c2e55bb8e18cdc423a1e3b98b
 discovered_at: '2026-08-27T15:21:11.349021Z'
-updated_at: '2026-08-27T20:27:20.160937Z'
+updated_at: '2026-09-02T07:29:27.673960Z'

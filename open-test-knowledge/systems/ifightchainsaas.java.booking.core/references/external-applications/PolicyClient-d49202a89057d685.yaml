@@ -101,4 +101,4 @@ affected_target_ids:
 - facade:com.ly.flight.chainsaas.booking.facade.TradeResourcesFacade#verifyPriceAndCabin
 evidence_digest: 3bea79a99ee780580ea1d43fef45ecfe080ac6ee4cbea81cbb8902766e6c3eff
 discovered_at: '2026-08-27T15:21:11.349956Z'
-updated_at: '2026-08-27T20:27:20.162039Z'
+updated_at: '2026-09-02T07:29:27.675161Z'

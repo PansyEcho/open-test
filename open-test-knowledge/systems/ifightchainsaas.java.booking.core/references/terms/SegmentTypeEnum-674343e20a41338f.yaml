@@ -61,4 +61,4 @@ affected_target_ids:
 - facade:com.ly.flight.chainsaas.booking.facade.FlightChangeOrderFacade#queryFlightChangeOrderSegments
 evidence_digest: d984f0b048dce3eebaf79691c95bc761d79e3f979894f2d7ed455223a825fcfd
 discovered_at: '2026-08-27T15:21:11.348822Z'
-updated_at: '2026-08-27T20:27:20.156209Z'
+updated_at: '2026-09-02T07:29:27.669775Z'

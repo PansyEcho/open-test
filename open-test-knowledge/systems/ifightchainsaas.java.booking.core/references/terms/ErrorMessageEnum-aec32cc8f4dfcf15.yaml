@@ -101,4 +101,4 @@ affected_target_ids:
 - facade:com.ly.flight.chainsaas.booking.facade.honghu.HonghuApiFacade#verify
 evidence_digest: ab7e8afc3bdceb367e8ddf13ea87eddd3440080974ffc4b52d1053964cdcb1c0
 discovered_at: '2026-08-27T15:21:11.347094Z'
-updated_at: '2026-08-27T20:27:20.143559Z'
+updated_at: '2026-09-02T07:29:27.658960Z'

@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import subprocess
 from copy import deepcopy
 from contextlib import nullcontext
 from pathlib import Path
@@ -13,13 +14,17 @@ from pydantic import ValidationError
 
 from opentest.adapters.codex_app_server import (
     CodexCaseTurnProcessSnapshot,
-    CodexClientThread,
+    CodexModelCatalog,
+    CodexModelOption,
+    CodexStartedTurn,
+    CodexThreadSnapshot,
 )
 from opentest.adapters.case_template_v4_store import (
     CaseTemplateGenerationStoreV4,
     CaseTemplateHandoffStoreV4,
 )
 from opentest.adapters.registered_source_mcp import RegisteredSourceReader
+from opentest.adapters.source_analysis import GitSourceRepository, SourceScanArtifactStore
 from opentest.application.case_template_compiler_v4 import (
     CaseTemplateCompilerV4,
     CaseTemplateValidatorV4,
@@ -66,6 +71,7 @@ from opentest.domain.models import (
     SemanticTypeDefinition,
     SourceBaseline,
     SourceReference,
+    RuntimeToolSettings,
 )
 
 
@@ -318,6 +324,93 @@ def test_source_search_glob_matches_root_and_nested_java_files(tmp_path: Path) -
         "Root.java",
         "app/src/Nested.java",
     }
+
+
+def test_v4_source_tool_reads_frozen_commit_snapshot_after_working_tree_changes(
+    tmp_path: Path,
+) -> None:
+    """V4源码工具应始终读取handoff冻结快照而忽略working tree并发修改。
+
+    Args:
+        tmp_path: pytest隔离的注册源码、快照、审计和handoff目录。
+
+    Returns:
+        None；搜索只命中commit快照内容且不重新捕获活动源码时通过。
+
+    Side Effects:
+        在临时知识根创建一个模拟commit快照和源码访问审计文件。
+    """
+
+    # 先提交Codex本轮必须读取的源码，再由真实Git适配器发布受控快照。
+    live_source = tmp_path / "live-refund-core"
+    live_source.mkdir()
+    subprocess.run(["git", "-C", str(live_source), "init", "-q"], check=True)
+    subprocess.run(
+        ["git", "-C", str(live_source), "config", "user.email", "opentest@example.invalid"],
+        check=True,
+    )
+    subprocess.run(
+        ["git", "-C", str(live_source), "config", "user.name", "OpenTest"],
+        check=True,
+    )
+    source_file = live_source / "RefundFacade.java"
+    source_file.write_text(
+        "interface RefundFacade { String fixedCommitMarker; }\n",
+        encoding="utf-8",
+    )
+    subprocess.run(["git", "-C", str(live_source), "add", "RefundFacade.java"], check=True)
+    subprocess.run(
+        ["git", "-C", str(live_source), "commit", "-q", "-m", "fixed source"],
+        check=True,
+    )
+    artifacts = SourceScanArtifactStore(tmp_path / "knowledge")
+    source_repository = GitSourceRepository()
+    baseline = source_repository.capture_revision(live_source)
+    commit = baseline.commit
+    snapshot_path = artifacts.source_snapshot_path(SYSTEM_ID, commit)
+    source_repository.materialize_revision(
+        baseline,
+        snapshot_path,
+        artifacts.source_snapshot_root,
+    )
+    # 快照发布后制造并发working tree变化，handoff仍应保持原commit语义。
+    source_file.write_text(
+        "interface RefundFacade { String workingTreeChange; }\n",
+        encoding="utf-8",
+    )
+    handoff = CaseTemplateHandoffV4(
+        handoff_id=f"case-template-handoff-{'c' * 20}",
+        system_id=SYSTEM_ID,
+        entry_id=CANCEL_ID,
+        source_scan_id=SCAN_ID,
+        status="WAITING_FOR_AGENT",
+        source_scopes=[
+            CaseTemplateSourceScope(
+                source_system_id=SYSTEM_ID,
+                source_scan_id=SCAN_ID,
+                source_baseline=SourceBaseline(
+                    source_path=str(live_source),
+                    commit=commit,
+                    revision="HEAD",
+                    snapshot_path=str(snapshot_path),
+                ),
+            )
+        ],
+    )
+    handoffs = Mock()
+    handoffs.get.return_value = handoff
+    handoffs.audit_path.return_value = tmp_path / "source-audit.jsonl"
+    service = CaseTemplateV4Service(Mock(), artifacts, Mock(), handoffs)
+    service.source_repository = source_repository
+
+    response = service.call_source_tool(
+        handoff.handoff_id,
+        SYSTEM_ID,
+        "search_source",
+        {"pattern": "fixedCommitMarker", "file_glob": "*.java"},
+    )
+
+    assert [item["path"] for item in response["matches"]] == ["RefundFacade.java"]
 
 
 def test_runtime_registry_adds_source_required_fields_and_initializer_defaults() -> None:
@@ -2204,6 +2297,61 @@ def test_input_contract_merges_duplicate_inherited_field_paths() -> None:
     assert contract.fields[0].required is True
 
 
+def test_v4_service_resolves_request_model_before_saved_and_catalog_defaults() -> None:
+    """确认V4模型字段按单次请求、本机设置和Codex目录默认逐级解析。
+
+    Returns:
+        None；单次模型覆盖与本机effort组合在创建handoff前交给目录校验时通过。
+    """
+
+    catalog = CodexModelCatalog(
+        provider_id="company",
+        default_model="company-default",
+        models=(
+            CodexModelOption(
+                model_id="company-request",
+                display_name="Company Request",
+                default_reasoning_effort="medium",
+                supported_reasoning_efforts=("medium", "high"),
+            ),
+        ),
+    )
+    codex = Mock()
+    codex.validate_model_profile.return_value = (
+        catalog,
+        catalog.models[0],
+        "high",
+    )
+    service = CaseTemplateV4Service(
+        Mock(),
+        Mock(),
+        Mock(),
+        Mock(),
+        CaseTemplateV4RuntimeServices(
+            operation_catalog=Mock(),
+            operation_service=Mock(),
+            codex_app_server=codex,
+            environment_provider=default_case_template_environment_values,
+            runtime_settings_provider=lambda: RuntimeToolSettings(
+                case_template_v4_model="company-saved",
+                case_template_v4_reasoning_effort="high",
+            ),
+        ),
+    )
+
+    profile = service._resolve_model_profile(
+        CaseTemplateGenerationStartRequest(
+            operation_id=CANCEL_ID,
+            codex_model="company-request",
+        )
+    )
+
+    codex.validate_model_profile.assert_called_once_with("company-request", "high")
+    assert profile.provider_id == "company"
+    assert profile.model == "company-request"
+    assert profile.reasoning_effort == "high"
+
+
 def test_v4_service_creates_thread_and_starts_turn_with_v4_tool_scope() -> None:
     """确认V4 handoff绑定Codex深链并立即启动同线程turn。"""
 
@@ -2220,13 +2368,21 @@ def test_v4_service_creates_thread_and_starts_turn_with_v4_tool_scope() -> None:
                 source_baseline=SourceBaseline(source_path="/private/refund-core"),
             )
         ],
+        model_provider="custom",
+        codex_model="company-case-model",
+        reasoning_effort="high",
     )
     codex = Mock()
-    codex.create_scoped_thread.return_value = CodexClientThread(
+    codex.create_scoped_turn.return_value = CodexStartedTurn(
         thread_id="thread-v4-service",
         deep_link="codex://threads/thread-v4-service",
+        turn_id="turn-v4-service",
+        process_id="12345",
+        model_provider="custom",
+        model="company-case-model",
+        reasoning_effort="high",
+        turn_status="inProgress",
     )
-    codex.start_case_template_turn.return_value = "12345"
     handoffs = Mock()
     service = CaseTemplateV4Service(
         Mock(),
@@ -2243,18 +2399,16 @@ def test_v4_service_creates_thread_and_starts_turn_with_v4_tool_scope() -> None:
 
     started = service._start_codex_turn(handoff)
 
-    request = codex.create_scoped_thread.call_args.args[0]
+    request = codex.create_scoped_turn.call_args.args[0]
     assert request.tool_scope == "case_template_v4"
-    assert request.model == "gpt-5.6-sol"
+    assert request.model_provider == "custom"
+    assert request.model == "company-case-model"
     assert request.reasoning_effort == "high"
     assert started.thread_id == "thread-v4-service"
     assert started.codex_deep_link == "codex://threads/thread-v4-service"
     assert started.turn_process_id == "12345"
-    codex.start_case_template_turn.assert_called_once()
-    assert codex.start_case_template_turn.call_args.args[-2:] == (
-        "gpt-5.6-sol",
-        "high",
-    )
+    assert started.turn_id == "turn-v4-service"
+    assert started.turn_status == "inProgress"
 
 
 def test_v4_dsl_submission_dispatches_qa_without_waiting_for_execution() -> None:
@@ -2375,11 +2529,11 @@ def test_v4_dsl_submission_dispatches_qa_without_waiting_for_execution() -> None
     service.executor.execute.assert_not_called()
 
 
-def test_v4_service_preserves_thread_link_when_turn_start_fails() -> None:
-    """确认线程已创建但turn启动失败时仍返回可打开的Codex记录。
+def test_v4_service_marks_atomic_thread_turn_start_failure() -> None:
+    """确认同会话线程/turn启动失败时立即返回FAILED。
 
     Returns:
-        None；FAILED handoff保留thread ID和deep link时通过。
+        None；未取得App Server turn回执时不得伪造thread或WAITING状态。
     """
 
     handoff = CaseTemplateHandoffV4(
@@ -2395,13 +2549,12 @@ def test_v4_service_preserves_thread_link_when_turn_start_fails() -> None:
                 source_baseline=SourceBaseline(source_path="/private/refund-core"),
             )
         ],
+        model_provider="company",
+        codex_model="company-case",
+        reasoning_effort="high",
     )
     codex = Mock()
-    codex.create_scoped_thread.return_value = CodexClientThread(
-        thread_id="thread-v4-turn-start-failed",
-        deep_link="codex://threads/thread-v4-turn-start-failed",
-    )
-    codex.start_case_template_turn.side_effect = ExecutionFailure("turn failed")
+    codex.create_scoped_turn.side_effect = ExecutionFailure("turn failed")
     handoffs = Mock()
     service = CaseTemplateV4Service(
         Mock(),
@@ -2419,8 +2572,8 @@ def test_v4_service_preserves_thread_link_when_turn_start_fails() -> None:
     failed = service._start_codex_turn(handoff)
 
     assert failed.status == "FAILED"
-    assert failed.thread_id == "thread-v4-turn-start-failed"
-    assert failed.codex_deep_link == "codex://threads/thread-v4-turn-start-failed"
+    assert failed.thread_id == ""
+    assert failed.codex_deep_link == ""
 
 
 def test_v4_service_marks_exited_turn_without_submission_failed() -> None:
@@ -2445,11 +2598,21 @@ def test_v4_service_marks_exited_turn_without_submission_failed() -> None:
         ],
         thread_id="thread-v4-failed-turn",
         turn_process_id="12345",
+        turn_id="turn-v4-failed",
+        turn_status="inProgress",
     )
     codex = Mock()
     codex.inspect_case_turn_process.return_value = CodexCaseTurnProcessSnapshot(
         state="EXITED",
         return_code=1,
+    )
+    codex.inspect_thread.return_value = CodexThreadSnapshot(
+        thread_id="thread-v4-failed-turn",
+        deep_link="codex://threads/thread-v4-failed-turn",
+        turn_count=1,
+        latest_turn_id="turn-v4-failed",
+        latest_turn_status="failed",
+        latest_turn_error="Codex turn failed (code=unauthorized, http_status=401)",
     )
     handoffs = Mock()
     handoffs.get.return_value = handoff
@@ -2470,8 +2633,64 @@ def test_v4_service_marks_exited_turn_without_submission_failed() -> None:
     refreshed = service._refresh_agent_status(handoff)
 
     assert refreshed.status == "FAILED"
-    assert refreshed.safe_error == "Codex V4 turn exited before DSL submission"
+    assert refreshed.turn_status == "failed"
+    assert refreshed.safe_error == "Codex turn failed (code=unauthorized, http_status=401)"
     handoffs.write.assert_called_once_with(refreshed)
+
+
+def test_v4_service_does_not_read_thread_from_second_server_while_turn_runs() -> None:
+    """活跃V4 turn轮询不得用第二个App Server读取并误写interrupted状态。
+
+    Returns:
+        None；owner进程运行时保持WAITING/inProgress且不调用thread/read。
+
+    Side Effects:
+        仅调用内存状态桩，不启动真实App Server、MCP或模型turn。
+    """
+
+    handoff = CaseTemplateHandoffV4(
+        handoff_id=f"case-template-handoff-{'b' * 20}",
+        system_id=SYSTEM_ID,
+        entry_id=CANCEL_ID,
+        source_scan_id=SCAN_ID,
+        status="WAITING_FOR_AGENT",
+        source_scopes=[
+            CaseTemplateSourceScope(
+                source_system_id=SYSTEM_ID,
+                source_scan_id=SCAN_ID,
+                source_baseline=SourceBaseline(source_path="/private/refund-core"),
+            )
+        ],
+        thread_id="thread-v4-running-turn",
+        turn_process_id="67890",
+        turn_id="turn-v4-running",
+        turn_status="inProgress",
+    )
+    codex = Mock()
+    codex.inspect_case_turn_process.return_value = CodexCaseTurnProcessSnapshot(state="RUNNING")
+    handoffs = Mock()
+    handoffs.get.return_value = handoff
+    handoffs.processing_scope.return_value = nullcontext()
+    service = CaseTemplateV4Service(
+        Mock(),
+        Mock(),
+        Mock(),
+        handoffs,
+        CaseTemplateV4RuntimeServices(
+            operation_catalog=Mock(),
+            operation_service=Mock(),
+            codex_app_server=codex,
+            environment_provider=default_case_template_environment_values,
+        ),
+    )
+
+    # 活跃owner进程是运行状态真相源；持久线程仅在它退出后读取终态。
+    refreshed = service._refresh_agent_status(handoff)
+
+    assert refreshed.status == "WAITING_FOR_AGENT"
+    assert refreshed.turn_status == "inProgress"
+    codex.inspect_thread.assert_not_called()
+    handoffs.write.assert_not_called()
 
 
 def test_handoff_catalog_never_exposes_registered_source_root() -> None:

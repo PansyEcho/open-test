@@ -18,13 +18,13 @@ source_refs:
   path: app/biz/src/main/java/com/ly/flight/chainsaas/refund/biz/lock/DistributedLockService.java
   symbol: com.ly.flight.chainsaas.refund.biz.lock.DistributedLockService
   line: 8
-  commit: 189d1bf98e1388b5ede350672147c8e00bc39c7f
+  commit: 99b494d7824eab12ffc237ae7e945aac79d61411
   content_digest: df9304e5d60a163ee989a24a0b0fd517d52122fe682b4b694b5e1bd81ccfb977
 - repository: ''
   path: app/integration/src/main/java/com/ly/flight/chainsaas/refund/integration/lock/client/RedissonLockClient.java
   symbol: com.ly.flight.chainsaas.refund.integration.lock.client.RedissonLockClient
   line: 10
-  commit: 189d1bf98e1388b5ede350672147c8e00bc39c7f
+  commit: 99b494d7824eab12ffc237ae7e945aac79d61411
   content_digest: 26037526393448562eb76bfe8b90351f16b68bbf419ec0c622160fe60df6276f
 affected_target_ids:
 - facade:com.ly.flight.chainsaas.refund.facade.CallbackFacade#refundApplyCallback
@@ -61,4 +61,4 @@ affected_target_ids:
 - facade:com.ly.flight.chainsaas.refund.facade.ToolFacade#syncOrder
 evidence_digest: e102bc9114e806ae8ea436061c4af510b68e7cc0c7948d4dbf49693e6ea24bc9
 discovered_at: '2026-08-13T10:23:54.669485Z'
-updated_at: '2026-09-01T06:43:43.411464Z'
+updated_at: '2026-09-02T07:26:12.784514Z'

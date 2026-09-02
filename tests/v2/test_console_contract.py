@@ -18,8 +18,8 @@ def test_console_static_client_uses_versioned_routes_and_safe_rendering() -> Non
 
     assert "OpenTest V2 Console" in html
     assert 'const API_ROOT = "/api/v2"' in script
-    assert '<meta name="opentest-page-version" content="20260828-03">' in html
-    assert '/assets/app.js?v=20260828-03' in html
+    assert '<meta name="opentest-page-version" content="20260902-01">' in html
+    assert '/assets/app.js?v=20260902-01' in html
     assert '/assets/styles.css?v=20260828-02' in html
     assert 'id="case-generation-profile"' in html
     assert "仅在程序无法完成Case生成时用于Codex补全" in html
@@ -152,6 +152,12 @@ def test_console_static_client_uses_versioned_routes_and_safe_rendering() -> Non
     assert "codex://threads/" in script
     assert "使用 Codex 重新生成当前对象知识" in script
     assert 'id="knowledge-generation-profile"' in html
+    assert 'id="case-template-v4-provider"' in html
+    assert 'id="case-template-v4-model"' in html
+    assert 'id="case-template-v4-reasoning-effort"' in html
+    assert "/local-settings/codex-model-catalog" in script
+    assert "renderCodexModelCatalog" in script
+    assert "renderCaseTemplateV4ReasoningEfforts" in script
     assert 'value="gpt-5.6-luna|medium"' in html
     assert '<option value="gpt-5.6-luna|low">Luna · Low</option>' in html
     assert 'codex_model: "gpt-5.6-luna"' in script

@@ -200,4 +200,4 @@ affected_target_ids:
 - facade:com.ly.flight.chainsaas.booking.facade.TradeFacade#updateVccCard
 evidence_digest: c16967d0b798a9ff6c44684c4e0f476f27b91a69d421a74201925bf1e26b0d4e
 discovered_at: '2026-08-27T15:21:11.348397Z'
-updated_at: '2026-08-27T20:27:20.142226Z'
+updated_at: '2026-09-02T07:29:27.657914Z'

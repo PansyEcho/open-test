@@ -235,11 +235,15 @@ def test_runtime_prompt_and_codex_speed_settings_persist_with_0600(tmp_path: Pat
             knowledge_agent="codex",
             codex_model="gpt-5.6-sol",
             codex_reasoning_effort="low",
+            case_template_v4_model="company-case-model",
+            case_template_v4_reasoning_effort="high",
             knowledge_agent_prompt_template="分析 {{target_id}} 的完整业务知识。",
         )
     )
 
     assert saved.codex_reasoning_effort == "low"
+    assert store.read().case_template_v4_model == "company-case-model"
+    assert store.read().case_template_v4_reasoning_effort == "high"
     assert store.read().knowledge_agent_prompt_template == "分析 {{target_id}} 的完整业务知识。"
     assert stat.S_IMODE(store.settings_path.stat().st_mode) == 0o600
     with pytest.raises(ValueError, match="unsupported knowledge prompt placeholder"):
