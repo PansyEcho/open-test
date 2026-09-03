@@ -32,7 +32,13 @@ from opentest.adapters.sqlite_index import SqliteKnowledgeIndex
 from opentest.application.knowledge import KnowledgeGenerationService
 from opentest.application.foundation import OpenTestApplication
 from opentest.application.tasks import LocalTaskManager, report_task_progress
-from opentest.domain.errors import ExecutionFailure, KnowledgeValidationError, ScopeViolationError, TaskCancelledError
+from opentest.domain.errors import (
+    CodexPluginPreflightError,
+    ExecutionFailure,
+    KnowledgeValidationError,
+    ScopeViolationError,
+    TaskCancelledError,
+)
 from opentest.domain.models import (
     AgentKnowledgeEnvelope,
     AgentKnowledgeCompleteness,
@@ -2528,454 +2534,6 @@ def test_auto_publish_promotes_only_exact_state_machine_entry_facts(
     assert [item.assertion_id for item in migrated_facts.state_transitions] == [
         exact_transition.assertion_id
     ]
-
-
-def test_auto_publish_binding_requires_exact_current_published_mapping(
-    tmp_path: Path,
-) -> None:
-    """Binding只有被current Published逻辑到provider映射及Fact字段共同证明才自动发布。
-
-    Args:
-        tmp_path: Pytest隔离的latest扫描、Published、Fact契约和知识草稿目录。
-
-    Returns:
-        None；精确物理字段映射成为CODE_PROVEN，类型兼容但目标不一致的候选仍隔离时通过。
-
-    Side Effects:
-        复用通用编译夹具在临时知识库发布能力和入口知识，不访问AI或QA。
-    """
-
-    from test_typed_case_compiler_phase5 import ENTRY_ID, SYSTEM_ID, _compiler_harness
-
-    harness = _compiler_harness(tmp_path, [])
-    application = harness.application
-    manifest = application.source_analysis.artifacts.read(SYSTEM_ID, "latest")
-    SetupContractRuleStore(application.store).write(
-        SetupContractRuleSet(
-            system_id=SYSTEM_ID,
-            fact_contracts=[
-                SetupFactContractDefinition(
-                    fact_contract_id="generic-action-input/v1",
-                    display_name="通用Action输入实体",
-                    required_origin=SetupFactOrigin.PUBLISHED_OUTPUT,
-                    required_fields=[
-                        SetupFactRequiredField(path="mode", schema_type="string"),
-                        SetupFactRequiredField(path="state", schema_type="string"),
-                    ],
-                    business_identity_paths=["mode"],
-                    state_path="state",
-                    state_predicates=[
-                        SetupStatePredicateDefinition(
-                            name="READY",
-                            allowed_values=["READY"],
-                        )
-                    ],
-                )
-            ],
-        )
-    )
-    entry = manifest.entries[0]
-    formal_evidence = SourceReference(
-        path=entry.source_path,
-        symbol=entry.source_id,
-        line=1,
-        commit=manifest.baseline.commit,
-    )
-    requirement = EntryFactAssertion(
-        assertion_id="entry-fact:generic-action-required",
-        assertion_type="REQUIRES_FACT",
-        slot_id="action_input",
-        fact_contract_id="generic-action-input/v1",
-        required_state="READY",
-        acquisition_policy="QUERY_THEN_CREATE",
-        source=KnowledgeConclusionSource.USER_CONFIRMED,
-        evidence_refs=[formal_evidence],
-    )
-    existing_formal = EntryFactKnowledge(
-        entry_id=entry.entry_id,
-        source_scan_id=manifest.scan_id,
-        source_baseline=manifest.baseline,
-        requires_facts=[requirement],
-        evidence_refs=[formal_evidence],
-    )
-    existing_node = KnowledgeNode(
-        node_id="entry:sample.AtomicFacade#inspect",
-        system_id=SYSTEM_ID,
-        kind=KnowledgeNodeKind.FACADE,
-        title=entry.display_name,
-        aliases=[entry.entry_id, entry.source_id, entry.display_name],
-        status=KnowledgeStatus.USER_CONFIRMED,
-        source_refs=[formal_evidence],
-        entry_fact_knowledge=existing_formal,
-    )
-    application.store.write_node(existing_node, "已确认通用Action所需实体。")
-    untrusted_reference = SourceReference(
-        path="AgentSuggested.java",
-        symbol="agent.suggestion",
-        line=999,
-    )
-    exact_binding = EntryFactAssertion(
-        assertion_id="entry-fact:generic-action-mode-binding",
-        assertion_type="BINDING_PATH",
-        slot_id="action_input",
-        fact_contract_id="generic-action-input/v1",
-        request_path="mode",
-        fact_path="mode",
-        source=KnowledgeConclusionSource.AI_CANDIDATE,
-        evidence_refs=[untrusted_reference],
-    )
-    mismatched_binding = exact_binding.model_copy(
-        update={
-            "assertion_id": "entry-fact:generic-action-state-binding",
-            "fact_path": "state",
-        }
-    )
-    candidates = EntryFactCandidateSet(
-        system_id=SYSTEM_ID,
-        entry_id=entry.entry_id,
-        source_scan_id=manifest.scan_id,
-        source_baseline=manifest.baseline,
-        assertions=[exact_binding, mismatched_binding],
-    )
-    draft = KnowledgeDraft(
-        draft_id="draft-current-published-binding-proof",
-        system_id=SYSTEM_ID,
-        target_id=entry.entry_id,
-        node=existing_node.model_copy(
-            update={
-                "status": KnowledgeStatus.INFERRED,
-                "entry_fact_knowledge": None,
-            }
-        ),
-        content="Agent提出的字段绑定候选，等待current Published映射证明。",
-        entry_fact_candidates=candidates,
-    )
-    batch = KnowledgeGenerationWorkflowBatch(
-        batch_id="knowledge-workflow-current-published-binding-proof",
-        system_id=SYSTEM_ID,
-        scan_id=manifest.scan_id,
-        target_ids=[entry.entry_id],
-        status="PENDING_CONFIRMATION",
-        drafts=[draft],
-    )
-    application.store.write_draft_batch(batch)
-
-    # Published逻辑mode映射到provider mode，只有同一provider形状的Fact字段可自动建立绑定。
-    application.knowledge.publish_ready_drafts(
-        SYSTEM_ID,
-        batch.batch_id,
-        rebuild_index=False,
-    )
-
-    published = application.store.get_node(SYSTEM_ID, existing_node.node_id)[0]
-    assert published.entry_fact_knowledge is not None
-    assert [item.assertion_id for item in published.entry_fact_knowledge.binding_paths] == [
-        exact_binding.assertion_id
-    ]
-    formal_binding = published.entry_fact_knowledge.binding_paths[0]
-    assert formal_binding.source == KnowledgeConclusionSource.CODE_PROVEN
-    assert untrusted_reference not in formal_binding.evidence_refs
-    assert formal_binding.evidence_refs
-    remaining = application.store.read_draft_batch(SYSTEM_ID, batch.batch_id)
-    remaining_candidates = remaining.drafts[0].entry_fact_candidates
-    assert remaining_candidates is not None
-    assert [item.assertion_id for item in remaining_candidates.assertions] == [
-        mismatched_binding.assertion_id
-    ]
-    assert remaining_candidates.assertions[0].source == (
-        KnowledgeConclusionSource.AI_CANDIDATE
-    )
-    application.close()
-
-
-@pytest.mark.parametrize(
-    ("operation_role", "mutability", "availability"),
-    [
-        (
-            "QUERY",
-            OperationMutability.READ_ONLY,
-            SetupAvailabilityRule(type="VALUE_NOT_NULL", path="reference_id"),
-        ),
-        ("CREATE", OperationMutability.WRITE, None),
-    ],
-)
-def test_auto_publish_candidate_operation_requires_current_published_closure(
-    tmp_path: Path,
-    operation_role: str,
-    mutability: OperationMutability,
-    availability: SetupAvailabilityRule | None,
-) -> None:
-    """查询和创建候选只有与current Published完整闭合时才能成为CODE_PROVEN。
-
-    Args:
-        tmp_path: Pytest隔离的latest扫描、Published、Fact契约和知识草稿目录。
-        operation_role: 本次验证的QUERY或CREATE知识角色。
-        mutability: 与角色对应的Published读写分类。
-        availability: QUERY必须提供的结构型存在性规则；CREATE为空。
-
-    Returns:
-        None；正确角色自动提升，读写不符或业务型miss语义仍隔离时通过。
-
-    Side Effects:
-        复用通用编译夹具在临时知识库发布能力和入口知识，不访问AI或QA。
-    """
-
-    from test_typed_case_compiler_phase5 import ENTRY_ID, SYSTEM_ID, _compiler_harness
-
-    harness = _compiler_harness(
-        tmp_path / operation_role.lower(),
-        [],
-        mutability=mutability,
-    )
-    application = harness.application
-    manifest = application.source_analysis.artifacts.read(SYSTEM_ID, "latest")
-    SetupContractRuleStore(application.store).write(
-        SetupContractRuleSet(
-            system_id=SYSTEM_ID,
-            fact_contracts=[
-                SetupFactContractDefinition(
-                    fact_contract_id="generic-operation-result/v1",
-                    display_name="通用操作实体",
-                    required_origin=SetupFactOrigin.PUBLISHED_OUTPUT,
-                    required_fields=[
-                        SetupFactRequiredField(path="entity_id", schema_type="string"),
-                        SetupFactRequiredField(path="state", schema_type="string"),
-                    ],
-                    business_identity_paths=["entity_id"],
-                    state_path="state",
-                    state_predicates=[
-                        SetupStatePredicateDefinition(
-                            name="READY",
-                            allowed_values=["READY"],
-                        )
-                    ],
-                )
-            ],
-        )
-    )
-    entry = manifest.entries[0]
-    untrusted_reference = SourceReference(
-        path="AgentSuggestedOperation.java",
-        symbol="agent.operation.suggestion",
-        line=999,
-    )
-    exact_operation = EntryFactAssertion(
-        assertion_id=f"entry-fact:generic-{operation_role.lower()}-operation",
-        assertion_type="CANDIDATE_OPERATION",
-        fact_contract_id="generic-operation-result/v1",
-        operation_role=operation_role,
-        candidate_system_id=SYSTEM_ID,
-        candidate_operation_id=harness.action.provider_operation_ref.operation_id,
-        query_availability=availability,
-        source=KnowledgeConclusionSource.AI_CANDIDATE,
-        evidence_refs=[untrusted_reference],
-    )
-    wrong_role = "CREATE" if operation_role == "QUERY" else "QUERY"
-    wrong_role_availability = (
-        SetupAvailabilityRule(type="VALUE_NOT_NULL", path="reference_id")
-        if wrong_role == "QUERY"
-        else None
-    )
-    mismatched_operation = exact_operation.model_copy(
-        update={
-            "assertion_id": f"entry-fact:generic-{wrong_role.lower()}-operation-mismatch",
-            "operation_role": wrong_role,
-            "query_availability": wrong_role_availability,
-        }
-    )
-    assertions = [exact_operation, mismatched_operation]
-    if operation_role == "QUERY":
-        # 布尔字段类型本身不能证明true代表“找到实体”，仍须保留为AI语义候选。
-        assertions.append(
-            exact_operation.model_copy(
-                update={
-                    "assertion_id": "entry-fact:generic-query-semantic-availability",
-                    "query_availability": SetupAvailabilityRule(
-                        type="BOOLEAN_EQUALS",
-                        path="accepted",
-                        expected_boolean=True,
-                    ),
-                }
-            )
-        )
-    candidates = EntryFactCandidateSet(
-        system_id=SYSTEM_ID,
-        entry_id=entry.entry_id,
-        source_scan_id=manifest.scan_id,
-        source_baseline=manifest.baseline,
-        assertions=assertions,
-    )
-    node = KnowledgeNode(
-        node_id="entry:sample.AtomicFacade#inspect-operation-proof",
-        system_id=SYSTEM_ID,
-        kind=KnowledgeNodeKind.FACADE,
-        title=entry.display_name,
-        aliases=[entry.entry_id, entry.source_id, entry.display_name],
-        status=KnowledgeStatus.INFERRED,
-        source_refs=[untrusted_reference],
-    )
-    draft = KnowledgeDraft(
-        draft_id=f"draft-current-published-{operation_role.lower()}-proof",
-        system_id=SYSTEM_ID,
-        target_id=ENTRY_ID,
-        node=node,
-        content="Agent提出的操作候选，等待current Published闭环证明。",
-        entry_fact_candidates=candidates,
-    )
-    batch = KnowledgeGenerationWorkflowBatch(
-        batch_id=f"knowledge-workflow-current-published-{operation_role.lower()}-proof",
-        system_id=SYSTEM_ID,
-        scan_id=manifest.scan_id,
-        target_ids=[ENTRY_ID],
-        status="PENDING_CONFIRMATION",
-        drafts=[draft],
-    )
-    application.store.write_draft_batch(batch)
-
-    # 自动发布重新读取Published、Candidate及provider operation，不采用Agent来源引用。
-    application.knowledge.publish_ready_drafts(
-        SYSTEM_ID,
-        batch.batch_id,
-        rebuild_index=False,
-    )
-
-    published = application.store.get_node(SYSTEM_ID, node.node_id)[0]
-    assert published.entry_fact_knowledge is not None
-    assert [item.assertion_id for item in published.entry_fact_knowledge.candidate_operations] == [
-        exact_operation.assertion_id
-    ]
-    formal_operation = published.entry_fact_knowledge.candidate_operations[0]
-    assert formal_operation.source == KnowledgeConclusionSource.CODE_PROVEN
-    assert untrusted_reference not in formal_operation.evidence_refs
-    assert formal_operation.evidence_refs
-    remaining = application.store.read_draft_batch(SYSTEM_ID, batch.batch_id)
-    remaining_candidates = remaining.drafts[0].entry_fact_candidates
-    assert remaining_candidates is not None
-    assert [item.assertion_id for item in remaining_candidates.assertions] == [
-        item.assertion_id for item in assertions[1:]
-    ]
-    assert all(
-        item.source == KnowledgeConclusionSource.AI_CANDIDATE
-        for item in remaining_candidates.assertions
-    )
-    application.close()
-
-
-def test_auto_publish_candidate_operation_accepts_exact_current_restricted_projection(
-    tmp_path: Path,
-) -> None:
-    """知识CODE_PROVEN应重验PARTIAL Candidate的精确Published选中路径。
-
-    Args:
-        tmp_path: Pytest隔离的扫描、知识、能力和本地环境目录。
-
-    Returns:
-        None；受限投影仍current时操作候选成为CODE_PROVEN，Candidate保持PARTIAL。
-
-    Side Effects:
-        只在临时Git真相中发布能力与知识，不访问AI或QA。
-    """
-
-    from test_published_operation_capabilities_phase3 import (
-        _configure_real_local_binding,
-        _entry_candidate,
-        _publish_restricted_projection_scan,
-        _submission,
-    )
-
-    application = OpenTestApplication(tmp_path / "knowledge")
-    system_id = "atomic-app"
-    _publish_restricted_projection_scan(application, system_id)
-    _configure_real_local_binding(application, system_id)
-    publication = application.publish_operation_capability(
-        system_id,
-        _submission(application, system_id, "publish-knowledge-projection-0001"),
-    )
-    assert publication.status == "PUBLISHED"
-    assert publication.capability is not None
-    candidate = _entry_candidate(application, system_id)
-    assert candidate.status.value == "PARTIAL"
-    manifest = application.source_analysis.artifacts.read(system_id, "latest")
-    entry = manifest.entries[0]
-    SetupContractRuleStore(application.store).write(
-        SetupContractRuleSet(
-            system_id=system_id,
-            fact_contracts=[
-                SetupFactContractDefinition(
-                    fact_contract_id="restricted-result/v1",
-                    display_name="受限投影操作结果",
-                    required_origin=SetupFactOrigin.PUBLISHED_OUTPUT,
-                    required_fields=[
-                        SetupFactRequiredField(path="reference_id", schema_type="string")
-                    ],
-                    business_identity_paths=["reference_id"],
-                )
-            ],
-        )
-    )
-    assertion = EntryFactAssertion(
-        assertion_id="entry-fact:restricted-create-operation",
-        assertion_type="CANDIDATE_OPERATION",
-        fact_contract_id="restricted-result/v1",
-        operation_role="CREATE",
-        candidate_system_id=system_id,
-        candidate_operation_id=publication.capability.provider_operation_ref.operation_id,
-        source=KnowledgeConclusionSource.AI_CANDIDATE,
-        evidence_refs=[
-            SourceReference(path="AgentSuggested.java", symbol="agent.suggestion", line=999)
-        ],
-    )
-    candidate_set = EntryFactCandidateSet(
-        system_id=system_id,
-        entry_id=entry.entry_id,
-        source_scan_id=manifest.scan_id,
-        source_baseline=manifest.baseline,
-        assertions=[assertion],
-    )
-    node = KnowledgeNode(
-        node_id="entry:sample.AtomicFacade#restricted-projection-proof",
-        system_id=system_id,
-        kind=KnowledgeNodeKind.FACADE,
-        title=entry.display_name,
-        aliases=[entry.entry_id, entry.source_id, entry.display_name],
-        status=KnowledgeStatus.INFERRED,
-        source_refs=[candidate.source_ref],
-    )
-    draft = KnowledgeDraft(
-        draft_id="draft-current-restricted-published-proof",
-        system_id=system_id,
-        target_id=entry.entry_id,
-        node=node,
-        content="受限投影操作候选等待程序闭环证明。",
-        entry_fact_candidates=candidate_set,
-    )
-    batch = KnowledgeGenerationWorkflowBatch(
-        batch_id="knowledge-workflow-current-restricted-published-proof",
-        system_id=system_id,
-        scan_id=manifest.scan_id,
-        target_ids=[entry.entry_id],
-        status="PENDING_CONFIRMATION",
-        drafts=[draft],
-    )
-    application.store.write_draft_batch(batch)
-
-    application.knowledge.publish_ready_drafts(
-        system_id,
-        batch.batch_id,
-        rebuild_index=False,
-    )
-
-    published_node = application.store.get_node(system_id, node.node_id)[0]
-    assert published_node.entry_fact_knowledge is not None
-    assert [
-        item.assertion_id
-        for item in published_node.entry_fact_knowledge.candidate_operations
-    ] == [assertion.assertion_id]
-    assert (
-        published_node.entry_fact_knowledge.candidate_operations[0].source
-        == KnowledgeConclusionSource.CODE_PROVEN
-    )
-    application.close()
 
 
 def test_auto_publish_repairs_only_exact_legacy_double_wrapping(tmp_path: Path) -> None:
@@ -5755,7 +5313,7 @@ def test_codex_app_server_creates_and_injects_thread_without_starting_a_turn(
         "            continue\n"
         "        result = {'thread':{'id':'01a-client-handoff-test'},'model':'gpt-test','modelProvider':'openai','cwd':request['params']['cwd'],'approvalPolicy':'onRequest','approvalsReviewer':'user','sandbox':{'type':'readOnly'}}\n"
         "    elif method == 'mcpServerStatus/list':\n"
-        "        names = ['get_knowledge_handoff','list_source_files','search_source','read_source','submit_knowledge_candidate','get_case_generation_handoff','submit_case_generation_drafts']\n"
+        "        names = ['get_knowledge_handoff','list_source_files','search_source','read_source','submit_knowledge_candidate']\n"
         "        result = {'data':[{'name':'opentest_knowledge','authStatus':'unsupported','resources':[],'resourceTemplates':[],'tools':{name:{'name':name,'inputSchema':{}} for name in names}}],'nextCursor':None}\n"
         "    else:\n"
         "        result = {}\n"
@@ -5827,238 +5385,6 @@ def test_codex_app_server_creates_and_injects_thread_without_starting_a_turn(
     injected = next(request for request in requests if request.get("method") == "thread/inject_items")
     assert injected["params"]["items"][0]["role"] == "user"
     assert "OpenTest知识目标" in injected["params"]["items"][0]["content"][0]["text"]
-
-
-def test_codex_app_server_case_thread_has_machine_enforced_case_only_tools(
-    tmp_path: Path,
-) -> None:
-    """Case线程必须关闭已安装插件并只注入两个Case MCP工具。
-
-    Args:
-        tmp_path: pytest隔离的假App Server、协议日志和工作目录。
-
-    Returns:
-        None；启动配置只含Case桥接且额外knowledge/QA工具会被线程门禁拒绝时通过。
-
-    Side Effects:
-        只创建假本地线程协议记录，不调用真实Codex、HTTP、QA或模型。
-    """
-
-    executable = tmp_path / "codex"
-    request_log = tmp_path / "case-app-server-requests.jsonl"
-    executable.write_text(
-        "#!/usr/bin/env python3\n"
-        "import json, sys\n"
-        f"log_path = {str(request_log)!r}\n"
-        "for raw in sys.stdin:\n"
-        "    request = json.loads(raw)\n"
-        "    with open(log_path, 'a', encoding='utf-8') as handle:\n"
-        "        handle.write(json.dumps(request, ensure_ascii=False) + '\\n')\n"
-        "    if 'id' not in request:\n"
-        "        continue\n"
-        "    method = request.get('method')\n"
-        "    if method == 'initialize':\n"
-        "        result = {'userAgent':'fake-case-app-server'}\n"
-        "    elif method == 'model/list':\n"
-        "        result = {'data':[{'id':'gpt-5.6-luna','supportedReasoningEfforts':['low','medium']}]}\n"
-        "    elif method == 'thread/start':\n"
-        "        result = {'thread':{'id':'01a-case-only-thread'}}\n"
-        "    elif method == 'mcpServerStatus/list':\n"
-        "        names = ['get_case_generation_handoff','submit_case_generation_drafts']\n"
-        "        result = {'data':[{'name':'opentest_case','tools':{name:{'name':name} for name in names}}]}\n"
-        "    else:\n"
-        "        result = {}\n"
-        "    print(json.dumps({'id':request['id'],'result':result}), flush=True)\n",
-        encoding="utf-8",
-    )
-    executable.chmod(0o755)
-    workspace = tmp_path / "workspace"
-    workspace.mkdir()
-    client = CodexAppServerClient(
-        CodexAppServerConfig(
-            executable=str(executable),
-            thread_start_wire=CodexThreadStartWire(
-                approval_policy="never",
-                sandbox="readOnly",
-            ),
-        )
-    )
-
-    thread = client.create_scoped_thread(
-        CodexThreadCreationRequest(
-            prompt="处理Case handoff。",
-            title="OpenTest Case · cancel",
-            cwd=workspace,
-            developer_instructions="只允许Case typed工具。",
-            model="gpt-5.6-luna",
-            reasoning_effort="low",
-            tool_scope="case_only",
-        )
-    )
-
-    assert thread.thread_id == "01a-case-only-thread"
-    requests = [
-        json.loads(line)
-        for line in request_log.read_text(encoding="utf-8").splitlines()
-        if line.strip()
-    ]
-    started = next(request for request in requests if request.get("method") == "thread/start")
-    config = started["params"]["config"]
-    assert config["features"]["plugins"] is False
-    assert config["features"]["shell_tool"] is False
-    assert set(config["mcp_servers"]) == {"node_repl", "opentest_case"}
-    assert config["mcp_servers"]["node_repl"]["enabled"] is False
-    assert config["mcp_servers"]["opentest_case"]["args"][-1] == "--case-only"
-    with pytest.raises(ExecutionFailure, match="MCP tools are unavailable"):
-        client._require_handoff_tools(
-            {
-                "data": [
-                    {
-                        "name": "opentest_case",
-                        "tools": {
-                            "get_case_generation_handoff": {},
-                            "submit_case_generation_drafts": {},
-                            "execute_case": {},
-                        },
-                    }
-                ]
-            },
-            "case_only",
-        )
-
-
-def test_codex_app_server_case_turn_ignores_user_tools_and_reuses_thread(
-    tmp_path: Path,
-) -> None:
-    """Case模型turn必须复用线程、移除用户工具面并保留延迟退出事实。
-
-    Args:
-        tmp_path: pytest隔离的假Codex CLI、参数记录和工作目录。
-
-    Returns:
-        None；命令复用原线程、只注入Case MCP且延迟失败可被轮询识别时通过。
-
-    Side Effects:
-        启动一个短暂假CLI子进程并等待回收，不调用真实Codex、HTTP、QA或模型。
-    """
-
-    executable = tmp_path / "codex"
-    argument_log = tmp_path / "case-turn-arguments.json"
-    executable.write_text(
-        "#!/usr/bin/env python3\n"
-        "import json, sys, time\n"
-        f"open({str(argument_log)!r}, 'w', encoding='utf-8').write(json.dumps(sys.argv[1:]))\n"
-        "time.sleep(0.8)\n"
-        "sys.exit(17)\n",
-        encoding="utf-8",
-    )
-    executable.chmod(0o755)
-    workspace = tmp_path / "workspace"
-    workspace.mkdir()
-    client = CodexAppServerClient(
-        CodexAppServerConfig(
-            executable=str(executable),
-            user_config_path=tmp_path / "missing-codex-config.toml",
-        )
-    )
-
-    process_id = client.start_case_turn(
-        "01a-case-only-existing-thread",
-        "继续Case typed handoff。",
-        workspace,
-        "gpt-5.6-luna",
-        "low",
-    )
-    # 启动窗口之后的失败必须由后台watcher收割并保留，不能成为页面永久运行的假回执。
-    deadline = time.monotonic() + 5
-    process = client.inspect_case_turn_process(process_id)
-    while process.state == "RUNNING" and time.monotonic() < deadline:
-        time.sleep(0.05)
-        process = client.inspect_case_turn_process(process_id)
-    arguments = json.loads(argument_log.read_text(encoding="utf-8"))
-
-    assert arguments[-3:] == [
-        "--json",
-        "01a-case-only-existing-thread",
-        "继续Case typed handoff。",
-    ]
-    assert "--ignore-user-config" in arguments
-    assert "--case-only" in " ".join(arguments)
-    assert 'mcp_servers.opentest_case.env_vars=["OPENTEST_LOCAL_API"]' in arguments
-    assert arguments.count("--disable") == 10
-    assert "plugins" in arguments
-    assert "shell_tool" in arguments
-    assert "unified_exec" in arguments
-    assert process.state == "EXITED"
-    assert process.return_code == 17
-
-
-def test_codex_app_server_case_turn_inherits_only_safe_model_provider_fields(
-    tmp_path: Path,
-) -> None:
-    """隔离Case turn应继承连接Provider但不得复制用户工具或凭据配置。
-
-    Args:
-        tmp_path: pytest隔离的Codex配置、假CLI和参数记录目录。
-
-    Returns:
-        None；命令只包含白名单Provider字段且仍忽略其余用户配置时通过。
-
-    Side Effects:
-        启动一个短暂假CLI子进程并读取其参数记录，不访问真实模型或网络。
-    """
-
-    executable = tmp_path / "codex"
-    argument_log = tmp_path / "provider-turn-arguments.json"
-    executable.write_text(
-        "#!/usr/bin/env python3\n"
-        "import json, sys, time\n"
-        f"open({str(argument_log)!r}, 'w', encoding='utf-8').write(json.dumps(sys.argv[1:]))\n"
-        "time.sleep(0.8)\n",
-        encoding="utf-8",
-    )
-    executable.chmod(0o755)
-    user_config = tmp_path / "config.toml"
-    user_config.write_text(
-        'model_provider = "company"\n'
-        '[model_providers.company]\n'
-        'name = "Company Gateway"\n'
-        'wire_api = "responses"\n'
-        'requires_openai_auth = true\n'
-        'base_url = "https://gateway.example.test/v1"\n'
-        '[mcp_servers.forbidden]\n'
-        'command = "must-not-be-inherited"\n',
-        encoding="utf-8",
-    )
-    workspace = tmp_path / "workspace"
-    workspace.mkdir()
-    client = CodexAppServerClient(
-        CodexAppServerConfig(
-            executable=str(executable),
-            user_config_path=user_config,
-        )
-    )
-
-    process_id = client.start_case_turn(
-        "01a-case-provider-existing-thread",
-        "继续Case typed handoff。",
-        workspace,
-        "gpt-5.6-luna",
-        "low",
-    )
-    deadline = time.monotonic() + 5
-    process = client.inspect_case_turn_process(process_id)
-    while process.state == "RUNNING" and time.monotonic() < deadline:
-        time.sleep(0.05)
-        process = client.inspect_case_turn_process(process_id)
-    arguments = json.loads(argument_log.read_text(encoding="utf-8"))
-
-    assert 'model_provider="company"' in arguments
-    assert 'model_providers.company.name="Company Gateway"' in arguments
-    assert 'model_providers.company.base_url="https://gateway.example.test/v1"' in arguments
-    assert "model_providers.company.requires_openai_auth=true" in arguments
-    assert "must-not-be-inherited" not in " ".join(arguments)
-    assert "--ignore-user-config" in arguments
 
 
 def test_codex_app_server_inspects_persisted_turn_without_resuming_thread(tmp_path: Path) -> None:
@@ -6261,7 +5587,7 @@ def test_codex_app_server_uses_local_schema_wire_before_side_effectful_thread_st
         "            continue\n"
         "        result = {'thread':{'id':'01a-schema-wire-thread'}}\n"
         "    elif method == 'mcpServerStatus/list':\n"
-        "        names = ['get_knowledge_handoff','list_source_files','search_source','read_source','submit_knowledge_candidate','get_case_generation_handoff','submit_case_generation_drafts']\n"
+        "        names = ['get_knowledge_handoff','list_source_files','search_source','read_source','submit_knowledge_candidate']\n"
         "        result = {'data':[{'name':'opentest_knowledge','tools':{name:{'name':name} for name in names}}]}\n"
         "    else:\n"
         "        result = {}\n"
@@ -6291,14 +5617,14 @@ def test_codex_app_server_uses_local_schema_wire_before_side_effectful_thread_st
     assert all(request.get("method") != "turn/start" for request in requests)
 
 
-def test_codex_app_server_requires_installed_opentest_plugin_before_thread_creation(tmp_path: Path) -> None:
-    """客户端接管必须确认插件已安装启用，仓库源码存在不能替代Codex安装状态。
+def test_codex_app_server_classifies_plugin_preflight_results(tmp_path: Path) -> None:
+    """插件检查区分配置损坏、缺失、禁用和正常启用四类结果。
 
     Args:
         tmp_path: pytest隔离的假Codex插件清单命令。
 
     Returns:
-        None；正确插件通过、空安装清单被阻止且没有创建线程时通过。
+        None；只有正常启用通过，其他状态返回各自稳定错误码且诊断已脱敏。
     """
 
     executable = tmp_path / "codex-plugin-list"
@@ -6318,8 +5644,62 @@ def test_codex_app_server_requires_installed_opentest_plugin_before_thread_creat
         encoding="utf-8",
     )
     executable.chmod(0o755)
-    with pytest.raises(KnowledgeValidationError, match="安装并启用OpenTest Codex插件"):
+    with pytest.raises(CodexPluginPreflightError) as missing_error:
         client.require_knowledge_plugin()
+    assert missing_error.value.error_code == "PLUGIN_NOT_INSTALLED"
+
+    executable.write_text(
+        "#!/usr/bin/env python3\n"
+        "import json\n"
+        "print(json.dumps({'installed':[{'pluginId':'open-test-knowledge@opentest-local','installed':True,'enabled':False}]}))\n",
+        encoding="utf-8",
+    )
+    executable.chmod(0o755)
+    with pytest.raises(CodexPluginPreflightError) as disabled_error:
+        client.require_knowledge_plugin()
+    assert disabled_error.value.error_code == "PLUGIN_DISABLED"
+
+    executable.write_text(
+        "#!/usr/bin/env python3\n"
+        "import sys\n"
+        "print('invalid config /Users/user/.codex/config.toml token=private-token', file=sys.stderr)\n"
+        "raise SystemExit(2)\n",
+        encoding="utf-8",
+    )
+    executable.chmod(0o755)
+    with pytest.raises(CodexPluginPreflightError) as config_error:
+        client.require_knowledge_plugin()
+    assert config_error.value.error_code == "CODEX_CONFIG_INVALID"
+    assert "~/.codex/config.toml" in str(config_error.value)
+    assert "private-token" not in str(config_error.value)
+
+    # CLI零退出但清单结构损坏并不等价于可信空清单，必须继续失败关闭。
+    executable.write_text(
+        "#!/usr/bin/env python3\nimport json\nprint(json.dumps({'plugins':[]}))\n",
+        encoding="utf-8",
+    )
+    executable.chmod(0o755)
+    with pytest.raises(CodexPluginPreflightError) as malformed_error:
+        client.require_knowledge_plugin()
+    assert malformed_error.value.error_code == "CODEX_CONFIG_INVALID"
+
+    # installed数组中任何条目的必需字段缺失或类型错误，都不能被误判为目标插件缺失。
+    for malformed_item in (
+        {},
+        {"pluginId": 123, "installed": True, "enabled": True},
+        {"pluginId": "other@market", "installed": "yes", "enabled": True},
+        {"pluginId": "other@market", "installed": True, "enabled": 1},
+    ):
+        executable.write_text(
+            "#!/usr/bin/env python3\n"
+            "import json\n"
+            f"print(json.dumps({{'installed':[{malformed_item!r}]}}))\n",
+            encoding="utf-8",
+        )
+        executable.chmod(0o755)
+        with pytest.raises(CodexPluginPreflightError) as malformed_item_error:
+            client.require_knowledge_plugin()
+        assert malformed_item_error.value.error_code == "CODEX_CONFIG_INVALID"
 
 
 def test_agent_knowledge_envelope_schema_is_fully_codex_strict() -> None:

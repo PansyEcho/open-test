@@ -4,7 +4,7 @@
 
 扫描器交叉读取生产Facade接口、DSF发布XML、环境filter及`dsf_application.properties`，生成带源码证据的`DsfClientProfile`与`DsfOperationDefinition`。动态占位符必须从当前项目QA filter唯一解析；无法解析或来源冲突时保持候选状态，不得猜测。
 
-provider操作进入全局派生索引，但只有调用系统显式确认的`DsfOperationBinding`可以执行。请求只携带操作ID、业务payload、deadline与目录摘要；服务描述只能来自Snapshot绑定目录。
+provider操作进入全局派生索引，但只有调用系统显式确认的`DsfOperationBinding`可以执行。请求只携带操作ID、业务payload、deadline与目录摘要；服务描述只能来自当前扫描绑定目录。
 
 ## Worker边界
 
@@ -14,7 +14,7 @@ QA Oracle Worker继续只负责MySQL、TiDB、Redis和MQ只读验证。DSF Worke
 
 ## 切换与兼容
 
-内部先并存`generated_cli`与`dsf_proxy`用于离线测试和两个只读金丝雀。Booking.Core自调用与跨Refund.Core调用均成功后，新Snapshot只生成`dsf_proxy`工具并删除Labrador设置/API/UI与执行器。旧Manifest和Snapshot继续可读，但`generated_cli`历史运行被稳定拒绝为不可重放；本地旧配置文件不自动删除。
+内部先并存`generated_cli`与`dsf_proxy`用于离线测试和两个只读金丝雀。Booking.Core自调用与跨Refund.Core调用均成功后，新扫描操作目录只使用`dsf_proxy`并删除Labrador设置/API/UI与执行器。旧Manifest继续可读，但`generated_cli`历史运行被稳定拒绝为不可重放；本地旧配置文件不自动删除。
 
 ## QA门禁
 

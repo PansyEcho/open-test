@@ -916,14 +916,14 @@ def test_effect_evidence_requires_unique_verified_operation_binding(tmp_path: Pa
     assert ambiguous.effect_targets == []
 
 
-def test_public_case_generation_boundaries_fail_closed_without_writes(tmp_path: Path) -> None:
-    """阶段1必须拒绝客户端清单编译和旧Hybrid编排且不得留下生成或Attempt。
+def test_retired_case_generation_routes_are_absent_without_writes(tmp_path: Path) -> None:
+    """历史类型化编译和Hybrid编排路由必须移除且不得留下资产。
 
     Args:
         tmp_path: Pytest隔离的注册系统和知识目录。
 
     Returns:
-        None；两个公开写入口返回稳定阻塞码且生成、Attempt目录仍为空时通过。
+        None；两个历史入口均不存在且未创建旧Case目录时通过。
 
     Side Effects:
         只在隔离知识目录注册一个通用系统；不会生成Case或访问QA。
@@ -962,20 +962,9 @@ def test_public_case_generation_boundaries_fail_closed_without_writes(tmp_path: 
             json=hybrid_payload,
         )
 
-    assert compile_response.status_code == 422
-    assert {item["loc"][-1] for item in compile_response.json()["detail"]} >= {
-        "entry_id",
-        "manifest",
-        "base_execution_graph",
-    }
-    assert hybrid_response.status_code == 422
-    assert {item["loc"][-1] for item in hybrid_response.json()["detail"]} >= {
-        "action_capability_id",
-        "data_setup_recipe_id",
-        "cleanup_plan_id",
-    }
-    assert application.list_hybrid_case_generations(SYSTEM_ID) == []
-    assert application.list_hybrid_case_attempts(SYSTEM_ID) == []
+    assert compile_response.status_code == 404
+    assert hybrid_response.status_code == 404
+    assert not (application.store.system_root(SYSTEM_ID) / "cases" / "v3").exists()
 
 
 def _manifest(tmp_path: Path) -> ScanManifest:

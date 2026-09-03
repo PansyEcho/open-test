@@ -31,8 +31,6 @@ CONTROL_FLOW_FILES = (
     "opentest/application/operations.py",
     "opentest/application/foundation.py",
     "opentest/application/resources.py",
-    "opentest/application/create_order_mvp.py",
-    "opentest/application/scenarios.py",
     "opentest/adapters/knowledge_tracing.py",
     "opentest/adapters/qa_worker.py",
 )
@@ -158,23 +156,6 @@ def test_operation_v2_contract_has_no_safe_default_channel() -> None:
 
     assert OperationCapability.model_fields["contract_version"].default == "operation-capability/v2"
     assert "safe_defaults" not in OperationCapability.model_fields
-
-
-def test_unprofiled_fallback_is_limited_to_the_legacy_scenario_api() -> None:
-    """未配置系统只能复用旧场景模板，不能获得追踪、Worker或真实MVP能力。"""
-
-    profiles = default_capability_profiles()
-
-    # fallback的调用面由不同注册表方法显式隔离，避免同名入口扩大为真实执行授权。
-    assert profiles.legacy_workflow("unprofiled.system.core", "facade:TradeFacade#createOrder") is None
-    assert profiles.legacy_scenario_workflow(
-        "unprofiled.system.core",
-        "facade:TradeFacade#createOrder",
-    ) is not None
-    assert profiles.legacy_scenario_workflow(
-        "ifightchainsaas.java.refund.core",
-        "facade:TradeFacade#createOrder",
-    ) is None
 
 
 def test_relation_query_ranking_prefers_matching_input_and_requested_output(tmp_path: Path) -> None:

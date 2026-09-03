@@ -9,12 +9,12 @@
 - 增加独立Java 8 DSF Worker，通过`DSFProxy`执行固定目录中的Facade操作。
 - 从被测项目发布配置和Facade源码发现DSF客户端Profile与provider操作。
 - 增加项目级操作确认及调用系统到目标操作的绑定，支持本系统自调用和跨系统调用。
-- Snapshot绑定DSF Profile、操作目录和Worker摘要；HTTP Job继续使用原有工具。
-- 两个只读金丝雀均通过后移除Labrador页面、设置与执行通道；历史Snapshot保持只读。
+- 将DSF Profile、操作目录和Worker身份绑定到当前不可变扫描代际；HTTP Job继续使用原有工具。
+- 两个只读金丝雀均通过后移除Labrador页面、设置与执行通道；历史扫描与操作目录保持只读。
 
 ## Scope
 
-一期只允许QA环境和用户确认的固定操作。真实业务标识保存在本地0600 Fixture中；本Change不执行31个生命周期Case，也不提前完成`dsf-execution-and-oracles`任务5.4。
+一期只允许QA环境和用户确认的固定操作。真实业务标识保存在本地0600 Fixture中；本Change不执行写操作或回归Case。
 
 ## Non-Goals
 

@@ -2,95 +2,38 @@
 
 ## Project
 
-This repository is the local MVP for an AI backend automation test platform. It is a Python web app with a static frontend. The platform manages local business-code projects, scans Java Facade and Job entrypoints into CLI tools, guides knowledge-base generation through local agents, generates main-flow cases, snapshots version bindings, and runs regression without LLM calls.
+OpenTest is a local FastAPI application for DSF system configuration, source scanning, knowledge publishing, Operation execution, and regression Case generation/execution. The only product package is `opentest`; the console is served from `opentest/web` and all current transport routes use `/api/v2`.
 
 ## Runtime
 
-Start the app from the repo root:
-
 ```bash
-python3 -m ai_test_platform.cli --host 127.0.0.1 --port 8787
+python3 -m pip install -e '.[dev]'
+uvicorn opentest.api:app --host 127.0.0.1 --port 8788
 ```
 
-Use an isolated data directory when testing:
+Open `http://127.0.0.1:8788/console`.
 
-```bash
-AI_TEST_PLATFORM_HOME=/private/tmp/ai-test-platform-dev python3 -m ai_test_platform.cli --host 127.0.0.1 --port 8787
-```
+## Current Case Contract
 
-The UI is served at `http://127.0.0.1:8787`.
+- Generation analyzes, compiles, validates, and persists immutable Variants without accessing QA.
+- Execution requires a second explicit page or Skill action and runs every runnable Variant in the selected Generation.
+- Variant order is frozen in the Generation. Each runnable Variant executes `DATA → TARGET → ORACLE → CLEANUP`.
+- Write Variants without structured Cleanup remain visible but are `BLOCKED`; the executor must not call their target.
+- Each explicit run has an independent `execution_id` and report.
+- UI and Skills do not expose implementation-version labels.
 
-## Important Paths
+## Codex Plugin and Skills
 
-- `ai_test_platform/services.py`: core platform orchestration, project config, CLI scan, knowledge catalog/chat, cases, snapshots, regression runs, and local-agent invocation.
-- `ai_test_platform/server.py`: HTTP API and static file server.
-- `ai_test_platform/web/index.html`: static HTML shell.
-- `ai_test_platform/web/app.js`: frontend state, API calls, navigation, knowledge chat/editor behavior.
-- `ai_test_platform/web/styles.css`: UI styling.
-- `tests/`: backend and frontend-contract tests.
-- `scripts/run_mvp_flow.py`: deterministic end-to-end MVP flow without LLM usage.
+The OpenTest plugin must be installed and enabled before knowledge or Case tasks are created. A failed Codex configuration load is reported as `CODEX_CONFIG_INVALID`; an empty valid plugin list is `PLUGIN_NOT_INSTALLED`; an installed disabled plugin is `PLUGIN_DISABLED`.
 
-External local tools referenced by the product:
-
-- CLI scanner/generator: `/Users/user/data/code/other/CLI-Anything/scriptgen`
-- Open Design reference for local-agent style: `/Users/user/data/code/other/open-design`
-- Example Java project: `/Users/user/data/code/tc/travelsystem.java.dsf.supplychain.booking.core`
-- Knowledge builder skill example: `/Users/user/temp/self-skill/code-knowledge-builder-cl`
-- Case builder skill example: `/Users/user/temp/self-skill/knowledge-case-builder-cl`
-
-## Agent Integration
-
-The app supports local `codex` and `claude` CLI profiles. Knowledge chat sends prompts through the local agent command when `execute_agent=true` or the frontend sends `force_agent=true`.
-
-Codex invocation is intentionally based on an Open Design style local-agent substrate:
-
-- command starts with `codex exec --json`
-- prompt is passed through stdin, not as a shell argument
-- allowed directories are added with `--add-dir`
-- the working directory is the generated `agent-runs/<id>` directory
-- stdout/stderr/prompt/result are persisted under the project workspace
-
-If the local agent is unavailable or returns no agent message, the knowledge chat should show an explicit failure instead of silently generating fake content.
-
-## Knowledge Catalog Rules
-
-Knowledge nodes are seeded from the confirmed CLI version. Facade grouping must come from scan metadata:
-
-- `TradeFacade -> createOrder【下单】`
-- `TicketFacade -> issueTicket【出票】`
-
-Do not group all Facade methods under a generic label such as `交易接口`. Existing confirmed CLI indexes may be stale, so `services.py` re-enriches `platform-tool-index.json` from `_meta/scan-manifest.json` at read time.
-
-State-machine knowledge is not a CLI tool. `generate_cli()` writes `_meta/state-machines.json` by scanning Java `@State(from=..., to=...)` actor annotations, including `actor/pre` and `actor/post` classes. The knowledge catalog renders these as a separate `状态机` group, for example `OrderStateEnum 状态流转`, so interface knowledge and Case generation can depend on common state transitions.
-
-The knowledge page keeps chat and editable content visible together. Sending a chat message should keep the user in chat mode, update the selected knowledge draft, and leave confirmation/cancel controls available.
-
-## Case Module
-
-The `主流程 Case` page is organized by the same knowledge catalog tree. A user selects a knowledge node, generates a Case draft for that node, then reviews a list of cases. Each case stores metadata in `suite.json` and executable steps in `steps.json`; the UI can switch between a visual flow view and editable JSON. `upsert_case()` is the service entry point for manual edits and newly added cases.
-
-Keep the existing deterministic MVP path intact: calling `generate_cases(project_id, "main-flow")` without a node still creates the small offline regression suite used by `scripts/run_mvp_flow.py`. Node-scoped generation should pass `node_id` and may create multiple cases for one interface.
+The system Skill is `$open-test-ifightchainsaas-java-refund-core`. Case tools are `generate_interface_cases`, `get_case_generation`, `execute_case_generation`, and `get_case_execution`. A generation request never implies execution.
 
 ## Verification
 
-Run focused tests while changing behavior:
-
-```bash
-python3 -m pytest tests/test_knowledge_catalog_flow.py -q
-python3 -m pytest tests/test_frontend_contract.py tests/test_knowledge_frontend_contract.py -q
-python3 -m pytest tests/test_case_builder_flow.py -q
-```
-
-Run the full suite before finishing:
-
 ```bash
 python3 -m pytest -q
+openspec validate correct-versioned-scan-and-console-contract --strict --no-interactive
+openspec validate --specs --strict --no-interactive
 ```
 
-Run deterministic MVP regression without LLM calls:
-
-```bash
-python3 scripts/run_mvp_flow.py --data-root /private/tmp/ai-test-platform-mvp
-```
-
-The regression flow intentionally includes a failing sample case so the report can display failed steps, command, stdout JSON, assertion diff, and bound snapshot versions.
+After browser changes, validate through the running HTTP service using a newly opened or hard-refreshed page. Stop every development service before handoff and confirm port 8788 is not listening.

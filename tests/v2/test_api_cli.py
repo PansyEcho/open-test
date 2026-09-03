@@ -12,7 +12,13 @@ from opentest.api import create_app
 from opentest.application.foundation import OpenTestApplication
 from opentest.application.tasks import report_task_progress
 from opentest.domain.case_template_v4 import CaseTemplateHandoffV4, CaseTemplateSourceScope
-from opentest.domain.errors import ModelProfileValidationError, TaskPartialFailureError
+from opentest.domain.errors import (
+    CaseExecutionConflictError,
+    CaseGenerationStateConflictError,
+    KnowledgeNotFoundError,
+    ModelProfileValidationError,
+    TaskPartialFailureError,
+)
 from opentest.domain.models import AgentRunEvent, SourceBaseline, TaskProgressUpdate, TaskStatus
 
 
@@ -45,7 +51,7 @@ def test_fastapi_registers_multiple_systems_without_overwrite(tmp_path: Path, mo
     with TestClient(create_app(application), client=("127.0.0.1", 50000)) as client:
         health = client.get("/api/v2/health").json()
         assert health["status"] == "ok"
-        assert health["page_version"] == "20260903-01"
+        assert health["page_version"] == "20260903-06"
         first_response = client.post(
             "/api/v2/systems",
             json={
@@ -89,103 +95,87 @@ def test_console_is_served_and_references_only_versioned_api(tmp_path: Path) -> 
         script_response = client.get("/assets/app.js")
 
     assert console_response.status_code == 200
-    assert "OpenTest V2 Console" in console_response.text
-    assert '<meta name="opentest-page-version" content="20260903-01">' in console_response.text
-    assert '/assets/app.js?v=20260903-01' in console_response.text
+    assert "<title>OpenTest Console</title>" in console_response.text
+    assert '<meta name="opentest-page-version" content="20260903-06">' in console_response.text
+    assert '/assets/app.js?v=20260903-06' in console_response.text
     assert script_response.status_code == 200
     assert 'const API_ROOT = "/api/v2"' in script_response.text
-    assert 'const API_V3_ROOT = "/api/v3"' in script_response.text
+    assert "API_V3_ROOT" not in script_response.text
+    assert "API_V4_ROOT" not in script_response.text
     assert "/api/projects" not in script_response.text
 
 
-def test_v2_openapi_contains_complete_single_system_workflow(tmp_path: Path) -> None:
-    """OpenAPI契约应暴露扫描、知识、Case、Snapshot和执行闭环入口。
+def test_v2_openapi_contains_single_system_generation_and_execution_workflow(
+    tmp_path: Path,
+) -> None:
+    """OpenAPI应只暴露统一V2 Case生命周期，并移除历史Case传输契约。
 
     Args:
         tmp_path: pytest隔离的知识根目录。
 
     Returns:
-        None；通过路径集合断言验证周期接口和既有V2契约。
+        None；扫描、知识、Operation、资源与新Case接口集合正确时通过。
     """
 
     application = OpenTestApplication(tmp_path / "knowledge")
     with TestClient(create_app(application)) as client:
         paths = set(client.get("/openapi.json").json()["paths"])
 
-    assert {
+    required_paths = {
         "/api/v2/systems/{system_id}/scans",
+        "/api/v2/systems/{system_id}/scans/{scan_id}/catalog",
         "/api/v2/systems/{system_id}/knowledge/generations",
         "/api/v2/systems/{system_id}/knowledge/catalog",
         "/api/v2/systems/{system_id}/knowledge/context",
-        "/api/v2/systems/{system_id}/knowledge/context/narrative",
-        "/api/v2/systems/{system_id}/knowledge/context/candidates",
-        "/api/v2/systems/{system_id}/knowledge/context/candidates/{candidate_id}",
-        "/api/v2/systems/{system_id}/knowledge/discoveries",
-        "/api/v2/systems/{system_id}/knowledge/questions",
-        "/api/v2/systems/{system_id}/knowledge/question-cycle",
-        "/api/v2/systems/{system_id}/knowledge/question-cycles/{cycle_id}/answers/{question_id}",
-        "/api/v2/systems/{system_id}/knowledge/question-cycles/{cycle_id}/complete",
-        "/api/v2/systems/{system_id}/knowledge/questions/{question_id}/answers",
-        "/api/v2/systems/{system_id}/knowledge/targets/{target_id}",
-        "/api/v2/systems/{system_id}/knowledge/nodes/{node_id}",
-        "/api/v2/systems/{system_id}/knowledge/generation-batches",
-        "/api/v2/systems/{system_id}/knowledge/generation-batches/{batch_id}/continuations",
-        "/api/v2/systems/{system_id}/knowledge/generation-batches/{batch_id}/questions/{question_id}/answers",
-        "/api/v2/systems/{system_id}/knowledge/generation-batches/{batch_id}/confirmations",
-        "/api/v2/knowledge/client-handoffs/{handoff_id}",
-        "/api/v2/knowledge/client-handoffs/{handoff_id}/tools/{tool_name}",
-        "/api/v2/knowledge/client-handoffs/{handoff_id}/candidates",
-        "/api/v2/knowledge/client-handoffs/{handoff_id}/confirmations",
-        "/api/v2/systems/{system_id}/scenarios/generations",
-        "/api/v2/systems/{system_id}/scenarios/compile",
-        "/api/v2/systems/{system_id}/case-generations",
-        "/api/v2/systems/{system_id}/case-generation-tasks",
-        "/api/v2/systems/{system_id}/case-generations/{generation_id}/confirmations",
-        "/api/v2/systems/{system_id}/case-generations/{generation_id}/confirmation-tasks",
-        "/api/v2/systems/{system_id}/case-generations/{generation_id}/execution-tasks",
-        "/api/v3/systems/{system_id}/case-generations",
-        "/api/v3/systems/{system_id}/case-generations/{generation_id}",
-        "/api/v3/systems/{system_id}/case-generations/{generation_id}/variants/{variant_id}/attempts",
-        "/api/v3/systems/{system_id}/case-attempts",
-        "/api/v3/systems/{system_id}/case-workspace",
-        "/api/v4/systems/{system_id}/case-generations",
-        "/api/v4/systems/{system_id}/case-generations/{generation_id}",
-        "/api/v4/case-template-handoffs/{handoff_id}",
-        "/api/v4/case-template-handoffs/{handoff_id}/outer-api-info",
-        "/api/v4/case-template-handoffs/{handoff_id}/sources/{source_system_id}/tools/{tool_name}",
-        "/api/v4/case-template-handoffs/{handoff_id}/dsl",
-        "/api/v2/local-settings/codex-model-catalog",
-        "/api/v2/systems/{system_id}/case-fixture-bindings",
-        "/api/v2/systems/{system_id}/case-fixture-bindings/{entry_id}",
-        "/api/v2/systems/{system_id}/cases/catalog",
-        "/api/v2/systems/{system_id}/natural-language-tests/previews",
-        "/api/v2/systems/{system_id}/natural-language-tests/previews/{preview_id}",
-        "/api/v2/systems/{system_id}/natural-language-tests/previews/{preview_id}/runs",
-        "/api/v2/systems/{system_id}/natural-language-tests/previews/{preview_id}/run-tasks",
-        "/api/v2/systems/{system_id}/snapshots",
+        "/api/v2/systems/{system_id}/operations",
+        "/api/v2/systems/{system_id}/operation-executions",
+        "/api/v2/operation-executions/{execution_id}",
         "/api/v2/systems/{system_id}/resources",
         "/api/v2/systems/{system_id}/resource-probes",
-        "/api/v2/systems/{system_id}/oracle-operations",
-        "/api/v2/systems/{system_id}/validation-capabilities",
-        "/api/v2/systems/{system_id}/local-settings",
-        "/api/v2/systems/{system_id}/scans/{scan_id}/catalog",
-        "/api/v2/systems/{system_id}/regression-suites/{suite_id}/runs",
-        "/api/v2/systems/{system_id}/regression-suites/{suite_id}/reports",
-        "/api/v2/systems/{system_id}/runs",
-        "/api/v2/runs/{run_id}",
+        "/api/v2/systems/{system_id}/case-generations",
+        "/api/v2/case-handoffs/{handoff_id}",
+        "/api/v2/case-handoffs/{handoff_id}/dsl",
+        "/api/v2/systems/{system_id}/case-generations/{generation_id}",
+        "/api/v2/systems/{system_id}/case-generations/{generation_id}/executions",
+        "/api/v2/systems/{system_id}/case-executions",
+        "/api/v2/systems/{system_id}/case-executions/{execution_id}",
         "/api/v2/tasks/{task_id}/progress",
         "/api/v2/tasks/{task_id}/events",
-        "/api/v2/tasks/{task_id}/agent-diagnostics",
-        "/api/v2/tasks/{task_id}/cancel-agent",
         "/api/v2/console/activity",
-    } <= paths
+    }
+    assert required_paths <= paths
 
-
-def test_v4_start_returns_202_thread_link_and_poll_url(
+    assert not any(
+        path.startswith("/api/v3/") or path.startswith("/api/v4/")
+        for path in paths
+    )
+    assert not any(
+        fragment in path
+        for path in paths
+        for fragment in (
+            "/scenarios/",
+            "/snapshots",
+            "/natural-language-tests/",
+            "/regression-suites/",
+            "/case-attempts",
+            "/case-workspace",
+            "/case-generation-tasks",
+            "/execution-tasks",
+            "/case-fixture-bindings",
+            "/cases/catalog",
+        )
+    )
+    assert "/api/v2/systems/{system_id}/runs" not in paths
+    assert "/api/v2/runs/{run_id}" not in paths
+    assert not any(
+        "/case-generations/" in path and path.endswith("/confirmations")
+        for path in paths
+    )
+def test_case_generation_start_returns_ids_thread_link_and_poll_url(
     tmp_path: Path,
     monkeypatch,
 ) -> None:
-    """确认V4通用入口接收operation_id并返回Codex线程和轮询地址。
+    """确认统一入口只接收生成参数并返回Generation、Codex线程和轮询地址。
 
     Args:
         tmp_path: Pytest隔离应用根。
@@ -197,12 +187,14 @@ def test_v4_start_returns_202_thread_link_and_poll_url(
 
     application = OpenTestApplication(tmp_path / "knowledge")
     handoff_id = f"case-template-handoff-{'a' * 20}"
+    generation_id = f"case-template-generation-{'b' * 20}"
     handoff = CaseTemplateHandoffV4(
         handoff_id=handoff_id,
         system_id="sample.java.system",
         entry_id="facade:sample.RefundFacade#cancel",
         source_scan_id="scan-v4-api",
         status="WAITING_FOR_AGENT",
+        generation_id=generation_id,
         source_scopes=[
             CaseTemplateSourceScope(
                 source_system_id="sample.java.system",
@@ -254,20 +246,20 @@ def test_v4_start_returns_202_thread_link_and_poll_url(
 
     with TestClient(create_app(application), client=("127.0.0.1", 50000)) as client:
         response = client.post(
-            "/api/v4/systems/sample.java.system/case-generations",
+            "/api/v2/systems/sample.java.system/case-generations",
             json={
                 "operation_id": "sample.RefundFacade#cancel",
-                "execution_mode": "QA_AFTER_GENERATION",
                 "codex_model": "company-case-model",
                 "reasoning_effort": "high",
             },
         )
-        polled = client.get(f"/api/v4/case-template-handoffs/{handoff_id}")
+        polled = client.get(f"/api/v2/case-handoffs/{handoff_id}")
         catalog = client.get("/api/v2/local-settings/codex-model-catalog")
 
     assert response.status_code == 202
     assert response.json() == {
         "handoff_id": handoff_id,
+        "generation_id": generation_id,
         "status": "WAITING_FOR_AGENT",
         "thread_id": "thread-v4-api",
         "turn_id": "turn-v4-api",
@@ -276,22 +268,23 @@ def test_v4_start_returns_202_thread_link_and_poll_url(
         "codex_model": "company-case-model",
         "reasoning_effort": "high",
         "codex_deep_link": "codex://threads/thread-v4-api",
-        "poll_url": f"/api/v4/case-template-handoffs/{handoff_id}",
+        "poll_url": f"/api/v2/case-handoffs/{handoff_id}",
     }
     assert polled.status_code == 200
     assert polled.json()["handoff"]["thread_id"] == "thread-v4-api"
     assert received_request["value"].codex_model == "company-case-model"
     assert received_request["value"].reasoning_effort == "high"
+    assert not hasattr(received_request["value"], "execution_mode")
     assert catalog.status_code == 200
     assert catalog.json()["provider_id"] == "custom"
     assert catalog.json()["models"][0]["supported_reasoning_efforts"] == ["medium", "high"]
 
 
-def test_v4_start_rejects_unavailable_user_model_before_thread_creation(
+def test_case_generation_rejects_unavailable_user_model_before_thread_creation(
     tmp_path: Path,
     monkeypatch,
 ) -> None:
-    """V4模型或档位不在当前用户目录时应返回明确422。
+    """Case模型或档位不在当前用户目录时应返回明确422。
 
     Args:
         tmp_path: pytest隔离应用根。
@@ -312,7 +305,7 @@ def test_v4_start_rejects_unavailable_user_model_before_thread_creation(
 
     with TestClient(create_app(application), client=("127.0.0.1", 50000)) as client:
         response = client.post(
-            "/api/v4/systems/sample.java.system/case-generations",
+            "/api/v2/systems/sample.java.system/case-generations",
             json={
                 "operation_id": "sample.RefundFacade#cancel",
                 "codex_model": "missing-model",
@@ -321,6 +314,58 @@ def test_v4_start_rejects_unavailable_user_model_before_thread_creation(
 
     assert response.status_code == 422
     assert response.json()["error"]["code"] == "model_profile_validation_error"
+
+
+def test_case_execution_conflicts_are_exposed_as_http_409(
+    tmp_path: Path,
+    monkeypatch,
+) -> None:
+    """不可执行 Generation 和并发 Execution 都应返回可恢复的 409 契约。
+
+    Args:
+        tmp_path: pytest 隔离的应用目录。
+        monkeypatch: 注入两类应用层状态冲突，不访问 QA。
+
+    Returns:
+        None；状态码、错误码和当前执行身份均稳定时通过。
+    """
+
+    application = OpenTestApplication(tmp_path / "knowledge")
+
+    def reject_blocked(_system_id, _generation_id, _request):
+        """模拟 BLOCKED Generation 在 QA 调用前拒绝执行。"""
+
+        raise CaseGenerationStateConflictError("BLOCKED")
+
+    monkeypatch.setattr(application, "execute_case_generation", reject_blocked)
+    path = (
+        "/api/v2/systems/sample.java.system/case-generations/"
+        f"case-template-generation-{'c' * 20}/executions"
+    )
+    with TestClient(create_app(application), client=("127.0.0.1", 50000)) as client:
+        blocked = client.post(path, json={"environment_id": "qa"})
+
+        def reject_running(_system_id, _generation_id, _request):
+            """模拟同 Generation 与环境已经存在 RUNNING Execution。"""
+
+            raise CaseExecutionConflictError(
+                f"case-generation-execution-{'d' * 20}"
+            )
+
+        monkeypatch.setattr(application, "execute_case_generation", reject_running)
+        running = client.post(path, json={"environment_id": "qa"})
+
+    assert blocked.status_code == 409
+    assert blocked.json()["error"] == {
+        "code": "CASE_GENERATION_NOT_EXECUTABLE",
+        "message": "Generation状态为BLOCKED，不能启动执行",
+        "generation_status": "BLOCKED",
+    }
+    assert running.status_code == 409
+    assert running.json()["error"]["code"] == "CASE_EXECUTION_CONFLICT"
+    assert running.json()["error"]["execution_id"] == (
+        f"case-generation-execution-{'d' * 20}"
+    )
 
 
 def test_codex_client_handoff_bridge_is_loopback_only_and_preserves_tool_scope(
@@ -681,12 +726,45 @@ def test_task_event_stream_closes_after_partial_terminal_status(tmp_path: Path) 
     assert response.text == ""
 
 
-def test_fastapi_missing_run_uses_safe_not_found_response(tmp_path: Path) -> None:
-    """未知运行报告应返回统一404且不得泄露Python堆栈。"""
+def test_fastapi_missing_case_execution_uses_safe_not_found_response(
+    tmp_path: Path,
+    monkeypatch,
+) -> None:
+    """未知Execution报告应返回统一404且不得泄露Python堆栈。
+
+    Args:
+        tmp_path: pytest隔离的知识根目录。
+        monkeypatch: 令应用层稳定模拟Execution不存在。
+
+    Returns:
+        None；错误响应使用统一领域协议时通过。
+    """
 
     application = OpenTestApplication(tmp_path / "knowledge")
+    missing_execution_id = f"case-generation-execution-{'f' * 20}"
+
+    def reject_missing_execution(_system_id: str, execution_id: str) -> None:
+        """模拟指定Execution不存在且不读取真实系统状态。
+
+        Args:
+            _system_id: API委托的系统身份，本桩不使用。
+            execution_id: API委托的Execution身份。
+
+        Raises:
+            KnowledgeNotFoundError: 始终表示目标报告不存在。
+        """
+
+        raise KnowledgeNotFoundError(f"Case execution not found: {execution_id}")
+
+    monkeypatch.setattr(
+        application,
+        "get_case_generation_execution",
+        reject_missing_execution,
+    )
     with TestClient(create_app(application)) as client:
-        response = client.get("/api/v2/runs/run-unknown")
+        response = client.get(
+            f"/api/v2/systems/sample.java.system/case-executions/{missing_execution_id}"
+        )
 
     assert response.status_code == 404
     assert response.json()["error"]["code"] == "not_found"

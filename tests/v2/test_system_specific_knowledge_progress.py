@@ -723,6 +723,12 @@ def test_agent_enrichment_rejects_other_system_unknown_target_and_escaping_sourc
     source_file = source_root / "RefundFacade.java"
     source_file.write_text("package demo; interface RefundFacade { void query(Request r); }", encoding="utf-8")
     manifest = _manifest("refund.core", source_root, source_file)
+    from opentest.adapters.source_analysis import GitSourceRepository
+
+    # Agent边界验证必须使用当前源码代际，避免源码漂移检查先于本测试目标失败。
+    manifest = manifest.model_copy(
+        update={"baseline": GitSourceRepository().capture(source_root)}
+    )
     node = KnowledgeNode(
         node_id="entry:demo.RefundFacade#createRefund",
         system_id="refund.core",

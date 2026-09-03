@@ -1506,7 +1506,9 @@ def test_operation_plugin_and_generated_skill_are_explicit_and_fixed(
         "read_system_source",
         "prepare_knowledge_target",
         "generate_interface_cases",
-        "execute_case",
+        "get_case_generation",
+        "execute_case_generation",
+        "get_case_execution",
     }
     execute_tool = next(tool for tool in tools if tool["name"] == "execute_operation")
     assert execute_tool["annotations"]["destructiveHint"] is True
@@ -1602,7 +1604,8 @@ def test_operation_plugin_and_generated_skill_are_explicit_and_fixed(
     assert f"`{SYSTEM_ID}`" in skill
     assert "严格按用户给出的顺序逐个处理" in skill
     assert "有效知识已存在" in skill
-    assert "知识不完整不阻止生成" in skill
+    assert "生成只创建Codex任务、编译并保存Generation，绝不访问QA" in skill
+    assert "只有用户明确要求执行某个Generation时" in skill
     assert "同系统对外Facade优先，外部DSF次之" in skill
     assert "env=qa" in skill and "targetenv=test" in skill
     assert "DELETE和DDL" in skill

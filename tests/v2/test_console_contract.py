@@ -5,338 +5,74 @@ from __future__ import annotations
 from pathlib import Path
 
 
-def test_console_static_client_uses_versioned_routes_and_safe_rendering() -> None:
-    """静态客户端应集中使用V2/V3前缀，并通过textContent展示业务响应。
+def test_console_static_client_uses_single_case_workflow_and_safe_rendering() -> None:
+    """静态控制台应只展示四个主入口，并分离Case生成与显式执行。
 
     Returns:
-        None；通过静态资源断言验证周期路由、右栏门禁和安全渲染。
+        None；页面、API版本、按钮门禁和安全渲染契约正确时通过。
     """
 
     web_root = Path(__file__).parents[2] / "opentest" / "web"
     html = (web_root / "index.html").read_text(encoding="utf-8")
     script = (web_root / "app.js").read_text(encoding="utf-8")
 
-    assert "OpenTest V2 Console" in html
+    assert "<title>OpenTest Console</title>" in html
+    assert '<meta name="opentest-page-version" content="20260903-06">' in html
+    assert '/assets/app.js?v=20260903-06' in html
+    assert '/assets/styles.css?v=20260903-01' in html
     assert 'const API_ROOT = "/api/v2"' in script
-    assert '<meta name="opentest-page-version" content="20260903-01">' in html
-    assert '/assets/app.js?v=20260903-01' in html
-    assert '/assets/styles.css?v=20260828-02' in html
-    assert 'id="case-generation-profile"' in html
-    assert 'id="resource-config-environment"' in html
-    for environment in ("auto", "test", "qa", "uat"):
-        assert f'<option value="{environment}">' in html
-    assert 'resource_config_environment: element("resource-config-environment").value' in script
-    assert "仅在程序无法完成Case生成时用于Codex补全" in html
-    for profile_label in ("Luna · Low", "Luna · Medium", "Sol · Low", "Sol · Medium"):
-        assert profile_label in html
-    assert 'id="stale-page-warning"' in html
-    assert html.index('id="stale-page-warning"') < html.index('id="workspace-workbench"')
-    assert "verifyCurrentPageVersion" in script
-    assert 'await verifyCurrentPageVersion()' in script
-    assert "/api/projects" not in script
-    assert "/resource-probes" in script
-    assert "/validation-capabilities" in script
-    assert "/oracle-operations" not in script
-    assert "/regression-suites/" in script
-    assert 'value="suite:train-booking-core:core-order-lifecycle-v2"' in html
-    assert "estimated_process_count" in script
-    assert "non_test_order_count" in script
+    assert "API_V3_ROOT" not in script
+    assert "API_V4_ROOT" not in script
+    assert "/api/v3" not in script
+    assert "/api/v4" not in script
     assert ".innerHTML" not in script
     assert ".textContent" in script
-    assert "EFFECT_ONLY：仅证明 MQ 消费后的业务效果" in html
-    assert "Host、账号、密码、Token" in html
-    assert html.count('class="nav-item') == 9
-    assert 'role="tooltip"' in html
-    assert "查看集群详情" in script
-    assert "mqDetailControl" in script
-    assert "resourceErrorLabel" in script
-    assert "historical_orphans" in script
-    assert "function shellQuote(value)" in script
-    assert 'replaceAll("\'", `\'"\'"\'`)' in script
-    assert "systemRequestGeneration" in script
-    assert "isCurrentSystemScope" in script
-    assert 'id="detail-drawer"' in html
-    assert "ScenarioDefinition → CaseVariant → ExecutionAttempt" not in script
-    assert "场景矩阵" not in html
-    assert "QA 数据模板" not in html
-    assert "/knowledge/generations" in script
-    assert script.count("/knowledge/generation-batches/") == 1
-    assert "/entry-fact-confirmations" in script
-    assert "/continuations" not in script
-    assert "/case-generations" in script
-    assert "/natural-language-tests/previews" in script
-    assert "preview-natural-language\" disabled" not in html
-    assert 'id="generate-all-knowledge"' not in html
-    assert 'id="start-knowledge-generation"' not in html
-    assert "生成全部接口与公共逻辑知识" not in html
-    assert "knowledgeGenerationTargets" not in script
-    assert 'id="knowledge-agent-stream-panel"' in html
-    assert "new EventSource" in script
-    assert "source.onerror = async" in script
-    assert "const taskPayload = await api(`/tasks/${encodeURIComponent(task.task_id)}`)" in script
-    assert "activeKnowledgeEventSource !== source" in script
-    assert "terminalStatuses.includes(latestTask.status)" in script
-    assert "if (!taskRunning)" in script
-    assert "stopKnowledgeAgentEventStream(true)" in script
-    assert "if (taskRunning) {\n    // 只有仍在运行的任务需要累计耗时" in script
-    assert "if (taskRunning) {\n    activeKnowledgeStreamStartedAt" in script
-    assert 'id="cancel-knowledge-agent"' in html
-    assert 'cancelButton.dataset.taskId = task.task_id' in script
-    assert 'cancelButton.dataset.attemptId = handoff.attempt_id || ""' in script
-    assert 'selectedTask?.client_handoff?.attempt_id !== attemptId' in script
-    assert 'cancelButton.dataset.taskId !== taskId' in script
-    assert 'id="continue-knowledge-agent"' in html
-    assert 'id="view-agent-diagnostics"' in html
-    assert 'id="knowledge-agent-prompt"' in html
-    assert 'id="knowledge-agent-source-access"' in html
-    assert 'id="knowledge-agent-resume-command"' in html
-    assert "/agent-diagnostics" in script
-    assert "公开推理摘要" in html
-    assert "隐藏思维链" in html
-    assert "diagnostics.final_output_truncated" in script
-    continuation = script[
-        script.index("async function continueKnowledgeAgent") : script.index("function refreshKnowledgeGenerationActions")
+    assert 'id="stale-page-warning"' in html
+    assert "verifyCurrentPageVersion" in script
+    assert "async function pollTask" in script
+    assert "async function showTaskProgress" in script
+
+    # 导航只保留SOP主线，不再暴露历史Case、自然语言、Suite或独立报告页面。
+    assert html.count('class="nav-item') == 4
+    for workspace in ("workbench", "system-config", "knowledge", "regression-cases"):
+        assert f'data-workspace="{workspace}"' in html
+    for retired_workspace in (
+        "case-workspace",
+        "natural-language",
+        "test-execution",
+        "booking-mvp",
+        "regression-suites",
+        "reports",
+    ):
+        assert f'data-workspace="{retired_workspace}"' not in html
+
+    # Case生成请求不含执行模式；QA只能由第二个显式动作触发。
+    assert 'id="start-case-generation"' in html
+    assert 'id="execute-case-generation"' in html
+    assert "执行本次 Generation 的全部 Variant" in html
+    assert "只生成、不访问QA" in html
+    start_generation = script[
+        script.index("async function startCaseGeneration") : script.index("async function refreshCaseHandoff")
     ]
-    assert "renderCodexTaskPane" in continuation
-    assert "/continuations" not in continuation
-    assert "backgroundKnowledgeReady" in script
-    assert "use_agent" not in script
-    assert "agent," in script
-    assert "requireKnowledgeAgentSelection" in script
-    assert "confirmKnowledgeGeneration" in script
-    assert 'interaction_mode: "codex_client"' in script
-    assert 'finalProgress.status === "superseded"' in script
-    assert 'generation_blocked_reason: "running"' in script
-    assert 'blockedReason === "running"' in script
-    assert 'blockedReason === "waiting_for_input"' in script
-    assert '"completed", "partial", "failed"' in script
-    assert "部分完成 · 仅代码事实" in script
-    assert "error_summary" in script
-    assert 'intent: regenerateTarget ? "regenerate" : "initial"' in script
-    assert "await Promise.all([loadKnowledgeWorkflow(), loadScanCatalog()])" in script
-    # 目标切换必须立即替换旧正文、主动取消旧GET并仅恢复当前目标/attempt的任务卡。
-    assert "let activeKnowledgeTargetController = null" in script
-    assert "activeKnowledgeTargetController.abort()" in script
-    assert 'textNode("p", `正在读取 ${target.display_name}…`, "loading-skeleton")' in script
-    assert "signal: activeKnowledgeTargetController.signal" in script
-    assert "knowledgeTargetDetailCache" in script
-    invalidation = script[
-        script.index("function invalidateKnowledgeReadCaches") : script.index("function knowledgeGenerationAttemptTargetId")
+    assert "const requestBody = { operation_id: operationId }" in start_generation
+    assert "execution_mode" not in start_generation
+    assert "/case-generations" in start_generation
+    execute_generation = script[
+        script.index("async function executeCaseGeneration") : script.index("function delay")
     ]
-    assert "knowledgeTargetRequestGeneration += 1" in invalidation
-    assert "activeKnowledgeTargetController" in invalidation
-    assert "&scan_id=${encodeURIComponent(scanId)}`" in script
-    assert "generation_attempts" in script
-    assert "attempt.target_id === selectedTargetId" in script
-    assert 'let selectedKnowledgeDiagnosticsTaskId = ""' in script
-    diagnostics = script[
-        script.index("async function viewKnowledgeAgentDiagnostics") : script.index("async function copyKnowledgeAgentResumeCommand")
-    ]
-    assert "selectedKnowledgeDiagnosticsTaskId" in diagnostics
-    assert "selectedKnowledgeDiagnosticsTaskId !== taskId" in diagnostics
-    assert 'dataset.targetId !== targetId' in diagnostics
-    assert "active_generation_task_id" not in diagnostics
-    assert "latest_agent_task" not in diagnostics
-    assert 'interaction_mode: agent === "codex" ? "codex_client" : "opentest_stream"' not in script
-    codex_confirmation = script[
-        script.index("function confirmKnowledgeGeneration") : script.index("function confirmKnowledgeAgentOperation")
-    ]
-    # 点击Codex生成本身就是单聊天授权，不再追加容易打断多轮客户端交互的费用确认框。
-    assert 'if (agent === "codex")' in codex_confirmation
-    assert "return true" in codex_confirmation
-    assert "window.confirm" not in codex_confirmation
-    # 失败/部分/过期attempt以及仍有有效旧知识的目标都必须明确走重新生成语义。
-    assert 'const regenerateTarget = retryableTerminal || ["STALE", "FAILED"].includes(selectedKnowledgeStatus)' in script
-    assert 'intent: regenerateTarget ? "regenerate" : "initial"' in script
-    generation_actions = script[
-        script.index("function refreshKnowledgeGenerationActions") : script.index("async function finishKnowledgeGeneration")
-    ]
-    assert "else if (selectedCategory && regenerateTarget)" in generation_actions
-    assert "open-codex-client-thread" in script
-    assert "codex://threads/" in script
-    assert "使用 Codex 重新生成当前对象知识" in script
-    assert 'id="knowledge-generation-profile"' in html
-    assert 'id="case-template-v4-provider"' in html
-    assert 'id="case-template-v4-model"' in html
-    assert 'id="case-template-v4-reasoning-effort"' in html
-    assert "/local-settings/codex-model-catalog" in script
-    assert "renderCodexModelCatalog" in script
-    assert "renderCaseTemplateV4ReasoningEfforts" in script
-    assert 'value="gpt-5.6-luna|medium"' in html
-    assert '<option value="gpt-5.6-luna|low">Luna · Low</option>' in html
-    assert 'codex_model: "gpt-5.6-luna"' in script
-    assert 'codex_reasoning_effort: "low"' in script
-    assert 'value="gpt-5.6-luna|low"' in html
-    assert "selectedKnowledgeGenerationProfile" in script
-    assert "codex_model: generationProfile.codexModel" in script
-    assert "reasoning_effort: generationProfile.reasoningEffort" in script
-    assert "最低底线知识当前没有新缺口，可进入测试场景准备" not in script
-    assert 'id="load-v3-case-workspace"' in html
-    assert 'const API_V3_ROOT = "/api/v3"' in script
-    assert 'const API_V4_ROOT = "/api/v4"' in script
-    assert 'id="scan-baseline"' in html
-    assert 'id="v4-case-operation"' in html
-    assert 'id="v4-case-execution-mode"' in html
-    assert 'id="start-v4-case-generation"' in html
-    assert 'id="refresh-v4-case-handoff"' in html
-    assert 'id="open-v4-codex-thread"' in html
-    assert 'id="load-v4-case-generations"' in html
-    assert 'id="v4-case-output"' in html
-    assert "async function startV4CaseGeneration" in script
-    assert 'operation_id: operationId' in script
-    assert 'execution_mode: element("v4-case-execution-mode").value' in script
-    assert "async function loadV4CaseHandoff" in script
-    assert "V4_CASE_TERMINAL_STATUSES" in script
-    assert "source_baselines" in script
-    assert "scan.revision" in script
-    assert "case-generation-tasks" not in script
+    assert "/executions" in execute_generation
+    assert 'environment_id: element("case-execution-environment").value' in execute_generation
+    assert 'currentCaseGeneration?.generation_id !== generationId' in execute_generation
+    assert '!["READY", "PARTIAL"].includes(currentCaseGeneration?.status)' in execute_generation
+    assert "caseGenerationViewRequestGeneration" in script
+    assert "caseExecutionViewRequestGeneration" in script
+    assert "FAILED Generation没有不可变文件" in script
+    assert "切换瞬间先撤销旧Generation的执行资格和报告" in script
+    assert "/natural-language-tests/" not in script
+    assert "/regression-suites/" not in script
+    assert "/snapshots" not in script
     assert "execution-tasks" not in script
-    assert "/case-workspace" in script
-    assert "refund-canaries" not in script
-    assert "const requestScope = captureSystemScope();" in script
-    assert "if (!isCurrentSystemScope(requestScope))" in script
-    assert "appendLegacyCaseDetails" not in script
-    assert "variant.can_execute === true" in script
-    assert "startHybridCaseGeneration" in script
-    assert "selectedCaseGenerationProfile" in script
-    assert "entry_id: entryId," in script
-    assert "codex_model: generationProfile.codexModel" in script
-    assert "reasoning_effort: generationProfile.reasoningEffort" in script
-    assert "generation_progress" in script
-    assert '["WAITING_TO_START", "AGENT_RUNNING", "VALIDATING"].includes(phase)' in script
-    assert 'WAITING_TO_START: "等待Codex补全"' in script
-    assert 'AGENT_RUNNING: "Codex正在设计Recipe"' in script
-    assert 'VALIDATING: "正在校验草稿"' in script
-    assert 'READY: "已生成"' in script
-    assert "scheduleCaseGenerationProgressPolling" in script
-    assert "CASE_PROGRESS_POLL_INTERVAL_MS" in script
-    assert "stopCaseGenerationProgressPolling();" in script[
-        script.index("function clearSystemWorkspaceState") : script.index("function renderSystemSelector")
-    ]
-    assert "生成阶段不访问QA" in script
-    assert "openCaseGenerationAgentTask" in script
-    assert "/case-generation-handoffs/${encodeURIComponent(agentAction.handoff_id)}/turns" in script
-    assert 'agentAction?.deep_link?.startsWith("codex://threads/")' in script
-    start_case_generation = script[
-        script.index("async function startHybridCaseGeneration") : script.index("function appendCasePipelineDetails")
-    ]
-    assert "window.location.href" not in start_case_generation
-    assert "await loadHybridCaseWorkspace(entryId)" in start_case_generation
-    progress_renderer = script[
-        script.index("function appendCaseGenerationProgress") : script.index("function stopCaseGenerationProgressPolling")
-    ]
-    assert "step.label" in progress_renderer
-    assert "step.code" not in progress_renderer
-    assert 'CURRENT: ["进行中", "current"]' in progress_renderer
-    assert 'BLOCKED: ["待处理", "blocked"]' in progress_renderer
-    assert "agentAction?.deep_link" in progress_renderer
-    progress_polling = script[
-        script.index("function scheduleCaseGenerationProgressPolling") : script.index("function renderHybridGeneration")
-    ]
-    assert "isActiveCaseGenerationPhase(entry.generation_progress?.phase)" in progress_polling
-    assert "window.setTimeout" in progress_polling
-    assert "window.setInterval" not in progress_polling
-    generation_renderer = script[
-        script.index("function renderHybridGeneration") : script.index("function appendUserFacingCaseStatus")
-    ]
-    assert 'entry.generation_lifecycle === "GENERATING"' not in generation_renderer
-    assert "currentCaseWorkspaceDetail?.technical_details" in script
-    assert "attempt.user_status?.title" in script
-    assert "入口详情暂时无法读取，请稍后重试。" in script
-    assert "查看覆盖、准备、断言与运行证据" in script
-    assert "最近运行证据" in script
-    entry_renderer = script[
-        script.index("async function renderCaseWorkspaceEntry") : script.index("async function handleHybridCaseGenerationClick")
-    ]
-    assert 'error.message || "入口详情读取失败。"' not in entry_renderer
-    assert "caseDetailRequestGeneration += 1" in entry_renderer
-    assert "detailGeneration !== caseDetailRequestGeneration" in entry_renderer
-    scenario_renderer = script[
-        script.index("async function renderCaseScenarioDetail") : script.index("function caseAttemptStatusLabel")
-    ]
-    assert "caseDetailRequestGeneration += 1" in scenario_renderer
-    assert "detailGeneration !== caseDetailRequestGeneration" in scenario_renderer
-    assert "evidence.operation_execution_id" not in script
-    assert "/case-workspace-scenarios/detail?" in script
-    assert "scenarioDetail.recent_results" in script
-    assert "旧V3记录只读展示并禁止访问QA" not in script
-    assert 'id="run-natural-language"' in html
-    assert 'id="save-natural-language-case"' in html
-    assert 'id="knowledge-task-progress"' in html
-    assert "finishKnowledgeGeneration" in script
-    assert "helpedAction" in script
-    assert "阻塞 ${blocker.code}" not in script
-    assert "renderKnowledgeBackgroundEditor" in script
-    assert "saveKnowledgeBackground" in script
-    assert "renderBusinessTermEditor" in script
-    assert 'id="knowledge-workflow-panel"' in html
-    assert 'id="knowledge-agent-select"' in html
-    assert 'id="show-all-knowledge-questions"' in html
-    assert 'id="knowledge-question-pane"' in html
-    assert 'id="codex-task-filter"' in html
-    assert 'id="codex-task-list"' in html
-    assert "renderCodexTaskPane" in script
-    assert "打开 Codex 聊天记录" in script
-    assert "在 Codex 中继续" in script
-    assert "在 Codex 中回答" in script
-    assert 'waiting_for_input: "等待用户回答"' in script
-    assert 'failed: "技术失败"' in script
-    assert 'payload.state === "manual_required"' in script
-    assert "/knowledge/question-cycle" not in script
-    assert "/knowledge/question-cycles/" not in script
-    target_renderer = script[script.index("function renderKnowledgeTargetDetail") : script.index("async function loadKnowledgeInterview")]
-    assert "detail.questions" not in target_renderer
-    assert "detail.latest_drafts" not in target_renderer
-    assert "detail.formal_entry_facts" in target_renderer
-    assert "detail.pending_entry_fact_candidates" in target_renderer
-    assert "AI候选（未发布）" in target_renderer
-    assert "input[data-entry-fact-assertion-id]:checked" in target_renderer
-    assert "/entry-fact-confirmations" in target_renderer
-    assert "fact_candidate_ids: selectedIds" in target_renderer
-    assert "draft.content" not in target_renderer
-    assert 'id="knowledge-feedback"' not in html
-    assert 'id="knowledge-conversation-history"' in html
-    assert 'id="send-knowledge-conversation"' in html
-    assert 'id="mvp-create-order-request"' in html
-    assert 'id="load-mvp-fixture-summary"' in html
-    assert 'id="run-create-order-mvp"' in html
-    assert "/knowledge/context" in script
-    assert "/knowledge/targets/" in script
-    assert "/knowledge/context/narrative" not in script
-    assert "/knowledge/context/candidates" in script
-    assert "/knowledge/discoveries" not in script
-    assert "createBusinessTerm" in script
-    assert "createTargetKnowledgeRevision" not in script
-    assert "source_refs || []" in script
-    assert "/knowledge/revisions" not in script
-    assert "/knowledge/conversation-turns" not in script
-    assert "/create-order-mvp/fixture" in script
-    assert 'bindShortAction("load-mvp-fixture-summary", loadMvpFixtureSummary)' in script
-    assert "loadMvpFixtureSummary(scope)" not in script
-    assert "[loadMvpFixtureSummary()]" not in script
-    assert "/create-order-mvp/plan" in script
-    assert "/dsf-operations/canary-fixture" in script
-    assert "loadDsfOperationCatalogWithFixture" in script
-    assert "includeFixture = false" in script
-    assert "/dsf-operations/canary-executions" in script
-    assert 'id="dsf-operation-list"' in html
-    assert 'id="save-dsf-canary-fixture"' in html
-    assert "const operationIds = new Set(" in script
-    assert "operationIds.delete(input.dataset.dsfOperationChoice)" in script
-    assert "${profile.registry_host}" not in script
-    assert "页面不再保留请求正文" in script
-    assert "请先在系统配置中新增或切换一个系统" in script
-    # 通用知识工作区不得再硬编码Booking.Core术语或默认自然语言示例。
-    generic_knowledge = html[html.index('id="workspace-knowledge"') : html.index('id="workspace-regression-cases"')]
-    assert all(term not in generic_knowledge for term in ("港币", "EBK", "票机", "收单", "分单系统关系"))
-    assert "不要输入 Token、真实订单号、HT/TX" in generic_knowledge
-    assert 'id="booking-mvp-section"' in html
-    assert 'id="booking-lifecycle-section"' in html
-    assert 'id="collapse-sidebar"' in html[html.index('id="sidebar"') : html.index('class="brand"')]
-    assert 'id="restore-sidebar"' in html[: html.index('id="sidebar"')]
-    assert 'id="global-task-progress"' in html
-
-
+    assert "case-generation-tasks" not in script
 def test_all_long_task_callers_use_the_progress_endpoint() -> None:
     """资源与执行等兼容轮询也必须读取统一阶段进度，而不是退回粗粒度任务状态。"""
 
@@ -629,36 +365,33 @@ def test_scan_catalog_rejects_invalidated_and_out_of_order_scan_responses() -> N
     assert "signal: requestController.signal" in loader
 
 
-def test_v4_generation_list_invalidates_active_handoff_polling() -> None:
-    """查看已有V4 JSON前必须停止轮询，并废弃在途handoff的成功或失败响应。
+def test_generation_list_invalidates_active_handoff_polling() -> None:
+    """查看已有Generation前必须废弃在途handoff响应和轮询定时器。
 
     Returns:
-        None；目录请求先推进共享代次，handoff与启动异常也校验该代次即通过。
+        None；目录、handoff和启动请求共享同一代次门禁时通过。
     """
 
     script_path = Path(__file__).parents[2] / "opentest" / "web" / "app.js"
     script = script_path.read_text(encoding="utf-8")
     list_loader = script[
-        script.index("async function loadV4CaseGenerations") : script.index("function openV4CodexThread")
+        script.index("async function loadCaseGenerations") : script.index("async function loadCaseHandoff")
     ]
     handoff_loader = script[
-        script.index("async function loadV4CaseHandoff") : script.index("async function startV4CaseGeneration")
+        script.index("async function loadCaseHandoff") : script.index("async function startCaseGeneration")
     ]
     starter = script[
-        script.index("async function startV4CaseGeneration") : script.index("async function refreshV4CaseHandoff")
+        script.index("async function startCaseGeneration") : script.index("async function refreshCaseHandoff")
     ]
 
-    # 目录JSON与handoff共用展示区，必须先使定时器及在途GET失效，再读取用户主动选择的内容。
-    stop_polling = list_loader.index("stopV4CaseHandoffPolling(false)")
-    generation_request = list_loader.index("const payload = await apiV4")
+    # Generation目录和handoff共享展示区，用户主动切换目录前必须先废弃旧轮询。
+    stop_polling = list_loader.index("stopCaseHandoffPolling(false)")
+    generation_request = list_loader.index("payload = await api")
     assert stop_polling < generation_request
-    # 两段handoff远程读取的成功守卫和异常分支都必须使用相同代次，迟到错误也不能串写页面。
-    assert handoff_loader.count("requestGeneration !== v4CaseRequestGeneration") >= 4
-    assert "用户切换到Generation目录或其他系统后" in handoff_loader
-    assert "终态明细读取期间切换视图时" in handoff_loader
-    # 创建handoff的POST也可能与目录读取并发，成功响应和异常必须共同服从启动时冻结的代次。
-    assert "const startRequestGeneration = v4CaseRequestGeneration" in starter
-    assert starter.count("startRequestGeneration !== v4CaseRequestGeneration") >= 2
+    assert handoff_loader.count("requestGeneration !== caseRequestGeneration") >= 2
+    assert "activeCaseHandoffId !== handoffId" in handoff_loader
+    assert "const startRequestGeneration = caseRequestGeneration" in starter
+    assert starter.count("startRequestGeneration !== caseRequestGeneration") >= 2
 
 
 def test_scan_history_change_restores_confirmed_baseline_after_catalog_failure() -> None:

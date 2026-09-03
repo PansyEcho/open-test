@@ -20,6 +20,7 @@ from opentest.adapters.codex_app_server import (
     CodexThreadSnapshot,
 )
 from opentest.adapters.case_template_v4_store import (
+    CaseGenerationExecutionStoreV4,
     CaseTemplateGenerationStoreV4,
     CaseTemplateHandoffStoreV4,
 )
@@ -42,6 +43,8 @@ from opentest.application.case_template_v4 import (
 from opentest.application.operations import OperationCapabilityCatalog
 from opentest.application.operation_input_knowledge import OperationInputKnowledgeBuilder
 from opentest.domain.case_template_v4 import (
+    CaseGenerationExecutionRequestV4,
+    CaseGenerationExecutionV4,
     CaseOracleAssertion,
     CaseTemplateCompilationInput,
     CaseTemplateGenerationStartRequest,
@@ -49,11 +52,19 @@ from opentest.domain.case_template_v4 import (
     CaseTemplateHandoffV4,
     CaseTemplateSourceScope,
     CaseTemplateSubmission,
+    CaseVariantV4,
+    CaseVariantExecutionV4,
     DslValueSource,
     RuntimeFunctionDescriptor,
     RuntimeFunctionRegistry,
 )
-from opentest.domain.errors import ExecutionFailure, KnowledgeValidationError
+from opentest.domain.errors import (
+    CaseExecutionConflictError,
+    CaseGenerationStateConflictError,
+    ExecutionFailure,
+    KnowledgeNotFoundError,
+    KnowledgeValidationError,
+)
 from opentest.domain.models import (
     KnowledgeNode,
     KnowledgeNodeKind,
@@ -81,6 +92,7 @@ SCAN_ID = "scan-refund-v4-golden"
 CANCEL_ID = "facade:com.ly.flight.chainsaas.refund.facade.RefundFacade#cancel"
 QUERY_LIST_ID = "facade:com.ly.flight.chainsaas.refund.facade.RefundFacade#queryList"
 DETAIL_ID = "facade:com.ly.flight.chainsaas.refund.facade.RefundFacade#queryDetailByRefundNo"
+CREATE_ORDER_ID = "facade:com.ly.flight.chainsaas.refund.facade.RefundFacade#createOrder"
 DATABASE_ID = "database:ifightchainsaas.java.refund.core:itradecoredatasource"
 TRADE_QUERY_LIST_ID = "facade:com.ly.flight.chainsaas.booking.facade.TradeFacade#queryList"
 GOLDEN_PATH = Path(__file__).resolve().parents[1] / "fixtures" / "case-template-v4" / "refund-cancel-golden.json"
@@ -1880,7 +1892,7 @@ def test_operation_limit_blocks_template_before_qa_execution() -> None:
 
 
 def test_cancel_executor_runs_dynamic_data_target_detail_and_mysql() -> None:
-    """确认五个cancel Variant逐次跨系统选单并保留五阶段execution ID和断言明细。
+    """确认五个cancel Variant逐次跨系统选单并保留脱敏阶段摘要和断言明细。
 
     Returns:
         None；五个Variant完成动态取数、目标调用和结构化Oracle执行时通过。
@@ -1911,32 +1923,47 @@ def test_cancel_executor_runs_dynamic_data_target_detail_and_mysql() -> None:
 
     assert len(results) == 5
     assert {item.status for item in results} == {"COMPLETED"}
-    assert [item.actual_request["refundSerialNo"] for item in results] == ["RF-0", "RF-1", "RF-2", "RF-5", "RF-8"]
+    target_requests = [
+        request.arguments
+        for _system_id, request in operations.calls
+        if request.operation_id == CANCEL_ID
+    ]
+    assert [item["refundSerialNo"] for item in target_requests] == ["RF-0", "RF-1", "RF-2", "RF-5", "RF-8"]
     assert all(len(item.operations) == 5 for item in results)
     assert all(item.operations[0].function_id == TRADE_QUERY_LIST_ID for item in results)
-    assert all(item.operations[0].request == {"page": 1, "pageSize": 20} for item in results)
-    assert [item.operations[1].request for item in results] == [
+    assert all(item.operations[0].input_summary["fields"] == ["page", "pageSize"] for item in results)
+    refund_query_requests = [
+        request.arguments
+        for _system_id, request in operations.calls
+        if request.operation_id == QUERY_LIST_ID and "orderState" in request.arguments
+    ]
+    assert refund_query_requests == [
         {"page": 1, "pageSize": 20, "platFormId": "OWNER-100", "orderState": state}
         for state in (0, 1, 2, 5, 8)
     ]
     # 数据库Worker只接受小写case用途；执行器必须发送协议值而不是DSL通道名称。
     database_requests = [
-        operation.request
-        for item in results
-        for operation in item.operations
-        if operation.function_id == DATABASE_ID
+        request.arguments
+        for _system_id, request in operations.calls
+        if request.operation_id == DATABASE_ID
     ]
     assert database_requests
     assert all(request["purpose"] == "case" for request in database_requests)
     assert all(len(item.assertions) == 9 and all(assertion.passed for assertion in item.assertions) for item in results)
     assert all(operation.execution_id for item in results for operation in item.operations)
+    serialized_report = json.dumps(
+        [item.model_dump(mode="json") for item in results],
+        ensure_ascii=False,
+    )
+    assert "RF-0" not in serialized_report
+    assert "OWNER-100" not in serialized_report
 
 
-def test_blocked_data_call_preserves_completed_operation_request_and_response() -> None:
-    """确认DATA后续选取失败时仍返回已执行第三方查询的完整轨迹。
+def test_blocked_data_call_preserves_completed_operation_summaries() -> None:
+    """确认DATA后续选取失败时仍返回已执行第三方查询的脱敏摘要。
 
     Returns:
-        None；每个Variant为BLOCKED、目标请求为空且booking请求响应可见时通过。
+        None；每个Variant为BLOCKED、目标请求为空且booking响应结构可见时通过。
     """
 
     variants, issues = _compile_golden()
@@ -1963,11 +1990,14 @@ def test_blocked_data_call_preserves_completed_operation_request_and_response() 
     )
 
     assert {item.status for item in results} == {"BLOCKED"}
-    assert all(item.actual_request == {} for item in results)
+    assert all(item.actual_request_summary["field_count"] == 0 for item in results)
     assert all(len(item.operations) == 1 for item in results)
     assert all(item.operations[0].function_id == TRADE_QUERY_LIST_ID for item in results)
-    assert all(item.operations[0].request == {"page": 1, "pageSize": 20} for item in results)
-    assert all(item.operations[0].response["list"]["pageList"] == [] for item in results)
+    assert all(item.operations[0].input_summary["fields"] == ["page", "pageSize"] for item in results)
+    assert all(
+        item.operations[0].output_summary["field_shapes"][0]["field_shapes"][0]["item_count"] == 0
+        for item in results
+    )
 
 
 def test_provider_failure_is_failed_and_preserves_operation_trace() -> None:
@@ -2003,7 +2033,9 @@ def test_provider_failure_is_failed_and_preserves_operation_trace() -> None:
     assert all(len(item.operations) == 1 for item in results)
     assert all(item.operations[0].status == "FAILED" for item in results)
     assert all(item.operations[0].execution_id for item in results)
-    assert all("booking QA provider failed" in item.error for item in results)
+    assert all("QA_PROVIDER_FAILED" in item.error for item in results)
+    assert all(item.operations[0].error == "QA_PROVIDER_FAILED" for item in results)
+    assert all("booking QA provider failed" not in item.error for item in results)
 
 
 def test_operation_request_identity_is_stable_and_binds_actual_arguments() -> None:
@@ -2086,7 +2118,7 @@ def test_generation_store_round_trips_dynamic_value_sources(tmp_path: Path) -> N
 
 
 def test_query_list_uses_same_generic_compiler_and_executor_without_cancel_branch() -> None:
-    """确认只读queryList的不同请求/响应结构走同一通用执行器。"""
+    """确认只读queryList的不同请求/响应结构走同一通用执行器和摘要报告。"""
 
     submission = CaseTemplateSubmission.model_validate(
         {
@@ -2151,7 +2183,8 @@ def test_query_list_uses_same_generic_compiler_and_executor_without_cancel_branc
         variants=variants,
     )
 
-    results = CaseTemplateExecutorV4(_FakeOperationService()).execute(
+    operations = _FakeOperationService()
+    results = CaseTemplateExecutorV4(operations).execute(
         f"case-template-handoff-{'d' * 20}",
         generation,
         RuntimeFunctionRegistry(functions=[]),
@@ -2159,9 +2192,971 @@ def test_query_list_uses_same_generic_compiler_and_executor_without_cancel_branc
 
     assert issues == []
     assert len(variants) == 2
-    assert [item.actual_request for item in results] == [{"page": 1, "pageSize": 20}, {"page": 2, "pageSize": 20}]
+    assert [request.arguments for _system_id, request in operations.calls] == [
+        {"page": 1, "pageSize": 20},
+        {"page": 2, "pageSize": 20},
+    ]
+    assert all(item.actual_request_summary["fields"] == ["page", "pageSize"] for item in results)
     assert {item.status for item in results} == {"COMPLETED"}
     assert all(len(item.operations) == 1 for item in results)
+
+
+def _create_order_generation(
+    cleanup_source_kind: str = "target_response",
+    blocked_reason: str = "",
+    cleanup_source_path: str = "order.refundSerialNo",
+) -> CaseTemplateGenerationV4:
+    """构造验证createOrder与cancel清理语义的单Variant Generation。
+
+    Args:
+        cleanup_source_kind: Cleanup身份取自真实目标响应或原目标请求。
+        blocked_reason: 可选编译期阻塞原因，用于证明执行器不会访问QA。
+        cleanup_source_path: Cleanup从createOrder实际响应读取的源码证明字段路径。
+
+    Returns:
+        带结构化Cleanup和响应Oracle的不可变Generation。
+    """
+
+    cleanup_source = (
+        {"kind": "target_response", "path": cleanup_source_path}
+        if cleanup_source_kind == "target_response"
+        else {"kind": "request_field", "path": "clientRequestId"}
+    )
+    submission = CaseTemplateSubmission.model_validate(
+        {
+            "data_functions": [],
+            "case_templates": [
+                {
+                    "template_id": "refund.create-order.normal",
+                    "title": "创建后取消回收",
+                    "coverage_kind": "business",
+                    "data_calls": [],
+                    "parameters": [],
+                    "constraints": [],
+                    "request_bindings": [
+                        {
+                            "field": "clientRequestId",
+                            "source": {"kind": "literal", "value": "OPENTEST-CREATE-1"},
+                        }
+                    ],
+                    "combination": "each",
+                    "oracles": [
+                        {
+                            "oracle_id": "create-success",
+                            "channel": "response",
+                            "assertions": [
+                                {
+                                    "actual_path": "success",
+                                    "operator": "eq",
+                                    "expected": {"kind": "literal", "value": True},
+                                }
+                            ],
+                        }
+                    ],
+                    "cleanup": {
+                        "cleanup_id": "cancel-created-order",
+                        "operation_id": CANCEL_ID,
+                        "arguments": {"refundSerialNo": cleanup_source},
+                        "evidence": [
+                            {
+                                "source_system_id": SYSTEM_ID,
+                                "path": "RefundFacade.java",
+                                "symbol": "RefundFacade#cancel",
+                                "line": 20,
+                            }
+                        ],
+                    },
+                    "evidence": [
+                        {
+                            "source_system_id": SYSTEM_ID,
+                            "path": "RefundFacade.java",
+                            "symbol": "RefundFacade#createOrder",
+                            "line": 10,
+                        }
+                    ],
+                }
+            ],
+            "unresolved": [],
+        }
+    )
+    variant = CaseVariantV4(
+        variant_id=f"case-variant-v4-{'d' * 20}",
+        template_id="refund.create-order.normal",
+        ordinal=1,
+        parameter_values={},
+        request_values={"clientRequestId": "OPENTEST-CREATE-1"},
+        data_calls=[],
+        oracles=submission.case_templates[0].oracles,
+        cleanup=submission.case_templates[0].cleanup,
+        blocked_reason=blocked_reason,
+    )
+    input_contract = OperationInputKnowledgeContract(
+        target_id=CREATE_ORDER_ID,
+        request_type="CreateOrderRequest",
+        source_scan_id=SCAN_ID,
+        status="READY",
+        request_schema={
+            "type": "object",
+            "properties": {"clientRequestId": {"type": "string"}},
+            "required": ["clientRequestId"],
+            "additionalProperties": False,
+        },
+        fields=[
+            OperationInputFieldKnowledge(
+                path="clientRequestId",
+                field_name="clientRequestId",
+                schema={"type": "string"},
+                required=True,
+                requirement_marker="@required",
+            )
+        ],
+    )
+    return CaseTemplateGenerationV4(
+        generation_id=f"case-template-generation-{'b' * 20}",
+        handoff_id=f"case-template-handoff-{'c' * 20}",
+        system_id=SYSTEM_ID,
+        operation_id=CREATE_ORDER_ID,
+        source_scan_id=SCAN_ID,
+        coverage_id=f"coverage:{CREATE_ORDER_ID}",
+        runtime_registry_version="runtime-functions/v1",
+        value_registry_version="value-functions/v1",
+        status="READY" if not blocked_reason else "BLOCKED",
+        input_contract=input_contract,
+        submission=submission,
+        variants=[variant],
+    )
+
+
+def test_create_order_cleanup_gate_validates_contract_and_real_response_identity() -> None:
+    """createOrder在生成期必须校验cancel参数、证据和真实响应身份。
+
+    Returns:
+        None；合法Cleanup可运行，缺参、固定身份和错误Operation均阻塞时通过。
+    """
+
+    generation = _create_order_generation()
+    target_capability = OperationCapability(
+        operation_id=CREATE_ORDER_ID,
+        system_id=SYSTEM_ID,
+        business_name="创建退票单",
+        kind=OperationKind.FACADE,
+        mutability=OperationMutability.WRITE,
+        input_schema=generation.input_contract.request_schema,
+        publication_output_schema={
+            "type": "object",
+            "properties": {
+                "output": {
+                    "type": "object",
+                    "properties": {
+                        "order": {
+                            "type": "object",
+                            "properties": {"refundSerialNo": {"type": "string"}},
+                            "additionalProperties": False,
+                        },
+                        "bizCode": {"type": "string"},
+                    },
+                    "additionalProperties": False,
+                }
+            },
+        },
+        output_fields=[
+            OperationFieldEvidence(
+                field_path="order.refundSerialNo",
+                field_name="refundSerialNo",
+                declared_type="String",
+            )
+        ],
+        source_scan_id=SCAN_ID,
+        executable=True,
+    )
+    cancel_capability = OperationCapability(
+        operation_id=CANCEL_ID,
+        system_id=SYSTEM_ID,
+        business_name="取消退票单",
+        kind=OperationKind.FACADE,
+        mutability=OperationMutability.WRITE,
+        input_schema={
+            "type": "object",
+            "properties": {"refundSerialNo": {"type": "string"}},
+            "required": ["refundSerialNo"],
+            "additionalProperties": False,
+        },
+        source_scan_id=SCAN_ID,
+        executable=True,
+    )
+    replacement_capability = cancel_capability.model_copy(
+        update={
+            "operation_id": CREATE_ORDER_ID.rsplit("#", 1)[0] + "#markDeleted",
+            "business_name": "标记删除",
+        }
+    )
+    compilation = CaseTemplateCompilationInput(
+        submission=generation.submission,
+        input_contract=generation.input_contract,
+        target_output_schema={
+            "type": "object",
+            "properties": {
+                "order": {
+                    "type": "object",
+                    "properties": {"refundSerialNo": {"type": "string"}},
+                    "additionalProperties": False,
+                },
+                "bizCode": {"type": "string"},
+            },
+            "additionalProperties": False,
+        },
+        runtime_registry=RuntimeFunctionRegistry(functions=[]),
+        value_registry=CaseTemplateRegistryLoader().value_registry(),
+        allowed_system_ids={SYSTEM_ID},
+    )
+    service = CaseTemplateV4Service(Mock(), Mock(), Mock(), Mock())
+
+    valid_variants, valid_issues = service._apply_cleanup_requirements(
+        generation.variants,
+        compilation,
+        target_capability,
+        [target_capability, cancel_capability],
+    )
+
+    fixed_identity_generation = _create_order_generation("request_field")
+    fixed_identity_compilation = compilation.model_copy(
+        update={"submission": fixed_identity_generation.submission}
+    )
+    fixed_variants, fixed_issues = service._apply_cleanup_requirements(
+        fixed_identity_generation.variants,
+        fixed_identity_compilation,
+        target_capability,
+        [target_capability, cancel_capability],
+    )
+
+    wrong_path_generation = _create_order_generation(cleanup_source_path="bizCode")
+    wrong_path_variants, wrong_path_issues = service._apply_cleanup_requirements(
+        wrong_path_generation.variants,
+        compilation.model_copy(update={"submission": wrong_path_generation.submission}),
+        target_capability,
+        [target_capability, cancel_capability],
+    )
+
+    unproven_capability = target_capability.model_copy(update={"output_fields": []})
+    unproven_variants, unproven_issues = service._apply_cleanup_requirements(
+        generation.variants,
+        compilation,
+        unproven_capability,
+        [unproven_capability, cancel_capability],
+    )
+
+    empty_cleanup = generation.submission.case_templates[0].cleanup.model_copy(
+        update={"arguments": {}}
+    )
+    missing_arguments_submission = generation.submission.model_copy(
+        update={
+            "case_templates": [
+                generation.submission.case_templates[0].model_copy(
+                    update={"cleanup": empty_cleanup}
+                )
+            ]
+        }
+    )
+    missing_variants, missing_issues = service._apply_cleanup_requirements(
+        generation.variants,
+        compilation.model_copy(update={"submission": missing_arguments_submission}),
+        target_capability,
+        [target_capability, cancel_capability],
+    )
+
+    wrong_cleanup = generation.submission.case_templates[0].cleanup.model_copy(
+        update={"operation_id": replacement_capability.operation_id}
+    )
+    wrong_operation_submission = generation.submission.model_copy(
+        update={
+            "case_templates": [
+                generation.submission.case_templates[0].model_copy(
+                    update={"cleanup": wrong_cleanup}
+                )
+            ]
+        }
+    )
+    wrong_variants, wrong_issues = service._apply_cleanup_requirements(
+        generation.variants,
+        compilation.model_copy(update={"submission": wrong_operation_submission}),
+        target_capability,
+        [target_capability, cancel_capability, replacement_capability],
+    )
+
+    # 子串相似的方法名和同名方法的其他Facade都不能充当cancel源码证据。
+    mismatched_evidence_results = []
+    for symbol in ("RefundFacade#cancelOther", "OtherFacade#cancel"):
+        mismatched_evidence = generation.submission.case_templates[0].cleanup.evidence[0].model_copy(
+            update={"symbol": symbol}
+        )
+        mismatched_cleanup = generation.submission.case_templates[0].cleanup.model_copy(
+            update={"evidence": [mismatched_evidence]}
+        )
+        mismatched_submission = generation.submission.model_copy(
+            update={
+                "case_templates": [
+                    generation.submission.case_templates[0].model_copy(
+                        update={"cleanup": mismatched_cleanup}
+                    )
+                ]
+            }
+        )
+        mismatched_evidence_results.append(
+            service._apply_cleanup_requirements(
+                generation.variants,
+                compilation.model_copy(update={"submission": mismatched_submission}),
+                target_capability,
+                [target_capability, cancel_capability],
+            )
+        )
+
+    assert valid_issues == []
+    assert valid_variants[0].blocked_reason == ""
+    assert fixed_variants[0].blocked_reason
+    assert "CREATE_ORDER_CLEANUP_IDENTITY_INVALID" in {item.code for item in fixed_issues}
+    assert wrong_path_variants[0].blocked_reason
+    assert "CREATE_ORDER_CLEANUP_IDENTITY_INVALID" in {
+        item.code for item in wrong_path_issues
+    }
+    assert unproven_variants[0].blocked_reason
+    assert "CREATE_ORDER_CLEANUP_IDENTITY_INVALID" in {
+        item.code for item in unproven_issues
+    }
+    assert missing_variants[0].blocked_reason
+    assert "CLEANUP_ARGUMENT_MISMATCH" in {item.code for item in missing_issues}
+    assert wrong_variants[0].blocked_reason
+    assert "CREATE_ORDER_CLEANUP_OPERATION_INVALID" in {item.code for item in wrong_issues}
+    assert all(variants[0].blocked_reason for variants, _issues in mismatched_evidence_results)
+    assert all(
+        "CLEANUP_EVIDENCE_MISMATCH" in {item.code for item in issues}
+        for _variants, issues in mismatched_evidence_results
+    )
+
+
+class _CreateOrderCleanupOperationService:
+    """记录createOrder与cancel调用，并可注入目标、Oracle或Cleanup失败。"""
+
+    def __init__(
+        self,
+        fail_target: bool = False,
+        fail_cleanup: bool = False,
+        oracle_success: bool = True,
+        omit_target_identity: bool = False,
+        failure_message: str = "injected provider failure",
+    ):
+        """初始化可控执行结果和调用轨迹。
+
+        Args:
+            fail_target: createOrder是否返回Provider失败。
+            fail_cleanup: cancel是否返回Provider失败。
+            oracle_success: createOrder响应是否满足成功Oracle。
+            omit_target_identity: createOrder响应是否模拟缺少回收身份。
+            failure_message: Provider失败时仅应留在受保护Operation记录的原始错误。
+        """
+
+        self.fail_target = fail_target
+        self.fail_cleanup = fail_cleanup
+        self.oracle_success = oracle_success
+        self.omit_target_identity = omit_target_identity
+        self.failure_message = failure_message
+        self.calls: list[tuple[str, object]] = []
+
+    def execute(self, system_id: str, request: object) -> OperationExecutionRecord:
+        """按目标Operation返回带真实订单身份的可预测记录。
+
+        Args:
+            system_id: 被测或Cleanup Operation所属系统。
+            request: 统一Operation请求。
+
+        Returns:
+            根据注入开关形成的COMPLETED或FAILED记录。
+
+        Side Effects:
+            按真实发生顺序保存每次QA调用，供阶段和身份断言使用。
+        """
+
+        self.calls.append((system_id, request))
+        is_cleanup = request.operation_id == CANCEL_ID
+        failed = self.fail_cleanup if is_cleanup else self.fail_target
+        business = {"success": True}
+        if not is_cleanup:
+            # 缺失身份模式用于验证Cleanup参数解析失败也会形成独立阶段证据。
+            business = {"success": self.oracle_success}
+            if not self.omit_target_identity:
+                business["order"] = {"refundSerialNo": "REAL-ORDER-9527"}
+        return OperationExecutionRecord(
+            execution_id=f"operation-execution-{len(self.calls):020d}",
+            request_id=request.request_id,
+            request_digest="a" * 64,
+            system_id=system_id,
+            operation_id=request.operation_id,
+            kind=OperationKind.FACADE,
+            status=OperationExecutionStatus.FAILED if failed else OperationExecutionStatus.COMPLETED,
+            result={"status": "failed" if failed else "success", "output": business},
+            message=self.failure_message if failed else "",
+        )
+
+
+def test_create_order_cleanup_uses_identity_from_real_target_response() -> None:
+    """createOrder成功后必须把真实响应订单身份传给cancel回收。
+
+    Returns:
+        None；阶段顺序为TARGET、CLEANUP且cancel没有使用固定订单号时通过。
+    """
+
+    operations = _CreateOrderCleanupOperationService()
+    results = CaseTemplateExecutorV4(operations).execute(
+        "case-generation-execution-" + "1" * 20,
+        _create_order_generation(),
+        RuntimeFunctionRegistry(functions=[]),
+    )
+
+    assert results[0].status == "COMPLETED"
+    assert [item.phase for item in results[0].operations] == ["TARGET", "CLEANUP"]
+    assert operations.calls[1][1].arguments == {"refundSerialNo": "REAL-ORDER-9527"}
+
+
+def test_execution_report_does_not_copy_provider_error_message() -> None:
+    """Provider原始错误中的PNR或订单号不得复制到Execution报告。
+
+    Returns:
+        None；目标阶段和Variant只保存稳定错误码且序列化结果不含敏感值时通过。
+    """
+
+    sensitive_pnr = "SENSITIVE-PNR-781234567890"
+    operations = _CreateOrderCleanupOperationService(
+        fail_target=True,
+        failure_message=f"QA rejected pnr={sensitive_pnr}",
+    )
+
+    results = CaseTemplateExecutorV4(operations).execute(
+        "case-generation-execution-" + "8" * 20,
+        _create_order_generation("request_field"),
+        RuntimeFunctionRegistry(functions=[]),
+    )
+
+    serialized_report = json.dumps(
+        [item.model_dump(mode="json") for item in results],
+        ensure_ascii=False,
+    )
+    assert results[0].status == "FAILED"
+    assert results[0].operations[0].error == "OPERATION_FAILED"
+    assert sensitive_pnr not in serialized_report
+
+
+@pytest.mark.parametrize(
+    ("operations", "cleanup_source_kind", "expected_status"),
+    [
+        (_CreateOrderCleanupOperationService(fail_target=True), "request_field", "FAILED"),
+        (_CreateOrderCleanupOperationService(oracle_success=False), "target_response", "PARTIAL"),
+        (_CreateOrderCleanupOperationService(fail_cleanup=True), "target_response", "FAILED"),
+    ],
+)
+def test_cleanup_runs_after_target_or_oracle_failure_and_cannot_false_pass(
+    operations: _CreateOrderCleanupOperationService,
+    cleanup_source_kind: str,
+    expected_status: str,
+) -> None:
+    """TARGET或ORACLE失败后仍尝试Cleanup，且Cleanup失败不得假绿。
+
+    Args:
+        operations: 当前失败模式的QA Operation替身。
+        cleanup_source_kind: Cleanup使用目标请求或真实响应身份。
+        expected_status: 整个Variant应形成的终态。
+
+    Returns:
+        None；最后阶段始终为CLEANUP且终态符合失败来源时通过。
+    """
+
+    results = CaseTemplateExecutorV4(operations).execute(
+        "case-generation-execution-" + "2" * 20,
+        _create_order_generation(cleanup_source_kind),
+        RuntimeFunctionRegistry(functions=[]),
+    )
+
+    assert results[0].status == expected_status
+    assert results[0].operations[-1].phase == "CLEANUP"
+    assert len(operations.calls) == 2
+
+
+def test_cleanup_argument_resolution_failure_preserves_blocked_phase_summary() -> None:
+    """TARGET响应缺少回收身份时必须保存独立CLEANUP阻塞证据。
+
+    Returns:
+        None；不调用cancel、Variant失败且最后阶段为BLOCKED Cleanup时通过。
+    """
+
+    operations = _CreateOrderCleanupOperationService(omit_target_identity=True)
+    results = CaseTemplateExecutorV4(operations).execute(
+        "case-generation-execution-" + "6" * 20,
+        _create_order_generation(),
+        RuntimeFunctionRegistry(functions=[]),
+    )
+
+    cleanup_stage = results[0].operations[-1]
+    assert results[0].status == "FAILED"
+    assert len(operations.calls) == 1
+    assert cleanup_stage.phase == "CLEANUP"
+    assert cleanup_stage.status == "BLOCKED"
+    assert cleanup_stage.input_summary["fields"] == ["refundSerialNo"]
+    assert cleanup_stage.output_summary == {"type": "not-produced"}
+
+
+def test_oracle_argument_resolution_failure_preserves_blocked_phase_summary() -> None:
+    """Oracle参数在调用前缺失时必须保存独立ORACLE阻塞证据。
+
+    Returns:
+        None；Observer未访问QA，Cleanup仍执行且报告保留两阶段时通过。
+    """
+
+    generation = _create_order_generation("request_field")
+    operation_oracle = generation.submission.case_templates[0].oracles[0].model_copy(
+        update={
+            "channel": "operation",
+            "function_id": DETAIL_ID,
+            "arguments": {
+                "refundSerialNo": DslValueSource(
+                    kind="target_response",
+                    path="missingOrderSerialNo",
+                )
+            },
+            "evidence": [
+                {
+                    "source_system_id": SYSTEM_ID,
+                    "path": "RefundFacade.java",
+                    "symbol": "RefundFacade#queryDetailByRefundNo",
+                    "line": 30,
+                }
+            ],
+        }
+    )
+    template = generation.submission.case_templates[0].model_copy(
+        update={"oracles": [operation_oracle]}
+    )
+    submission = generation.submission.model_copy(update={"case_templates": [template]})
+    variant = generation.variants[0].model_copy(update={"oracles": [operation_oracle]})
+    generation = generation.model_copy(update={"submission": submission, "variants": [variant]})
+    runtime_registry = RuntimeFunctionRegistry(
+        functions=[
+            RuntimeFunctionDescriptor(
+                function_id=DETAIL_ID,
+                kind="dsf",
+                description="查询退票详情",
+                input_schema={
+                    "type": "object",
+                    "properties": {"refundSerialNo": {"type": "string"}},
+                    "required": ["refundSerialNo"],
+                    "additionalProperties": False,
+                },
+                output_schema={"type": "object", "properties": {"success": {"type": "boolean"}}},
+                allowed_phases=["ORACLE"],
+                source_system_id=SYSTEM_ID,
+                provider_ref=DETAIL_ID,
+            )
+        ]
+    )
+    operations = _CreateOrderCleanupOperationService()
+
+    results = CaseTemplateExecutorV4(operations).execute(
+        "case-generation-execution-" + "7" * 20,
+        generation,
+        runtime_registry,
+    )
+
+    phases = [(item.phase, item.status) for item in results[0].operations]
+    assert results[0].status == "BLOCKED"
+    assert phases == [("TARGET", "COMPLETED"), ("ORACLE", "BLOCKED"), ("CLEANUP", "COMPLETED")]
+    assert [request.operation_id for _system_id, request in operations.calls] == [
+        CREATE_ORDER_ID,
+        CANCEL_ID,
+    ]
+
+
+def test_blocked_write_variant_never_calls_data_or_target() -> None:
+    """缺少合格Cleanup的写Variant保留在报告但不得访问QA。
+
+    Returns:
+        None；Variant为BLOCKED且Operation调用计数为零时通过。
+    """
+
+    operations = _CreateOrderCleanupOperationService()
+    generation = _create_order_generation(blocked_reason="写接口Case必须声明结构化Cleanup")
+
+    results = CaseTemplateExecutorV4(operations).execute(
+        "case-generation-execution-" + "3" * 20,
+        generation,
+        RuntimeFunctionRegistry(functions=[]),
+    )
+
+    assert results[0].status == "BLOCKED"
+    assert results[0].operations == []
+    assert operations.calls == []
+
+
+def test_execution_store_allows_repeat_after_terminal_and_rejects_running_duplicate(tmp_path: Path) -> None:
+    """同Generation终态后可再次执行，运行中重复触发返回当前execution_id。
+
+    Args:
+        tmp_path: pytest提供的私有Execution状态根。
+
+    Returns:
+        None；并发冲突携带活动ID，终态后新Execution使用独立ID时通过。
+    """
+
+    store = CaseGenerationExecutionStoreV4(tmp_path)
+    first = CaseGenerationExecutionV4(
+        execution_id=f"case-generation-execution-{'4' * 20}",
+        generation_id=f"case-template-generation-{'5' * 20}",
+        system_id=SYSTEM_ID,
+        environment_id="qa",
+        status="RUNNING",
+    )
+    store.create(first)
+    duplicate = first.model_copy(
+        update={"execution_id": f"case-generation-execution-{'6' * 20}"}
+    )
+
+    with pytest.raises(CaseExecutionConflictError) as conflict:
+        store.create(duplicate)
+    assert conflict.value.execution_id == first.execution_id
+
+    store.update(first.model_copy(update={"status": "PASSED"}))
+    second = store.create(duplicate)
+    assert second.execution_id != first.execution_id
+
+
+@pytest.mark.parametrize(
+    ("handoff_status", "turn_process_id", "expected_status"),
+    [
+        ("WAITING_FOR_AGENT", "", "QUEUED"),
+        ("WAITING_FOR_AGENT", "12345", "GENERATING"),
+        ("VALIDATING", "", "GENERATING"),
+        ("FAILED", "", "FAILED"),
+    ],
+)
+def test_generation_state_projects_async_handoff_status(
+    handoff_status: str,
+    turn_process_id: str,
+    expected_status: str,
+) -> None:
+    """未落盘 Generation 应投影为统一的排队、生成中或失败状态。
+
+    Args:
+        handoff_status: 私有 Codex handoff 当前状态。
+        turn_process_id: 已启动生成 turn 时存在的进程身份。
+        expected_status: 页面和 Skill 可见的 Generation 状态。
+
+    Returns:
+        None；投影保持预分配 Generation 身份且不伪造 Variant 时通过。
+    """
+
+    generation_id = f"case-template-generation-{'7' * 20}"
+    generation_store = Mock()
+    generation_store.get.side_effect = KnowledgeNotFoundError("not ready")
+    handoff_store = Mock()
+    handoff_store.find_by_generation.return_value = CaseTemplateHandoffV4(
+        handoff_id=f"case-template-handoff-{'8' * 20}",
+        system_id=SYSTEM_ID,
+        entry_id=CANCEL_ID,
+        source_scan_id=SCAN_ID,
+        status=handoff_status,
+        source_scopes=[
+            CaseTemplateSourceScope(
+                source_system_id=SYSTEM_ID,
+                source_scan_id=SCAN_ID,
+                source_baseline=SourceBaseline(source_path="/private/refund-core"),
+            )
+        ],
+        generation_id=generation_id,
+        turn_process_id=turn_process_id,
+        safe_error="generation failed" if handoff_status == "FAILED" else "",
+    )
+    service = CaseTemplateV4Service(
+        Mock(),
+        Mock(),
+        generation_store,
+        handoff_store,
+    )
+
+    projected = service.get_generation_state(SYSTEM_ID, generation_id)
+
+    assert projected["generation_id"] == generation_id
+    assert projected["status"] == expected_status
+    assert projected["variants"] == []
+    assert projected["safe_error"] == (
+        "generation failed" if expected_status == "FAILED" else ""
+    )
+
+
+def test_case_handoff_catalog_allows_preallocated_generation_before_artifact() -> None:
+    """预分配Generation身份不得阻止Codex首次读取handoff目录。
+
+    Returns:
+        None；等待中的handoff返回空Generation且不会读取尚不存在的JSON时通过。
+    """
+
+    generation_id = f"case-template-generation-{'9' * 20}"
+    handoff = CaseTemplateHandoffV4(
+        handoff_id=f"case-template-handoff-{'9' * 20}",
+        system_id=SYSTEM_ID,
+        entry_id=CANCEL_ID,
+        source_scan_id=SCAN_ID,
+        status="WAITING_FOR_AGENT",
+        source_scopes=[
+            CaseTemplateSourceScope(
+                source_system_id=SYSTEM_ID,
+                source_scan_id=SCAN_ID,
+                source_baseline=SourceBaseline(source_path="/private/refund-core"),
+            )
+        ],
+        generation_id=generation_id,
+    )
+    target_capability = OperationCapability(
+        operation_id=CANCEL_ID,
+        system_id=SYSTEM_ID,
+        business_name="取消退票单",
+        kind=OperationKind.FACADE,
+        mutability=OperationMutability.WRITE,
+        input_schema=_cancel_contract().request_schema,
+        publication_output_schema={
+            "type": "object",
+            "properties": {"output": {"type": "object", "properties": {}}},
+        },
+        source_scan_id=SCAN_ID,
+        executable=True,
+    )
+    generations = Mock()
+    handoffs = Mock()
+    handoffs.get.return_value = handoff
+    service = CaseTemplateV4Service(Mock(), Mock(), generations, handoffs)
+    service._refresh_agent_status = Mock(return_value=handoff)
+    service._input_contract = Mock(return_value=_cancel_contract())
+    service._runtime_capabilities = Mock(return_value=[target_capability])
+
+    catalog = service.catalog(handoff.handoff_id)
+
+    assert catalog["handoff"]["generation_id"] == generation_id
+    assert catalog["generation"] is None
+    generations.get.assert_not_called()
+
+
+def test_failed_generation_rejects_execution_as_conflict_before_qa() -> None:
+    """只有私有handoff状态的FAILED Generation也必须返回不可执行冲突。
+
+    Returns:
+        None；错误携带FAILED且未创建Execution、未调用Operation时通过。
+    """
+
+    generation_id = f"case-template-generation-{'8' * 20}"
+    generation_store = Mock()
+    generation_store.get.side_effect = KnowledgeNotFoundError("generation artifact absent")
+    handoff_store = Mock()
+    handoff_store.find_by_generation.return_value = CaseTemplateHandoffV4(
+        handoff_id=f"case-template-handoff-{'7' * 20}",
+        system_id=SYSTEM_ID,
+        entry_id=CREATE_ORDER_ID,
+        source_scan_id=SCAN_ID,
+        status="FAILED",
+        source_scopes=[
+            CaseTemplateSourceScope(
+                source_system_id=SYSTEM_ID,
+                source_scan_id=SCAN_ID,
+                source_baseline=SourceBaseline(source_path="/private/refund-core"),
+            )
+        ],
+        generation_id=generation_id,
+        safe_error="generation failed",
+    )
+    operation_service = Mock()
+    execution_store = Mock()
+    service = CaseTemplateV4Service(
+        Mock(),
+        Mock(),
+        generation_store,
+        handoff_store,
+        CaseTemplateV4RuntimeServices(
+            operation_catalog=Mock(),
+            operation_service=operation_service,
+            codex_app_server=Mock(),
+            environment_provider=default_case_template_environment_values,
+            execution_store=execution_store,
+        ),
+    )
+
+    with pytest.raises(CaseGenerationStateConflictError) as conflict:
+        service.execute_generation(
+            SYSTEM_ID,
+            generation_id,
+            CaseGenerationExecutionRequestV4(environment_id="qa"),
+        )
+
+    assert conflict.value.generation_status == "FAILED"
+    execution_store.create.assert_not_called()
+    operation_service.execute.assert_not_called()
+
+
+def test_variant_order_is_frozen_by_path_kind_and_stable_identity() -> None:
+    """Generation 应忽略模型提交顺序并冻结确定性的 Variant 执行顺序。
+
+    Returns:
+        None；业务、必填校验、状态校验依次排序且 ordinal 连续时通过。
+    """
+
+    variants, _issues = _compile_golden()
+    submission = _golden_submission()
+    service = CaseTemplateV4Service(Mock(), Mock(), Mock(), Mock())
+
+    frozen = service._freeze_variant_order(list(reversed(variants)), submission)
+    coverage_order = {
+        template.template_id: {
+            "business": 0,
+            "required_validation": 1,
+            "state_validation": 2,
+        }[template.coverage_kind]
+        for template in submission.case_templates
+    }
+    expected_ids = [
+        item.variant_id
+        for item in sorted(
+            variants,
+            key=lambda item: (coverage_order[item.template_id], item.variant_id),
+        )
+    ]
+
+    assert [item.variant_id for item in frozen] == expected_ids
+    assert [item.ordinal for item in frozen] == list(range(1, len(frozen) + 1))
+
+
+def test_partial_generation_executes_runnable_variants_and_can_run_again(
+    tmp_path: Path,
+) -> None:
+    """PARTIAL Generation 应保留阻塞项并允许每次显式触发形成独立报告。
+
+    Args:
+        tmp_path: pytest 隔离的 Execution 私有存储根。
+
+    Returns:
+        None；可运行项与阻塞项按冻结顺序报告，重复执行使用新身份时通过。
+    """
+
+    ready_generation = _create_order_generation()
+    blocked_variant = ready_generation.variants[0].model_copy(
+        update={
+            "variant_id": f"case-variant-v4-{'e' * 20}",
+            "ordinal": 2,
+            "blocked_reason": "缺少结构化 Cleanup",
+        }
+    )
+    generation = ready_generation.model_copy(
+        update={
+            "status": "PARTIAL",
+            "variants": [ready_generation.variants[0], blocked_variant],
+        }
+    )
+    handoff = CaseTemplateHandoffV4(
+        handoff_id=generation.handoff_id,
+        system_id=SYSTEM_ID,
+        entry_id=generation.operation_id,
+        source_scan_id=SCAN_ID,
+        status="PARTIAL",
+        source_scopes=[
+            CaseTemplateSourceScope(
+                source_system_id=SYSTEM_ID,
+                source_scan_id=SCAN_ID,
+                source_baseline=SourceBaseline(source_path="/private/refund-core"),
+            )
+        ],
+        generation_id=generation.generation_id,
+    )
+    generation_store = Mock()
+    generation_store.get.return_value = generation
+    handoff_store = Mock()
+    handoff_store.get.return_value = handoff
+    execution_store = CaseGenerationExecutionStoreV4(tmp_path)
+    runtime = CaseTemplateV4RuntimeServices(
+        operation_catalog=Mock(),
+        operation_service=Mock(),
+        codex_app_server=Mock(),
+        environment_provider=default_case_template_environment_values,
+        execution_store=execution_store,
+    )
+    service = CaseTemplateV4Service(
+        Mock(),
+        Mock(),
+        generation_store,
+        handoff_store,
+        runtime,
+    )
+    service._runtime_registry_for_execution = Mock(
+        return_value=RuntimeFunctionRegistry(functions=[])
+    )
+    service.executor = Mock()
+    service.executor.execute.return_value = [
+        CaseVariantExecutionV4(
+            variant_id=ready_generation.variants[0].variant_id,
+            status="COMPLETED",
+        ),
+        CaseVariantExecutionV4(
+            variant_id=blocked_variant.variant_id,
+            status="BLOCKED",
+            error=blocked_variant.blocked_reason,
+        ),
+    ]
+
+    first = service.execute_generation(
+        SYSTEM_ID,
+        generation.generation_id,
+        CaseGenerationExecutionRequestV4(environment_id="qa"),
+    )
+    second = service.execute_generation(
+        SYSTEM_ID,
+        generation.generation_id,
+        CaseGenerationExecutionRequestV4(environment_id="qa"),
+    )
+
+    assert first.status == "PARTIAL"
+    assert [item.variant_id for item in first.variant_results] == [
+        ready_generation.variants[0].variant_id,
+        blocked_variant.variant_id,
+    ]
+    assert second.execution_id != first.execution_id
+
+
+def test_blocked_generation_rejects_execution_before_qa() -> None:
+    """BLOCKED Generation 必须在重建运行目录和调用 QA 前返回状态冲突。
+
+    Returns:
+        None；服务抛出不可执行冲突且 Operation 服务零调用时通过。
+    """
+
+    generation_store = Mock()
+    generation_store.get.return_value = _create_order_generation(
+        blocked_reason="缺少结构化 Cleanup"
+    )
+    operation_service = Mock()
+    service = CaseTemplateV4Service(
+        Mock(),
+        Mock(),
+        generation_store,
+        Mock(),
+        CaseTemplateV4RuntimeServices(
+            operation_catalog=Mock(),
+            operation_service=operation_service,
+            codex_app_server=Mock(),
+            environment_provider=default_case_template_environment_values,
+            execution_store=Mock(),
+        ),
+    )
+
+    with pytest.raises(CaseGenerationStateConflictError) as conflict:
+        service.execute_generation(
+            SYSTEM_ID,
+            generation_store.get.return_value.generation_id,
+            CaseGenerationExecutionRequestV4(environment_id="qa"),
+        )
+
+    assert conflict.value.generation_status == "BLOCKED"
+    operation_service.execute.assert_not_called()
 
 
 def test_v4_service_builds_finite_output_schema_from_scan_fields() -> None:
@@ -2508,11 +3503,11 @@ def test_v4_service_creates_thread_and_starts_turn_with_v4_tool_scope() -> None:
     assert started.turn_status == "inProgress"
 
 
-def test_v4_dsl_submission_dispatches_qa_without_waiting_for_execution() -> None:
-    """确认DSL严格落盘后通过后台任务执行QA而不阻塞MCP请求。
+def test_case_dsl_submission_persists_generation_without_dispatching_qa() -> None:
+    """确认DSL提交只持久化Generation且不会派发或调用QA。
 
     Returns:
-        None；handoff进入EXECUTING、任务已派发且当前线程未调用执行器时通过。
+        None；handoff完成、Generation落盘且所有QA调用计数为零时通过。
     """
 
     handoff = CaseTemplateHandoffV4(
@@ -2528,7 +3523,6 @@ def test_v4_dsl_submission_dispatches_qa_without_waiting_for_execution() -> None
                 source_baseline=SourceBaseline(source_path="/private/refund-core"),
             )
         ],
-        execution_mode="QA_AFTER_GENERATION",
     )
     submission = CaseTemplateSubmission.model_validate(
         {
@@ -2601,9 +3595,10 @@ def test_v4_dsl_submission_dispatches_qa_without_waiting_for_execution() -> None
     generations = Mock()
     generations.write.side_effect = lambda generation: generation
     task_manager = Mock()
+    operation_service = Mock()
     runtime = CaseTemplateV4RuntimeServices(
         operation_catalog=Mock(),
-        operation_service=Mock(),
+        operation_service=operation_service,
         codex_app_server=Mock(),
         environment_provider=default_case_template_environment_values,
         task_manager=task_manager,
@@ -2621,9 +3616,10 @@ def test_v4_dsl_submission_dispatches_qa_without_waiting_for_execution() -> None
 
     written_statuses = [call.args[0].status for call in handoffs.write.call_args_list]
     assert generation.status == "READY"
-    assert written_statuses[-1] == "EXECUTING"
-    task_manager.submit.assert_called_once()
+    assert written_statuses[-1] == "COMPLETED"
+    task_manager.submit.assert_not_called()
     service.executor.execute.assert_not_called()
+    operation_service.execute.assert_not_called()
 
 
 def test_v4_service_marks_atomic_thread_turn_start_failure() -> None:

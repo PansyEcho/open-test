@@ -18,14 +18,9 @@ from opentest.application.foundation import OpenTestApplication
 from opentest.application.program_case_analysis import ProgramCaseAnalysisBuilder
 from opentest.domain.errors import KnowledgeNotFoundError, KnowledgeValidationError, ScopeViolationError
 from opentest.domain.models import (
-    CandidateOperation,
-    CandidateRef,
-    CaseVariantExecutionRequest,
-    CapabilityDraftSubmission,
     EntryPoint,
     KnowledgeNodeKind,
     MqEntryFrameworkRule,
-    ProviderOperationRef,
     ScanManifest,
     SemanticAnalysisResult,
     SemanticFieldDefinition,
@@ -168,53 +163,6 @@ def _publish_generic_scan(
     artifacts.write_scan_bundle(manifest, program_catalog)
     application.store.update_source_baseline(system_id, baseline)
     artifacts.publish_latest(system_id, manifest.scan_id)
-
-
-def _capability_submission(candidate: CandidateOperation) -> CapabilityDraftSubmission:
-    """构造用于验证跨系统发现不授予发布权限的V2草稿。
-
-    Args:
-        candidate: consumer通过直接绑定读取到的provider Candidate。
-
-    Returns:
-        引用provider系统Candidate和Operation、应被consumer路由拒绝的草稿。
-    """
-
-    return CapabilityDraftSubmission(
-        publication_request_id="phase2-cross-system-publication",
-        candidate_ref=CandidateRef(
-            source_system_id=candidate.system_id,
-            candidate_id=candidate.candidate_id,
-            source_scan_id=candidate.source_scan_id,
-            source_baseline=candidate.source_baseline,
-            candidate_signature=candidate.method_signature,
-            request_dto_types=candidate.request_dto_types,
-            response_dto_type=candidate.response_dto_type,
-            dto_definitions=candidate.dto_definitions,
-            field_conversions=candidate.field_conversions,
-        ),
-        provider_operation_ref=ProviderOperationRef(
-            source_system_id=candidate.system_id,
-            operation_id="facade:sample.ProvisionFacade#execute",
-            source_scan_id=candidate.source_scan_id,
-        ),
-        business_name="通用原子操作",
-        business_purpose="验证直接依赖绑定不能扩大跨系统发布权限。",
-        input_schema={
-            "type": "object",
-            "properties": {"items": {"type": "array", "items": {"type": "string"}}},
-            "required": ["items"],
-            "additionalProperties": False,
-        },
-        input_mapping={"items": "items"},
-        output_fact_schema={
-            "type": "object",
-            "properties": {"reference_id": {"type": "string"}},
-            "required": ["reference_id"],
-            "additionalProperties": False,
-        },
-        output_mapping={"reference_id": "referenceId"},
-    )
 
 
 def _system_mq_rule_path(tmp_path: Path) -> tuple[Path, Path]:
@@ -386,37 +334,8 @@ def test_duplicate_candidate_identity_blocks_whole_source_snapshot(tmp_path: Pat
         application.candidate_operation_catalog("consumer-app")
 
 
-def test_v3_execution_rejects_unknown_generation_before_attempt_or_qa(tmp_path: Path) -> None:
-    """阶段8执行入口遇到未知Generation时必须在Attempt和QA之前失败。
-
-    Args:
-        tmp_path: Pytest隔离知识、源码和潜在后续阶段资产目录。
-    """
-
-    application = OpenTestApplication(tmp_path / "knowledge")
-    _publish_generic_scan(application, "consumer-app", "Consume", "consumer-v1")
-    system_root = application.store.system_root("consumer-app")
-    before_files = sorted(
-        str(path.relative_to(system_root)) for path in system_root.rglob("*") if path.is_file()
-    )
-    with pytest.raises(KnowledgeNotFoundError, match="hybrid case generation not found"):
-        # 不存在的Generation无法解析Variant，因此不得创建Attempt或访问provider。
-        application.execute_hybrid_case_variant(
-            "consumer-app",
-            "variant-any",
-            CaseVariantExecutionRequest(
-                generation_id="hybrid-generation-00000000000000000000"
-            ),
-        )
-
-    after_files = sorted(
-        str(path.relative_to(system_root)) for path in system_root.rglob("*") if path.is_file()
-    )
-    assert after_files == before_files
-    assert application.list_hybrid_case_attempts("consumer-app") == []
-
-def test_dependency_api_is_direct_only_and_cross_system_publication_is_blocked(tmp_path: Path) -> None:
-    """HTTP绑定不得传递，provider Candidate也不得由consumer路由发布。
+def test_dependency_api_is_direct_only_and_legacy_publication_route_is_removed(tmp_path: Path) -> None:
+    """HTTP绑定不得传递，历史候选发布路由也不再对外提供。
 
     Args:
         tmp_path: Pytest隔离知识与源码根目录。
@@ -457,13 +376,9 @@ def test_dependency_api_is_direct_only_and_cross_system_publication_is_blocked(t
             "/api/v2/systems/consumer-app/candidate-operations/"
             + quote(provider_candidate["candidate_id"], safe="")
         )
-        candidate = application.get_candidate_operation(
-            "consumer-app",
-            provider_candidate["candidate_id"],
-        )
-        blocked_response = client.post(
+        retired_response = client.post(
             "/api/v2/systems/consumer-app/capability-drafts",
-            json=_capability_submission(candidate).model_dump(mode="json"),
+            json={},
         )
 
     assert put_response.status_code == 200
@@ -473,12 +388,7 @@ def test_dependency_api_is_direct_only_and_cross_system_publication_is_blocked(t
     }
     assert visible_systems == {"consumer-app", "provider-app"}
     assert "third-app" not in visible_systems
-    assert blocked_response.status_code == 200
-    result = blocked_response.json()["result"]
-    assert result["status"] == "BLOCKED"
-    assert [issue["code"] for issue in result["issues"]] == [
-        "CAPABILITY_SYSTEM_SCOPE_MISMATCH"
-    ]
+    assert retired_response.status_code == 404
     assert not (application.store.system_root("consumer-app") / "capabilities" / "published.yaml").exists()
 
 

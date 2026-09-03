@@ -1,8 +1,8 @@
 ## ADDED Requirements
 
-### Requirement: Facade通过Snapshot绑定的DSFProxy操作执行
+### Requirement: Facade通过扫描绑定的DSFProxy操作执行
 
-系统 SHALL 在QA环境把已确认的Facade逻辑工具解析为Snapshot绑定的DSF操作，并通过独立Java Worker使用被测系统客户端身份调用。请求不得携带动态服务地址、凭据或未确认服务描述。
+系统 SHALL 在QA环境把已确认的Facade逻辑工具解析为当前扫描绑定的DSF操作，并通过独立Java Worker使用被测系统客户端身份调用。请求不得携带动态服务地址、凭据或未确认服务描述。
 
 #### Scenario: 被测系统调用自身只读Facade
 
@@ -28,5 +28,5 @@
 #### Scenario: 两个只读金丝雀完成
 
 - **WHEN** 自调用和跨系统调用均通过注册、路由、序列化和响应校验
-- **THEN** 新Snapshot只生成`dsf_proxy`工具
-- **AND** 历史脚本Snapshot可审计但不可重新执行
+- **THEN** 新扫描操作目录只使用`dsf_proxy`
+- **AND** 历史脚本Manifest可审计但不可重新执行

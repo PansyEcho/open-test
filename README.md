@@ -1,51 +1,26 @@
 # OpenTest
 
-## V2：单系统DSF闭环
+OpenTest 是面向 DSF 系统的本地测试工作台。当前主线只保留四个页面入口：工作台、系统、知识库、回归 Case。页面、`$open-test` 与系统专属 Skill 共用 `opentest` 后端和 `/api/v2` 传输接口。
 
-V2位于 `opentest` 包，使用FastAPI、Pydantic、Git Markdown/YAML知识真相和可删除重建的SQLite索引。当前验证目标是 `train-booking-core` 的 `TradeFacade#createOrder`；不使用向量数据库，也不验证跨系统知识。
-
-安装开发依赖并启动：
+## 启动
 
 ```bash
 python3 -m pip install -e '.[dev]'
 uvicorn opentest.api:app --host 127.0.0.1 --port 8788
 ```
 
-打开 `http://127.0.0.1:8788/console`。CLI可通过 `opentest --help` 查看；源码扫描还需设置 `--scriptgen-pythonpath` 或环境变量 `OPENTEST_SCRIPTGEN_PYTHONPATH`。
+打开 `http://127.0.0.1:8788/console`。源码扫描还需在系统页面配置 scriptgen `agent-harness` 路径。
 
-知识与Case位于 `open-test-knowledge/`；SQLite、扫描工具、任务、Snapshot、QA环境和运行报告位于被Git忽略的 `open-test-knowledge/.opentest/`。真实执行前按 [QA本地环境配置](docs/development/qa-environment.md) 创建本地YAML并通过环境变量引用密钥。
+知识与不可变 Case Generation 位于 `open-test-knowledge/`；扫描任务、QA 配置和 Execution 报告位于 Git 忽略的 `open-test-knowledge/.opentest/`。真实执行前在系统页明确配置 QA 环境和 Operation 网关。
 
-开发进度见 [docs/status.md](docs/status.md)，架构见 [docs/architecture/overview.md](docs/architecture/overview.md)。
+## 标准 SOP
 
-## Legacy MVP
+1. 修复 Codex 环境：从 `~/.codex/config.toml` 删除无效的 `[agents] enabled=true`，保留 `[features] multi_agent=true`；重启 Codex，确认 OpenTest 插件已启用，并在新任务中确认 `$open-test-ifightchainsaas-java-refund-core` 可见。
+2. 配置系统：填写代码库、扫描基线、QA 环境和 Operation 网关，保存后确认系统状态完整。
+3. 扫描：确认接口、资源、调用关系和候选 Operation 已产生；先处理阻塞项，不复用旧扫描冒充成功。
+4. 生成并发布知识：在页面点击“在 Codex 中生成”或使用 `$open-test`。发布知识版本并同步系统 Skill 后，可用 `$open-test-ifightchainsaas-java-refund-core 帮我退 pnr=xxx 的订单` 验证自然语言 Operation。
+5. 只生成 Case：选择接口并点击“生成 Case”，或调用 `generate_interface_cases`。此阶段不得访问 QA；检查 Generation 的 `READY/PARTIAL/BLOCKED`、冻结 Variant 顺序和 Cleanup 完整性。
+6. 显式执行：选择 QA 环境并点击“执行本次 Generation 的全部 Variant”，或调用 `execute_case_generation`。系统逐 Variant 严格执行 `DATA → TARGET → ORACLE → CLEANUP`。
+7. 查看报告：按 `execution_id` 查看整体状态、逐阶段状态及有界脱敏输入/输出摘要。修复知识、数据或 Cleanup 后创建新的 Generation，再显式执行；旧 Generation 不原地修改。
 
-本项目是一个本地 Web MVP，用 Python 标准库实现后端服务和静态前端，不依赖外部安装包。
-
-## 启动
-
-```bash
-python3 -m ai_test_platform.cli --host 127.0.0.1 --port 8787
-```
-
-可选数据目录：
-
-```bash
-AI_TEST_PLATFORM_HOME=/tmp/ai-test-platform python3 -m ai_test_platform.cli --port 8787
-```
-
-浏览器打开 `http://127.0.0.1:8787`。推荐手工操作顺序：
-
-1. 创建本地项目
-2. 选择 travelsystem 业务代码目录
-3. 检测并选择 Codex / Claude Code
-4. 进入 CLI 工具，生成并确认 CLI
-5. 进入知识库，配置“从代码生成知识库的 Skill 目录”
-6. 在知识库聊天页生成项目背景
-7. 在右侧树点击某个接口，例如“创建订单”，通过聊天生成或重新生成子知识库
-8. 点击子知识库查看内容，可人工编辑，也可通过内容中的知识链接跳转
-9. 生成并确认 Case
-10. 创建 snapshot
-11. 不调用 LLM 执行主流程回归
-12. 查看失败步骤、命令、stdout JSON、断言差异和绑定版本
-
-也可以点击“一键跑通 MVP”，它会按 `CLI -> 知识库聊天 -> Case -> Snapshot -> 回归` 的顺序自动跑完。
+`READY` 会执行全部 Variant；`PARTIAL` 只执行可运行 Variant并在报告中保留其余 `BLOCKED`；`BLOCKED/FAILED` 不允许启动。一次 Generation 可以多次显式执行，每次产生独立 `execution_id`。
