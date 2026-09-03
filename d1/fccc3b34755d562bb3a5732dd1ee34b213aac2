@@ -1,0 +1,106 @@
+opentest/adapters/dsf_proxy_worker.py
+  s_e3e4bd4c1f59cb::t_e56195cc971cab 21,70-75,77-78
+opentest/application/source_analysis.py
+  s_e3e4bd4c1f59cb::t_50b5505703a6c0 157
+opentest/application/operations.py
+  s_e3e4bd4c1f59cb::t_94588eed940ed3 21,1207,1337-1341,1343-1398
+  s_e3e4bd4c1f59cb::t_f8ce4b3a049161 51,277-281,361-365
+  s_e3e4bd4c1f59cb::t_01578edfc4c580 1342
+tests/v2/test_dsf_operations.py
+  s_e3e4bd4c1f59cb::t_c891130987248e 120-130,155-156,195-196,524-534
+  s_e3e4bd4c1f59cb::t_959350e14f8dc0 157-159,197-199
+  s_e3e4bd4c1f59cb::t_bb7f5ab9375e53 298,523,542-543,548
+  s_e3e4bd4c1f59cb::t_6a4b7c9c0a478c 139,149-154,160-194,200-210
+  s_e3e4bd4c1f59cb::t_81f3d1e05667f3 211-212
+opentest/adapters/qa_active_worker.py
+  s_e3e4bd4c1f59cb::t_f2ef109772c53f 85-89
+  s_e3e4bd4c1f59cb::t_38c700aff5491c 84,90-94,96,123,172-176,178-184,186-197,200,202-204,208,217,232
+  s_e3e4bd4c1f59cb::t_5fdd6472c629fd 16-22,201
+  s_e3e4bd4c1f59cb::t_10dfcda4187ec8 95,177,185,198-199
+  s_e3e4bd4c1f59cb::t_50af7e8c59ca71 55
+workers/qa-oracle-worker/src/test/java/com/opentest/qaoracle/active/ActiveOperationServiceTest.java
+  s_e3e4bd4c1f59cb::t_50af7e8c59ca71 74,76,78-81
+opentest/application/dsf_operations.py
+  s_e3e4bd4c1f59cb::t_c20e77a0557e20 29,78-89,93,373-378,424,437-442
+tests/v2/test_multi_system_reliability.py
+  s_e3e4bd4c1f59cb::t_6a4b7c9c0a478c 601
+  s_e3e4bd4c1f59cb::t_c891130987248e 301-306
+  s_e3e4bd4c1f59cb::t_13bd7fa98a51b0 323,333,338,340
+  s_e3e4bd4c1f59cb::t_b0bfdf65bc544d 7,9,345-400,403-436
+  s_e3e4bd4c1f59cb::t_4e0b0bc556a771 401-402
+  s_e3e4bd4c1f59cb::t_2f90017cad92ad 437-439
+tests/v2/test_guided_onboarding.py
+  s_e3e4bd4c1f59cb::t_6a4b7c9c0a478c 120,125-126
+  s_e3e4bd4c1f59cb::t_e8fc51bdd79fa0 154-159,163-169,171-175,177-188
+  s_e3e4bd4c1f59cb::t_8367d154933f7f 170,176
+  s_e3e4bd4c1f59cb::t_b0bfdf65bc544d 189,193,239-254,258-259
+  s_e3e4bd4c1f59cb::t_c891130987248e 91-96,160-162,198-203
+workers/qa-oracle-worker/src/main/java/com/opentest/qaoracle/active/ActiveOperationService.java
+  s_e3e4bd4c1f59cb::t_74972b892313ca 81,147,369
+  s_e3e4bd4c1f59cb::t_50af7e8c59ca71 34-35,170,228,230-232,234,236-238,240
+opentest/adapters/dsf_operations.py
+  s_e3e4bd4c1f59cb::t_50af7e8c59ca71 67,130-134,339,401
+  s_e3e4bd4c1f59cb::t_96adccb1319e17 26,46,493
+  s_e3e4bd4c1f59cb::t_74972b892313ca 51,239,469-472
+  s_e3e4bd4c1f59cb::t_10dfcda4187ec8 348-377,381-385,394
+  s_e3e4bd4c1f59cb::t_36d5218f22a9d3 185,192,207-218,237-238,243,246-249,252-255,257-271,273,323,329,336,455,465,525
+  s_e3e4bd4c1f59cb::t_c891130987248e 198
+  s_e3e4bd4c1f59cb::t_bb7f5ab9375e53 499
+opentest/domain/models.py
+  s_e3e4bd4c1f59cb::t_74a07e0ef22477 239,2399,4101
+  s_e3e4bd4c1f59cb::t_2c3b1c2451d1aa 231-233
+  s_e3e4bd4c1f59cb::t_74972b892313ca 235,2395
+tests/v2/test_case_template_v4.py
+  s_e3e4bd4c1f59cb::t_1fd6d4ef0398ba 1116-1120,1883-1887
+  s_e3e4bd4c1f59cb::t_9a26021a52d463 1922-1930
+  s_e3e4bd4c1f59cb::t_2bda5b2717a969 1146-1160,1162-1167,1174-1231
+  s_e3e4bd4c1f59cb::t_31bc09d298a089 1232-1233
+tests/v2/test_console_contract.py
+  s_e3e4bd4c1f59cb::t_50af7e8c59ca71 21-22,25-28
+opentest/application/foundation.py
+  s_e3e4bd4c1f59cb::t_1072e72f718ada 818,826,840-845,867,876,891-896,916,924,934-945,1523-1534
+  s_e3e4bd4c1f59cb::t_c891130987248e 1515
+  s_e3e4bd4c1f59cb::t_7403650d35af1e 1402-1429,1440-1442,1446,1453,1457-1458,1476-1479,1488,1502
+  s_e3e4bd4c1f59cb::t_0197b87683d33d 1443-1445
+  s_e3e4bd4c1f59cb::t_50af7e8c59ca71 1506,1512
+opentest/web/index.html
+  s_e3e4bd4c1f59cb::t_50af7e8c59ca71 6,81-84,295
+opentest/web/app.js
+  s_e3e4bd4c1f59cb::t_50af7e8c59ca71 626-631,639,647-654,680,687,1554-1559,1573
+opentest/adapters/environment_config.py
+  s_e3e4bd4c1f59cb::t_13bd7fa98a51b0 270
+  s_e3e4bd4c1f59cb::t_74972b892313ca 180
+  s_e3e4bd4c1f59cb::t_f2eaa738b09471 207,213-229,256,264,292-298,305,547-581
+  s_e3e4bd4c1f59cb::t_c3a32ee950ceb7 582
+tests/v2/test_api_cli.py
+  s_e3e4bd4c1f59cb::t_50af7e8c59ca71 48,93-94
+tests/v2/test_codex_native_workspace.py
+  s_e3e4bd4c1f59cb::t_cf6ab2e3ddd224 1123-1211
+  s_e3e4bd4c1f59cb::t_242a1b46466206 28,1703-1811
+  s_e3e4bd4c1f59cb::t_6a4b7c9c0a478c 1634,1654,1663,1673
+  s_e3e4bd4c1f59cb::t_1d350eb3bc7b48 1812-1813
+opentest/application/case_template_executor_v4.py
+  s_e3e4bd4c1f59cb::t_9a26021a52d463 29-30,450
+opentest/api.py
+  s_e3e4bd4c1f59cb::t_50af7e8c59ca71 536-547,578-590,640-652
+  s_e3e4bd4c1f59cb::t_74972b892313ca 176,208,241,245,655-660,664
+  s_e3e4bd4c1f59cb::t_53d01f69cfef3f 563,603-607,618,666
+  s_e3e4bd4c1f59cb::t_0197b87683d33d 594-598,695-712,716-718
+  s_e3e4bd4c1f59cb::t_9b623d4507d794 172,186,217,247
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.24",
+  "base_commit_sha": "d1fccc3b34755d562bb3a5732dd1ee34b213aac2",
+  "prompts": {},
+  "sessions": {
+    "s_e3e4bd4c1f59cb": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a05aeb-8bea-7652-b8ff-6e5e7ece97f0",
+        "model": "gpt-5.6-sol"
+      },
+      "human_author": "shizhen <yuuu.shizhen@gmail.com>"
+    }
+  }
+}
