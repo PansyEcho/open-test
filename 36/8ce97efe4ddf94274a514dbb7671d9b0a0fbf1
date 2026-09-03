@@ -1,0 +1,53 @@
+openspec/changes/correct-versioned-scan-and-console-contract/proposal.md
+  s_fc0b868764374c::t_c0fbdc154b3445 1,5,9-20
+  s_e3e4bd4c1f59cb::t_1dc0ae1c0bd945 2-4,6-8
+openspec/changes/correct-versioned-scan-and-console-contract/specs/v2-console/spec.md
+  s_e3e4bd4c1f59cb::t_c8c7a1461e450d 20,24,26,28,30,34,36
+  s_fc0b868764374c::t_c0fbdc154b3445 1,3,5,7,9-11,13,15-17,19,21-23,25,27,29,31-33,35,37-39
+  s_e3e4bd4c1f59cb::t_1dc0ae1c0bd945 2,4,6,8,12,14,18
+openspec/changes/correct-versioned-scan-and-console-contract/tasks.md
+  s_fc0b868764374c::t_73f6dbcef0ca1e 3-6,10-12,16-18,22-24
+  s_fc0b868764374c::t_c0fbdc154b3445 1-2,7-9,13-15,19-21
+  s_fc0b868764374c::t_03d5cc37dfb679 25
+openspec/changes/correct-versioned-scan-and-console-contract/specs/v2-api/spec.md
+  s_fc0b868764374c::t_68ac3de22c33d8 1-17
+openspec/changes/correct-versioned-scan-and-console-contract/specs/case-template-generation-v4/spec.md
+  s_fc0b868764374c::t_e300c1ade6f0b6 20-25,28,40,58,113
+  s_fc0b868764374c::t_daafce2639a4e8 42-47,50,118
+  s_e3e4bd4c1f59cb::t_1dc0ae1c0bd945 1-2,4,6,8,13,15,19,26-27,29,31,35,60-70
+  s_fc0b868764374c::t_c0fbdc154b3445 3,5,7,9-12,14,16-18,30,32-34,36-39,41,48-49,51-57,59,71-87
+  s_fc0b868764374c::t_68ac3de22c33d8 88-112,114-117,119
+openspec/changes/correct-versioned-scan-and-console-contract/.openspec.yaml
+  s_e3e4bd4c1f59cb::t_1ed0b307dac919 1-2
+openspec/changes/correct-versioned-scan-and-console-contract/specs/codex-system-workflow/spec.md
+  s_fc0b868764374c::t_c0fbdc154b3445 1-44,46-47
+  s_fc0b868764374c::t_daafce2639a4e8 51
+  s_fc0b868764374c::t_d6ed64b4f45dbe 45,48-50,52-53
+openspec/changes/correct-versioned-scan-and-console-contract/design.md
+  s_fc0b868764374c::t_c0fbdc154b3445 1,3,5,7,9,11,13,15,17
+  s_e3e4bd4c1f59cb::t_1dc0ae1c0bd945 2,4,6,8,10,12,14,16
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.24",
+  "base_commit_sha": "368ce97efe4ddf94274a514dbb7671d9b0a0fbf1",
+  "prompts": {},
+  "sessions": {
+    "s_e3e4bd4c1f59cb": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a05aeb-8bea-7652-b8ff-6e5e7ece97f0",
+        "model": "gpt-5.6-sol"
+      },
+      "human_author": "shizhen <yuuu.shizhen@gmail.com>"
+    },
+    "s_fc0b868764374c": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a065b8-3a29-7762-af3b-5b2044b55299",
+        "model": "gpt-5.6-sol"
+      },
+      "human_author": "shizhen <yuuu.shizhen@gmail.com>"
+    }
+  }
+}
