@@ -1,0 +1,190 @@
+tests/v2/test_console_contract.py
+  s_e3e4bd4c1f59cb::t_d445a2716a9dfd 633,636,644-649,655-661
+  s_e3e4bd4c1f59cb::t_eb6e43bdf51b73 632,634-635,637-643,650-654,662-684
+  s_e3e4bd4c1f59cb::t_fae8e361158afa 21-22,176-191
+openspec/changes/fix-v4-console-late-error-isolation/specs/v2-console/spec.md
+  s_e3e4bd4c1f59cb::t_2651a95e7aacb4 1-23
+tests/v2/test_semantic_catalog.py
+  s_e3e4bd4c1f59cb::t_e9901993f6f363 71-83,239-262
+  s_e3e4bd4c1f59cb::t_988a55fb9cce91 263-264
+openspec/specs/java-knowledge-tracing/spec.md
+  s_e3e4bd4c1f59cb::t_e1ea5012aee3b0 18-29
+openspec/specs/knowledge-workspace-cache/spec.md
+  s_e3e4bd4c1f59cb::t_48aa0a8bfdadff 1-31
+openspec/specs/stateful-case-condition-resolution/spec.md
+  s_e3e4bd4c1f59cb::t_e1ea5012aee3b0 1-133
+openspec/specs/source-baseline-capture/spec.md
+  s_e3e4bd4c1f59cb::t_fd1ac5dfe74ab8 8,10,12-30,33-52
+openspec/specs/structured-entry-fact-knowledge/spec.md
+  s_e3e4bd4c1f59cb::t_e1ea5012aee3b0 1-39
+openspec/specs/candidate-operation-catalog/spec.md
+  s_e3e4bd4c1f59cb::t_fd1ac5dfe74ab8 1-73
+opentest/adapters/source_analysis.py
+  s_e3e4bd4c1f59cb::t_b9b6e9478dc6a2 2311,2331-2333
+opentest/application/catalogs.py
+  s_e3e4bd4c1f59cb::t_8722e480a453e9 193
+openspec/changes/fix-v4-console-late-error-isolation/proposal.md
+  s_e3e4bd4c1f59cb::t_2651a95e7aacb4 1-15
+openspec/specs/unified-qa-operations/spec.md
+  s_e3e4bd4c1f59cb::t_fd1ac5dfe74ab8 1-50
+opentest/api.py
+  s_e3e4bd4c1f59cb::t_b92b34e4843480 172
+openspec/specs/knowledge-target-workspace/spec.md
+  s_e3e4bd4c1f59cb::t_e1ea5012aee3b0 27-34
+openspec/specs/confirmed-case-generation/spec.md
+  s_e3e4bd4c1f59cb::t_e1ea5012aee3b0 6,8,10-12,14,16,18-20,22,24-60,62-64,66-68
+openspec/specs/coverage-driven-generation/spec.md
+  s_e3e4bd4c1f59cb::t_e1ea5012aee3b0 22-49
+openspec/specs/case-template-generation-v4/spec.md
+  s_e3e4bd4c1f59cb::t_fd1ac5dfe74ab8 1-96
+openspec/changes/archive/2026-09-03-correct-versioned-scan-and-console-contract/tasks.md
+  s_e3e4bd4c1f59cb::t_fd1ac5dfe74ab8 1-13
+openspec/specs/codex-knowledge-continuation/spec.md
+  s_e3e4bd4c1f59cb::t_48aa0a8bfdadff 1-35
+openspec/specs/codex-system-operations/spec.md
+  s_e3e4bd4c1f59cb::t_48aa0a8bfdadff 1-35
+openspec/specs/published-operation-capabilities/spec.md
+  s_e3e4bd4c1f59cb::t_60e5572c4c781c 1-157
+openspec/specs/natural-language-blocked-guidance/spec.md
+  s_e3e4bd4c1f59cb::t_e1ea5012aee3b0 14-25
+openspec/specs/runtime-scanner-settings/spec.md
+  s_e3e4bd4c1f59cb::t_fd1ac5dfe74ab8 43-59
+opentest/web/app.js
+  s_e3e4bd4c1f59cb::t_958856fac6b778 90,335,1739,1757,1759,4949-5007,5009-5014,5017-5036,5058-5067,5069-5071,5090-5099,5105-5128,5132-5144,5146-5153,5199-5214,5222-5235,5238-5263
+  s_e3e4bd4c1f59cb::t_2584b24fd7653d 1683,5145
+  s_e3e4bd4c1f59cb::t_eb6e43bdf51b73 5008
+  s_e3e4bd4c1f59cb::t_ea72e10ca02efa 91,5037-5038,5053-5057,5068,5100-5104,5129-5131,5192-5193,5195-5197,5215-5221
+  s_e3e4bd4c1f59cb::t_f873991fdb9130 1760-1765,1768,1784-1785,5158,5160-5165,5169-5170,5189-5190,5194,5198,6649,6691-6694
+  s_e3e4bd4c1f59cb::t_e8a24a348dd56b 5039-5052,5072-5089,5154-5157,5159,5166-5168,5171-5188,5191
+  s_e3e4bd4c1f59cb::t_ce848a5aab2b20 1740-1747,1766-1767,1769-1783,1831-1832,5015-5016,5236-5237
+  s_e3e4bd4c1f59cb::t_9e5559d3d2498a 5,9-10,41,87-89,336-346,350,534,537,566,604-607,1694,1697,1700-1702,1705,1711-1712,1725-1738,1748-1756
+  s_e3e4bd4c1f59cb::t_62fdcd8dfb4e74 1758,5264
+tests/v2/test_source_analysis.py
+  s_e3e4bd4c1f59cb::t_b9b6e9478dc6a2 795,797-807,816,820,825
+openspec/specs/multi-system-workspace/spec.md
+  s_e3e4bd4c1f59cb::t_fd1ac5dfe74ab8 8,11,13-14,17,19-29
+  s_e3e4bd4c1f59cb::t_60e5572c4c781c 31-34
+  s_e3e4bd4c1f59cb::t_5f0b98e14c460f 30
+openspec/changes/fix-v4-console-late-error-isolation/tasks.md
+  s_e3e4bd4c1f59cb::t_2651a95e7aacb4 1-11
+AGENTS.md
+  s_e3e4bd4c1f59cb::t_3dd192dab65d87 100
+  s_e3e4bd4c1f59cb::t_f6791945289f32 91-99,101
+opentest/domain/models.py
+  s_e3e4bd4c1f59cb::t_8722e480a453e9 2389
+opentest/web/index.html
+  s_e3e4bd4c1f59cb::t_8722e480a453e9 6,112,224-238,311
+openspec/specs/v2-console/spec.md
+  s_e3e4bd4c1f59cb::t_e1ea5012aee3b0 6,8-85
+  s_e3e4bd4c1f59cb::t_fd1ac5dfe74ab8 86-120,123,128
+openspec/specs/codex-operation-resolution/spec.md
+  s_e3e4bd4c1f59cb::t_e963b7d4b4de0d 1-27
+openspec/changes/fix-v4-console-late-error-isolation/design.md
+  s_e3e4bd4c1f59cb::t_2651a95e7aacb4 1-11
+openspec/specs/semantic-operation-contract/spec.md
+  s_e3e4bd4c1f59cb::t_e963b7d4b4de0d 1-43
+openspec/specs/codex-system-skill/spec.md
+  s_e3e4bd4c1f59cb::t_48aa0a8bfdadff 1-21
+tests/v2/test_api_cli.py
+  s_e3e4bd4c1f59cb::t_fae8e361158afa 48,93-94
+openspec/specs/knowledge-draft-and-confirmation/spec.md
+  s_e3e4bd4c1f59cb::t_e1ea5012aee3b0 26-49
+openspec/specs/fault-injection-capabilities/spec.md
+  s_e3e4bd4c1f59cb::t_cb243ebb13677b 1-163
+openspec/specs/declarative-capability-profiles/spec.md
+  s_e3e4bd4c1f59cb::t_e963b7d4b4de0d 1-15
+openspec/changes/archive/2026-09-03-correct-versioned-scan-and-console-contract/.openspec.yaml
+  s_e3e4bd4c1f59cb::t_1733ce8e061c9e 1-2
+openspec/changes/archive/2026-09-03-correct-versioned-scan-and-console-contract/README.md
+  s_e3e4bd4c1f59cb::t_ffa3c4e91ffdb9 1-3
+openspec/changes/archive/2026-09-03-reconcile-v4-case-and-versioned-console/.openspec.yaml
+  s_e3e4bd4c1f59cb::t_af13849265cca4 1-2
+openspec/changes/archive/2026-09-03-reconcile-v4-case-and-versioned-console/README.md
+  s_e3e4bd4c1f59cb::t_297b3d6cbb8f9c 1-3
+openspec/specs/case-workspace-truth-recovery/spec.md
+  s_e3e4bd4c1f59cb::t_63a631cc07590f 1-40
+openspec/specs/codex-system-workflow/spec.md
+  s_e3e4bd4c1f59cb::t_6e8f0a1d8bb01e 1-31
+openspec/specs/data-setup-recipes/spec.md
+  s_e3e4bd4c1f59cb::t_0a313b71d9424e 1-172
+openspec/specs/hybrid-case-generation-v3/spec.md
+  s_e3e4bd4c1f59cb::t_57e465006cdcaa 1-117
+openspec/specs/interface-case-generation/spec.md
+  s_e3e4bd4c1f59cb::t_4989a80314c7d2 1-25
+openspec/specs/java-structure-scan/spec.md
+  s_e3e4bd4c1f59cb::t_21b7ae215fe350 8,11-12,15-53,55-57
+openspec/specs/pluggable-case-rules/spec.md
+  s_e3e4bd4c1f59cb::t_207160f4c090c7 1-37
+openspec/specs/program-case-analysis/spec.md
+  s_e3e4bd4c1f59cb::t_48c8208b7bf879 1-73
+openspec/specs/resource-cleanup-plans/spec.md
+  s_e3e4bd4c1f59cb::t_07d274c2dadf32 1-118
+openspec/specs/typed-case-compiler/spec.md
+  s_e3e4bd4c1f59cb::t_ad19c55ef3fe75 1-211
+openspec/specs/typed-case-obligations/spec.md
+  s_e3e4bd4c1f59cb::t_d6901587df393d 1-33
+openspec/changes/archive/2026-09-03-correct-versioned-scan-and-console-contract/design.md
+  s_fe0ff1a3477bfb::t_0f58b6ae0c13dc 1-37
+openspec/changes/archive/2026-09-03-correct-versioned-scan-and-console-contract/proposal.md
+  s_fe0ff1a3477bfb::t_014eb85a1ae1b2 1-25
+openspec/changes/archive/2026-09-03-correct-versioned-scan-and-console-contract/specs/candidate-operation-catalog/spec.md
+  s_fe0ff1a3477bfb::t_159da64bd879b5 1-13
+openspec/changes/archive/2026-09-03-correct-versioned-scan-and-console-contract/specs/case-template-generation-v4/spec.md
+  s_fe0ff1a3477bfb::t_e50744166d9b48 1-39
+openspec/changes/archive/2026-09-03-correct-versioned-scan-and-console-contract/specs/multi-system-workspace/spec.md
+  s_fe0ff1a3477bfb::t_dcfe56ad65d7c6 1-31
+openspec/changes/archive/2026-09-03-correct-versioned-scan-and-console-contract/specs/runtime-scanner-settings/spec.md
+  s_fe0ff1a3477bfb::t_630e3bb5071aad 1-18
+openspec/changes/archive/2026-09-03-correct-versioned-scan-and-console-contract/specs/source-baseline-capture/spec.md
+  s_b1d4a938e0505a::t_74b7b865b3c1db 1-49
+openspec/changes/archive/2026-09-03-correct-versioned-scan-and-console-contract/specs/unified-qa-operations/spec.md
+  s_fe0ff1a3477bfb::t_be0857f4ce9eaf 1-11
+openspec/changes/archive/2026-09-03-correct-versioned-scan-and-console-contract/specs/v2-console/spec.md
+  s_fe0ff1a3477bfb::t_56e1d4136dfa23 1-40
+openspec/changes/archive/2026-09-03-reconcile-v4-case-and-versioned-console/design.md
+  s_fe0ff1a3477bfb::t_1526d811d1c49a 1-23
+openspec/changes/archive/2026-09-03-reconcile-v4-case-and-versioned-console/proposal.md
+  s_fe0ff1a3477bfb::t_d0c195a7138a64 1-18
+openspec/changes/archive/2026-09-03-reconcile-v4-case-and-versioned-console/specs/case-template-generation-v4/spec.md
+  s_fe0ff1a3477bfb::t_64df3f6d06d460 1-87
+openspec/changes/archive/2026-09-03-reconcile-v4-case-and-versioned-console/specs/runtime-scanner-settings/spec.md
+  s_fe0ff1a3477bfb::t_1a38dd93140161 1-18
+openspec/changes/archive/2026-09-03-reconcile-v4-case-and-versioned-console/specs/source-baseline-capture/spec.md
+  s_fe0ff1a3477bfb::t_7a0b832c88c6f1 1-18
+openspec/changes/archive/2026-09-03-reconcile-v4-case-and-versioned-console/specs/v2-console/spec.md
+  s_fe0ff1a3477bfb::t_c1ec7c6345453b 1-33
+openspec/changes/archive/2026-09-03-reconcile-v4-case-and-versioned-console/tasks.md
+  s_fe0ff1a3477bfb::t_50c6e56680bbef 1-17
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.24",
+  "base_commit_sha": "6a57ddf0c272787d99c516d2d75cb9fc074c8529",
+  "prompts": {},
+  "sessions": {
+    "s_b1d4a938e0505a": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a065d7-11d1-7662-baf7-e6c7a74d7e4a",
+        "model": "unknown"
+      },
+      "human_author": "shizhen <yuuu.shizhen@gmail.com>"
+    },
+    "s_e3e4bd4c1f59cb": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a05aeb-8bea-7652-b8ff-6e5e7ece97f0",
+        "model": "gpt-5.6-sol"
+      },
+      "human_author": "shizhen <yuuu.shizhen@gmail.com>"
+    },
+    "s_fe0ff1a3477bfb": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a060d7-3481-7252-9dbe-2fd96407e2be",
+        "model": "unknown"
+      },
+      "human_author": "shizhen <yuuu.shizhen@gmail.com>"
+    }
+  }
+}
