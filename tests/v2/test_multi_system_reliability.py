@@ -4,7 +4,9 @@ from __future__ import annotations
 
 import stat
 import threading
+import time
 from pathlib import Path
+from unittest.mock import MagicMock
 
 import pytest
 
@@ -296,6 +298,12 @@ def test_generic_dsf_scan_uses_local_gateway_and_explicit_prefix_wins(tmp_path: 
 
     Args:
         tmp_path: Pytest隔离的源码、知识与本地系统设置目录。
+
+    Returns:
+        None；本地默认test和请求显式uat按优先级生效时通过。
+
+    Side Effects:
+        在隔离知识根写入系统和0600本地设置，不启动源码扫描。
     """
 
     source = tmp_path / "ifightchainsaas.java.refund.core"
@@ -312,6 +320,7 @@ def test_generic_dsf_scan_uses_local_gateway_and_explicit_prefix_wins(tmp_path: 
         "ifightchainsaas.java.refund.core",
         "must-not-enter-scan-request",
         "http://servicegw.qa.ly.com/gateway/saas.refund.core/qa",
+        "test",
     )
 
     local_request = application._source_scan_request(
@@ -321,12 +330,110 @@ def test_generic_dsf_scan_uses_local_gateway_and_explicit_prefix_wins(tmp_path: 
         SourceScanRequest(
             system_id="ifightchainsaas.java.refund.core",
             facade_http_prefix="https://explicit.qa.example/refund/v2/",
+            resource_config_environment="uat",
         ),
     )
 
     assert local_request.facade_http_prefix == "http://servicegw.qa.ly.com/gateway/saas.refund.core/qa"
+    assert local_request.resource_config_environment == "test"
     assert explicit_request.facade_http_prefix == "https://explicit.qa.example/refund/v2"
+    assert explicit_request.resource_config_environment == "uat"
     assert "must-not-enter-scan-request" not in local_request.model_dump_json()
+    application.close()
+
+
+def test_prepared_scan_freezes_environment_before_background_execution(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """准备型扫描入队后修改本地设置不得改变该任务的资源环境。
+
+    Args:
+        tmp_path: Pytest隔离源码、知识和本地设置目录。
+        monkeypatch: 替换扫描及派生阶段，避免启动外部分析器。
+
+    Returns:
+        None；后台扫描收到准备阶段冻结的test环境时通过。
+
+    Side Effects:
+        创建并完成一个本地后台任务，不访问QA或真实源码分析器。
+    """
+
+    source = tmp_path / "prepared-environment-source"
+    source.mkdir()
+    application = OpenTestApplication(tmp_path / "knowledge")
+    system = application.register_system(
+        SystemDefinition(
+            system_id="prepared-environment-system",
+            name="准备型环境系统",
+            source_path=str(source),
+        )
+    )
+    scan_started = threading.Event()
+    release_scan = threading.Event()
+    captured_environments: list[str] = []
+    manifest = MagicMock(
+        scan_id="scan-prepared-environment",
+        entries=[],
+        tools=[],
+        state_machines=[],
+    )
+
+    def analyze(frozen_request: SourceScanRequest):
+        """记录任务冻结值并等待测试修改全局设置。
+
+        Args:
+            frozen_request: 准备阶段已补齐网关和资源环境的扫描请求。
+
+        Returns:
+            满足任务摘要读取的最小Manifest替身。
+
+        Side Effects:
+            同步测试线程并记录资源环境。
+        """
+
+        captured_environments.append(frozen_request.resource_config_environment)
+        scan_started.set()
+        assert release_scan.wait(timeout=5)
+        return manifest
+
+    monkeypatch.setattr(application.source_analysis, "analyze", analyze)
+    # 测试替身不依赖生产scriptgen设置，避免后台任务在进入冻结值断言前执行环境诊断。
+    application.source_analysis.scriptgen = MagicMock()
+    monkeypatch.setattr(
+        application.knowledge_discovery,
+        "discover",
+        MagicMock(return_value=MagicMock(candidates=[])),
+    )
+    monkeypatch.setattr(application, "rebuild_index", MagicMock(return_value={}))
+    task = application.submit_prepared_source_scan(
+        SourceScanRequest(system_id=system.system_id),
+        lambda: application.prepare_system_update(
+            system.system_id,
+            system,
+            "prepared-token",
+            "http://servicegw.qa.example/prepared/v2",
+            "test",
+        ),
+    )
+    assert scan_started.wait(timeout=5)
+
+    # 模拟任务排队或执行期间页面切换到uat；当前任务仍只能使用入队前冻结的test。
+    application.save_local_settings(
+        system.system_id,
+        "prepared-token",
+        resource_config_environment="uat",
+    )
+    release_scan.set()
+    deadline = time.monotonic() + 5
+    while application.get_task(task.task_id).status not in {
+        TaskStatus.COMPLETED,
+        TaskStatus.FAILED,
+    } and time.monotonic() < deadline:
+        time.sleep(0.01)
+
+    assert application.get_task(task.task_id).status == TaskStatus.COMPLETED
+    assert captured_environments == ["test"]
     application.close()
 
 
@@ -491,6 +598,7 @@ def test_prepared_update_restores_existing_local_qa_settings(tmp_path: Path, mon
                 updated_system,
                 "replacement-token",
                 "http://servicegw.qa.ly.com/gateway/replacement/v2",
+                "test",
             ),
         )
 

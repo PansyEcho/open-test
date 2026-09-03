@@ -117,7 +117,17 @@ def _operation(action: str = "orderDetail") -> DsfOperationDefinition:
 
 
 def test_dsf_source_discovery_builds_profile_and_fixed_operations(tmp_path: Path) -> None:
-    """源码发现应解析Profile、provider坐标、类型和保守读写标记。"""
+    """源码发现应解析Profile、filter环境、provider坐标和保守读写标记。
+
+    Args:
+        tmp_path: Pytest隔离的最小Java项目根。
+
+    Returns:
+        None；默认auto命中qa且固定操作完整时通过。
+
+    Side Effects:
+        仅创建本地源码配置样本，不访问远程服务。
+    """
 
     source_root = tmp_path / "project"
     _write_dsf_project(source_root)
@@ -126,6 +136,7 @@ def test_dsf_source_discovery_builds_profile_and_fixed_operations(tmp_path: Path
 
     assert profile.registry_host == "qa-registry.invalid"
     assert profile.client_name == "demo-client"
+    assert profile.config_environment == "qa"
     assert profile.routing_environment == "qa"
     assert profile.target_environment == "test"
     assert warnings == []
@@ -133,6 +144,70 @@ def test_dsf_source_discovery_builds_profile_and_fixed_operations(tmp_path: Path
     assert by_action["orderDetail"].mutability == DsfOperationMutability.READ_ONLY
     assert by_action["createOrder"].mutability == DsfOperationMutability.WRITE
     assert by_action["orderDetail"].operation_id == f"dsf:{SYSTEM_ID}:order:orderDetail"
+
+
+def test_dsf_source_discovery_uses_only_the_explicit_resource_environment(tmp_path: Path) -> None:
+    """显式UAT选择只能读取UAT filter，并把选择冻结进Profile。
+
+    Args:
+        tmp_path: pytest隔离的最小Java项目根。
+
+    Returns:
+        None；Profile只包含UAT配置且冻结uat后缀时通过。
+
+    Side Effects:
+        创建qa与uat配置样本，不访问注册中心或其他远程资源。
+    """
+
+    source_root = tmp_path / "project"
+    _write_dsf_project(source_root)
+    uat_filter = source_root / "conf/filter/application.uat"
+    uat_filter.write_text(
+        "\n".join(
+            (
+                "dsf.service.config.registryhost=uat-registry.invalid",
+                "dsf.service.config.name=demo-uat-client",
+                "dsf.service.config.env=uat",
+                "dsf.service.config.targetenv=uat",
+                "provider.gs.name=dsf.demo.booking",
+                "provider.version=1.2.3",
+            )
+        ),
+        encoding="utf-8",
+    )
+
+    profile, _, warnings = DsfSourceDiscoverer().discover(SYSTEM_ID, source_root, "uat")
+
+    assert profile.config_environment == "uat"
+    assert profile.registry_host == "uat-registry.invalid"
+    assert profile.client_name == "demo-uat-client"
+    assert profile.routing_environment == "uat"
+    assert profile.target_environment == "uat"
+    assert warnings == []
+
+
+def test_dsf_source_discovery_rejects_missing_or_unknown_resource_environment(tmp_path: Path) -> None:
+    """显式filter缺失或环境枚举越界时必须在生成Profile前失败。
+
+    Args:
+        tmp_path: pytest隔离的最小Java项目根。
+
+    Returns:
+        None；缺失test和未知prod均在Profile生成前被拒绝时通过。
+
+    Side Effects:
+        仅创建qa配置样本，不读取任何远程配置。
+    """
+
+    source_root = tmp_path / "project"
+    _write_dsf_project(source_root)
+    discoverer = DsfSourceDiscoverer()
+
+    # 显式选择不能回退到已有qa文件，否则页面选择与实际资源环境会发生漂移。
+    with pytest.raises(KnowledgeValidationError, match=r"filter is unavailable: \*\.test"):
+        discoverer.discover(SYSTEM_ID, source_root, "test")
+    with pytest.raises(KnowledgeValidationError, match="must be auto, qa, test or uat"):
+        discoverer.discover(SYSTEM_ID, source_root, "prod")
 
 
 def test_dsf_source_discovery_builds_fixed_external_reference_operations(tmp_path: Path) -> None:
@@ -220,7 +295,7 @@ def test_dsf_source_discovery_resolves_main_properties_and_rejects_non_qa_enviro
     assert profile.client_name == "demo-client"
     assert profile.target_environment == "prod"
     assert profile.status == "BLOCKED"
-    assert any("允许的QA集合" in warning for warning in profile.warnings)
+    assert any("允许的qa/test/uat集合" in warning for warning in profile.warnings)
 
 
 def test_dsf_source_discovery_treats_mixed_read_write_verbs_as_write(tmp_path: Path) -> None:
@@ -445,8 +520,18 @@ def test_worker_launcher_rejects_request_operation_identity_mismatch(tmp_path: P
         SuccessfulProtocolLauncher(worker_jar).execute(SYSTEM_ID, profile, _operation(), request)
 
 
-def test_worker_launcher_rejects_non_qa_profile_before_process_start(tmp_path: Path) -> None:
-    """即使绕过应用层，Worker启动器也必须在启动Java前拒绝非qa/test固定组合。"""
+def test_worker_launcher_rejects_production_profile_before_process_start(tmp_path: Path) -> None:
+    """即使绕过应用层，Worker启动器也必须在启动Java前拒绝生产环境。
+
+    Args:
+        tmp_path: Pytest隔离的Worker JAR占位目录。
+
+    Returns:
+        None；prod Profile触发范围异常时通过。
+
+    Side Effects:
+        只创建占位文件，不启动Java进程。
+    """
 
     worker_jar = tmp_path / "worker.jar"
     worker_jar.write_bytes(b"test-placeholder")
@@ -454,13 +539,13 @@ def test_worker_launcher_rejects_non_qa_profile_before_process_start(tmp_path: P
         system_id=SYSTEM_ID,
         registry_host="qa-registry.invalid",
         client_name="demo-client",
-        routing_environment="qa",
-        target_environment="qa",
+        routing_environment="prod",
+        target_environment="prod",
     )
     operation = _operation()
     request = DsfExecutionRequest(operation_id=operation.operation_id, payload={})
 
-    with pytest.raises(ScopeViolationError, match="env=qa and targetenv=test"):
+    with pytest.raises(ScopeViolationError, match="qa, test or uat"):
         SuccessfulProtocolLauncher(worker_jar).execute(SYSTEM_ID, profile, operation, request)
 
 

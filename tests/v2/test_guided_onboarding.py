@@ -88,6 +88,12 @@ def test_local_settings_preserve_fixture_and_support_environment_reference(tmp_p
     Args:
         tmp_path: Pytest提供的隔离本地配置目录。
         monkeypatch: 注入兼容环境引用的测试Token。
+
+    Returns:
+        None；Fixture、Token、环境选择和0600权限均保留时通过。
+
+    Side Effects:
+        在隔离目录更新一份本地系统设置。
     """
 
     environment_root = tmp_path / "environments"
@@ -111,11 +117,13 @@ def test_local_settings_preserve_fixture_and_support_environment_reference(tmp_p
     store = LocalSystemSettingsStore(environment_root)
 
     assert store.read(BOOKING_SYSTEM_ID).qa_labrador_token == "environment-token"
-    store.write(BOOKING_SYSTEM_ID, "page-token")
+    store.write(BOOKING_SYSTEM_ID, "page-token", resource_config_environment="test")
     payload = yaml.safe_load(settings_path.read_text(encoding="utf-8"))
 
     assert payload["values"]["fixtures"] == {"supplier": "fixture-ebk"}
     assert payload["values"]["tool_environment"]["LABRADOR_TOKEN"] == "page-token"
+    assert payload["resource_config_environment"] == "test"
+    assert store.read(BOOKING_SYSTEM_ID).resource_config_environment == "test"
     assert stat.S_IMODE(settings_path.stat().st_mode) == 0o600
 
 
@@ -143,15 +151,56 @@ def test_local_settings_api_rejects_non_loopback_client(tmp_path: Path) -> None:
     assert "replacement" not in write_response.text
 
 
-def test_registration_and_update_reject_non_loopback_token_writes(
+def test_local_settings_environment_update_preserves_omitted_token(tmp_path: Path) -> None:
+    """仅切换资源filter时不得因请求未带Token而清除已有凭据。
+
+    Args:
+        tmp_path: pytest隔离的系统源码、知识和0600设置目录。
+
+    Returns:
+        None；仅更新资源环境后原Token仍可读取时通过。
+
+    Side Effects:
+        通过回环测试客户端更新本地设置，不启动扫描或访问远程资源。
+    """
+
+    source = tmp_path / "source"
+    source.mkdir()
+    application = OpenTestApplication(tmp_path / "knowledge")
+    # 先保存不可泄露也不可被环境单字段更新覆盖的已有Token。
+    application.register_system(
+        SystemDefinition(system_id=BOOKING_SYSTEM_ID, name="火车票预订", source_path=str(source))
+    )
+    application.save_local_settings(BOOKING_SYSTEM_ID, "existing-local-token")
+
+    # 请求体刻意不提供Token，用于覆盖页面或API只切换资源环境的真实路径。
+    with TestClient(create_app(application), client=("127.0.0.1", 50000)) as client:
+        response = client.put(
+            f"/api/v2/systems/{BOOKING_SYSTEM_ID}/local-settings",
+            json={"resource_config_environment": "uat"},
+        )
+
+    assert response.status_code == 200
+    local_settings = response.json()["local_settings"]
+    assert local_settings["qa_labrador_token"] == "existing-local-token"
+    assert local_settings["resource_config_environment"] == "uat"
+
+
+def test_registration_update_and_scan_reject_non_loopback_resource_changes(
     tmp_path: Path,
     monkeypatch,
 ) -> None:
-    """系统注册和更新只要包含Token就必须应用同一回环写门禁。
+    """系统注册、更新环境及显式扫描环境必须应用同一回环门禁。
 
     Args:
         tmp_path: Pytest提供的隔离源码和知识目录。
         monkeypatch: 替换后台扫描提交，确保安全边界测试不启动scriptgen。
+
+    Returns:
+        None；三类非回环环境或凭据变更均返回冲突时通过。
+
+    Side Effects:
+        创建隔离应用和HTTP测试客户端，不提交真实扫描或QA请求。
     """
 
     source = tmp_path / "remote-token-source"
@@ -187,9 +236,27 @@ def test_registration_and_update_reject_non_loopback_token_writes(
                 "qa_gateway_prefix": "http://servicegw.qa.example/gateway/booking/v2",
             },
         )
+        environment_update = client.put(
+            f"/api/v2/systems/{BOOKING_SYSTEM_ID}",
+            json={
+                "name": "火车票预订",
+                "source_path": str(source),
+                "qa_gateway_prefix": "http://servicegw.qa.example/gateway/booking/v2",
+                "resource_config_environment": "uat",
+            },
+        )
+        explicit_scan = client.post(
+            f"/api/v2/systems/{BOOKING_SYSTEM_ID}/scans",
+            json={
+                "system_id": BOOKING_SYSTEM_ID,
+                "resource_config_environment": "uat",
+            },
+        )
 
     assert registration.status_code == 409
     assert update.status_code == 409
+    assert environment_update.status_code == 409
+    assert explicit_scan.status_code == 409
     environment_root = tmp_path / "knowledge/.opentest/environments"
     assert not environment_root.exists()
 

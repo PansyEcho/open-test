@@ -25,7 +25,7 @@ from opentest.adapters.knowledge_interview import KnowledgeInterviewStore
 from opentest.adapters.knowledge_store import GitKnowledgeStore
 from opentest.adapters.operation_execution_store import OperationExecutionStore
 from opentest.adapters.qa_active_worker import QaActiveWorkerLauncher
-from opentest.adapters.source_analysis import SourceScanArtifactStore
+from opentest.adapters.source_analysis import GitSourceRepository, SourceScanArtifactStore
 from opentest.adapters.sqlite_index import SqliteKnowledgeIndex
 from opentest.application.catalogs import ScanCatalogService
 from opentest.application.foundation import OpenTestApplication
@@ -1120,6 +1120,95 @@ def test_local_facade_provider_executes_the_capability_source_scan(tmp_path: Pat
     assert call.args[2].operation_id == capability.provider_operation_id
 
 
+def test_active_resource_provider_materializes_legacy_commit_instead_of_current_tree(
+    tmp_path: Path,
+) -> None:
+    """旧干净Git扫描执行资源操作时必须读取记录commit而非当前工作树。
+
+    Args:
+        tmp_path: Pytest隔离的Git源码与托管快照目录。
+
+    Returns:
+        None；返回快照保留旧filter且当前工作树修改不进入执行范围时通过。
+
+    Side Effects:
+        创建一个本地Git提交并物化对应的OpenTest源码快照。
+    """
+
+    source_root = tmp_path / "legacy-git-source"
+    filter_path = source_root / "conf/filter/dsf_application.properties.test"
+    filter_path.parent.mkdir(parents=True)
+    filter_path.write_text("uniform.env=test\nrefund.database=legacy_refund\n", encoding="utf-8")
+    subprocess.run(["git", "init", str(source_root)], check=True, capture_output=True)
+    subprocess.run(["git", "-C", str(source_root), "add", "."], check=True, capture_output=True)
+    subprocess.run(
+        [
+            "git",
+            "-C",
+            str(source_root),
+            "-c",
+            "user.name=OpenTest",
+            "-c",
+            "user.email=opentest@example.invalid",
+            "commit",
+            "-m",
+            "legacy scan baseline",
+        ],
+        check=True,
+        capture_output=True,
+    )
+    baseline = GitSourceRepository().capture_revision(source_root)
+    filter_path.write_text("uniform.env=uat\nrefund.database=current_refund\n", encoding="utf-8")
+    store = GitKnowledgeStore(tmp_path / "knowledge")
+    store.initialize()
+    store.register_system(
+        SystemDefinition(system_id=SYSTEM_ID, name="SaaS退票核心", source_path=str(source_root))
+    )
+    artifacts = SourceScanArtifactStore(store.root)
+    provider = LocalQaOperationProvider(MagicMock(), artifacts, MagicMock())
+    manifest = _manifest(source_root).model_copy(update={"baseline": baseline})
+
+    snapshot_root = provider._active_resource_source_root(
+        SYSTEM_ID,
+        str(source_root),
+        manifest,
+    )
+
+    snapshot_filter = snapshot_root / "conf/filter/dsf_application.properties.test"
+    assert snapshot_filter.read_text(encoding="utf-8") == (
+        "uniform.env=test\nrefund.database=legacy_refund\n"
+    )
+    assert filter_path.read_text(encoding="utf-8").startswith("uniform.env=uat")
+
+
+def test_active_resource_provider_rejects_unowned_declared_snapshot(tmp_path: Path) -> None:
+    """Manifest声明非本系统commit目录时不得作为资源配置快照使用。
+
+    Args:
+        tmp_path: Pytest隔离的注册源码和伪造快照目录。
+
+    Returns:
+        None；快照在Worker启动前被归属校验拒绝时通过。
+
+    Side Effects:
+        创建本地测试目录，不执行QA操作。
+    """
+
+    store, source_root = _registered_workspace(tmp_path)
+    artifacts = SourceScanArtifactStore(store.root)
+    provider = LocalQaOperationProvider(MagicMock(), artifacts, MagicMock())
+    baseline = SourceBaseline(
+        source_path=str(source_root),
+        commit="a" * 40,
+        dirty=False,
+        snapshot_path=str(tmp_path / "unowned-snapshot"),
+    )
+    manifest = _manifest(source_root).model_copy(update={"baseline": baseline})
+
+    with pytest.raises(KnowledgeValidationError, match="does not belong"):
+        provider._active_resource_source_root(SYSTEM_ID, str(source_root), manifest)
+
+
 def test_local_facade_provider_raises_stable_failure_for_failed_worker_response(tmp_path: Path) -> None:
     """Worker文件协议成功但DSF结果失败时provider必须抛出结构化异常。
 
@@ -1542,6 +1631,7 @@ def test_active_worker_preserves_structured_failure_after_nonzero_exit(
     profile = DsfClientProfile(
         system_id=SYSTEM_ID,
         environment="qa",
+        config_environment="test",
         client_name=f"dsf.{SYSTEM_ID}",
         routing_environment="qa",
         target_environment="test",
@@ -1561,6 +1651,7 @@ def test_active_worker_preserves_structured_failure_after_nonzero_exit(
 
     def fake_run_worker(
         application_name: str,
+        worker_environment: str,
         request_path: Path,
         response_path: Path,
         timeout_seconds: int,
@@ -1569,6 +1660,7 @@ def test_active_worker_preserves_structured_failure_after_nonzero_exit(
 
         Args:
             application_name: 扫描资源绑定的配置应用名。
+            worker_environment: 扫描时冻结的Java与SDK运行环境。
             request_path: 启动器创建的请求文件。
             response_path: 假Worker响应目标。
             timeout_seconds: 调用超时。
@@ -1578,6 +1670,7 @@ def test_active_worker_preserves_structured_failure_after_nonzero_exit(
         """
 
         assert application_name == SYSTEM_ID
+        assert worker_environment == "test"
         assert request_path.is_file()
         assert timeout_seconds == 60
         request_payload = json.loads(request_path.read_text(encoding="utf-8"))
@@ -1605,6 +1698,117 @@ def test_active_worker_preserves_structured_failure_after_nonzero_exit(
 
     with pytest.raises(OperationProviderFailure, match="current QA topic configuration is missing"):
         launcher.execute(profile, OperationKind.MQ, resource, request, source_root)
+
+
+@pytest.mark.parametrize(
+    ("filter_suffix", "expected_environment"),
+    [("qa", "qa"), ("test", "test")],
+)
+def test_legacy_manifest_mq_uses_the_filter_environment_actually_selected(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+    filter_suffix: str,
+    expected_environment: str,
+) -> None:
+    """旧Manifest的MQ JVM环境必须与auto实际选中的filter一致。
+
+    Args:
+        tmp_path: Pytest隔离的Worker与filter目录。
+        monkeypatch: 替换Java进程，捕获启动环境且不访问MQ。
+        filter_suffix: 本次唯一存在的qa或test配置后缀。
+        expected_environment: Java和MQ SDK应共同使用的环境。
+
+    Returns:
+        None；即使旧Profile的targetenv为test，qa filter仍以qa启动时通过。
+
+    Side Effects:
+        只在临时目录交换一次0600 Worker JSON，不启动Java或访问MQ。
+    """
+
+    worker_jar = tmp_path / "worker.jar"
+    worker_jar.write_bytes(b"test-worker")
+    source_root = tmp_path / "source"
+    filter_root = source_root / "conf/filter"
+    filter_root.mkdir(parents=True)
+    (filter_root / f"dsf_application.properties.{filter_suffix}").write_text(
+        "mq.nameSrvAddress=qa-mq.example.test:9876\n"
+        "refund.topic=refund-topic\n",
+        encoding="utf-8",
+    )
+    launcher = QaActiveWorkerLauncher(worker_jar)
+    profile = DsfClientProfile(
+        system_id=SYSTEM_ID,
+        environment="qa",
+        client_name=f"dsf.{SYSTEM_ID}",
+        routing_environment="qa",
+        target_environment="test",
+        status=DsfProfileStatus.CANDIDATE,
+    )
+    resource = DiscoveredResource(
+        resource_id=f"resource:{SYSTEM_ID}:mq:consumer:legacy",
+        system_id=SYSTEM_ID,
+        kind=ResourceKind.MQ,
+        role=ResourceRole.CONSUMER,
+        logical_name="legacyConsumer",
+        source_refs=[SourceReference(path="src/main/resources/mq.xml", symbol="legacyConsumer")],
+        nameserver_config_key="mq.nameSrvAddress",
+        topic_config_key="refund.topic",
+    )
+
+    def fake_run_worker(
+        application_name: str,
+        worker_environment: str,
+        request_path: Path,
+        response_path: Path,
+        timeout_seconds: int,
+    ) -> subprocess.CompletedProcess[str]:
+        """回写成功协议并断言旧扫描实际filter环境。
+
+        Args:
+            application_name: 扫描资源所属系统ID。
+            worker_environment: 启动Java和公司SDK的环境。
+            request_path: 启动器生成的私有请求文件。
+            response_path: 假Worker响应目标。
+            timeout_seconds: 业务调用超时。
+
+        Returns:
+            返回码为零的假进程结果。
+
+        Side Effects:
+            创建一个0600成功响应文件。
+        """
+
+        assert application_name == SYSTEM_ID
+        assert worker_environment == expected_environment
+        assert timeout_seconds == 60
+        request_payload = json.loads(request_path.read_text(encoding="utf-8"))
+        response_path.write_text(
+            json.dumps(
+                {
+                    "request_id": request_payload["request_id"],
+                    "status": "completed",
+                    "result": {"status": "accepted"},
+                }
+            ),
+            encoding="utf-8",
+        )
+        response_path.chmod(0o600)
+        return subprocess.CompletedProcess(args=["java"], returncode=0, stdout="", stderr="")
+
+    monkeypatch.setattr(launcher, "_run_worker", fake_run_worker)
+    response = launcher.execute(
+        profile,
+        OperationKind.MQ,
+        resource,
+        OperationExecutionRequest(
+            operation_id=f"mq:{SYSTEM_ID}:legacy",
+            arguments={"message": {"refundSerialNo": "LEGACY_FILTER_TEST"}},
+            request_id=f"request-legacy-filter-{filter_suffix}",
+        ),
+        source_root,
+    )
+
+    assert response == {"status": "accepted"}
 
 
 def test_codex_thread_recovery_uses_read_without_resume_or_new_thread(monkeypatch: pytest.MonkeyPatch) -> None:

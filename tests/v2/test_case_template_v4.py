@@ -1113,7 +1113,11 @@ def test_enum_code_name_pairs_must_match_one_source_declaration() -> None:
 
 
 def test_runtime_registry_is_derived_from_operations_without_refund_fixture() -> None:
-    """确认Runtime Function来自扫描Operation而不是静态refund/MySQL/Redis/MQ写死目录。"""
+    """确认Runtime Function来自扫描Operation而不是静态refund/MySQL/Redis/MQ写死目录。
+
+    Returns:
+        None；目录仅包含可作为运行函数使用的Facade与数据库Operation时通过。
+    """
 
     facade = OperationCapability(
         operation_id="facade:sample.QueryFacade#search",
@@ -1139,12 +1143,92 @@ def test_runtime_registry_is_derived_from_operations_without_refund_fixture() ->
         source_scan_id=SCAN_ID,
         executable=True,
     )
+    mq_sender = OperationCapability(
+        operation_id="mq:sample-system:sample-consumer",
+        system_id=SYSTEM_ID,
+        business_name="向样例消费者发送消息",
+        kind=OperationKind.MQ,
+        mutability=OperationMutability.WRITE,
+        input_schema={
+            "type": "object",
+            "properties": {"message": {}},
+            "required": ["message"],
+            "additionalProperties": False,
+        },
+        source_scan_id=SCAN_ID,
+        executable=True,
+    )
 
-    registry = CaseTemplateRegistryLoader().runtime_registry(SYSTEM_ID, {SYSTEM_ID}, [facade, database])
+    # MQ目录当前是写入消费者的测试激励，不能被投影成只读结果Observer。
+    registry = CaseTemplateRegistryLoader().runtime_registry(
+        SYSTEM_ID,
+        {SYSTEM_ID},
+        [facade, database, mq_sender],
+    )
 
     assert {item.function_id for item in registry.functions} == {facade.operation_id, DATABASE_ID}
     assert {item.kind for item in registry.functions} == {"dsf", "mysql"}
     assert all("refund_order.get" not in item.function_id for item in registry.functions)
+
+
+@pytest.mark.parametrize(
+    ("channel", "function_id", "statement"),
+    [
+        ("redis", "redis:sample-system:sample-cache", "GET"),
+        ("mq", "mq:sample-system:sample-consumer", "OBSERVE"),
+    ],
+)
+def test_v4_blocks_resource_oracles_without_authorized_observer(
+    channel: str,
+    function_id: str,
+    statement: str,
+) -> None:
+    """确认Redis或MQ只有进入Runtime目录的只读Observer才能用于V4断言。
+
+    Args:
+        channel: 待验证的资源Oracle通道。
+        function_id: 未获授权的资源函数ID。
+        statement: 资源观察命令占位值。
+
+    Returns:
+        None；校验器返回UNKNOWN_ORACLE_FUNCTION时通过。
+    """
+
+    submission = _golden_submission()
+    template = submission.case_templates[0]
+    mysql = template.oracles[-1]
+    resource_oracle = mysql.model_copy(
+        update={
+            "oracle_id": f"{channel}.unauthorized_observer",
+            "channel": channel,
+            "function_id": function_id,
+            "statement": statement,
+        }
+    )
+    invalid_submission = submission.model_copy(
+        update={
+            "case_templates": [
+                template.model_copy(
+                    update={"oracles": [*template.oracles[:-1], resource_oracle]}
+                )
+            ]
+        }
+    )
+    compilation = CaseTemplateCompilationInput(
+        submission=invalid_submission,
+        input_contract=_cancel_contract(),
+        target_output_schema={
+            "type": "object",
+            "properties": {"success": {"type": "boolean"}, "orderSerialNo": {"type": "string"}},
+        },
+        runtime_registry=_runtime_registry(),
+        value_registry=CaseTemplateRegistryLoader().value_registry(),
+        allowed_system_ids={SYSTEM_ID, BOOKING_SYSTEM_ID},
+    )
+
+    issues = CaseTemplateValidatorV4().validate(compilation)
+
+    assert "UNKNOWN_ORACLE_FUNCTION" in {item.code for item in issues}
 
 
 def test_v4_catalog_runtime_scope_keeps_same_facade_and_controlled_database() -> None:
@@ -1796,7 +1880,11 @@ def test_operation_limit_blocks_template_before_qa_execution() -> None:
 
 
 def test_cancel_executor_runs_dynamic_data_target_detail_and_mysql() -> None:
-    """确认五个cancel Variant逐次跨系统选单并保留五阶段execution ID和断言明细。"""
+    """确认五个cancel Variant逐次跨系统选单并保留五阶段execution ID和断言明细。
+
+    Returns:
+        None；五个Variant完成动态取数、目标调用和结构化Oracle执行时通过。
+    """
 
     variants, issues = _compile_golden()
     generation = CaseTemplateGenerationV4(
@@ -1831,6 +1919,15 @@ def test_cancel_executor_runs_dynamic_data_target_detail_and_mysql() -> None:
         {"page": 1, "pageSize": 20, "platFormId": "OWNER-100", "orderState": state}
         for state in (0, 1, 2, 5, 8)
     ]
+    # 数据库Worker只接受小写case用途；执行器必须发送协议值而不是DSL通道名称。
+    database_requests = [
+        operation.request
+        for item in results
+        for operation in item.operations
+        if operation.function_id == DATABASE_ID
+    ]
+    assert database_requests
+    assert all(request["purpose"] == "case" for request in database_requests)
     assert all(len(item.assertions) == 9 and all(assertion.passed for assertion in item.assertions) for item in results)
     assert all(operation.execution_id for item in results for operation in item.operations)
 

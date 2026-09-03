@@ -18,10 +18,14 @@ def test_console_static_client_uses_versioned_routes_and_safe_rendering() -> Non
 
     assert "OpenTest V2 Console" in html
     assert 'const API_ROOT = "/api/v2"' in script
-    assert '<meta name="opentest-page-version" content="20260902-01">' in html
-    assert '/assets/app.js?v=20260902-01' in html
+    assert '<meta name="opentest-page-version" content="20260902-02">' in html
+    assert '/assets/app.js?v=20260902-02' in html
     assert '/assets/styles.css?v=20260828-02' in html
     assert 'id="case-generation-profile"' in html
+    assert 'id="resource-config-environment"' in html
+    for environment in ("auto", "test", "qa", "uat"):
+        assert f'<option value="{environment}">' in html
+    assert 'resource_config_environment: element("resource-config-environment").value' in script
     assert "仅在程序无法完成Case生成时用于Codex补全" in html
     for profile_label in ("Luna · Low", "Luna · Medium", "Sol · Low", "Sol · Medium"):
         assert profile_label in html
