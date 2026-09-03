@@ -45,7 +45,7 @@ def test_fastapi_registers_multiple_systems_without_overwrite(tmp_path: Path, mo
     with TestClient(create_app(application), client=("127.0.0.1", 50000)) as client:
         health = client.get("/api/v2/health").json()
         assert health["status"] == "ok"
-        assert health["page_version"] == "20260902-02"
+        assert health["page_version"] == "20260903-01"
         first_response = client.post(
             "/api/v2/systems",
             json={
@@ -90,8 +90,8 @@ def test_console_is_served_and_references_only_versioned_api(tmp_path: Path) -> 
 
     assert console_response.status_code == 200
     assert "OpenTest V2 Console" in console_response.text
-    assert '<meta name="opentest-page-version" content="20260902-02">' in console_response.text
-    assert '/assets/app.js?v=20260902-02' in console_response.text
+    assert '<meta name="opentest-page-version" content="20260903-01">' in console_response.text
+    assert '/assets/app.js?v=20260903-01' in console_response.text
     assert script_response.status_code == 200
     assert 'const API_ROOT = "/api/v2"' in script_response.text
     assert 'const API_V3_ROOT = "/api/v3"' in script_response.text

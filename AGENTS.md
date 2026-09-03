@@ -89,3 +89,13 @@ Do not add retries or fallbacks to hide an unknown root cause. First establish t
 - Do not scan `openspec/changes/archive/**` by default.
 - Read archived changes only when investigating historical decisions,
   regressions, migrations, or the reason behind an existing design.
+
+### OpenSpec maintenance gate
+
+- Every behavior-changing implementation MUST select an existing active change or create one before modifying runtime code, tests, configuration, API contracts, persistence, or browser behavior.
+- Keep the selected change's `proposal.md`, delta specs, design decisions and `tasks.md` consistent with the implementation throughout the task. Mark a checkbox complete only after the corresponding implementation and verification actually pass.
+- When implementation changes an existing requirement, update the requirement and all of its scenarios in the selected delta spec; when it introduces a distinct capability, add a focused delta spec. Tests and code comments are not substitutes for an OpenSpec requirement.
+- Before reporting completion, run `openspec validate <change> --strict --no-interactive` and `openspec validate --specs --strict --no-interactive`. Fix validation errors in task-owned specs.
+- Once every task in a change is complete and the implementation is verified, archive it with the OpenSpec CLI so its delta is merged into `openspec/specs/**`. Do not archive a change with unfinished tasks or known unmet acceptance criteria.
+- Every completion report for behavior-changing work MUST name the selected OpenSpec change and state whether it was archived or which verified tasks remain open; do not report a change as complete while its progress record is stale.
+- Documentation-only edits that do not alter product behavior may update the current specs directly only when no change history is needed; otherwise use the same change workflow.

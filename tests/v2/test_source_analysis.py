@@ -792,8 +792,19 @@ def test_semantic_reuse_counts_distinct_state_transition_owners(tmp_path: Path) 
 
 
 def test_source_analysis_persists_manifest_and_updates_baseline(tmp_path: Path) -> None:
-    """应用编排成功后应同时发布本地manifest和Git source baseline。"""
+    """应用编排成功后应发布Manifest、分析sidecar和Git source baseline。
 
+    Args:
+        tmp_path: pytest隔离的源码、知识Git真相和扫描产物目录。
+
+    Returns:
+        None；latest、历史列表和系统基线均指向同一主Manifest时通过。
+
+    Side Effects:
+        在临时目录注册系统、执行一次模拟扫描并发布latest扫描bundle。
+    """
+
+    # 构造不依赖真实Git和scriptgen进程的最小源码系统。
     source = tmp_path / "source"
     source.mkdir()
     (source / "TradeFacade.java").write_text("class TradeFacade {}\n", encoding="utf-8")
@@ -802,13 +813,16 @@ def test_source_analysis_persists_manifest_and_updates_baseline(tmp_path: Path) 
     artifacts = SourceScanArtifactStore(store.root)
     service = SourceAnalysisService(store, artifacts, FakeScriptgenScanner())  # type: ignore[arg-type]
 
+    # 分别从精确ID、latest和扫描历史读取，历史读取必须忽略同名前缀的Case分析sidecar。
     manifest = service.analyze(SourceScanRequest(system_id="train-booking-core"))
     restored = service.get_manifest("train-booking-core", manifest.scan_id)
     latest = service.get_manifest("train-booking-core")
+    history = artifacts.list_manifests("train-booking-core")
     updated_system = store.get_system("train-booking-core")
 
     assert restored == manifest
     assert latest.scan_id == manifest.scan_id
+    assert history == [manifest]
     assert updated_system.baseline == manifest.baseline
     assert manifest.entries[0].source_id == "TradeFacade#createOrder"
     assert manifest.tools[0].script_path.startswith(manifest.tool_root)

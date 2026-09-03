@@ -18,8 +18,8 @@ def test_console_static_client_uses_versioned_routes_and_safe_rendering() -> Non
 
     assert "OpenTest V2 Console" in html
     assert 'const API_ROOT = "/api/v2"' in script
-    assert '<meta name="opentest-page-version" content="20260902-02">' in html
-    assert '/assets/app.js?v=20260902-02' in html
+    assert '<meta name="opentest-page-version" content="20260903-01">' in html
+    assert '/assets/app.js?v=20260903-01' in html
     assert '/assets/styles.css?v=20260828-02' in html
     assert 'id="case-generation-profile"' in html
     assert 'id="resource-config-environment"' in html
@@ -173,6 +173,22 @@ def test_console_static_client_uses_versioned_routes_and_safe_rendering() -> Non
     assert "最低底线知识当前没有新缺口，可进入测试场景准备" not in script
     assert 'id="load-v3-case-workspace"' in html
     assert 'const API_V3_ROOT = "/api/v3"' in script
+    assert 'const API_V4_ROOT = "/api/v4"' in script
+    assert 'id="scan-baseline"' in html
+    assert 'id="v4-case-operation"' in html
+    assert 'id="v4-case-execution-mode"' in html
+    assert 'id="start-v4-case-generation"' in html
+    assert 'id="refresh-v4-case-handoff"' in html
+    assert 'id="open-v4-codex-thread"' in html
+    assert 'id="load-v4-case-generations"' in html
+    assert 'id="v4-case-output"' in html
+    assert "async function startV4CaseGeneration" in script
+    assert 'operation_id: operationId' in script
+    assert 'execution_mode: element("v4-case-execution-mode").value' in script
+    assert "async function loadV4CaseHandoff" in script
+    assert "V4_CASE_TERMINAL_STATUSES" in script
+    assert "source_baselines" in script
+    assert "scan.revision" in script
     assert "case-generation-tasks" not in script
     assert "execution-tasks" not in script
     assert "/case-workspace" in script
@@ -611,6 +627,59 @@ def test_scan_catalog_rejects_invalidated_and_out_of_order_scan_responses() -> N
     cache_write = loader.index("knowledgeScanCatalogCache.set(catalogCacheKey, payload)")
     assert request < scope_guard < cache_write
     assert "signal: requestController.signal" in loader
+
+
+def test_v4_generation_list_invalidates_active_handoff_polling() -> None:
+    """查看已有V4 JSON前必须停止轮询，并废弃在途handoff的成功或失败响应。
+
+    Returns:
+        None；目录请求先推进共享代次，handoff与启动异常也校验该代次即通过。
+    """
+
+    script_path = Path(__file__).parents[2] / "opentest" / "web" / "app.js"
+    script = script_path.read_text(encoding="utf-8")
+    list_loader = script[
+        script.index("async function loadV4CaseGenerations") : script.index("function openV4CodexThread")
+    ]
+    handoff_loader = script[
+        script.index("async function loadV4CaseHandoff") : script.index("async function startV4CaseGeneration")
+    ]
+    starter = script[
+        script.index("async function startV4CaseGeneration") : script.index("async function refreshV4CaseHandoff")
+    ]
+
+    # 目录JSON与handoff共用展示区，必须先使定时器及在途GET失效，再读取用户主动选择的内容。
+    stop_polling = list_loader.index("stopV4CaseHandoffPolling(false)")
+    generation_request = list_loader.index("const payload = await apiV4")
+    assert stop_polling < generation_request
+    # 两段handoff远程读取的成功守卫和异常分支都必须使用相同代次，迟到错误也不能串写页面。
+    assert handoff_loader.count("requestGeneration !== v4CaseRequestGeneration") >= 4
+    assert "用户切换到Generation目录或其他系统后" in handoff_loader
+    assert "终态明细读取期间切换视图时" in handoff_loader
+    # 创建handoff的POST也可能与目录读取并发，成功响应和异常必须共同服从启动时冻结的代次。
+    assert "const startRequestGeneration = v4CaseRequestGeneration" in starter
+    assert starter.count("startRequestGeneration !== v4CaseRequestGeneration") >= 2
+
+
+def test_scan_history_change_restores_confirmed_baseline_after_catalog_failure() -> None:
+    """历史scan目录失败时必须恢复原选择，避免Git卡与仍显示的知识目录错配。
+
+    Returns:
+        None；切换使用可抛错目录加载，并在失败分支恢复previousScanId即通过。
+    """
+
+    script_path = Path(__file__).parents[2] / "opentest" / "web" / "app.js"
+    script = script_path.read_text(encoding="utf-8")
+    change_handler = script[
+        script.index("async function handleScanHistoryChange") : script.index("async function loadScanCatalog")
+    ]
+
+    # 只有目录加载成功才能提交新Git基线；失败分支要回到仍在页面中的旧目录版本。
+    assert "const previousScanId = scanCatalog?.scan_id || \"\"" in change_handler
+    assert "await loadScanCatalog(requestScope, true)" in change_handler
+    failure_branch = change_handler.index("} catch (error)")
+    assert change_handler.index("select.value = previousScanId", failure_branch) > failure_branch
+    assert change_handler.index("renderSelectedScanBaseline()", failure_branch) > failure_branch
 
 
 def test_console_scan_failure_stops_manifest_loading_and_success_feedback() -> None:

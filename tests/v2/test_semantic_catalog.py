@@ -68,6 +68,19 @@ class FixedManifestArtifacts:
         assert scan_id in {"latest", self.manifest.scan_id}
         return self.manifest
 
+    def list_manifests(self, system_id: str) -> list[ScanManifest]:
+        """返回轻量扫描历史投影所需的唯一Manifest。
+
+        Args:
+            system_id: 必须与固定Manifest所属系统一致。
+
+        Returns:
+            只包含固定Manifest的扫描历史。
+        """
+
+        assert system_id == self.manifest.system_id
+        return [self.manifest]
+
 
 def _manifest(source_root: Path) -> ScanManifest:
     """构造共享方法、责任链和中文状态标签组成的语义Manifest。
@@ -221,6 +234,32 @@ def _store(tmp_path: Path) -> tuple[GitKnowledgeStore, Path]:
     store.initialize()
     store.register_system(SystemDefinition(system_id=SYSTEM_ID, name="语义系统", source_path=str(source_root)))
     return store, source_root
+
+
+def test_scan_history_exposes_fixed_git_revision_for_console(tmp_path: Path) -> None:
+    """扫描历史应直接提供页面识别branch、tag或commit所需的revision。
+
+    Args:
+        tmp_path: pytest隔离的系统注册和源码目录。
+
+    Returns:
+        None；轻量历史中的scan、commit、branch与revision均来自同一Manifest时通过。
+    """
+
+    store, source_root = _store(tmp_path)
+    manifest = _manifest(source_root)
+    baseline = manifest.baseline.model_copy(
+        update={"commit": "a" * 40, "branch": "release/refund", "revision": "refund-v4.1"}
+    )
+    versioned_manifest = manifest.model_copy(update={"baseline": baseline})
+
+    # 页面列表只读取轻量历史；该投影必须保留用户扫描时选择的原始revision。
+    history = ScanCatalogService(store, FixedManifestArtifacts(versioned_manifest)).list_history(SYSTEM_ID)
+
+    assert history[0].scan_id == versioned_manifest.scan_id
+    assert history[0].commit == baseline.commit
+    assert history[0].branch == baseline.branch
+    assert history[0].revision == baseline.revision
 
 
 def test_catalog_groups_shared_logic_patterns_and_state_display(tmp_path: Path) -> None:

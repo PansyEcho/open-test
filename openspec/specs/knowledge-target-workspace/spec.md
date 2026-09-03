@@ -24,3 +24,11 @@ TBD - created by archiving change system-specific-knowledge-discovery-and-task-p
 - **THEN** 页面不显示主要下游、分单系统关系或固定EBK/票机/收单/HT字段
 - **AND** 展示当前系统自己的术语和外部应用候选及源码证据
 
+### Requirement: 知识工作区必须区分正式入口事实与候选
+
+系统 SHALL 分别展示正式入口事实和待确认typed候选，并允许用户选择确切候选提交确认。
+
+#### Scenario: 查看入口知识候选
+- **WHEN** 入口知识生成返回实体前置、产出或绑定候选
+- **THEN** 页面标明候选来源和证据且不把其显示为已发布知识
+
