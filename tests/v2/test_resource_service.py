@@ -141,6 +141,9 @@ def test_list_resources_keeps_discovered_state_without_catalog(tmp_path: Path) -
     assert {item["definition"]["resource_id"] for item in resources} == {MYSQL_RESOURCE_ID, MQ_CLUSTER_ID}
     assert {item["state"]["status"] for item in resources} == {"DISCOVERED"}
     assert all(item["state"]["operation_count"] == 0 for item in resources)
+    assert all(item["state"]["last_probe_at"] is None for item in resources)
+    assert all(item["state"]["last_business_validation_at"] is None for item in resources)
+    assert all(item["discovery"]["discovered_at"] for item in resources)
     mq_definition = next(item["definition"] for item in resources if item["definition"]["kind"] == "mq")
     assert mq_definition["legacy_resource_ids"] == [MQ_RESOURCE_ID]
     assert len(mq_definition["interactions"]) == 1
@@ -154,8 +157,11 @@ def test_probe_reports_missing_worker_for_database_and_mq_cluster(tmp_path: Path
 
     assert states[MYSQL_RESOURCE_ID].status == ResourceStatus.BLOCKED
     assert states[MYSQL_RESOURCE_ID].error_code == "QA_WORKER_MISSING"
+    assert states[MYSQL_RESOURCE_ID].last_probe_at is not None
+    assert states[MYSQL_RESOURCE_ID].last_business_validation_at is None
     assert states[MQ_CLUSTER_ID].status == ResourceStatus.BLOCKED
     assert states[MQ_CLUSTER_ID].error_code == "QA_WORKER_MISSING"
+    assert states[MQ_CLUSTER_ID].last_probe_at is not None
 
 
 def test_legacy_mq_id_resolves_for_probe_and_business_evidence(tmp_path: Path, monkeypatch) -> None:
@@ -188,6 +194,7 @@ def test_legacy_mq_id_resolves_for_probe_and_business_evidence(tmp_path: Path, m
     saved = service.mark_business_evidence(MQ_RESOURCE_ID, evidence, effect_only=True)
     assert saved.resource_id == MQ_CLUSTER_ID
     assert saved.status == ResourceStatus.EFFECT_ONLY
+    assert saved.last_business_validation_at is not None
 
 
 def test_public_operation_projection_excludes_private_execution_fields(tmp_path: Path) -> None:

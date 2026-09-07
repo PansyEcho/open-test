@@ -8,14 +8,18 @@ from pathlib import Path
 import pytest
 from pydantic import ValidationError
 
+from opentest.adapters.environment_config import LocalEnvironmentLoader
 from opentest.adapters.resource_inventory import ResourceStateStore, SourceResourceDiscoverer
+from opentest.application.foundation import OpenTestApplication
 from opentest.domain.errors import KnowledgeValidationError
 from opentest.domain.models import (
     ResourceBusinessEvidence,
     ResourceKind,
+    ResourceProbeRequest,
     ResourceRole,
     ResourceStateRecord,
     ResourceStatus,
+    SystemDefinition,
 )
 
 
@@ -68,7 +72,10 @@ def _write_resource_fixture(source_root: Path) -> None:
         """<?xml version="1.0" encoding="UTF-8"?>
 <beans xmlns="http://www.springframework.org/schema/beans" xmlns:sof="http://schema.ly.com/schema/sof">
   <sof:publisher id="uniformEventPublisher" group="${mq.sample.group}" nameSrvAddress="${mq.nameSrvAddress}"/>
-  <bean id="redissionProxy" class="example.RedissionProxy">
+  <bean id="redisClient" class="com.ly.flight.chainsaas.refund.integration.tools.redis.RedisClient">
+    <property name="groupName" value="${redis.groupName:do-not-persist-default}"/>
+  </bean>
+  <bean id="redissonProxy" class="com.ly.flight.chainsaas.refund.integration.lock.proxy.RedissonProxy">
     <property name="groupName" value="${redis.groupName:do-not-persist-default}"/>
   </bean>
 </beans>
@@ -158,7 +165,13 @@ def test_discovers_booking_core_resource_shapes_with_source_evidence(tmp_path: P
     assert {resource.database_environment_config_key for resource in databases} == {"uniform.env"}
 
     redis = next(resource for resource in discovery.resources if resource.kind == ResourceKind.REDIS)
+    assert redis.logical_name == "redis.groupName"
     assert redis.config_keys == ["redis.groupName"]
+    assert {reference.symbol for reference in redis.source_refs} == {"redisClient", "redissonProxy"}
+    assert redis.legacy_resource_ids == [
+        "resource:train-booking-core:redis:cache:redisclient",
+        "resource:train-booking-core:redis:cache:redissonproxy",
+    ]
     assert "do-not-persist-default" not in redis.model_dump_json()
 
     consumers = [resource for resource in discovery.resources if resource.role == ResourceRole.CONSUMER]
@@ -184,6 +197,45 @@ def test_discovers_booking_core_resource_shapes_with_source_evidence(tmp_path: P
     assert all(reference.line and reference.line > 0 for resource in discovery.resources for reference in resource.source_refs)
     assert all("src/test" not in reference.path for resource in discovery.resources for reference in resource.source_refs)
 
+
+@pytest.mark.parametrize(
+    ("bean_class", "property_name"),
+    [
+        ("example.RedissionProxy", "groupName"),
+        ("example.CacheClientHA", "cacheName"),
+    ],
+)
+def test_discovers_supported_legacy_redis_initializers(
+    tmp_path: Path,
+    bean_class: str,
+    property_name: str,
+) -> None:
+    """历史拼写和显式CacheClientHA仍应按配置键形成一个Redis逻辑资源。
+
+    Args:
+        tmp_path: Pytest提供的隔离源码目录。
+        bean_class: 当前兼容样例使用的受支持初始化类型。
+        property_name: 该初始化类型声明逻辑Redis身份的property。
+
+    Side Effects:
+        写入一个最小生产XML并执行纯本地静态资源发现。
+    """
+
+    source_root = tmp_path / "refund-core"
+    xml_path = source_root / "app/integration/src/main/resources/META-INF/spring/redis.xml"
+    xml_path.parent.mkdir(parents=True)
+    xml_path.write_text(
+        f'<beans><bean id="legacyRedis" class="{bean_class}">'
+        f'<property name="{property_name}" value="${{redis.legacy}}"/>'
+        '</bean></beans>',
+        encoding="utf-8",
+    )
+
+    discovery = SourceResourceDiscoverer().discover("refund-core", source_root)
+
+    assert len(discovery.resources) == 1
+    assert discovery.resources[0].kind == ResourceKind.REDIS
+    assert discovery.resources[0].logical_name == "redis.legacy"
 
 @pytest.mark.parametrize("status", list(ResourceStatus))
 def test_all_resource_statuses_round_trip(status: ResourceStatus, tmp_path: Path) -> None:
@@ -277,3 +329,187 @@ def test_state_store_rejects_unsafe_ids_and_corrupt_files(tmp_path: Path) -> Non
     state_path.write_text(json.dumps({"schema_version": 1, "system_id": "wrong", "resources": []}), encoding="utf-8")
     with pytest.raises(KnowledgeValidationError, match="invalid resource state file"):
         store.list("train-booking-core")
+
+
+def test_environment_loader_resolves_only_explicit_unique_alias(tmp_path: Path) -> None:
+    """环境选择只能命中规范ID或当前系统唯一声明的显式别名。
+
+    Args:
+        tmp_path: Pytest提供的隔离本地环境目录。
+
+    Side Effects:
+        写入两份不含真实凭据的本地环境YAML。
+    """
+
+    environment_root = tmp_path / "environments"
+    system_root = environment_root / "train-booking-core"
+    system_root.mkdir(parents=True)
+    qa_path = system_root / "qa.yaml"
+    qa_path.write_text(
+        "system_id: train-booking-core\nenvironment: qa\naliases: [QA1]\nvalues: {region: qa-east}\n",
+        encoding="utf-8",
+    )
+    qa_path.chmod(0o600)
+    uat_path = system_root / "uat.yaml"
+    uat_path.write_text(
+        "system_id: train-booking-core\nenvironment: uat\naliases: [PRE]\n",
+        encoding="utf-8",
+    )
+    uat_path.chmod(0o600)
+    loader = LocalEnvironmentLoader(environment_root)
+
+    catalog = loader.list_catalog("train-booking-core")
+    resolved = loader.resolve("train-booking-core", "QA1")
+
+    assert [(item.environment, item.aliases) for item in catalog] == [
+        ("qa", ["QA1"]),
+        ("uat", ["PRE"]),
+    ]
+    assert resolved.environment == "qa"
+    assert resolved.aliases == ["QA1"]
+    with pytest.raises(KnowledgeValidationError, match="not configured"):
+        loader.resolve("train-booking-core", "qa1")
+
+
+def test_environment_loader_rejects_ambiguous_alias_without_guessing(tmp_path: Path) -> None:
+    """同一系统多个环境声明相同别名时必须要求用户确认规范环境。
+
+    Args:
+        tmp_path: Pytest提供的隔离本地环境目录。
+
+    Side Effects:
+        写入两份故意使用相同别名的本地环境YAML。
+    """
+
+    system_root = tmp_path / "environments/train-booking-core"
+    system_root.mkdir(parents=True)
+    for environment in ("qa", "uat"):
+        path = system_root / f"{environment}.yaml"
+        path.write_text(
+            "system_id: train-booking-core\n"
+            f"environment: {environment}\n"
+            "aliases: [QA1]\n",
+            encoding="utf-8",
+        )
+        path.chmod(0o600)
+    loader = LocalEnvironmentLoader(tmp_path / "environments")
+
+    with pytest.raises(KnowledgeValidationError, match="ambiguous"):
+        loader.resolve("train-booking-core", "QA1")
+
+
+def test_resource_probe_requires_environment_and_resolves_canonical_or_alias(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """资源探测必须显式选择环境，并在建任务前把唯一alias解析为canonical ID。
+
+    Args:
+        tmp_path: Pytest提供的隔离知识、源码和本地环境目录。
+        monkeypatch: 将任务提交和资源探测替换为同步离线记录器。
+
+    Returns:
+        None；缺环境被模型拒绝，canonical和显式alias均只向资源服务传递``qa``时通过。
+
+    Side Effects:
+        写入一份无凭据环境YAML和临时任务目录；不会启动Worker或访问QA。
+    """
+
+    with pytest.raises(ValidationError, match="environment"):
+        ResourceProbeRequest(system_id="train-booking-core")
+
+    source_root = tmp_path / "source"
+    source_root.mkdir()
+    application = OpenTestApplication(tmp_path / "knowledge")
+    application.store.register_system(
+        SystemDefinition(
+            system_id="train-booking-core",
+            name="火车票预订",
+            source_path=str(source_root),
+        )
+    )
+    environment_path = (
+        application.knowledge_root
+        / ".opentest/environments/train-booking-core/qa.yaml"
+    )
+    environment_path.parent.mkdir(parents=True)
+    environment_path.write_text(
+        "system_id: train-booking-core\nenvironment: qa\naliases: [QA1]\n",
+        encoding="utf-8",
+    )
+    environment_path.chmod(0o600)
+    observed_environments: list[str] = []
+    submitted_jobs: list[dict[str, object]] = []
+    submitted_task = object()
+
+    def probe_without_worker(
+        system_id: str,
+        environment: str,
+        resource_ids: list[str],
+    ) -> list[ResourceStateRecord]:
+        """记录资源服务收到的规范环境并返回空安全状态集。
+
+        Args:
+            system_id: 探测所属注册系统。
+            environment: Foundation已经解析的规范环境。
+            resource_ids: 用户选择的可选资源范围。
+
+        Returns:
+            空状态集，避免离线测试启动真实Worker。
+        """
+
+        assert system_id == "train-booking-core"
+        assert resource_ids == []
+        observed_environments.append(environment)
+        return []
+
+    def submit_inline(
+        operation: str,
+        system_id: str,
+        job,
+        exclusive: bool = False,
+    ):
+        """同步执行资源任务闭包以观察其参数而不启动线程池工作流。
+
+        Args:
+            operation: Foundation声明的任务类型。
+            system_id: 任务归属系统。
+            job: 已冻结canonical环境的资源探测闭包。
+            exclusive: 是否要求排他任务门禁。
+
+        Returns:
+            用于确认两次提交均返回原任务管理器结果的测试哨兵。
+
+        Side Effects:
+            当前测试线程内执行闭包并保存其安全摘要。
+        """
+
+        assert operation == "resource-probe"
+        assert system_id == "train-booking-core"
+        assert exclusive is True
+        submitted_jobs.append(job())
+        return submitted_task
+
+    monkeypatch.setattr(application.resources, "probe", probe_without_worker)
+    monkeypatch.setattr(application.tasks, "submit", submit_inline)
+    try:
+        alias_task = application.submit_resource_probe(
+            ResourceProbeRequest(system_id="train-booking-core", environment="QA1")
+        )
+        canonical_task = application.submit_resource_probe(
+            ResourceProbeRequest(system_id="train-booking-core", environment="qa")
+        )
+        with pytest.raises(KnowledgeValidationError, match="not configured"):
+            application.submit_resource_probe(
+                ResourceProbeRequest(system_id="train-booking-core", environment="QA2")
+            )
+
+        assert alias_task is submitted_task
+        assert canonical_task is submitted_task
+        assert observed_environments == ["qa", "qa"]
+        assert submitted_jobs == [
+            {"resource_count": 0, "states": []},
+            {"resource_count": 0, "states": []},
+        ]
+    finally:
+        application.close()

@@ -12,7 +12,7 @@
 
 - [x] 3.1 实现独立Java 8 DSF Worker和0600文件协议
 - [x] 3.2 实现Python启动器、目录摘要校验、日志上下文和脱敏响应
-- [ ] 3.3 将Facade工具切换为`dsf_proxy`并保持HTTP Job不变
+- [x] 3.3 将Facade工具切换为`dsf_proxy`并保持HTTP Job不变
 
 ## 4. 接口与页面
 
@@ -25,3 +25,5 @@
 - [ ] 5.2 经用户确认执行两个只读DSF金丝雀
 - [x] 5.3 运行完整测试、浏览器验收和OCR delegation审查
 - [x] 5.4 更新状态文档；保持写操作与回归Case不在只读金丝雀范围
+- [x] 5.5 移除Facade能力和扫描器对Labrador/Facade HTTP的残余依赖并完成离线无回退验证
+- [x] 5.6 增加安全环境目录、显式alias解析和canonical环境贯穿Case Operation

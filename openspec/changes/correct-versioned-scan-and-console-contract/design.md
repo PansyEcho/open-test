@@ -2,15 +2,47 @@
 
 ## Decision
 
-`POST /api/v2/systems/{system_id}/case-generations`只创建Codex handoff。DSL提交完成后写入不可变Generation并结束生成状态，不调用Operation。`POST /api/v2/systems/{system_id}/case-generations/{generation_id}/executions`创建独立Execution，按Generation中冻结的Variant顺序串行执行。一次Generation可多次显式执行，但同一环境同时只能有一个RUNNING Execution。
+`POST /api/v2/systems/{system_id}/case-generations`先创建持久业务任务，再创建冻结当前完整扫描与源码范围的prepare-only handoff并预留Generation ID。响应只返回任务、handoff、上下文地址和包含系统Skill与`task_id`的继续指令；OpenTest不创建或启动另一个Agent thread/turn，也不调用Operation。当前原生Agent通过正式的context、受控源码、问题、草稿校验和发布接口完成工作。
+
+历史handoff在读取边界仅允许额外出现已确认的`execution_mode`和`execution_results`。这两个字段不进入当前领域对象或API，新handoff不再写入；更新历史handoff时原样保留它们，避免一次新建请求在全局request_id检查期间被任意旧记录阻断。其他未知字段、身份错位、非法历史字段形状和损坏JSON仍然失败，错误只报告handoff身份与安全格式原因。
+
+草稿、结构化校验问题、业务问题、答案和revision保存在handoff，草稿校验不直接创建BLOCKED Generation。当前Agent仍能修订或任务正在等待回答时保持可恢复状态；只有全部门禁通过、显式发布可用部分，或无开放问题与可修复错误时显式最终阻塞，才创建不可变`READY / PARTIAL / BLOCKED` Generation。成功保存正式产物才是业务完成。
+
+Case写请求使用稳定`request_id`，修改既有handoff时同时携带`expected_revision`。锁顺序固定为request identity、handoff跨线程/跨进程处理锁、系统事务；幂等回执检查、revision比较、校验、写入和revision推进在同一handoff保护范围内完成。相同request_id同参返回首次持久结果，异参返回幂等冲突；两个相同expected_revision的并发请求最多一个成功。Generation在发布前预留身份，产物已写但任务链接中断时重试只允许精确回读同一产物并补齐状态，不覆盖或重复发布。
+
+正式Generation需要修订时自动创建带`predecessor_generation_id`的后继task、handoff和新Generation身份。`continue`固定原扫描与源码范围；`regenerate_latest`才冻结最新完整扫描并重新校验源码、字段和类型。旧Generation保持字节不变。
+
+后继handoff文件是continue请求的持久提交点，父handoff链接是随后补齐的可恢复投影。如果进程在后继落盘后、父链接写入前中断，相同request_id重试必须定位并复用该后继，在父handoff锁内只补齐链接和revision；不得创建第二个task、handoff或Generation身份。
+
+`POST /api/v2/systems/{system_id}/case-generations/{generation_id}/executions`创建独立Execution，按Generation中冻结的Variant顺序串行执行。一次Generation可多次显式执行，但同一规范环境同时只能有一个RUNNING Execution。执行前必须把规范ID或系统内唯一显式alias解析为canonical environment，并在四个Operation阶段保持同一ID。
 
 写接口模板必须包含结构化Cleanup。缺少或无效Cleanup的Variant仍保存在Generation中，但带阻塞原因且执行器不得调用其TARGET。已尝试TARGET后，无论TARGET或ORACLE结果如何都在finally语义中尝试Cleanup；Cleanup失败使Variant失败，并保留各阶段证据。
 
 公共API使用`/api/v2`作为传输协议版本。领域类和历史JSON暂保留内部V4 contract字符串以严格读取既有不可变产物，但页面、文档和Skill不展示V2/V3/V4产品代际。
 
-## Plugin diagnostics
+## 扫描发布与资源投影
 
-插件清单命令非零退出时先返回经过脱敏的真实配置诊断。只有清单命令成功后，才根据清单区分未安装与禁用。任何前置失败都发生在线程创建和模型调用之前。
+每次扫描attempt按组件保存`complete / partial / failed`、稳定问题代码、安全消息和失败源码范围。普通信息warning不降低完整性；任一必需输入失败或不完整时，本次attempt不替换知识与Case使用的最新完整baseline，但可靠新结果仍可用于页面投影。
+
+扫描任务的线程生命周期可以正常`completed`，其结果必须同时保存Manifest的`completeness`和`publication_outcome`。历史列表直接投影这两个字段，页面也据此区分完整基线与部分投影；不得使用通用任务状态重新猜测扫描业务结果。旧Manifest缺少字段时继续使用领域模型既有的完整基线默认值读取。
+
+Facade结构仍由scriptgen的scan manifest读取，但正式执行只走DSF。tool manifest中的`facade_raw`仅作为同一次扫描的入口身份描述符参与类型、路径范围和一一映射校验；缺少已退役HTTP网关时，它可以不可执行且不生成脚本，不会进入OpenTest工具目录或阻断后续Java、资源和语义扫描。仍由生成脚本执行的HTTP Job继续要求`ready`状态和真实脚本文件。
+
+资源部分扫描以源码范围为合并边界：本次成功范围使用可靠新结果，失败或未读范围才从上一完整扫描保留必要资源并标记来源。首次部分成功直接展示本次provisional资源；下一次完整扫描只使用本次结果，因此能够确认并移除已经删除的资源。资源发现时间、连接探测时间和业务结果校验时间分别保存，缺少连接配置或验证能力不影响MySQL、Redis和MQ的发现展示。
+
+Redis发现覆盖真实`RedisClient`、`RedissonProxy`、历史拼写`RedissionProxy`以及显式配置`cacheName`的`CacheClientHA`。逻辑身份来自`${...}`配置键而不是bean ID或直写运行值；多个bean引用同一`groupName`或`cacheName`时合并为一个资源并保留全部源码引用，同时保留旧bean资源ID作为读取兼容别名。
+
+## 源码版本固定与知识新鲜度
+
+Git系统首次配置时把用户选择的revision（默认当时HEAD）解析成完整commit，并创建`opentest/baseline/<commit>`本地lightweight managed tag。系统定义持久化原始选择、完整commit、扫描时分支提示、managed tag和固定时间。tag同名同commit可幂等复用；tag不存在、被移动或同名指向其他commit时明确阻断，不force、不checkout、不push，也不修改用户工作树。
+
+普通保存、扫描、Skill扫描和任务继续只允许使用已保存pin；请求中的空revision会解析为pin，显式但不匹配的revision被拒绝。只有系统配置中的“更新代码基准并扫描”动作可创建新pin并提交扫描。用户工作树可继续切换分支或产生未提交修改，但这些内容不进入固定基准，页面必须如实提示。
+
+Git知识新鲜度只比较规范源码路径、完整commit和分析器兼容性。同commit下的不同scan ID、branch文案、用户输入revision、managed tag、快照路径与捕获时间不得单独使知识过期；历史Manifest缺失或无法证明commit、节点显式STALE、源码路径变化、commit变化或分析器不兼容仍必须显示过期。非Git目录继续使用已有目录内容摘要语义。
+
+## Plugin boundary
+
+OpenTest只同步并校验项目拥有的插件与系统Skill源码，并返回真实调用名和包含`task_id`的继续指令；它不读取Codex登录状态、私有配置或已安装插件清单，也不再返回旧App Server专用的插件前置错误码。插件安装与刷新由当前Agent宿主负责，宿主未就绪不能被OpenTest伪装成业务任务失败，也不影响网页先持久化待接手任务。
 
 ## Rollout
 

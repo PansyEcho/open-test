@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import re
 from pathlib import Path
 
 
@@ -17,9 +18,9 @@ def test_console_static_client_uses_single_case_workflow_and_safe_rendering() ->
     script = (web_root / "app.js").read_text(encoding="utf-8")
 
     assert "<title>OpenTest Console</title>" in html
-    assert '<meta name="opentest-page-version" content="20260903-06">' in html
-    assert '/assets/app.js?v=20260903-06' in html
-    assert '/assets/styles.css?v=20260903-01' in html
+    assert '<meta name="opentest-page-version" content="20260907-06">' in html
+    assert '/assets/app.js?v=20260907-06' in html
+    assert '/assets/styles.css?v=20260907-06' in html
     assert 'const API_ROOT = "/api/v2"' in script
     assert "API_V3_ROOT" not in script
     assert "API_V4_ROOT" not in script
@@ -54,14 +55,18 @@ def test_console_static_client_uses_single_case_workflow_and_safe_rendering() ->
     start_generation = script[
         script.index("async function startCaseGeneration") : script.index("async function refreshCaseHandoff")
     ]
-    assert "const requestBody = { operation_id: operationId }" in start_generation
+    assert "operation_id: operationId" in start_generation
+    assert 'request_id: getOrCreateCaseRequestId("start", operationId)' in start_generation
     assert "execution_mode" not in start_generation
     assert "/case-generations" in start_generation
+    assert "continuation_instruction" in start_generation
+    assert "task_id" in start_generation
     execute_generation = script[
         script.index("async function executeCaseGeneration") : script.index("function delay")
     ]
     assert "/executions" in execute_generation
-    assert 'environment_id: element("case-execution-environment").value' in execute_generation
+    assert 'const environmentId = element("case-execution-environment").value' in execute_generation
+    assert "body: JSON.stringify({ environment_id: environmentId })" in execute_generation
     assert 'currentCaseGeneration?.generation_id !== generationId' in execute_generation
     assert '!["READY", "PARTIAL"].includes(currentCaseGeneration?.status)' in execute_generation
     assert "caseGenerationViewRequestGeneration" in script
@@ -156,20 +161,49 @@ def test_knowledge_workspace_css_prevents_hidden_overflow_and_mobile_nested_scro
 
 
 def test_console_ignores_late_failures_from_previous_system_scope() -> None:
-    """重扫、目录和Curl请求的迟到失败不得覆盖用户刚切换的新系统页面。"""
+    """重扫、扫描目录和任务目录的迟到结果不得覆盖刚切换的新系统页面。"""
 
     script_path = Path(__file__).parents[2] / "opentest" / "web" / "app.js"
     script = script_path.read_text(encoding="utf-8")
 
-    # 三个跨系统异步入口都必须捕获请求代次，并在失败回写前检查当前系统作用域。
+    # 跨系统异步入口必须捕获请求代次，并在任何页面回写前检查当前系统作用域。
     retry_scan = script[script.index("async function retryScan()") : script.index("async function loadScanHistory")]
     load_catalog = script[script.index("async function loadScanCatalog") : script.index("function renderScanTree")]
-    curl_preview = script[script.index("async function updateCurlPreview") : script.index("async function copyFacadeCurl")]
+    load_tasks = script[script.index("async function loadTaskCatalog") : script.index("function renderSelectedKnowledgeGenerationAttempt")]
     assert "const requestScope = captureSystemScope();" in retry_scan
     assert retry_scan.count("if (!isCurrentSystemScope(requestScope))") >= 3
     assert "requestScope.systemId" in retry_scan
     assert "catch (error) {\n    if (!isCurrentSystemScope(requestScope))" in load_catalog
-    assert "catch (error) {\n    if (!isCurrentSystemScope(requestScope))" in curl_preview
+    assert "if (!isCurrentSystemScope(requestScope))" in load_tasks
+    assert "/tasks?system_id=" in load_tasks
+    assert "updateCurlPreview" not in script
+    assert "copyFacadeCurl" not in script
+
+
+def test_scan_completion_message_uses_persisted_manifest_outcome() -> None:
+    """扫描任务completed时，页面仍应按Manifest结果准确提示partial projection。
+
+    Returns:
+        None；任务轮询返回持久结果，三个扫描入口均复用业务结果判断时通过。
+    """
+
+    script_path = Path(__file__).parents[2] / "opentest" / "web" / "app.js"
+    script = script_path.read_text(encoding="utf-8")
+    classifier = script[
+        script.index("function isPartialScanResult") : script.index("async function saveSystem")
+    ]
+    progress = script[
+        script.index("async function showTaskProgress") : script.index("async function resumeConsoleActivity")
+    ]
+    scan_workflows = script[
+        script.index("async function saveSystem") : script.index("async function loadScanHistory")
+    ]
+
+    assert 'scanProgress?.result?.publication_outcome === "partial_projection"' in classifier
+    assert 'scanProgress?.result?.completeness === "partial"' in classifier
+    assert "result: taskPayload.task.result || {}" in progress
+    assert scan_workflows.count("isPartialScanResult(scanProgress)") == 3
+    assert 'scanProgress.status === "partial"' not in scan_workflows
 
 
 def test_question_cycle_writes_are_retired_from_the_page() -> None:
@@ -229,32 +263,80 @@ def test_same_system_list_refresh_rebases_knowledge_return_navigation() -> None:
     assert "source.generation = requestGeneration;" in load_system
 
 
-def test_page_conversation_is_retired_and_task_polling_stays_scoped() -> None:
-    """页面聊天不再发请求，现有长任务轮询仍不得跨系统或对象回写。
+def test_legacy_agent_ui_is_removed_and_task_polling_stays_scoped() -> None:
+    """旧后台Agent面板、页面会话和写控制调用必须从静态客户端彻底移除。
 
     Returns:
-        None；旧聊天入口无网络写入，且通用任务轮询仍固定作用域即通过。
+        None；旧DOM、样式、实时或写入口消失，通用任务轮询仍固定作用域时通过。
     """
 
-    script_path = Path(__file__).parents[2] / "opentest" / "web" / "app.js"
-    script = script_path.read_text(encoding="utf-8")
-    send_turn = script[
-        script.index("async function sendKnowledgeConversation") : script.index("async function retryKnowledgeConversationTurn")
-    ]
-    retry_turn = script[
-        script.index("async function retryKnowledgeConversationTurn") : script.index("async function generateCurrentKnowledge")
-    ]
+    web_root = Path(__file__).parents[2] / "opentest" / "web"
+    html = (web_root / "index.html").read_text(encoding="utf-8")
+    script = (web_root / "app.js").read_text(encoding="utf-8")
+    styles = (web_root / "styles.css").read_text(encoding="utf-8")
     load_questions = script[
         script.index("async function loadQuestions(") : script.index("function renderKnowledgeQuestions")
     ]
     task_progress = script[
         script.index("async function showTaskProgress") : script.index("async function resumeConsoleActivity")
     ]
-    # 旧聊天入口只能提示迁移，不得保留conversation-turns读取、写入或重试路径。
-    assert "renderCodexTaskPane" in send_turn
-    assert "api(" not in send_turn
-    assert "api(" not in retry_turn
-    assert "return false;" in retry_turn
+    # 删除旧区域本身，避免隐藏DOM继续保留已下线的按钮和敏感诊断材料。
+    for retired_id in (
+        "knowledge-agent-stream-panel",
+        "open-codex-client-thread",
+        "view-agent-diagnostics",
+        "cancel-knowledge-agent",
+        "continue-knowledge-agent",
+        "copy-agent-resume-command",
+        "knowledge-agent-prompt",
+        "knowledge-agent-source-access",
+        "knowledge-agent-final-output",
+        "knowledge-conversation-history",
+        "knowledge-conversation-message",
+        "send-knowledge-conversation",
+    ):
+        assert f'id="{retired_id}"' not in html
+
+    # 浏览器不再连接后台Agent事件、取消、页面会话或turn接口。
+    for retired_fragment in (
+        "EventSource",
+        "startKnowledgeAgentEventStream",
+        "viewKnowledgeAgentDiagnostics",
+        "cancelKnowledgeAgent",
+        "continueKnowledgeAgent",
+        "sendKnowledgeConversation",
+        "retryKnowledgeConversationTurn",
+        "/events?after=",
+        "/cancel-agent",
+        "/conversation-turns",
+        "/turns",
+    ):
+        assert retired_fragment not in script
+    for retired_selector in (
+        ".knowledge-agent-stream-panel",
+        ".knowledge-agent-events",
+        ".knowledge-agent-diagnostics",
+        ".knowledge-conversation",
+        ".conversation-history",
+        ".conversation-turn",
+    ):
+        assert retired_selector not in styles
+
+    # 原生Agent任务卡和统一任务轮询仍是页面恢复入口。
+    assert 'id="knowledge-current-task-panel"' in html
+    assert 'id="copy-current-knowledge-task-instruction"' in html
+    assert "/tasks/${encodeURIComponent(taskId)}/agent-diagnostics" in script
+    assert "function taskHasHistoricalAgentEvidence" in script
+    assert "function appendTaskAgentDiagnostics" in script
+    evidence_guard = script[
+        script.index("function taskHasHistoricalAgentEvidence") : script.index("async function loadTaskAgentDiagnostics")
+    ]
+    assert "progress.agent_event_cursor" in evidence_guard
+    assert "progress.agent_session_id" in evidence_guard
+    assert "task.client_handoff?.thread_id" in evidence_guard
+    assert "diagnostics.prompt ||" not in script
+    assert "diagnostics.final_output ||" not in script
+    assert ".task-agent-diagnostics" in styles
     assert "requestScope" in task_progress
     assert "isCurrentTaskRequestScope(requestScope)" in task_progress
     assert "if (activeLongTaskId === taskId)" in task_progress
@@ -268,10 +350,10 @@ def test_page_conversation_is_retired_and_task_polling_stays_scoped() -> None:
 
 
 def test_knowledge_target_loading_ignores_out_of_order_detail_responses() -> None:
-    """快速切换对象时，旧详情响应和finally都不能覆盖最后选择或提前清除Loading。
+    """快速切换对象时，旧详情响应和finally不能覆盖最后选择或提前清除Loading。
 
     Returns:
-        None；详情函数使用独立目标代次校验而非仅校验系统时通过。
+        None；详情函数先绑定目标任务范围，再使用独立目标代次校验时通过。
     """
 
     script_path = Path(__file__).parents[2] / "opentest" / "web" / "app.js"
@@ -283,9 +365,9 @@ def test_knowledge_target_loading_ignores_out_of_order_detail_responses() -> Non
     assert "knowledgeTargetRequestGeneration += 1" in detail_loader
     assert detail_loader.count("isCurrentKnowledgeTargetRequestScope(requestScope)") >= 3
     assert "isCurrentSystemScope(requestScope)" not in detail_loader
-    # 中栏聊天也属于当前详情；发请求前必须先绑定新目标，不能继续显示上一个接口的作用域。
+    # 当前任务卡和问题投影必须在请求前绑定新目标，不能继续显示上一个接口的作用域。
     immediate_scope = detail_loader.index(
-        'bindKnowledgeConversationScope({ kind: "TARGET", scope_id: target.target_id }, target.display_name)'
+        'setKnowledgeViewScope({ kind: "TARGET", scope_id: target.target_id }, target.display_name)'
     )
     assert immediate_scope < detail_loader.index("try {")
     scope_check = detail_loader.index("if (!isCurrentKnowledgeTargetRequestScope(requestScope))")
@@ -295,48 +377,138 @@ def test_knowledge_target_loading_ignores_out_of_order_detail_responses() -> Non
     assert "scan_id=${encodeURIComponent(scanId)}" in detail_loader
 
 
-def test_codex_handoff_monitor_rejects_stale_same_target_attempt_responses() -> None:
-    """同一目标切换到新attempt后，旧轮询响应不得重绘任务卡或Toast。
+def test_console_element_lookups_match_static_dom_contract() -> None:
+    """脚本中的静态元素读取和短动作绑定必须全部命中当前HTML。
 
     Returns:
-        None；轮询在GET后及终态刷新后都复核当前monitor task ID时通过。
+        None；删除旧Agent区域后不存在会在初始化阶段抛错的悬空DOM ID时通过。
+    """
+
+    web_root = Path(__file__).parents[2] / "opentest" / "web"
+    html = (web_root / "index.html").read_text(encoding="utf-8")
+    script = (web_root / "app.js").read_text(encoding="utf-8")
+    html_ids = set(re.findall(r'\bid="([^"]+)"', html))
+    element_ids = set(re.findall(r'\belement\("([^"]+)"\)', script))
+    bound_action_ids = set(re.findall(r'\bbindShortAction\("([^"]+)"', script))
+
+    assert element_ids <= html_ids, sorted(element_ids - html_ids)
+    assert bound_action_ids <= html_ids, sorted(bound_action_ids - html_ids)
+
+
+def test_native_agent_task_uses_copyable_instruction_without_starting_background_turn() -> None:
+    """新业务任务必须复制持久指令，且不得启动或接管后台Codex turn。
+
+    Returns:
+        None；任务可通过task_id恢复，且页面不存在深链、SSE或turn写请求时通过。
     """
 
     script_path = Path(__file__).parents[2] / "opentest" / "web" / "app.js"
     script = script_path.read_text(encoding="utf-8")
-    monitor = script[
-        script.index("async function monitorCodexClientHandoff") : script.index("function openCodexClientThread")
+    copier = script[
+        script.index("async function copyTaskContinuationInstruction") : script.index("function taskHasHistoricalAgentEvidence")
     ]
 
-    assert "activeCodexHandoffMonitorTaskId === initialTask.task_id" in monitor
-    assert monitor.count("if (!monitorIsCurrent())") >= 2
-    task_get = monitor.index("const payload = await api")
-    first_guard = monitor.index("if (!monitorIsCurrent())", task_get)
-    attempt_write = monitor.index("currentKnowledgeWorkflow =", first_guard)
-    assert task_get < first_guard < attempt_write
-    terminal_reload = monitor.index("await Promise.all")
-    terminal_guard = monitor.index("if (!monitorIsCurrent())", terminal_reload)
-    toast = monitor.index('showToast("Codex 候选已确认并写入当前对象知识")')
-    assert terminal_reload < terminal_guard < toast
+    assert "/tasks/${encodeURIComponent(task.task_id)}/context" in copier
+    assert "navigator.clipboard.writeText(instruction)" in copier
+    assert "instruction.includes(task.task_id)" in copier
+    assert "/turns" not in script
+    assert "EventSource" not in script
+    assert "codex://threads/" not in script
+    assert "waiting_for_client" in script
 
 
-def test_codex_thread_button_opens_desktop_before_requesting_owner_start() -> None:
-    """等待任务按钮必须先打开原深链，再请求桌面owner幂等启动turn。
+def test_knowledge_attention_pane_only_shows_each_targets_latest_actionable_task() -> None:
+    """知识右栏必须先按目标选最新任务，再隐藏已完成和已取消目标。
 
     Returns:
-        None；静态客户端包含范围化turn路由，且跳转语句位于启动请求之前时通过。
+        None；任务聚合、过滤顺序、文案和过期知识动作均符合关注事项语义时通过。
     """
 
-    script_path = Path(__file__).parents[2] / "opentest" / "web" / "app.js"
-    script = script_path.read_text(encoding="utf-8")
-    opener = script[
-        script.index("async function openPersistedCodexTask") : script.index("function renderCodexTaskPane")
+    web_root = Path(__file__).parents[2] / "opentest" / "web"
+    html = (web_root / "index.html").read_text(encoding="utf-8")
+    script = (web_root / "app.js").read_text(encoding="utf-8")
+    latest_selector = script[
+        script.index("function latestKnowledgeTasksByTarget") : script.index("function isKnowledgeTaskAttentionRequired")
+    ]
+    attention_filter = script[
+        script.index("function isKnowledgeTaskAttentionRequired") : script.index("function isCurrentTaskRequestScope")
+    ]
+    renderer = script[
+        script.index("function renderCodexTaskPane") : script.index("function renderWorkbenchTasks")
+    ]
+    action_renderer = script[
+        script.index("function refreshKnowledgeGenerationActions") : script.index("async function searchKnowledge")
+    ]
+    retired_question_renderer = script[
+        script.index("function renderKnowledgeQuestions") : script.index("function selectKnowledgeQuestionTab")
     ]
 
-    start_request = opener.index("/knowledge/client-handoffs/${encodeURIComponent(handoffId)}/turns")
-    deep_link_open = opener.index("window.location.href = deepLink")
-    assert deep_link_open < start_request
-    assert 'task.status === "waiting_for_client"' in script
+    # 用户无需再从“全部/已完成”筛选器中分辨任务；右栏本身就是待关注队列。
+    assert 'id="codex-task-filter"' not in html
+    assert "待关注知识任务" in html
+    assert "latestByTarget = new Map()" in latest_selector
+    assert "knowledgeTaskCreatedAtMs(task) > knowledgeTaskCreatedAtMs(currentLatest)" in latest_selector
+    assert '"pending"' in attention_filter
+    assert '"waiting_for_input"' in attention_filter
+    assert '"failed"' in attention_filter
+    assert '"completed"' not in attention_filter
+    assert '"cancelled"' not in attention_filter
+    latest_index = renderer.index("latestKnowledgeTasksByTarget(workflow)")
+    attention_index = renderer.index(".filter(isKnowledgeTaskAttentionRequired)")
+    assert latest_index < attention_index
+    assert "当前没有需要关注的知识任务" in renderer
+    assert 'element("question-badge")' not in retired_question_renderer
+    assert 'element("question-count-inline")' not in retired_question_renderer
+    assert 'element("show-all-knowledge-questions")' not in retired_question_renderer
+
+    # STALE是用户能理解的业务状态，主动作必须明确表示会重新生成知识。
+    assert 'selectedKnowledgeStatus === "STALE"' in action_renderer
+    assert 'generateButtonLabel = "重新生成知识"' in action_renderer
+
+
+def test_console_exposes_pinned_source_version_and_explicit_baseline_update() -> None:
+    """顶部应全局显示固定Git版本，且只有专用动作可以切换现有系统基准。
+
+    Returns:
+        None；Tag、完整Commit、分支提示、扫描状态和显式更新端点均存在时通过。
+    """
+
+    web_root = Path(__file__).parents[2] / "opentest" / "web"
+    html = (web_root / "index.html").read_text(encoding="utf-8")
+    script = (web_root / "app.js").read_text(encoding="utf-8")
+    styles = (web_root / "styles.css").read_text(encoding="utf-8")
+    source_renderer = script[
+        script.index("function renderConfiguredSourceVersion") : script.index("function clearSystemWorkspaceState")
+    ]
+    updater = script[
+        script.index("async function updateSourceVersionAndScan") : script.index("async function retryScan")
+    ]
+    retry_scan = script[
+        script.index("async function retryScan") : script.index("async function loadScanHistory")
+    ]
+
+    for element_id in (
+        "source-version-chip",
+        "source-version-tag",
+        "source-version-commit",
+        "source-version-state",
+        "source-revision",
+        "update-source-version",
+    ):
+        assert f'id="{element_id}"' in html
+    assert "system.source_version || null" in source_renderer
+    assert "sourceVersion?.managed_tag" in source_renderer
+    assert "sourceVersion?.commit" in source_renderer
+    assert "sourceVersion?.branch_hint" in source_renderer
+    assert "完整扫描已发布" in source_renderer
+    assert ".source-version-chip" in styles
+
+    assert "/source-version`" in updater
+    assert 'method: "POST"' in updater
+    assert "body: JSON.stringify({ revision })" in updater
+    assert "response.scan_task.task_id" in updater
+    assert "loadScanHistory(requestScope, true)" in updater
+    assert "source_revision" not in retry_scan
 
 
 def test_scan_catalog_rejects_invalidated_and_out_of_order_scan_responses() -> None:
@@ -445,12 +617,59 @@ def test_single_target_knowledge_failure_remains_visible_after_loading_closes() 
     generate_current = script[
         script.index("async function generateCurrentKnowledge") : script.index("function backgroundKnowledgeReady")
     ]
-    finish_generation = script[
-        script.index("async function finishKnowledgeGeneration") : script.index("async function searchKnowledge")
-    ]
-
     assert 'element("knowledge-task-progress").textContent = `生成失败：${message}`' in generate_current
     assert 'showToast(`知识生成失败：${message}`, "error")' in generate_current
-    assert "activeKnowledgeStreamTaskId === task.task_id" in finish_generation
-    assert "stopKnowledgeAgentEventStream(true)" in finish_generation
-    assert "流式连接已关闭" in finish_generation
+    assert "finishKnowledgeGeneration" not in script
+    assert "stopKnowledgeAgentEventStream" not in script
+
+
+def test_knowledge_generation_uses_complete_latest_instead_of_browsed_partial_scan() -> None:
+    """浏览partial扫描时，知识生成仍必须请求后端当前完整latest基线。
+
+    Returns:
+        None；生成请求与幂等范围均不再绑定当前浏览目录时通过。
+    """
+
+    script_path = Path(__file__).parents[2] / "opentest" / "web" / "app.js"
+    script = script_path.read_text(encoding="utf-8")
+    baseline_key = script[
+        script.index("function knowledgeGenerationBaselineKey")
+        : script.index("function getOrCreateCodexKnowledgeAttemptId")
+    ]
+    generate_current = script[
+        script.index("async function generateCurrentKnowledge")
+        : script.index("function backgroundKnowledgeReady")
+    ]
+
+    # latest完整基线驱动幂等身份；用户选择的partial只控制当前目录展示。
+    assert "scan.latest" in baseline_key
+    assert 'scan.completeness === "complete"' in baseline_key
+    assert 'scan.publication_outcome === "complete_baseline"' in baseline_key
+    assert 'scan_id: "latest"' in generate_current
+    assert "scan_id: scanCatalog?.scan_id" not in generate_current
+
+
+def test_legacy_knowledge_progress_rejects_scan_id_as_target_fallback() -> None:
+    """旧任务current_item中的scan ID不得伪装成右栏知识目标。
+
+    Returns:
+        None；回退只接受目录目标、稳定知识前缀或旧Java方法身份时通过。
+    """
+
+    script_path = Path(__file__).parents[2] / "opentest" / "web" / "app.js"
+    script = script_path.read_text(encoding="utf-8")
+    classifier = script[
+        script.index("function isLegacyKnowledgeTargetId")
+        : script.index("function knowledgeGenerationAttemptTargetId")
+    ]
+    extractor = script[
+        script.index("function knowledgeGenerationAttemptTargetId")
+        : script.index("function selectKnowledgeGenerationAttempt")
+    ]
+
+    # 类型化target字段仍优先；只有历史progress回退需要防止scan任务串入知识关注栏。
+    assert "scanCatalog?.targets" in classifier
+    assert "state-machine|transition|semantic|entry|logic" in classifier
+    assert "#[A-Za-z_$]" in classifier
+    assert "isLegacyKnowledgeTargetId(progressTarget)" in extractor
+    assert "return task.progress.current_item" not in extractor

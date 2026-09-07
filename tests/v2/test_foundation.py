@@ -26,6 +26,7 @@ from opentest.domain.models import (
     SystemDefinition,
     TaskRecord,
     TaskStatus,
+    utc_now,
 )
 
 
@@ -164,6 +165,135 @@ def test_task_manager_persists_success_failure_and_restart(tmp_path: Path) -> No
     restarted.close()
     assert interrupted.status == TaskStatus.INTERRUPTED
     assert interrupted.ended_at is not None
+
+
+def test_business_task_create_is_idempotent_and_rejects_parameter_reuse(tmp_path: Path) -> None:
+    """同参重试返回首次记录，异参复用request ID不得覆盖既有任务。
+
+    Args:
+        tmp_path: Pytest提供的隔离任务目录。
+
+    Returns:
+        None；仅当首次记录未被同参重试或异参冲突覆盖时通过。
+    """
+
+    manager = LocalTaskManager(tmp_path / "tasks", max_workers=1)
+    initial = TaskRecord(
+        task_id="task-1111111111111111",
+        operation="case-generation",
+        system_id="train-booking-core",
+        target_id="operation:TradeFacade#cancel",
+        root_task_id="task-1111111111111111",
+        status=TaskStatus.WAITING_FOR_CLIENT,
+        trace_id="first-trace",
+        result={"request_id": "case-start-request-001", "continuation_intent": "initial"},
+        ended_at=utc_now(),
+    )
+    first = manager.create_business_record(initial)
+
+    # trace和时间不是业务请求参数；网络重试必须返回首次落盘记录而不是覆盖它。
+    same_request = initial.model_copy(update={"trace_id": "retry-trace", "ended_at": utc_now()})
+    retried = manager.create_business_record(same_request)
+    assert retried == first
+    assert manager.get(initial.task_id) == first
+
+    # 相同request ID改换继续意图属于幂等键误用，冲突后磁盘仍保留第一次成功内容。
+    different_request = initial.model_copy(
+        update={
+            "trace_id": "conflicting-trace",
+            "result": {
+                "request_id": "case-start-request-001",
+                "continuation_intent": "regenerate_latest",
+            },
+        }
+    )
+    with pytest.raises(ScopeViolationError, match="different parameters"):
+        manager.create_business_record(different_request)
+    assert manager.get(initial.task_id) == first
+    manager.close()
+
+
+def test_business_task_create_serializes_two_manager_instances(tmp_path: Path) -> None:
+    """共享目录的两个管理器并发异参创建时只能持久化一个首次版本。
+
+    Args:
+        tmp_path: Pytest提供给两个管理器共享的隔离任务目录。
+
+    Returns:
+        None；仅当一个候选创建成功、另一个明确冲突且磁盘未被覆盖时通过。
+    """
+
+    task_root = tmp_path / "tasks"
+    first_manager = LocalTaskManager(task_root, max_workers=1)
+    second_manager = LocalTaskManager(task_root, max_workers=1)
+    start_barrier = threading.Barrier(2)
+    task_id = "task-2222222222222222"
+
+    def create(
+        manager: LocalTaskManager,
+        trace_id: str,
+        continuation_intent: str,
+    ) -> tuple[str, TaskRecord | str]:
+        """让两个实例同时提交同一request ID并捕获create-only结果。
+
+        Args:
+            manager: 使用共享目录但拥有独立线程锁的任务管理器。
+            trace_id: 仅用于识别哪个候选赢得首次创建。
+            continuation_intent: 用于构造互相冲突的规范业务参数。
+
+        Returns:
+            created及权威任务，或conflict及安全领域错误消息。
+        """
+
+        candidate = TaskRecord(
+            task_id=task_id,
+            operation="case-generation",
+            system_id="train-booking-core",
+            target_id="operation:TradeFacade#cancel",
+            root_task_id=task_id,
+            status=TaskStatus.WAITING_FOR_CLIENT,
+            trace_id=trace_id,
+            result={
+                "request_id": "case-start-request-002",
+                "continuation_intent": continuation_intent,
+            },
+            ended_at=utc_now(),
+        )
+        start_barrier.wait(timeout=5)
+        try:
+            return "created", manager.create_business_record(candidate)
+        except ScopeViolationError as exc:
+            return "conflict", str(exc)
+
+    try:
+        # 两个manager的进程内锁彼此独立，create-only胜负依赖共享task锁文件上的flock。
+        with ThreadPoolExecutor(max_workers=2) as executor:
+            first_future = executor.submit(
+                create,
+                first_manager,
+                "first-manager-trace",
+                "initial",
+            )
+            second_future = executor.submit(
+                create,
+                second_manager,
+                "second-manager-trace",
+                "regenerate_latest",
+            )
+            first_result = first_future.result(timeout=5)
+            second_result = second_future.result(timeout=5)
+
+        outcomes = [first_result, second_result]
+        assert sorted(outcome for outcome, _payload in outcomes) == ["conflict", "created"]
+        created = next(payload for outcome, payload in outcomes if outcome == "created")
+        conflict = next(payload for outcome, payload in outcomes if outcome == "conflict")
+        assert isinstance(created, TaskRecord)
+        assert isinstance(conflict, str) and "different parameters" in conflict
+        assert created.trace_id in {"first-manager-trace", "second-manager-trace"}
+        assert first_manager.get(task_id) == second_manager.get(task_id) == created
+    finally:
+        first_manager.close()
+        second_manager.close()
 
 
 def test_second_task_manager_does_not_interrupt_live_owner(tmp_path: Path) -> None:

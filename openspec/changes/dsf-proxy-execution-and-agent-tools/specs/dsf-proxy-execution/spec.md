@@ -30,3 +30,36 @@
 - **WHEN** 自调用和跨系统调用均通过注册、路由、序列化和响应校验
 - **THEN** 新扫描操作目录只使用`dsf_proxy`
 - **AND** 历史脚本Manifest可审计但不可重新执行
+
+#### Scenario: Facade uses DSFProxy before legacy cleanup
+
+- **WHEN** a current Facade operation is catalogued or executed through dsf_proxy
+- **THEN** the capability, scanner and worker do not require Labrador Token, Facade HTTP prefix or facade_raw
+- **AND** any retained HTTP Job dependency remains separately named and cannot be used as a Facade fallback
+
+### Requirement: Execution environment is explicitly resolved
+
+The system SHALL resolve an execution environment only by an exact canonical identifier or a unique alias declared in that system's local environment definition, and SHALL pass the resolved identifier through every Case Operation.
+
+#### Scenario: QA1 is not configured
+
+- **WHEN** a caller requests `QA1` and no unique alias maps it to a configured canonical environment
+- **THEN** execution is rejected before an Execution or Operation is created
+- **AND** the system does not silently use `qa`
+
+#### Scenario: Unique explicit alias is configured
+
+- **WHEN** one environment in the requested system explicitly declares `QA1` as its unique alias
+- **THEN** the system resolves `QA1` to that canonical environment before creating an Execution, Operation or resource probe
+- **AND** the canonical identifier is preserved through DATA, TARGET, ORACLE and CLEANUP
+
+#### Scenario: Environment alias is ambiguous or belongs to another system
+
+- **WHEN** an alias resolves to more than one local environment or is declared only by another system
+- **THEN** the request is rejected before any Execution, Operation or resource probe record is created
+
+#### Scenario: Agent reads the safe environment catalog
+
+- **WHEN** an Agent asks which environments can be selected for one registered system
+- **THEN** the catalog returns only canonical identifiers, explicit aliases and safe availability state
+- **AND** it does not return values, connections, tokens or other credentials

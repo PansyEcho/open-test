@@ -3,6 +3,12 @@ name: SaaS退票核心
 source_path: /Users/user/data/code/tc/ifightchainsaas.java.refund.core
 language: java
 description: 由V2引导式控制台接入的DSF系统
+source_version:
+  selected_revision: 99b494d7824eab12ffc237ae7e945aac79d61411
+  commit: 99b494d7824eab12ffc237ae7e945aac79d61411
+  branch_hint: feature_670989_oj_20260901
+  managed_tag: opentest/baseline/99b494d7824eab12ffc237ae7e945aac79d61411
+  pinned_at: '2026-09-07T08:26:55.989257Z'
 baseline:
   source_path: /Users/user/data/code/tc/ifightchainsaas.java.refund.core
   commit: 99b494d7824eab12ffc237ae7e945aac79d61411

@@ -25,12 +25,16 @@ from opentest.domain.models import (
     KnowledgeNode,
     KnowledgeNodeKind,
     KnowledgeStatus,
+    KnowledgeTargetStatus,
     SemanticAnalysisResult,
     SemanticEnumValue,
     SemanticMethodDefinition,
     SemanticPatternEvidence,
+    ScanCompleteness,
+    ScanPublicationOutcome,
     SourceBaseline,
     SourceReference,
+    SourceVersionPin,
     ScanManifest,
     StateMachineDefinition,
     StateTransition,
@@ -80,6 +84,54 @@ class FixedManifestArtifacts:
 
         assert system_id == self.manifest.system_id
         return [self.manifest]
+
+
+class VersionedManifestArtifacts:
+    """为知识新鲜度测试按scan ID返回当前与历史Manifest。"""
+
+    def __init__(self, latest: ScanManifest, historical: list[ScanManifest]):
+        """建立latest别名和可验证历史扫描映射。
+
+        Args:
+            latest: 页面当前完整扫描。
+            historical: 知识节点或批次可能引用的历史扫描。
+        """
+
+        self.latest = latest
+        self.manifests = {item.scan_id: item for item in [latest, *historical]}
+
+    def read(self, system_id: str, scan_id: str) -> ScanManifest:
+        """返回指定系统的latest或精确历史Manifest。
+
+        Args:
+            system_id: 必须与测试Manifest所属系统一致。
+            scan_id: `latest`别名或具体扫描ID。
+
+        Returns:
+            对应不可变扫描Manifest。
+
+        Raises:
+            KnowledgeNotFoundError: 历史Manifest未纳入本夹具。
+        """
+
+        assert system_id == self.latest.system_id
+        resolved_scan_id = self.latest.scan_id if scan_id == "latest" else scan_id
+        if resolved_scan_id not in self.manifests:
+            raise KnowledgeNotFoundError(f"scan manifest not found: {resolved_scan_id}")
+        return self.manifests[resolved_scan_id]
+
+    def list_manifests(self, system_id: str) -> list[ScanManifest]:
+        """返回当前与历史Manifest用于轻量历史投影。
+
+        Args:
+            system_id: 必须与测试Manifest所属系统一致。
+
+        Returns:
+            latest在前的全部夹具Manifest。
+        """
+
+        assert system_id == self.latest.system_id
+        return list(self.manifests.values())
 
 
 def _manifest(source_root: Path) -> ScanManifest:
@@ -260,6 +312,124 @@ def test_scan_history_exposes_fixed_git_revision_for_console(tmp_path: Path) -> 
     assert history[0].commit == baseline.commit
     assert history[0].branch == baseline.branch
     assert history[0].revision == baseline.revision
+    # 旧Manifest没有显式完整性字段时，领域默认值继续兼容为历史完整基线。
+    assert history[0].completeness == ScanCompleteness.COMPLETE
+    assert history[0].publication_outcome == ScanPublicationOutcome.COMPLETE_BASELINE
+
+
+def test_catalog_freshness_uses_git_identity_for_node_scan_without_workflow_batch(
+    tmp_path: Path,
+) -> None:
+    """无批次节点应按历史Manifest的path、commit与分析器判断新鲜度而非scan ID。
+
+    Args:
+        tmp_path: pytest隔离的知识节点和多版本Manifest目录。
+
+    Returns:
+        None；同commit重扫保持已生成，99b对eba真实切换仍明确过期时通过。
+
+    Side Effects:
+        在隔离知识目录写入一个只引用历史scan ID的已发布节点。
+    """
+
+    store, source_root = _store(tmp_path)
+    published_commit = "eba0fc72ec39a6883a6ceb1a70c38040ec5ea0bb"
+    configured_commit = "99b494d7824eab12ffc237ae7e945aac79d61411"
+    historical = _manifest(source_root).model_copy(
+        update={
+            "scan_id": "scan-published-eba",
+            "baseline": SourceBaseline(
+                source_path=str(source_root),
+                commit=published_commit,
+                branch="feature/old",
+                revision="HEAD",
+                snapshot_path=str(tmp_path / "snapshot-old"),
+                dirty=False,
+                analyzer_version="0.2.0",
+            ),
+        }
+    )
+    same_commit = historical.model_copy(
+        update={
+            "scan_id": "scan-current-same-commit",
+            "baseline": historical.baseline.model_copy(
+                update={
+                    "branch": "feature/renamed",
+                    "revision": f"opentest/baseline/{published_commit}",
+                    "snapshot_path": str(tmp_path / "snapshot-current"),
+                }
+            ),
+        }
+    )
+    node = KnowledgeNode(
+        node_id="logic:RefundRules#shared",
+        system_id=SYSTEM_ID,
+        kind=KnowledgeNodeKind.COMMON_LOGIC,
+        title="退款共享规则",
+        status=KnowledgeStatus.INFERRED,
+        source_refs=[
+            SourceReference(
+                path="src/RefundRules.java",
+                symbol="demo.RefundRules#shared()",
+                commit=published_commit,
+            )
+        ],
+        metadata={"scan_id": historical.scan_id},
+    )
+    store.write_node(node, "退款入口共享同一条可验证规则。")
+
+    same_catalog = ScanCatalogService(
+        store,
+        VersionedManifestArtifacts(same_commit, [historical]),
+    ).build_catalog(SYSTEM_ID)
+    same_target = next(item for item in same_catalog.targets if item.target_id == node.node_id)
+    assert same_target.knowledge_status == KnowledgeTargetStatus.GENERATED
+
+    # 历史Manifest缺失时无法证明节点引用的源码身份，必须保守显示过期。
+    missing_history_catalog = ScanCatalogService(
+        store,
+        VersionedManifestArtifacts(same_commit, []),
+    ).build_catalog(SYSTEM_ID)
+    missing_target = next(
+        item for item in missing_history_catalog.targets if item.target_id == node.node_id
+    )
+    assert missing_target.knowledge_status == KnowledgeTargetStatus.STALE
+
+    # pin已改到99b而latest仍停在eba时，目录只能把旧扫描作为历史展示并强制标记过期。
+    store.update_source_version(
+        SYSTEM_ID,
+        SourceVersionPin(
+            selected_revision=configured_commit,
+            commit=configured_commit,
+            branch_hint="release/new-baseline",
+            managed_tag=f"opentest/baseline/{configured_commit}",
+        ),
+    )
+    pin_mismatch_catalog = ScanCatalogService(
+        store,
+        VersionedManifestArtifacts(same_commit, [historical]),
+    ).build_catalog(SYSTEM_ID)
+    pin_mismatch_target = next(
+        item for item in pin_mismatch_catalog.targets if item.target_id == node.node_id
+    )
+    assert pin_mismatch_target.knowledge_status == KnowledgeTargetStatus.STALE
+    assert "当前固定代码基准尚无完整扫描；该旧扫描仅供历史查看。" in (
+        pin_mismatch_catalog.warnings
+    )
+
+    # 配置基准真正切到99b时，eba知识必须保持STALE，不能靠tag或branch文案伪装为最新。
+    newer_commit = same_commit.model_copy(
+        update={
+            "scan_id": "scan-current-99b",
+            "baseline": same_commit.baseline.model_copy(update={"commit": configured_commit}),
+        }
+    )
+    stale_catalog = ScanCatalogService(
+        store,
+        VersionedManifestArtifacts(newer_commit, [historical]),
+    ).build_catalog(SYSTEM_ID)
+    stale_target = next(item for item in stale_catalog.targets if item.target_id == node.node_id)
+    assert stale_target.knowledge_status == KnowledgeTargetStatus.STALE
 
 
 def test_catalog_groups_shared_logic_patterns_and_state_display(tmp_path: Path) -> None:

@@ -118,7 +118,7 @@ def test_worker_client_rejects_non_qa_environment_before_process(tmp_path: Path)
 
     client = _client_fixture(tmp_path, unexpected_runner)
     with pytest.raises(KnowledgeValidationError, match="qa environment"):
-        client.execute(_request(), _environment("prod"), 10)
+        client.execute(_request(), _environment("test"), 10)
 
 
 def test_worker_client_requires_profile_application_identity_before_process(tmp_path: Path) -> None:

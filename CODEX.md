@@ -24,9 +24,9 @@ Open `http://127.0.0.1:8788/console`.
 
 ## Codex Plugin and Skills
 
-The OpenTest plugin must be installed and enabled before knowledge or Case tasks are created. A failed Codex configuration load is reported as `CODEX_CONFIG_INVALID`; an empty valid plugin list is `PLUGIN_NOT_INSTALLED`; an installed disabled plugin is `PLUGIN_DISABLED`.
+OpenTest validates and synchronizes only the plugin and system-Skill source files owned by this project. It does not inspect Codex login state, private configuration, or installed-plugin state, and a web request may create a durable task before an Agent host picks it up. Plugin installation and refresh belong to the current Agent host; OpenTest does not create or hold a second Agent thread to perform that check.
 
-The system Skill is `$open-test-ifightchainsaas-java-refund-core`. Case tools are `generate_interface_cases`, `get_case_generation`, `execute_case_generation`, and `get_case_execution`. A generation request never implies execution.
+The system Skill is `$open-test-ifightchainsaas-java-refund-core`. Case tools include `generate_interface_cases`, task context and question/answer tools, draft submission, `publish_case_generation`, `continue_case_task`, `get_case_generation`, `execute_case_generation`, and `get_case_execution`. A generation request never implies execution.
 
 ## Verification
 

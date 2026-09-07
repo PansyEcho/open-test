@@ -12,13 +12,6 @@ from unittest.mock import Mock
 import pytest
 from pydantic import ValidationError
 
-from opentest.adapters.codex_app_server import (
-    CodexCaseTurnProcessSnapshot,
-    CodexModelCatalog,
-    CodexModelOption,
-    CodexStartedTurn,
-    CodexThreadSnapshot,
-)
 from opentest.adapters.case_template_v4_store import (
     CaseGenerationExecutionStoreV4,
     CaseTemplateGenerationStoreV4,
@@ -47,9 +40,11 @@ from opentest.domain.case_template_v4 import (
     CaseGenerationExecutionV4,
     CaseOracleAssertion,
     CaseTemplateCompilationInput,
+    CaseTemplateDraftRevisionRequest,
     CaseTemplateGenerationStartRequest,
     CaseTemplateGenerationV4,
     CaseTemplateHandoffV4,
+    CaseTemplatePublicationRequest,
     CaseTemplateSourceScope,
     CaseTemplateSubmission,
     CaseVariantV4,
@@ -61,7 +56,6 @@ from opentest.domain.case_template_v4 import (
 from opentest.domain.errors import (
     CaseExecutionConflictError,
     CaseGenerationStateConflictError,
-    ExecutionFailure,
     KnowledgeNotFoundError,
     KnowledgeValidationError,
 )
@@ -82,7 +76,8 @@ from opentest.domain.models import (
     SemanticTypeDefinition,
     SourceBaseline,
     SourceReference,
-    RuntimeToolSettings,
+    SourceVersionPin,
+    SystemDefinition,
 )
 
 
@@ -2039,10 +2034,10 @@ def test_provider_failure_is_failed_and_preserves_operation_trace() -> None:
 
 
 def test_operation_request_identity_is_stable_and_binds_actual_arguments() -> None:
-    """确认幂等请求对相同参数稳定，并在实际参数变化时产生新身份。
+    """确认幂等身份同时绑定实际参数和已解析的规范执行环境。
 
     Returns:
-        None；重复调用request ID相同而参数变化后不同则通过。
+        None；同参同环境的request ID稳定，参数或环境变化时均不同则通过。
     """
 
     operations = _FakeOperationService()
@@ -2056,6 +2051,7 @@ def test_operation_request_identity_is_stable_and_binds_actual_arguments() -> No
         "target",
         CANCEL_ID,
         base_arguments,
+        "qa",
     )
     executor._call_operation(
         "case-template-handoff-" + "a" * 20,
@@ -2064,6 +2060,7 @@ def test_operation_request_identity_is_stable_and_binds_actual_arguments() -> No
         "target",
         CANCEL_ID,
         base_arguments,
+        "qa",
     )
     executor._call_operation(
         "case-template-handoff-" + "a" * 20,
@@ -2072,11 +2069,22 @@ def test_operation_request_identity_is_stable_and_binds_actual_arguments() -> No
         "target",
         CANCEL_ID,
         {"refundSerialNo": "RF-2"},
+        "qa",
+    )
+    executor._call_operation(
+        "case-template-handoff-" + "a" * 20,
+        SYSTEM_ID,
+        "case-variant-v4-" + "b" * 20,
+        "target",
+        CANCEL_ID,
+        base_arguments,
+        "test",
     )
 
     request_ids = [request.request_id for _, request in operations.calls]
     assert request_ids[0] == request_ids[1]
     assert request_ids[0] != request_ids[2]
+    assert request_ids[0] != request_ids[3]
 
 
 def test_generation_store_round_trips_dynamic_value_sources(tmp_path: Path) -> None:
@@ -2616,6 +2624,58 @@ def test_create_order_cleanup_uses_identity_from_real_target_response() -> None:
     assert operations.calls[1][1].arguments == {"refundSerialNo": "REAL-ORDER-9527"}
 
 
+def test_executor_propagates_canonical_environment_to_every_operation_phase() -> None:
+    """显式解析后的规范环境必须贯穿DATA、TARGET、ORACLE和CLEANUP请求。
+
+    Returns:
+        None；两类Generation产生的全部Operation均携带同一uat环境时通过。
+    """
+
+    variants, issues = _compile_golden()
+    cancel_generation = CaseTemplateGenerationV4(
+        generation_id=f"case-template-generation-{'1' * 20}",
+        system_id=SYSTEM_ID,
+        operation_id=CANCEL_ID,
+        source_scan_id=SCAN_ID,
+        coverage_id=f"coverage:{CANCEL_ID}",
+        runtime_registry_version="runtime-functions/v1",
+        value_registry_version="value-functions/v1",
+        status="READY",
+        input_contract=_cancel_contract(),
+        submission=_golden_submission(),
+        issues=issues,
+        variants=variants,
+    )
+    cancel_operations = _FakeOperationService()
+    cancel_results = CaseTemplateExecutorV4(cancel_operations).execute(
+        f"case-template-handoff-{'2' * 20}",
+        cancel_generation,
+        _runtime_registry(),
+        environment_id="uat",
+    )
+
+    create_operations = _CreateOrderCleanupOperationService()
+    create_results = CaseTemplateExecutorV4(create_operations).execute(
+        f"case-generation-execution-{'3' * 20}",
+        _create_order_generation(),
+        RuntimeFunctionRegistry(functions=[]),
+        environment_id="uat",
+    )
+    all_requests = [
+        request
+        for _system_id, request in [*cancel_operations.calls, *create_operations.calls]
+    ]
+    cancel_phases = {
+        operation.phase
+        for result in cancel_results
+        for operation in result.operations
+    }
+
+    assert {request.environment for request in all_requests} == {"uat"}
+    assert cancel_phases >= {"DATA", "TARGET", "ORACLE"}
+    assert [operation.phase for operation in create_results[0].operations] == ["TARGET", "CLEANUP"]
+
+
 def test_execution_report_does_not_copy_provider_error_message() -> None:
     """Provider原始错误中的PNR或订单号不得复制到Execution报告。
 
@@ -2889,10 +2949,10 @@ def test_generation_state_projects_async_handoff_status(
 
 
 def test_case_handoff_catalog_allows_preallocated_generation_before_artifact() -> None:
-    """预分配Generation身份不得阻止Codex首次读取handoff目录。
+    """预分配Generation身份和历史线程字段不得影响原生Agent读取handoff目录。
 
     Returns:
-        None；等待中的handoff返回空Generation且不会读取尚不存在的JSON时通过。
+        None；目录只读返回历史字段和空Generation，不探测线程或写handoff时通过。
     """
 
     generation_id = f"case-template-generation-{'9' * 20}"
@@ -2910,6 +2970,10 @@ def test_case_handoff_catalog_allows_preallocated_generation_before_artifact() -
             )
         ],
         generation_id=generation_id,
+        thread_id="historical-thread-v4",
+        turn_id="historical-turn-v4",
+        turn_process_id="12345",
+        turn_status="failed",
     )
     target_capability = OperationCapability(
         operation_id=CANCEL_ID,
@@ -2929,15 +2993,26 @@ def test_case_handoff_catalog_allows_preallocated_generation_before_artifact() -
     handoffs = Mock()
     handoffs.get.return_value = handoff
     service = CaseTemplateV4Service(Mock(), Mock(), generations, handoffs)
-    service._refresh_agent_status = Mock(return_value=handoff)
     service._input_contract = Mock(return_value=_cancel_contract())
     service._runtime_capabilities = Mock(return_value=[target_capability])
 
     catalog = service.catalog(handoff.handoff_id)
 
     assert catalog["handoff"]["generation_id"] == generation_id
+    assert catalog["handoff"]["turn_status"] == "failed"
     assert catalog["generation"] is None
+    assert catalog["allowed_tools"] == [
+        "get_case_handoff",
+        "list_case_source",
+        "search_case_source",
+        "read_case_source",
+        "read_case_outer_api",
+        "revise_case_draft",
+        "answer_task_question",
+        "publish_case_generation",
+    ]
     generations.get.assert_not_called()
+    handoffs.write.assert_not_called()
 
 
 def test_failed_generation_rejects_execution_as_conflict_before_qa() -> None:
@@ -2977,7 +3052,6 @@ def test_failed_generation_rejects_execution_as_conflict_before_qa() -> None:
         CaseTemplateV4RuntimeServices(
             operation_catalog=Mock(),
             operation_service=operation_service,
-            codex_app_server=Mock(),
             environment_provider=default_case_template_environment_values,
             execution_store=execution_store,
         ),
@@ -3076,7 +3150,6 @@ def test_partial_generation_executes_runnable_variants_and_can_run_again(
     runtime = CaseTemplateV4RuntimeServices(
         operation_catalog=Mock(),
         operation_service=Mock(),
-        codex_app_server=Mock(),
         environment_provider=default_case_template_environment_values,
         execution_store=execution_store,
     )
@@ -3142,7 +3215,6 @@ def test_blocked_generation_rejects_execution_before_qa() -> None:
         CaseTemplateV4RuntimeServices(
             operation_catalog=Mock(),
             operation_service=operation_service,
-            codex_app_server=Mock(),
             environment_provider=default_case_template_environment_values,
             execution_store=Mock(),
         ),
@@ -3244,17 +3316,124 @@ def test_operation_output_fields_include_inherited_response_evidence() -> None:
     ]
 
 
-def test_start_request_accepts_raw_and_canonical_operation_paths() -> None:
-    """确认API请求模型和入口解析同时支持原始路径与facade canonical ID。"""
+def test_start_request_accepts_full_canonical_and_unique_short_operation_paths() -> None:
+    """确认入口解析支持完整路径、两类canonical ID及唯一Facade短名。
+
+    Returns:
+        None；四种等价输入都解析到latest完整扫描中的同一Entry时通过。
+    """
 
     entry = Mock(kind=KnowledgeNodeKind.FACADE, entry_id=CANCEL_ID)
     service = CaseTemplateV4Service(Mock(), Mock(), Mock(), Mock())
 
-    raw = CaseTemplateGenerationStartRequest(operation_id=CANCEL_ID.removeprefix("facade:"))
-    canonical = CaseTemplateGenerationStartRequest(operation_id=CANCEL_ID)
+    full_path = CaseTemplateGenerationStartRequest(
+        operation_id=CANCEL_ID.removeprefix("facade:")
+    )
+    operation_id = CaseTemplateGenerationStartRequest(operation_id=CANCEL_ID)
+    entry_id = CaseTemplateGenerationStartRequest(
+        operation_id=f"entry:{CANCEL_ID.removeprefix('facade:')}"
+    )
+    short_path = CaseTemplateGenerationStartRequest(operation_id="RefundFacade#cancel")
 
-    assert service._resolve_entry([entry], raw.operation_id) is entry
-    assert service._resolve_entry([entry], canonical.operation_id) is entry
+    assert service._resolve_entry([entry], full_path.operation_id) is entry
+    assert service._resolve_entry([entry], operation_id.operation_id) is entry
+    assert service._resolve_entry([entry], entry_id.operation_id) is entry
+    assert service._resolve_entry([entry], short_path.operation_id) is entry
+
+
+def test_start_request_rejects_ambiguous_short_operation_path() -> None:
+    """确认同名Facade短路径存在多个包候选时要求调用方补全限定名。
+
+    Returns:
+        None；解析抛出明确歧义错误且不任意选择第一个Entry时通过。
+    """
+
+    first = Mock(
+        kind=KnowledgeNodeKind.FACADE,
+        entry_id="facade:com.example.first.RefundFacade#cancel",
+    )
+    second = Mock(
+        kind=KnowledgeNodeKind.FACADE,
+        entry_id="facade:com.example.second.RefundFacade#cancel",
+    )
+    service = CaseTemplateV4Service(Mock(), Mock(), Mock(), Mock())
+
+    with pytest.raises(KnowledgeValidationError, match="ambiguous.*fully qualified"):
+        service._resolve_entry([first, second], "RefundFacade#cancel")
+
+
+def test_start_request_returns_absent_for_unknown_short_operation_path() -> None:
+    """确认短路径没有latest完整扫描候选时保留not-found语义。
+
+    Returns:
+        None；解析返回None供start转换为明确目标不存在错误时通过。
+    """
+
+    entry = Mock(kind=KnowledgeNodeKind.FACADE, entry_id=CANCEL_ID)
+    service = CaseTemplateV4Service(Mock(), Mock(), Mock(), Mock())
+
+    assert service._resolve_entry([entry], "MissingFacade#cancel") is None
+
+
+def test_case_start_rejects_latest_scan_from_previous_source_pin(tmp_path: Path) -> None:
+    """版本pin切换后，Case start不得把旧latest扫描当作当前生成基准。
+
+    Args:
+        tmp_path: pytest隔离的源码路径。
+
+    Returns:
+        None；入口返回明确基准未就绪错误且不创建handoff时通过。
+    """
+
+    source_root = tmp_path / "source"
+    source_root.mkdir()
+    configured_commit = "9" * 40
+    system = SystemDefinition(
+        system_id=SYSTEM_ID,
+        name="Refund Core",
+        source_path=str(source_root),
+        source_version=SourceVersionPin(
+            selected_revision=configured_commit,
+            commit=configured_commit,
+            branch_hint="release/new-baseline",
+            managed_tag=f"opentest/baseline/{configured_commit}",
+        ),
+    )
+    store = Mock()
+    store.get_system.return_value = system
+    store.source_scan_matches_configured_version.return_value = False
+    artifacts = Mock()
+    artifacts.read.return_value = Mock(
+        baseline=SourceBaseline(
+            source_path=str(source_root),
+            commit="8" * 40,
+            branch="release/old-baseline",
+        )
+    )
+    handoffs = Mock()
+    handoffs.request_scope.return_value = nullcontext()
+    handoffs.find_request_receipt.return_value = None
+    service = CaseTemplateV4Service(store, artifacts, Mock(), handoffs)
+    service.source_repository = Mock()
+
+    # start在解析Operation、创建task/handoff之前即拒绝已过期的完整扫描。
+    with pytest.raises(
+        KnowledgeValidationError,
+        match="configured source baseline scan is not ready for Case generation",
+    ):
+        service.start(
+            SYSTEM_ID,
+            CaseTemplateGenerationStartRequest(
+                operation_id=CANCEL_ID,
+                request_id="case-pin-mismatch-start-0001",
+            ),
+        )
+
+    handoffs.create.assert_not_called()
+    service.source_repository.resolve_source_version_pin.assert_called_once_with(
+        system.source_path,
+        system.source_version,
+    )
 
 
 def test_v4_service_rebuilds_stale_input_contract_from_current_scan_operation() -> None:
@@ -3317,7 +3496,6 @@ def test_v4_service_rebuilds_stale_input_contract_from_current_scan_operation() 
         CaseTemplateV4RuntimeServices(
             operation_catalog=catalog,
             operation_service=Mock(),
-            codex_app_server=Mock(),
             environment_provider=default_case_template_environment_values,
         ),
     )
@@ -3389,122 +3567,8 @@ def test_input_contract_merges_duplicate_inherited_field_paths() -> None:
     assert contract.fields[0].required is True
 
 
-def test_v4_service_resolves_request_model_before_saved_and_catalog_defaults() -> None:
-    """确认V4模型字段按单次请求、本机设置和Codex目录默认逐级解析。
-
-    Returns:
-        None；单次模型覆盖与本机effort组合在创建handoff前交给目录校验时通过。
-    """
-
-    catalog = CodexModelCatalog(
-        provider_id="company",
-        default_model="company-default",
-        models=(
-            CodexModelOption(
-                model_id="company-request",
-                display_name="Company Request",
-                default_reasoning_effort="medium",
-                supported_reasoning_efforts=("medium", "high"),
-            ),
-        ),
-    )
-    codex = Mock()
-    codex.validate_model_profile.return_value = (
-        catalog,
-        catalog.models[0],
-        "high",
-    )
-    service = CaseTemplateV4Service(
-        Mock(),
-        Mock(),
-        Mock(),
-        Mock(),
-        CaseTemplateV4RuntimeServices(
-            operation_catalog=Mock(),
-            operation_service=Mock(),
-            codex_app_server=codex,
-            environment_provider=default_case_template_environment_values,
-            runtime_settings_provider=lambda: RuntimeToolSettings(
-                case_template_v4_model="company-saved",
-                case_template_v4_reasoning_effort="high",
-            ),
-        ),
-    )
-
-    profile = service._resolve_model_profile(
-        CaseTemplateGenerationStartRequest(
-            operation_id=CANCEL_ID,
-            codex_model="company-request",
-        )
-    )
-
-    codex.validate_model_profile.assert_called_once_with("company-request", "high")
-    assert profile.provider_id == "company"
-    assert profile.model == "company-request"
-    assert profile.reasoning_effort == "high"
-
-
-def test_v4_service_creates_thread_and_starts_turn_with_v4_tool_scope() -> None:
-    """确认V4 handoff绑定Codex深链并立即启动同线程turn。"""
-
-    handoff = CaseTemplateHandoffV4(
-        handoff_id=f"case-template-handoff-{'f' * 20}",
-        system_id=SYSTEM_ID,
-        entry_id=CANCEL_ID,
-        source_scan_id=SCAN_ID,
-        status="WAITING_FOR_AGENT",
-        source_scopes=[
-            CaseTemplateSourceScope(
-                source_system_id=SYSTEM_ID,
-                source_scan_id=SCAN_ID,
-                source_baseline=SourceBaseline(source_path="/private/refund-core"),
-            )
-        ],
-        model_provider="custom",
-        codex_model="company-case-model",
-        reasoning_effort="high",
-    )
-    codex = Mock()
-    codex.create_scoped_turn.return_value = CodexStartedTurn(
-        thread_id="thread-v4-service",
-        deep_link="codex://threads/thread-v4-service",
-        turn_id="turn-v4-service",
-        process_id="12345",
-        model_provider="custom",
-        model="company-case-model",
-        reasoning_effort="high",
-        turn_status="inProgress",
-    )
-    handoffs = Mock()
-    service = CaseTemplateV4Service(
-        Mock(),
-        Mock(),
-        Mock(),
-        handoffs,
-        CaseTemplateV4RuntimeServices(
-            operation_catalog=Mock(),
-            operation_service=Mock(),
-            codex_app_server=codex,
-            environment_provider=default_case_template_environment_values,
-        ),
-    )
-
-    started = service._start_codex_turn(handoff)
-
-    request = codex.create_scoped_turn.call_args.args[0]
-    assert request.tool_scope == "case_template_v4"
-    assert request.model_provider == "custom"
-    assert request.model == "company-case-model"
-    assert request.reasoning_effort == "high"
-    assert started.thread_id == "thread-v4-service"
-    assert started.codex_deep_link == "codex://threads/thread-v4-service"
-    assert started.turn_process_id == "12345"
-    assert started.turn_id == "turn-v4-service"
-    assert started.turn_status == "inProgress"
-
-
-def test_case_dsl_submission_persists_generation_without_dispatching_qa() -> None:
-    """确认DSL提交只持久化Generation且不会派发或调用QA。
+def test_case_dsl_publication_persists_generation_without_dispatching_qa() -> None:
+    """确认草稿显式发布只持久化Generation且不会派发或调用QA。
 
     Returns:
         None；handoff完成、Generation落盘且所有QA调用计数为零时通过。
@@ -3586,20 +3650,49 @@ def test_case_dsl_submission_persists_generation_without_dispatching_qa() -> Non
         executable=True,
     )
     handoffs = Mock()
-    handoffs.get.return_value = handoff
+    latest_handoff = handoff
+
+    def write_handoff(value: CaseTemplateHandoffV4) -> CaseTemplateHandoffV4:
+        """模拟handoff store并让后续发布读取最新revision。
+
+        Args:
+            value: 草稿或发布阶段写入的完整handoff。
+
+        Returns:
+            原样保存的handoff。
+        """
+
+        nonlocal latest_handoff
+        latest_handoff = value
+        return value
+
+    def read_handoff(_handoff_id: str) -> CaseTemplateHandoffV4:
+        """返回测试内最近一次写入的handoff。
+
+        Args:
+            _handoff_id: 调用方请求的稳定handoff身份。
+
+        Returns:
+            内存替身当前持有的完整handoff。
+        """
+
+        return latest_handoff
+
+    handoffs.get.side_effect = read_handoff
+    handoffs.write.side_effect = write_handoff
     handoffs.accessed_paths.return_value = {SYSTEM_ID: {"RefundFacade.java"}}
     handoffs.accessed_outer_provider_ids.return_value = set()
     handoffs.accessed_ranges.return_value = {
         SYSTEM_ID: {"RefundFacade.java": [(1, 10)]}
     }
     generations = Mock()
+    generations.get.side_effect = KnowledgeNotFoundError("generation absent")
     generations.write.side_effect = lambda generation: generation
     task_manager = Mock()
     operation_service = Mock()
     runtime = CaseTemplateV4RuntimeServices(
         operation_catalog=Mock(),
         operation_service=operation_service,
-        codex_app_server=Mock(),
         environment_provider=default_case_template_environment_values,
         task_manager=task_manager,
     )
@@ -3612,7 +3705,26 @@ def test_case_dsl_submission_persists_generation_without_dispatching_qa() -> Non
     )
     service.executor = Mock()
 
-    generation = service._submit_exclusive(handoff.handoff_id, submission)
+    draft_request = CaseTemplateDraftRevisionRequest(
+        request_id="draft-query-list-generation-001",
+        expected_revision=0,
+        submission=submission,
+    )
+    draft = service._revise_draft_exclusive(
+        handoff.handoff_id,
+        draft_request,
+        service._write_parameters(handoff.handoff_id, draft_request),
+    )
+    publication = CaseTemplatePublicationRequest(
+        request_id="publish-query-list-generation-001",
+        expected_revision=draft.revision,
+        mode="complete",
+    )
+    generation = service._publish_exclusive(
+        handoff.handoff_id,
+        publication,
+        service._write_parameters(handoff.handoff_id, publication),
+    )
 
     written_statuses = [call.args[0].status for call in handoffs.write.call_args_list]
     assert generation.status == "READY"
@@ -3620,170 +3732,6 @@ def test_case_dsl_submission_persists_generation_without_dispatching_qa() -> Non
     task_manager.submit.assert_not_called()
     service.executor.execute.assert_not_called()
     operation_service.execute.assert_not_called()
-
-
-def test_v4_service_marks_atomic_thread_turn_start_failure() -> None:
-    """确认同会话线程/turn启动失败时立即返回FAILED。
-
-    Returns:
-        None；未取得App Server turn回执时不得伪造thread或WAITING状态。
-    """
-
-    handoff = CaseTemplateHandoffV4(
-        handoff_id=f"case-template-handoff-{'c' * 20}",
-        system_id=SYSTEM_ID,
-        entry_id=CANCEL_ID,
-        source_scan_id=SCAN_ID,
-        status="WAITING_FOR_AGENT",
-        source_scopes=[
-            CaseTemplateSourceScope(
-                source_system_id=SYSTEM_ID,
-                source_scan_id=SCAN_ID,
-                source_baseline=SourceBaseline(source_path="/private/refund-core"),
-            )
-        ],
-        model_provider="company",
-        codex_model="company-case",
-        reasoning_effort="high",
-    )
-    codex = Mock()
-    codex.create_scoped_turn.side_effect = ExecutionFailure("turn failed")
-    handoffs = Mock()
-    service = CaseTemplateV4Service(
-        Mock(),
-        Mock(),
-        Mock(),
-        handoffs,
-        CaseTemplateV4RuntimeServices(
-            operation_catalog=Mock(),
-            operation_service=Mock(),
-            codex_app_server=codex,
-            environment_provider=default_case_template_environment_values,
-        ),
-    )
-
-    failed = service._start_codex_turn(handoff)
-
-    assert failed.status == "FAILED"
-    assert failed.thread_id == ""
-    assert failed.codex_deep_link == ""
-
-
-def test_v4_service_marks_exited_turn_without_submission_failed() -> None:
-    """确认Codex退出且没有DSL时轮询不会永久停在WAITING。
-
-    Returns:
-        None；handoff被安全持久化为FAILED时通过。
-    """
-
-    handoff = CaseTemplateHandoffV4(
-        handoff_id=f"case-template-handoff-{'a' * 20}",
-        system_id=SYSTEM_ID,
-        entry_id=CANCEL_ID,
-        source_scan_id=SCAN_ID,
-        status="WAITING_FOR_AGENT",
-        source_scopes=[
-            CaseTemplateSourceScope(
-                source_system_id=SYSTEM_ID,
-                source_scan_id=SCAN_ID,
-                source_baseline=SourceBaseline(source_path="/private/refund-core"),
-            )
-        ],
-        thread_id="thread-v4-failed-turn",
-        turn_process_id="12345",
-        turn_id="turn-v4-failed",
-        turn_status="inProgress",
-    )
-    codex = Mock()
-    codex.inspect_case_turn_process.return_value = CodexCaseTurnProcessSnapshot(
-        state="EXITED",
-        return_code=1,
-    )
-    codex.inspect_thread.return_value = CodexThreadSnapshot(
-        thread_id="thread-v4-failed-turn",
-        deep_link="codex://threads/thread-v4-failed-turn",
-        turn_count=1,
-        latest_turn_id="turn-v4-failed",
-        latest_turn_status="failed",
-        latest_turn_error="Codex turn failed (code=unauthorized, http_status=401)",
-    )
-    handoffs = Mock()
-    handoffs.get.return_value = handoff
-    handoffs.processing_scope.return_value = nullcontext()
-    service = CaseTemplateV4Service(
-        Mock(),
-        Mock(),
-        Mock(),
-        handoffs,
-        CaseTemplateV4RuntimeServices(
-            operation_catalog=Mock(),
-            operation_service=Mock(),
-            codex_app_server=codex,
-            environment_provider=default_case_template_environment_values,
-        ),
-    )
-
-    refreshed = service._refresh_agent_status(handoff)
-
-    assert refreshed.status == "FAILED"
-    assert refreshed.turn_status == "failed"
-    assert refreshed.safe_error == "Codex turn failed (code=unauthorized, http_status=401)"
-    handoffs.write.assert_called_once_with(refreshed)
-
-
-def test_v4_service_does_not_read_thread_from_second_server_while_turn_runs() -> None:
-    """活跃V4 turn轮询不得用第二个App Server读取并误写interrupted状态。
-
-    Returns:
-        None；owner进程运行时保持WAITING/inProgress且不调用thread/read。
-
-    Side Effects:
-        仅调用内存状态桩，不启动真实App Server、MCP或模型turn。
-    """
-
-    handoff = CaseTemplateHandoffV4(
-        handoff_id=f"case-template-handoff-{'b' * 20}",
-        system_id=SYSTEM_ID,
-        entry_id=CANCEL_ID,
-        source_scan_id=SCAN_ID,
-        status="WAITING_FOR_AGENT",
-        source_scopes=[
-            CaseTemplateSourceScope(
-                source_system_id=SYSTEM_ID,
-                source_scan_id=SCAN_ID,
-                source_baseline=SourceBaseline(source_path="/private/refund-core"),
-            )
-        ],
-        thread_id="thread-v4-running-turn",
-        turn_process_id="67890",
-        turn_id="turn-v4-running",
-        turn_status="inProgress",
-    )
-    codex = Mock()
-    codex.inspect_case_turn_process.return_value = CodexCaseTurnProcessSnapshot(state="RUNNING")
-    handoffs = Mock()
-    handoffs.get.return_value = handoff
-    handoffs.processing_scope.return_value = nullcontext()
-    service = CaseTemplateV4Service(
-        Mock(),
-        Mock(),
-        Mock(),
-        handoffs,
-        CaseTemplateV4RuntimeServices(
-            operation_catalog=Mock(),
-            operation_service=Mock(),
-            codex_app_server=codex,
-            environment_provider=default_case_template_environment_values,
-        ),
-    )
-
-    # 活跃owner进程是运行状态真相源；持久线程仅在它退出后读取终态。
-    refreshed = service._refresh_agent_status(handoff)
-
-    assert refreshed.status == "WAITING_FOR_AGENT"
-    assert refreshed.turn_status == "inProgress"
-    codex.inspect_thread.assert_not_called()
-    handoffs.write.assert_not_called()
 
 
 def test_handoff_catalog_never_exposes_registered_source_root() -> None:

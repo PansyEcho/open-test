@@ -12,9 +12,15 @@
 - 控制台收敛为工作台、系统、知识库和回归Case四个入口。
 - 区分Codex配置错误、插件缺失和插件禁用，并同步更新OpenTest系统Skill。
 - 删除legacy MVP和已被唯一主线取代的V2/V3 Case入口及跟踪资产；Git外真实执行证据不自动删除。
+- Case生成改为当前原生Agent通过prepare、受控源码、草稿校验和正式发布工具完成；网页只创建可恢复业务任务，不再后台启动交互Codex。
+- Case问题、答案、草稿、revision和失败诊断持久化；正式Generation修订通过带predecessor的后继handoff/Generation完成。
+- 扫描按组件区分完整、部分与失败；可靠部分结果可展示，无关warning不阻断，只有完整扫描成为知识与Case的新基线。
+- 系统配置显式固定一个本地managed tag和完整Git commit；普通扫描只读取该不可变版本，只有“更新代码基准并扫描”才能切换版本。
+- 兼容只含已确认历史执行字段的Case handoff，并按Redis初始化配置键聚合资源；未知历史字段和损坏记录仍严格拒绝。
 
 ## Out of Scope
 
 - 不实现跨接口AI排序、批量调度器或额外调度状态。
 - 不自动修改用户的`~/.codex/config.toml`。
 - 不自动删除`open-test-knowledge/.opentest`中的本地运行证据。
+- 不批量重算损坏归档摘要，不让部分扫描资源冒充新一代完整源码证据。

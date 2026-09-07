@@ -10,18 +10,10 @@ import sys
 import threading
 import time
 from pathlib import Path
-from unittest.mock import Mock
 
 import pytest
 
 from opentest.adapters.agent_runner import AgentRunner, AgentRunnerConfig
-from opentest.adapters.codex_app_server import (
-    CodexAppServerClient,
-    CodexAppServerConfig,
-    CodexThreadCreationRequest,
-    CodexThreadStartWire,
-    _resolve_codex_app_server_executable,
-)
 from opentest.adapters.knowledge_store import AUTO_END, AUTO_START, GitKnowledgeStore
 from opentest.adapters.knowledge_tracing import JavaKnowledgeTracer
 from opentest.adapters.registered_source_mcp import RegisteredSourceReader
@@ -33,7 +25,6 @@ from opentest.application.knowledge import KnowledgeGenerationService
 from opentest.application.foundation import OpenTestApplication
 from opentest.application.tasks import LocalTaskManager, report_task_progress
 from opentest.domain.errors import (
-    CodexPluginPreflightError,
     ExecutionFailure,
     KnowledgeValidationError,
     ScopeViolationError,
@@ -85,7 +76,9 @@ from opentest.domain.models import (
     StateMachineDefinition,
     StateTransition,
     SystemDefinition,
+    TaskProgress,
     TaskProgressUpdate,
+    TaskRecord,
     TaskStatus,
 )
 
@@ -4941,767 +4934,6 @@ def test_agent_runner_passes_a_fully_strict_schema_to_fake_codex(
     assert json.loads(Path(evidence.output_path).read_text(encoding="utf-8"))["summaries"] == []
 
 
-def test_codex_app_server_prefers_desktop_bundled_executable(tmp_path: Path) -> None:
-    """客户端接管必须优先使用桌面同版本二进制，避免旧PATH CLI缺少新模型。
-
-    Args:
-        tmp_path: pytest隔离的可执行候选目录。
-
-    Returns:
-        None；可执行桌面候选被选择且候选缺失时回落``codex``即通过。
-    """
-
-    bundled = tmp_path / "ChatGPT.app" / "Contents" / "Resources" / "codex"
-    bundled.parent.mkdir(parents=True)
-    bundled.write_text("#!/bin/sh\nexit 0\n", encoding="utf-8")
-    bundled.chmod(0o755)
-
-    assert _resolve_codex_app_server_executable((bundled,)) == str(bundled)
-    assert _resolve_codex_app_server_executable((tmp_path / "missing-codex",)) == "codex"
-
-
-@pytest.mark.parametrize("reasoning_effort", ["medium", "low"])
-def test_codex_app_server_accepts_luna_only_when_local_catalog_lists_effort(
-    reasoning_effort: str,
-) -> None:
-    """Luna只能在本机模型目录明确列出目标档位时通过启动前门禁。
-
-    Args:
-        reasoning_effort: 页面允许选择的Medium或Low档位。
-
-    Returns:
-        None；两个合法档位通过，目录未声明的档位仍被明确拒绝时通过。
-    """
-
-    client = CodexAppServerClient()
-    payload = {
-        "data": [
-            {
-                "id": "gpt-5.6-luna",
-                "supportedReasoningEfforts": ["low", "medium"],
-            }
-        ]
-    }
-
-    client._require_model_effort(payload, "gpt-5.6-luna", reasoning_effort)
-    with pytest.raises(ExecutionFailure, match="does not support reasoning effort"):
-        client._require_model_effort(payload, "gpt-5.6-luna", "high")
-
-
-def test_codex_app_server_lists_current_user_provider_models_without_credentials(
-    tmp_path: Path,
-) -> None:
-    """模型目录应来自当前App Server且只暴露安全模型元数据。
-
-    Args:
-        tmp_path: pytest隔离的用户配置、假App Server和协议日志目录。
-
-    Returns:
-        None；Provider、默认模型、可见模型和动态档位正确且Token未进入协议时通过。
-
-    Side Effects:
-        启动假App Server并写隔离协议日志；不创建线程或调用真实模型。
-    """
-
-    executable = tmp_path / "codex"
-    request_log = tmp_path / "model-catalog-requests.jsonl"
-    executable.write_text(
-        "#!/usr/bin/env python3\n"
-        "import json, pathlib, sys\n"
-        f"request_log = pathlib.Path({str(request_log)!r})\n"
-        "for raw in sys.stdin:\n"
-        "    request = json.loads(raw)\n"
-        "    request_log.open('a', encoding='utf-8').write(json.dumps(request) + '\\n')\n"
-        "    if 'id' not in request:\n"
-        "        continue\n"
-        "    if request.get('method') == 'config/read':\n"
-        "        result = {'config':{'model_provider':'company','model':'company-deep'}, 'origins':{}}\n"
-        "    elif request.get('method') == 'model/list':\n"
-        "        result = {'data':["
-        "{'id':'company-fast','displayName':'Company Fast','hidden':False,'isDefault':True,'defaultReasoningEffort':'medium','supportedReasoningEfforts':[{'reasoningEffort':'low'},{'reasoningEffort':'medium'}]},"
-        "{'id':'company-deep','displayName':'Company Deep','hidden':False,'isDefault':False,'defaultReasoningEffort':'high','supportedReasoningEfforts':['medium','high']},"
-        "{'id':'company-hidden','displayName':'Hidden','hidden':True,'isDefault':False,'defaultReasoningEffort':'low','supportedReasoningEfforts':['low']}], 'nextCursor':None}\n"
-        "    else:\n"
-        "        result = {}\n"
-        "    print(json.dumps({'id':request['id'],'result':result}), flush=True)\n",
-        encoding="utf-8",
-    )
-    executable.chmod(0o755)
-    user_config = tmp_path / "config.toml"
-    user_config.write_text(
-        'model_provider = "company"\n'
-        'model = "company-deep"\n'
-        '[model_providers.company]\n'
-        'experimental_bearer_token = "must-not-leave-codex-config"\n',
-        encoding="utf-8",
-    )
-    client = CodexAppServerClient(
-        CodexAppServerConfig(executable=str(executable), user_config_path=user_config)
-    )
-
-    catalog = client.list_model_catalog()
-    protocol_text = request_log.read_text(encoding="utf-8")
-    protocol_requests = [json.loads(line) for line in protocol_text.splitlines()]
-
-    assert catalog.provider_id == "company"
-    assert catalog.default_model == "company-fast"
-    assert [item.model_id for item in catalog.models] == ["company-fast", "company-deep"]
-    assert catalog.models[1].supported_reasoning_efforts == ("medium", "high")
-    assert "must-not-leave-codex-config" not in protocol_text
-    config_request = next(item for item in protocol_requests if item.get("method") == "config/read")
-    assert config_request["params"] == {"includeLayers": False}
-    assert "thread/start" not in protocol_text
-    assert "turn/start" not in protocol_text
-
-
-def test_codex_app_server_starts_v4_turn_in_same_authenticated_session(
-    tmp_path: Path,
-) -> None:
-    """V4必须在创建线程的同一App Server会话启动真实turn。
-
-    Args:
-        tmp_path: pytest隔离的假App Server、用户配置、工作目录和协议日志。
-
-    Returns:
-        None；Provider模型被确认、Prompt属于turn且进程在完成通知后回收时通过。
-
-    Side Effects:
-        启动假App Server并写协议日志；不访问公司Provider或真实模型。
-    """
-
-    executable = tmp_path / "codex"
-    request_log = tmp_path / "v4-turn-requests.jsonl"
-    executable.write_text(
-        "#!/usr/bin/env python3\n"
-        "import json, os, pathlib, sys\n"
-        f"request_log = pathlib.Path({str(request_log)!r})\n"
-        "for raw in sys.stdin:\n"
-        "    request = json.loads(raw)\n"
-        "    record = {'pid':os.getpid(), 'request':request}\n"
-        "    request_log.open('a', encoding='utf-8').write(json.dumps(record) + '\\n')\n"
-        "    if 'id' not in request:\n"
-        "        continue\n"
-        "    method = request.get('method')\n"
-        "    if method == 'model/list' and not request.get('params', {}).get('cursor'):\n"
-        "        result = {'data':[{'id':'company-fast','displayName':'Company Fast','hidden':False,'isDefault':True,'defaultReasoningEffort':'medium','supportedReasoningEfforts':['medium']}], 'nextCursor':'company-page-2'}\n"
-        "    elif method == 'model/list':\n"
-        "        result = {'data':[{'id':'company-case','displayName':'Company Case','hidden':False,'isDefault':False,'defaultReasoningEffort':'high','supportedReasoningEfforts':['medium','high']}], 'nextCursor':None}\n"
-        "    elif method == 'thread/start':\n"
-        "        result = {'thread':{'id':'01a-v4-same-session'},'model':'company-case','modelProvider':'company','reasoningEffort':'high'}\n"
-        "    elif method == 'mcpServerStatus/list':\n"
-        "        names = ['get_case_template_handoff','list_source_files','search_source','read_source','read_outer_api_info','submit_case_template_dsl']\n"
-        "        result = {'data':[{'name':'opentest_case','tools':{name:{'name':name} for name in names}}]}\n"
-        "    elif method == 'turn/start':\n"
-        "        result = {'turn':{'id':'01a-v4-turn','status':'inProgress','items':[]}}\n"
-        "    else:\n"
-        "        result = {}\n"
-        "    if method == 'turn/start':\n"
-        "        completed = {'method':'turn/completed','params':{'threadId':'01a-v4-same-session','turn':{'id':'01a-v4-turn','status':'completed','items':[]}}}\n"
-        "        print(json.dumps(completed), flush=True)\n"
-        "    print(json.dumps({'id':request['id'],'result':result}), flush=True)\n",
-        encoding="utf-8",
-    )
-    executable.chmod(0o755)
-    user_config = tmp_path / "config.toml"
-    user_config.write_text(
-        'model_provider = "company"\n'
-        '[model_providers.company]\n'
-        'experimental_bearer_token = "must-stay-private"\n',
-        encoding="utf-8",
-    )
-    workspace = tmp_path / "workspace"
-    workspace.mkdir()
-    client = CodexAppServerClient(
-        CodexAppServerConfig(
-            executable=str(executable),
-            user_config_path=user_config,
-            thread_start_wire=CodexThreadStartWire(approval_policy="never", sandbox="readOnly"),
-        )
-    )
-
-    started = client.create_scoped_turn(
-        CodexThreadCreationRequest(
-            prompt="生成V4结构化DSL。",
-            title="OpenTest V4 Case · cancel",
-            cwd=workspace,
-            developer_instructions="只允许V4受控工具。",
-            model="company-case",
-            reasoning_effort="high",
-            model_provider="company",
-            tool_scope="case_template_v4",
-        )
-    )
-    deadline = time.monotonic() + 5
-    process = client.inspect_case_turn_process(started.process_id)
-    while process.state == "RUNNING" and time.monotonic() < deadline:
-        time.sleep(0.05)
-        process = client.inspect_case_turn_process(started.process_id)
-    records = [json.loads(line) for line in request_log.read_text(encoding="utf-8").splitlines()]
-    requests = [record["request"] for record in records]
-
-    assert started.thread_id == "01a-v4-same-session"
-    assert started.turn_id == "01a-v4-turn"
-    assert started.turn_status == "inProgress"
-    assert started.model_provider == "company"
-    assert len({record["pid"] for record in records}) == 1
-    assert process.state == "EXITED"
-    assert process.return_code == 0
-    methods = [request.get("method") for request in requests]
-    assert methods == [
-        "initialize",
-        "initialized",
-        "model/list",
-        "model/list",
-        "thread/start",
-        "mcpServerStatus/list",
-        "thread/name/set",
-        "turn/start",
-    ]
-    assert "thread/inject_items" not in methods
-    turn_request = next(request for request in requests if request.get("method") == "turn/start")
-    assert turn_request["params"]["input"][0]["text"] == "生成V4结构化DSL。"
-    assert "must-stay-private" not in request_log.read_text(encoding="utf-8")
-
-
-def test_codex_app_server_rejects_v4_thread_profile_without_exact_effort(
-    tmp_path: Path,
-) -> None:
-    """V4线程回执缺少请求effort时不得用请求值回填并继续启动turn。
-
-    Args:
-        tmp_path: pytest提供的合法线程工作目录。
-
-    Returns:
-        None；App Server回执不完整时在线程启动阶段明确失败。
-
-    Side Effects:
-        仅调用内存协议桩，不启动App Server、模型或MCP进程。
-    """
-
-    # 仅构造到thread/start回执所需的协议序列，缺失effort就是本测试的失败条件。
-    process = Mock(pid=12345)
-    client = CodexAppServerClient(
-        CodexAppServerConfig(
-            thread_start_wire=CodexThreadStartWire(approval_policy="never", sandbox="readOnly")
-        )
-    )
-    client._start_process = Mock(return_value=process)
-    client._notify = Mock()
-    client._close_process = Mock()
-    client._request = Mock(
-        side_effect=[
-            {},
-            {
-                "data": [
-                    {
-                        "id": "company-case",
-                        "supportedReasoningEfforts": ["high"],
-                    }
-                ],
-                "nextCursor": None,
-            },
-            {
-                "thread": {"id": "01a-v4-profile-mismatch"},
-                "model": "company-case",
-                "modelProvider": "company",
-            },
-        ]
-    )
-
-    with pytest.raises(ExecutionFailure, match="different Provider model profile"):
-        client.create_scoped_turn(
-            CodexThreadCreationRequest(
-                prompt="生成V4结构化DSL。",
-                title="OpenTest V4 Case · cancel",
-                cwd=tmp_path,
-                developer_instructions="只允许V4受控工具。",
-                model="company-case",
-                reasoning_effort="high",
-                model_provider="company",
-                tool_scope="case_template_v4",
-            )
-        )
-
-    client._close_process.assert_called()
-
-
-def test_codex_app_server_closes_synchronous_terminal_turn_without_watcher(
-    tmp_path: Path,
-) -> None:
-    """turn/start同步返回终态时应立即回收App Server并发布退出事实。
-
-    Args:
-        tmp_path: pytest提供的合法线程工作目录。
-
-    Returns:
-        None；completed状态被原样冻结且进程无需等待完成通知。
-
-    Side Effects:
-        仅调用内存协议桩，不启动App Server、模型或MCP进程。
-    """
-
-    process = Mock(pid=24680)
-    session = Mock(
-        process=process,
-        next_request_id=7,
-        thread=Mock(thread_id="01a-v4-sync-terminal", deep_link="codex://threads/01a-v4-sync-terminal"),
-        model_provider="company",
-        model="company-case",
-        reasoning_effort="high",
-    )
-    client = CodexAppServerClient()
-    client._open_scoped_thread_session = Mock(return_value=session)
-    client._request = Mock(
-        return_value={"turn": {"id": "01a-v4-sync-turn", "status": "completed", "items": []}}
-    )
-    client._close_process = Mock()
-
-    # 同步终态不能启动后台watcher，否则没有后续通知时进程和handoff会永久等待。
-    started = client.create_scoped_turn(
-        CodexThreadCreationRequest(
-            prompt="生成V4结构化DSL。",
-            title="OpenTest V4 Case · cancel",
-            cwd=tmp_path,
-            developer_instructions="只允许V4受控工具。",
-            model="company-case",
-            reasoning_effort="high",
-            model_provider="company",
-            tool_scope="case_template_v4",
-        )
-    )
-
-    assert started.turn_status == "completed"
-    assert client.inspect_case_turn_process(started.process_id).return_code == 0
-    client._close_process.assert_called_once_with(process)
-
-
-def test_codex_app_server_creates_and_injects_thread_without_starting_a_turn(
-    tmp_path: Path,
-) -> None:
-    """客户端接管只应创建持久线程和聊天历史，不得自动发送模型turn。
-
-    Args:
-        tmp_path: pytest隔离的假Codex App Server、协议记录和工作目录。
-
-    Returns:
-        None；线程可深链打开、Prompt已注入且协议中没有turn/start时通过。
-    """
-
-    executable = tmp_path / "codex"
-    request_log = tmp_path / "app-server-requests.jsonl"
-    executable.write_text(
-        "#!/usr/bin/env python3\n"
-        "import json, sys\n"
-        f"log_path = {str(request_log)!r}\n"
-        "for raw in sys.stdin:\n"
-        "    request = json.loads(raw)\n"
-        "    with open(log_path, 'a', encoding='utf-8') as handle:\n"
-        "        handle.write(json.dumps(request, ensure_ascii=False) + '\\n')\n"
-        "    if 'id' not in request:\n"
-        "        continue\n"
-        "    method = request.get('method')\n"
-        "    if 'jsonrpc' in request:\n"
-        "        print(json.dumps({'id':request.get('id'),'error':{'code':-32600,'message':'jsonrpc header forbidden'}}), flush=True)\n"
-        "        continue\n"
-        "    if method == 'initialize':\n"
-        "        result = {'userAgent':'fake-app-server'}\n"
-        "    elif method == 'model/list':\n"
-        "        result = {'data':[{'id':'gpt-5.6-sol','supportedReasoningEfforts':[{'reasoningEffort':'low'},{'reasoningEffort':'medium'}]}]}\n"
-        "    elif method == 'thread/start':\n"
-        "        if request['params'].get('approvalPolicy') != 'never' or request['params'].get('sandbox') != 'readOnly':\n"
-        "            print(json.dumps({'id':request['id'],'error':{'code':-32602,'message':'bad enums'}}), flush=True)\n"
-        "            continue\n"
-        "        result = {'thread':{'id':'01a-client-handoff-test'},'model':'gpt-test','modelProvider':'openai','cwd':request['params']['cwd'],'approvalPolicy':'onRequest','approvalsReviewer':'user','sandbox':{'type':'readOnly'}}\n"
-        "    elif method == 'mcpServerStatus/list':\n"
-        "        names = ['get_knowledge_handoff','list_source_files','search_source','read_source','submit_knowledge_candidate']\n"
-        "        result = {'data':[{'name':'opentest_knowledge','authStatus':'unsupported','resources':[],'resourceTemplates':[],'tools':{name:{'name':name,'inputSchema':{}} for name in names}}],'nextCursor':None}\n"
-        "    else:\n"
-        "        result = {}\n"
-        "    response = json.dumps({'id':request['id'],'result':result})\n"
-        "    if method == 'thread/start':\n"
-        "        notification = json.dumps({'method':'thread/started','params':{'thread':result['thread']}})\n"
-        "        sys.stdout.write(notification + '\\n' + response + '\\n')\n"
-        "        sys.stdout.flush()\n"
-        "    else:\n"
-        "        print(response, flush=True)\n",
-        encoding="utf-8",
-    )
-    executable.chmod(0o755)
-    workspace = tmp_path / "workspace"
-    workspace.mkdir()
-
-    thread = CodexAppServerClient(
-        CodexAppServerConfig(
-            executable=str(executable),
-            thread_start_wire=CodexThreadStartWire(approval_policy="never", sandbox="readOnly"),
-        )
-    ).create_thread(
-        "请分析当前OpenTest知识目标。",
-        "OpenTest · QueryFacade#queryList",
-        workspace,
-        "只能通过OpenTest插件回写候选。",
-        "gpt-5.6-sol",
-        "medium",
-    )
-    requests = [
-        json.loads(line)
-        for line in request_log.read_text(encoding="utf-8").splitlines()
-        if line.strip()
-    ]
-
-    assert thread.thread_id == "01a-client-handoff-test"
-    assert thread.deep_link == "codex://threads/01a-client-handoff-test"
-    assert [request.get("method") for request in requests if "method" in request] == [
-        "initialize",
-        "initialized",
-        "model/list",
-        "thread/start",
-        "mcpServerStatus/list",
-        "thread/name/set",
-        "thread/inject_items",
-    ]
-    assert all("jsonrpc" not in request for request in requests)
-    assert all(request.get("method") != "turn/start" for request in requests)
-    initialized = next(request for request in requests if request.get("method") == "initialized")
-    assert initialized == {"method": "initialized", "params": {}}
-    started = next(request for request in requests if request.get("method") == "thread/start")
-    assert set(started) == {"id", "method", "params"}
-    assert started["params"] == {
-        "cwd": str(workspace.resolve()),
-        "developerInstructions": "只能通过OpenTest插件回写候选。",
-        "model": "gpt-5.6-sol",
-        "config": {"model_reasoning_effort": "medium"},
-        "approvalPolicy": "never",
-        "approvalsReviewer": "user",
-        "sandbox": "readOnly",
-        "ephemeral": False,
-    }
-    status = next(request for request in requests if request.get("method") == "mcpServerStatus/list")
-    assert status["params"] == {
-        "threadId": "01a-client-handoff-test",
-        "detail": "toolsAndAuthOnly",
-        "limit": 100,
-    }
-    injected = next(request for request in requests if request.get("method") == "thread/inject_items")
-    assert injected["params"]["items"][0]["role"] == "user"
-    assert "OpenTest知识目标" in injected["params"]["items"][0]["content"][0]["text"]
-
-
-def test_codex_app_server_inspects_persisted_turn_without_resuming_thread(tmp_path: Path) -> None:
-    """协调器应只读检查已有turn并立即回收短生命周期App Server。
-
-    Args:
-        tmp_path: pytest隔离的假App Server、协议日志和进程关闭标记。
-
-    Returns:
-        None；只调用thread/read并返回最新turn身份和状态时通过。
-    """
-
-    executable = tmp_path / "codex"
-    request_log = tmp_path / "thread-inspect-requests.jsonl"
-    process_closed = tmp_path / "thread-inspect-process-closed.txt"
-    executable.write_text(
-        "#!/usr/bin/env python3\n"
-        "import json, pathlib, sys\n"
-        f"request_log = pathlib.Path({str(request_log)!r})\n"
-        f"process_closed = pathlib.Path({str(process_closed)!r})\n"
-        "for raw in sys.stdin:\n"
-        "    request = json.loads(raw)\n"
-        "    request_log.open('a', encoding='utf-8').write(json.dumps(request) + '\\n')\n"
-        "    if 'id' not in request:\n"
-        "        continue\n"
-        "    method = request.get('method')\n"
-        "    if method == 'thread/read':\n"
-        "        turns = [{'id':'turn-finished','status':'completed'}, {'id':'turn-active','status':'inProgress','error':{'message':'unexpected status 401 authorization=Bearer super-secret-value OPENAI_API_KEY=another-secret upstream pending'}}]\n"
-        "        result = {'thread':{'id':request['params']['threadId'],'turns':turns}}\n"
-        "    else:\n"
-        "        result = {}\n"
-        "    print(json.dumps({'id':request['id'],'result':result}), flush=True)\n"
-        "process_closed.write_text('closed', encoding='utf-8')\n",
-        encoding="utf-8",
-    )
-    executable.chmod(0o755)
-    client = CodexAppServerClient(CodexAppServerConfig(executable=str(executable)))
-
-    snapshot = client.inspect_thread("01a-client-handoff-test")
-    requests = [json.loads(line) for line in request_log.read_text(encoding="utf-8").splitlines()]
-    methods = [request.get("method") for request in requests]
-
-    assert snapshot.turn_count == 2
-    assert snapshot.latest_turn_id == "turn-active"
-    assert snapshot.latest_turn_status == "inProgress"
-    assert snapshot.latest_turn_error == "Codex turn failed (code=unauthorized, http_status=401)"
-    assert "super-secret-value" not in snapshot.latest_turn_error
-    assert "another-secret" not in snapshot.latest_turn_error
-    assert process_closed.read_text(encoding="utf-8") == "closed"
-    assert methods == ["initialize", "initialized", "thread/read"]
-    read_request = next(request for request in requests if request.get("method") == "thread/read")
-    assert read_request["params"] == {
-        "threadId": "01a-client-handoff-test",
-        "includeTurns": True,
-    }
-
-
-def test_codex_app_server_inspects_empty_thread_without_starting_turn(tmp_path: Path) -> None:
-    """尚无turn的持久线程只返回空快照，不得恢复线程或取得writer。
-
-    Args:
-        tmp_path: pytest隔离的假App Server与协议日志。
-
-    Returns:
-        None；快照数量为零且协议只有thread/read时通过。
-    """
-
-    executable = tmp_path / "codex"
-    request_log = tmp_path / "existing-turn-requests.jsonl"
-    executable.write_text(
-        "#!/usr/bin/env python3\n"
-        "import json, pathlib, sys\n"
-        f"request_log = pathlib.Path({str(request_log)!r})\n"
-        "for raw in sys.stdin:\n"
-        "    request = json.loads(raw)\n"
-        "    request_log.open('a', encoding='utf-8').write(json.dumps(request) + '\\n')\n"
-        "    if 'id' not in request:\n"
-        "        continue\n"
-        "    if request.get('method') == 'thread/read':\n"
-        "        result = {'thread':{'id':request['params']['threadId'],'turns':[]}}\n"
-        "    else:\n"
-        "        result = {}\n"
-        "    print(json.dumps({'id':request['id'],'result':result}), flush=True)\n",
-        encoding="utf-8",
-    )
-    executable.chmod(0o755)
-
-    snapshot = CodexAppServerClient(CodexAppServerConfig(executable=str(executable))).inspect_thread(
-        "01a-client-handoff-test"
-    )
-    methods = [
-        json.loads(line).get("method")
-        for line in request_log.read_text(encoding="utf-8").splitlines()
-    ]
-
-    assert snapshot.turn_count == 0
-    assert snapshot.latest_turn_id == ""
-    assert snapshot.latest_turn_status == ""
-    assert methods == ["initialize", "initialized", "thread/read"]
-
-
-def test_codex_app_server_rejects_thread_without_ready_opentest_mcp_tools(tmp_path: Path) -> None:
-    """客户端线程未装载全部OpenTest工具时必须在任何turn之前失败关闭。
-
-    Args:
-        tmp_path: pytest隔离的假App Server和工作目录。
-
-    Returns:
-        None；缺少确认工具时抛出精确失败且协议中没有注入或turn/start时通过。
-    """
-
-    executable = tmp_path / "codex"
-    request_log = tmp_path / "missing-mcp-requests.jsonl"
-    executable.write_text(
-        "#!/usr/bin/env python3\n"
-        "import json, sys\n"
-        f"log_path = {str(request_log)!r}\n"
-        "for raw in sys.stdin:\n"
-        "    request = json.loads(raw)\n"
-        "    with open(log_path, 'a', encoding='utf-8') as handle:\n"
-        "        handle.write(json.dumps(request) + '\\n')\n"
-        "    if 'id' not in request:\n"
-        "        continue\n"
-        "    if request['method'] == 'model/list':\n"
-        "        result = {'data':[{'id':'gpt-5.6-sol','supportedReasoningEfforts':['low','medium']}]}\n"
-        "    elif request['method'] == 'thread/start':\n"
-        "        result = {'thread':{'id':'01a-missing-mcp'}}\n"
-        "    elif request['method'] == 'mcpServerStatus/list':\n"
-        "        result = {'data':[{'name':'opentest_knowledge','tools':{'read_source':{'name':'read_source'}}}]}\n"
-        "    else:\n"
-        "        result = {}\n"
-        "    print(json.dumps({'id':request['id'],'result':result}), flush=True)\n",
-        encoding="utf-8",
-    )
-    executable.chmod(0o755)
-    workspace = tmp_path / "workspace"
-    workspace.mkdir()
-
-    with pytest.raises(ExecutionFailure, match="MCP tools are unavailable"):
-        CodexAppServerClient(
-            CodexAppServerConfig(
-                executable=str(executable),
-                thread_start_wire=CodexThreadStartWire(approval_policy="never", sandbox="readOnly"),
-            )
-        ).create_thread(
-            "请分析当前OpenTest知识目标。",
-            "OpenTest · QueryFacade#queryList",
-            workspace,
-            "只能通过OpenTest插件回写候选。",
-            "gpt-5.6-sol",
-            "low",
-        )
-
-    methods = [
-        json.loads(line).get("method")
-        for line in request_log.read_text(encoding="utf-8").splitlines()
-        if line.strip()
-    ]
-    assert "thread/inject_items" not in methods
-    assert "turn/start" not in methods
-
-
-def test_codex_app_server_uses_local_schema_wire_before_side_effectful_thread_start(tmp_path: Path) -> None:
-    """真实Codex旧枚举必须在创建线程前由本机Schema确定且不得失败后重试。
-
-    Args:
-        tmp_path: Pytest隔离的假Codex、Schema输出、请求日志和工作目录。
-
-    Returns:
-        None；只生成一次Schema并以旧枚举创建唯一线程且不启动turn时通过。
-    """
-
-    executable = tmp_path / "codex"
-    request_log = tmp_path / "schema-wire-requests.jsonl"
-    schema_log = tmp_path / "schema-wire-count.txt"
-    executable.write_text(
-        "#!/usr/bin/env python3\n"
-        "import json, pathlib, sys\n"
-        f"request_log = pathlib.Path({str(request_log)!r})\n"
-        f"schema_log = pathlib.Path({str(schema_log)!r})\n"
-        "if 'generate-json-schema' in sys.argv:\n"
-        "    out = pathlib.Path(sys.argv[sys.argv.index('--out') + 1]) / 'v2'\n"
-        "    out.mkdir(parents=True, exist_ok=True)\n"
-        "    schema_log.write_text('generated', encoding='utf-8')\n"
-        "    schema = {'definitions': {'AskForApproval': {'type':'string','enum':['never']}, 'SandboxMode': {'type':'string','enum':['readOnly']}}}\n"
-        "    (out / 'ThreadStartParams.json').write_text(json.dumps(schema), encoding='utf-8')\n"
-        "    raise SystemExit(0)\n"
-        "for raw in sys.stdin:\n"
-        "    request = json.loads(raw)\n"
-        "    request_log.open('a', encoding='utf-8').write(json.dumps(request) + '\\n')\n"
-        "    if 'id' not in request:\n"
-        "        continue\n"
-        "    method = request.get('method')\n"
-        "    if method == 'model/list':\n"
-        "        result = {'data':[{'id':'gpt-5.6-sol','supportedReasoningEfforts':['low','medium']}]}\n"
-        "    elif method == 'thread/start':\n"
-        "        params = request['params']\n"
-        "        if params.get('approvalPolicy') != 'never' or params.get('sandbox') != 'readOnly':\n"
-        "            print(json.dumps({'id':request['id'],'error':{'code':-32602,'message':'bad local enums'}}), flush=True)\n"
-        "            continue\n"
-        "        result = {'thread':{'id':'01a-schema-wire-thread'}}\n"
-        "    elif method == 'mcpServerStatus/list':\n"
-        "        names = ['get_knowledge_handoff','list_source_files','search_source','read_source','submit_knowledge_candidate']\n"
-        "        result = {'data':[{'name':'opentest_knowledge','tools':{name:{'name':name} for name in names}}]}\n"
-        "    else:\n"
-        "        result = {}\n"
-        "    print(json.dumps({'id':request['id'],'result':result}), flush=True)\n",
-        encoding="utf-8",
-    )
-    executable.chmod(0o755)
-    workspace = tmp_path / "workspace"
-    workspace.mkdir()
-
-    thread = CodexAppServerClient(CodexAppServerConfig(executable=str(executable))).create_thread(
-        "请分析当前OpenTest知识目标。",
-        "OpenTest · QueryFacade#queryList",
-        workspace,
-        "只能通过OpenTest插件回写候选。",
-        "gpt-5.6-sol",
-        "medium",
-    )
-    requests = [json.loads(line) for line in request_log.read_text(encoding="utf-8").splitlines()]
-    starts = [request for request in requests if request.get("method") == "thread/start"]
-
-    assert schema_log.read_text(encoding="utf-8") == "generated"
-    assert len(starts) == 1
-    assert starts[0]["params"]["approvalPolicy"] == "never"
-    assert starts[0]["params"]["sandbox"] == "readOnly"
-    assert thread.thread_id == "01a-schema-wire-thread"
-    assert all(request.get("method") != "turn/start" for request in requests)
-
-
-def test_codex_app_server_classifies_plugin_preflight_results(tmp_path: Path) -> None:
-    """插件检查区分配置损坏、缺失、禁用和正常启用四类结果。
-
-    Args:
-        tmp_path: pytest隔离的假Codex插件清单命令。
-
-    Returns:
-        None；只有正常启用通过，其他状态返回各自稳定错误码且诊断已脱敏。
-    """
-
-    executable = tmp_path / "codex-plugin-list"
-    executable.write_text(
-        "#!/usr/bin/env python3\n"
-        "import json\n"
-        "print(json.dumps({'installed':[{'pluginId':'open-test-knowledge@opentest-local','installed':True,'enabled':True}]}))\n",
-        encoding="utf-8",
-    )
-    executable.chmod(0o755)
-    client = CodexAppServerClient(CodexAppServerConfig(executable=str(executable)))
-
-    client.require_knowledge_plugin()
-
-    executable.write_text(
-        "#!/usr/bin/env python3\nimport json\nprint(json.dumps({'installed':[]}))\n",
-        encoding="utf-8",
-    )
-    executable.chmod(0o755)
-    with pytest.raises(CodexPluginPreflightError) as missing_error:
-        client.require_knowledge_plugin()
-    assert missing_error.value.error_code == "PLUGIN_NOT_INSTALLED"
-
-    executable.write_text(
-        "#!/usr/bin/env python3\n"
-        "import json\n"
-        "print(json.dumps({'installed':[{'pluginId':'open-test-knowledge@opentest-local','installed':True,'enabled':False}]}))\n",
-        encoding="utf-8",
-    )
-    executable.chmod(0o755)
-    with pytest.raises(CodexPluginPreflightError) as disabled_error:
-        client.require_knowledge_plugin()
-    assert disabled_error.value.error_code == "PLUGIN_DISABLED"
-
-    executable.write_text(
-        "#!/usr/bin/env python3\n"
-        "import sys\n"
-        "print('invalid config /Users/user/.codex/config.toml token=private-token', file=sys.stderr)\n"
-        "raise SystemExit(2)\n",
-        encoding="utf-8",
-    )
-    executable.chmod(0o755)
-    with pytest.raises(CodexPluginPreflightError) as config_error:
-        client.require_knowledge_plugin()
-    assert config_error.value.error_code == "CODEX_CONFIG_INVALID"
-    assert "~/.codex/config.toml" in str(config_error.value)
-    assert "private-token" not in str(config_error.value)
-
-    # CLI零退出但清单结构损坏并不等价于可信空清单，必须继续失败关闭。
-    executable.write_text(
-        "#!/usr/bin/env python3\nimport json\nprint(json.dumps({'plugins':[]}))\n",
-        encoding="utf-8",
-    )
-    executable.chmod(0o755)
-    with pytest.raises(CodexPluginPreflightError) as malformed_error:
-        client.require_knowledge_plugin()
-    assert malformed_error.value.error_code == "CODEX_CONFIG_INVALID"
-
-    # installed数组中任何条目的必需字段缺失或类型错误，都不能被误判为目标插件缺失。
-    for malformed_item in (
-        {},
-        {"pluginId": 123, "installed": True, "enabled": True},
-        {"pluginId": "other@market", "installed": "yes", "enabled": True},
-        {"pluginId": "other@market", "installed": True, "enabled": 1},
-    ):
-        executable.write_text(
-            "#!/usr/bin/env python3\n"
-            "import json\n"
-            f"print(json.dumps({{'installed':[{malformed_item!r}]}}))\n",
-            encoding="utf-8",
-        )
-        executable.chmod(0o755)
-        with pytest.raises(CodexPluginPreflightError) as malformed_item_error:
-            client.require_knowledge_plugin()
-        assert malformed_item_error.value.error_code == "CODEX_CONFIG_INVALID"
-
-
 def test_agent_knowledge_envelope_schema_is_fully_codex_strict() -> None:
     """Agent信封、问题、摘要和源码引用的所有对象都必须满足Codex严格契约。
 
@@ -6244,94 +5476,70 @@ def test_agent_worker_start_failure_writes_stable_failed_evidence(
     assert any(event.event_type == "failed" for event in events)
 
 
-def test_task_manager_close_detaches_observer_and_allows_free_restart_takeover(
+def test_restart_interrupts_orphaned_legacy_agent_task_without_discarding_evidence(
     tmp_path: Path,
-    monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    """服务关闭应快速放弃观察权，并让新实例接管同一付费Agent运行。
+    """重启把无活所有者的旧Agent任务标记为中断，同时保留已有运行证据。
 
     Args:
-        tmp_path: pytest隔离的慢速Agent、任务心跳和运行证据目录。
-        monkeypatch: 把慢速假Codex放到当前测试PATH首位。
+        tmp_path: pytest隔离的任务目录和旧Agent证据目录。
 
     Returns:
-        None；旧线程池快速关闭、任务保持RUNNING且新Runner读取原证据时通过。
+        None；旧任务不再保持RUNNING或阻塞新任务，证据文件保持原样时通过。
 
     Side Effects:
-        仅启动无网络的临时假Agent进程，不访问真实认证、源码或外部服务。
+        仅在临时目录写入历史兼容夹具和一个新的本地任务，不启动Agent或外部服务。
     """
 
-    executable = tmp_path / "codex"
-    executable.write_text(
-        "#!/usr/bin/env python3\n"
-        "import json, time\n"
-        "print(json.dumps({'type':'thread.started','thread_id':'thread-restart-test'}), flush=True)\n"
-        "time.sleep(1.0)\n"
-        "print(json.dumps({'type':'item.completed','item':{'type':'agent_message','text':'{\\\"status\\\":\\\"completed\\\"}'}}), flush=True)\n",
+    local_root = tmp_path / "knowledge" / ".opentest"
+    task_root = local_root / "tasks"
+    task_root.mkdir(parents=True)
+    run_id = "agent-cccccccccccccccc"
+    evidence_path = local_root / "agent-runs" / run_id / "evidence.json"
+    evidence_path.parent.mkdir(parents=True)
+    evidence_path.write_text('{"status":"completed","summary":"preserved"}', encoding="utf-8")
+    legacy_task = TaskRecord(
+        task_id="task-cccccccccccccccc",
+        operation="knowledge-target-generation",
+        system_id="train-booking-core",
+        status=TaskStatus.RUNNING,
+        trace_id="legacy-agent-task",
+        owner_pid=999_999,
+        owner_instance_id="d" * 32,
+        handoff_requested=True,
+        progress=TaskProgress(
+            task_id="task-cccccccccccccccc",
+            operation="knowledge-target-generation",
+            status=TaskStatus.RUNNING,
+            agent="codex",
+            agent_run_id=run_id,
+        ),
+    )
+    (task_root / f"{legacy_task.task_id}.json").write_text(
+        legacy_task.model_dump_json(indent=2),
         encoding="utf-8",
     )
-    executable.chmod(0o755)
-    monkeypatch.setenv("PATH", f"{tmp_path}{os.pathsep}{os.environ.get('PATH', '')}")
-    source = tmp_path / "source"
-    source.mkdir()
-    local_root = tmp_path / "knowledge" / ".opentest"
-    evidence_root = local_root / "agent-runs"
-    task_root = local_root / "tasks"
-    run_id = "agent-cccccccccccccccc"
-    runner = AgentRunner(AgentRunnerConfig(codex_executable="codex"))
-    manager = LocalTaskManager(task_root)
 
-    def observe_agent() -> dict[str, object]:
-        """把慢速Agent绑定到可恢复任务进度并等待原运行证据。"""
-
-        report_task_progress(
-            TaskProgressUpdate(
-                stage_code="agent_analysis",
-                stage_name="AI分析",
-                stage_index=2,
-                stage_total=3,
-                completed_units=0,
-                total_units=1,
-                agent="codex",
-                agent_run_id=run_id,
-                knowledge_batch_id="knowledge-workflow-restarttest",
-            )
-        )
-        evidence = runner.run(
-            AgentRunRequest(
-                system_id="train-booking-core",
-                agent="codex",
-                prompt="慢速只读分析",
-                run_id=run_id,
-            ),
-            source,
-            evidence_root,
-        )
-        return {"run_id": evidence.run_id}
-
-    task = manager.submit("knowledge-target-generation", "train-booking-core", observe_agent, exclusive=True)
-    for _ in range(300):
-        if (evidence_root / run_id / "state.json").is_file():
-            break
-        time.sleep(0.01)
-    assert runner.read_state(run_id, evidence_root).get("status") == "running"
-
-    started = time.monotonic()
-    runner.detach_observers()
-    manager.close()
-    elapsed = time.monotonic() - started
-    preserved = manager.get(task.task_id)
-
-    assert elapsed < 2
-    assert preserved.status == TaskStatus.RUNNING
-    takeover_runner = AgentRunner(AgentRunnerConfig(codex_executable="codex"))
     restarted_manager = LocalTaskManager(task_root)
-    recoverable = restarted_manager.recoverable_agent_tasks({"knowledge-target-generation"})
-    evidence = takeover_runner.attach(run_id, evidence_root)
+    interrupted = restarted_manager.get(legacy_task.task_id)
+
+    def native_job() -> dict[str, object]:
+        """证明旧Agent证据不会形成新的排他任务门禁。"""
+
+        return {"completed": True}
+
+    new_task = restarted_manager.submit(
+        "native-agent-context",
+        "train-booking-core",
+        native_job,
+        exclusive=True,
+    )
     restarted_manager.close()
 
-    assert [record.task_id for record in recoverable] == [task.task_id]
-    assert evidence.session_id == "thread-restart-test"
+    assert interrupted.status == TaskStatus.INTERRUPTED
+    assert interrupted.handoff_requested is False
+    assert restarted_manager.get(new_task.task_id).status == TaskStatus.COMPLETED
+    assert evidence_path.read_text(encoding="utf-8") == '{"status":"completed","summary":"preserved"}'
 
 
 def test_application_close_waits_for_non_recoverable_conversation_agent(
@@ -6402,21 +5610,21 @@ def test_application_close_waits_for_non_recoverable_conversation_agent(
     assert runner._observer_detached.is_set() is False
 
 
-def test_overlapping_service_startup_adopts_handoff_and_blocks_duplicate_agent(
+def test_overlapping_service_startup_does_not_adopt_legacy_agent_run(
     tmp_path: Path,
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    """新服务先启动时也应在旧服务声明handoff后接管并阻止第二个付费任务。
+    """新服务启动后不得扫描、接管或恢复旧实例中的后台Agent运行。
 
     Args:
         tmp_path: pytest隔离的两个应用实例、慢Agent和共享任务目录。
         monkeypatch: 把无网络假Codex放到两个实例共享的测试PATH首位。
 
     Returns:
-        None；孤儿门禁拒绝新任务且原任务所有权转移到新实例时通过。
+        None；旧任务保持原所有者，且新实例不因其自动建立后台Agent协调时通过。
 
     Side Effects:
-        仅运行一个临时假Agent；恢复任务因刻意缺少测试批次而安全结束为失败。
+        仅运行一个临时假Agent；不访问网络、QA或任何外部业务系统。
     """
 
     executable = tmp_path / "codex"
@@ -6475,34 +5683,31 @@ def test_overlapping_service_startup_adopts_handoff_and_blocks_duplicate_agent(
         if (evidence_root / run_id / "state.json").is_file():
             break
         time.sleep(0.01)
-    # 新实例在旧所有权心跳仍存在时启动，首次扫描应安全跳过而不是抢占。
+    # 新实例在旧所有权心跳仍存在时启动，不得注册协调线程或抢占旧Agent任务。
     new_application = OpenTestApplication(knowledge_root)
     assert new_application.tasks.get(task.task_id).owner_instance_id != new_application.tasks._owner_instance_id
+    assert not hasattr(new_application, "_client_coordination_thread")
     old_application.close()
 
-    def duplicate_agent_job() -> dict[str, object]:
-        """表示不应越过孤儿Agent门禁启动的第二个任务。"""
+    def independent_native_job() -> dict[str, object]:
+        """表示不依赖后台Agent所有权的独立原生任务。"""
 
         return {}
 
-    with pytest.raises(ScopeViolationError, match="takeover|active"):
-        new_application.tasks.submit(
-            "duplicate-agent",
-            "train-booking-core",
-            duplicate_agent_job,
-            exclusive=True,
-        )
+    # 读取旧任务不应隐式触发接管；新实例仍可运行不需要Codex B的独立业务任务。
+    current = new_application.get_task(task.task_id)
+    assert current.owner_instance_id != new_application.tasks._owner_instance_id
+    native_task = new_application.tasks.submit(
+        "native-agent-context",
+        "train-booking-core",
+        independent_native_job,
+        exclusive=True,
+    )
     for _ in range(300):
-        current = new_application.get_task(task.task_id)
-        if current.owner_instance_id == new_application.tasks._owner_instance_id:
-            break
-        time.sleep(0.01)
-    for _ in range(300):
-        current = new_application.tasks.get(task.task_id)
-        if current.status in {TaskStatus.FAILED, TaskStatus.INTERRUPTED, TaskStatus.COMPLETED}:
+        native_task = new_application.tasks.get(native_task.task_id)
+        if native_task.status in {TaskStatus.FAILED, TaskStatus.INTERRUPTED, TaskStatus.COMPLETED}:
             break
         time.sleep(0.01)
     new_application.close()
 
-    assert current.owner_instance_id == new_application.tasks._owner_instance_id
-    assert current.status != TaskStatus.RUNNING
+    assert native_task.status == TaskStatus.COMPLETED

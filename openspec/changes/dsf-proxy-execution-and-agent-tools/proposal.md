@@ -11,6 +11,8 @@
 - 增加项目级操作确认及调用系统到目标操作的绑定，支持本系统自调用和跨系统调用。
 - 将DSF Profile、操作目录和Worker身份绑定到当前不可变扫描代际；HTTP Job继续使用原有工具。
 - 两个只读金丝雀均通过后移除Labrador页面、设置与执行通道；历史扫描与操作目录保持只读。
+- Facade的DSFProxy能力不得再声明或读取Labrador Token、Facade HTTP前缀或`facade_raw`工具；HTTP Job在产品取舍明确前保持独立旧执行边界并使用如实命名的Job配置。
+- 增加不含连接值和凭据的环境目录；执行环境只接受canonical ID或系统内唯一显式alias，并把解析后的ID贯穿Case四阶段、单次Operation和资源探测。
 
 ## Scope
 
@@ -22,3 +24,4 @@
 - 不允许Agent提交任意gsName、service、version或action。
 - 不修改只读QA Oracle Worker的安全契约。
 - 不在未通过只读金丝雀时删除Labrador兼容实现。
+- 不把`QA1`等显示名隐式映射为`qa`；只有系统本地环境中唯一显式alias可以解析为canonical环境。

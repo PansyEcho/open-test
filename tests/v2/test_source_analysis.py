@@ -22,11 +22,15 @@ from opentest.adapters.source_analysis import (
 )
 from opentest.application.source_analysis import SourceAnalysisService
 from opentest.application.foundation import OpenTestApplication
+from opentest.application.resources import ResourceInventoryService
 from opentest.cli import dispatch
 from opentest.domain.errors import KnowledgeNotFoundError, KnowledgeValidationError
 from opentest.domain.models import (
     EntryPoint,
     KnowledgeNodeKind,
+    ResourceKind,
+    ScanCompleteness,
+    ScanPublicationOutcome,
     SemanticAnalysisResult,
     SemanticCallEdge,
     SemanticMethodDefinition,
@@ -186,6 +190,58 @@ class FakeScriptgenScanner:
             script_path=tool.script_path,
         )
         return [entry], [tool], []
+
+
+class InformationalScriptgenScanner(FakeScriptgenScanner):
+    """返回显式INFO诊断，用于证明普通warning不降低扫描完整性。"""
+
+    def scan(
+        self,
+        request: SourceScanRequest,
+        source_path: Path,
+        output_dir: Path,
+    ) -> tuple[list[EntryPoint], list[ToolDefinition], list[str]]:
+        """复用可靠入口和工具并附加显式非阻断信息。
+
+        Args:
+            request: 当前系统扫描请求。
+            source_path: 冻结源码根。
+            output_dir: 本次工具输出目录。
+
+        Returns:
+            可靠入口、工具及一条显式INFO warning。
+        """
+
+        entries, tools, _warnings = super().scan(request, source_path, output_dir)
+        return entries, tools, ["INFO: 可选说明文件未配置"]
+
+
+class IncompleteJavaStructureScanner:
+    """模拟一个Java文件无法解析但其他扫描器仍有可靠结果。"""
+
+    def scan(
+        self,
+        system_id: str,
+        source_path: Path,
+        system_rules_path: Path,
+        system_rules_root: Path,
+    ) -> tuple[list[EntryPoint], list[StateMachineDefinition], list[str]]:
+        """返回单文件解析遗漏warning而不抛弃整次扫描的其他结果。
+
+        Args:
+            system_id: 当前注册系统ID。
+            source_path: 冻结源码根。
+            system_rules_path: 系统MQ规则文件。
+            system_rules_root: MQ规则受控根。
+
+        Returns:
+            空Java结构结果和带明确失败文件的warning。
+        """
+
+        del system_id, source_path, system_rules_path, system_rules_root
+        return [], [], [
+            "unparsed Java class body: app/src/main/java/demo/BrokenListener.java"
+        ]
 
 
 class ChangingBaselineRepository:
@@ -370,6 +426,89 @@ def test_git_revision_snapshot_ignores_working_tree_changes(tmp_path: Path) -> N
     assert "version = 3" in source_file.read_text(encoding="utf-8")
 
 
+def test_managed_source_pin_is_lightweight_idempotent_and_detects_ref_tampering(
+    tmp_path: Path,
+) -> None:
+    """受管tag应固定commit、保留真实分支提示，并拒绝删除、移动和annotated替换。
+
+    Args:
+        tmp_path: pytest隔离的Git工作区。
+
+    Returns:
+        None；正常pin可重复使用且所有ref篡改均被明确阻断时通过。
+
+    Side Effects:
+        在临时Git仓库创建提交、lightweight tag并模拟用户修改该本地tag。
+    """
+
+    repository = tmp_path / "repository"
+    repository.mkdir()
+    _run_git(repository, "init", "-q")
+    _run_git(repository, "config", "user.email", "opentest@example.invalid")
+    _run_git(repository, "config", "user.name", "OpenTest")
+    _run_git(repository, "checkout", "-q", "-b", "feature/refund-baseline")
+    source_file = repository / "RefundFacade.java"
+    source_file.write_text("interface RefundFacade { void cancel(); }\n", encoding="utf-8")
+    _run_git(repository, "add", "RefundFacade.java")
+    _run_git(repository, "commit", "-q", "-m", "first")
+    first_commit = subprocess.run(
+        ["git", "-C", str(repository), "rev-parse", "HEAD"],
+        check=True,
+        capture_output=True,
+        text=True,
+    ).stdout.strip()
+
+    source_repository = GitSourceRepository()
+    pin = source_repository.create_source_version_pin(repository, first_commit)
+    repeated = source_repository.create_source_version_pin(repository, first_commit)
+    object_type = subprocess.run(
+        ["git", "-C", str(repository), "cat-file", "-t", f"refs/tags/{pin.managed_tag}"],
+        check=True,
+        capture_output=True,
+        text=True,
+    ).stdout.strip()
+
+    assert pin.commit == first_commit
+    assert pin.branch_hint == "feature/refund-baseline"
+    assert pin.managed_tag == f"opentest/baseline/{first_commit}"
+    assert repeated.managed_tag == pin.managed_tag
+    assert object_type == "commit"
+
+    # HEAD前进且工作区变脏后，解析pin仍只返回第一次提交，不读取开发中的内容。
+    source_file.write_text("interface RefundFacade { void cancel(); void query(); }\n", encoding="utf-8")
+    _run_git(repository, "add", "RefundFacade.java")
+    _run_git(repository, "commit", "-q", "-m", "second")
+    second_commit = subprocess.run(
+        ["git", "-C", str(repository), "rev-parse", "HEAD"],
+        check=True,
+        capture_output=True,
+        text=True,
+    ).stdout.strip()
+    source_file.write_text("uncommitted\n", encoding="utf-8")
+    resolved = source_repository.resolve_source_version_pin(repository, pin)
+
+    assert resolved.commit == first_commit
+    assert resolved.revision == pin.managed_tag
+    assert resolved.branch == "feature/refund-baseline"
+    assert resolved.dirty is False
+
+    # 同名tag被强制移动时既不能扫描，也不能由创建动作偷偷force回原commit。
+    _run_git(repository, "tag", "-f", pin.managed_tag, second_commit)
+    with pytest.raises(KnowledgeValidationError, match="moved from pinned commit"):
+        source_repository.resolve_source_version_pin(repository, pin)
+    with pytest.raises(KnowledgeValidationError, match="points to another commit"):
+        source_repository.create_source_version_pin(repository, first_commit)
+
+    _run_git(repository, "tag", "-d", pin.managed_tag)
+    with pytest.raises(KnowledgeValidationError, match="is missing"):
+        source_repository.resolve_source_version_pin(repository, pin)
+
+    # annotated tag即使最终解引用到相同commit也不是约定的lightweight受管ref。
+    _run_git(repository, "tag", "-a", pin.managed_tag, first_commit, "-m", "forged annotated tag")
+    with pytest.raises(KnowledgeValidationError, match="not a lightweight commit tag"):
+        source_repository.create_source_version_pin(repository, first_commit)
+
+
 def test_git_revision_snapshot_rejects_prebuilt_empty_directory(tmp_path: Path) -> None:
     """预建空目录不能冒充一个已经完整展开的commit快照。
 
@@ -479,8 +618,8 @@ def test_git_detection_forces_stable_c_locale(tmp_path: Path, monkeypatch: pytes
     assert observed_environment["LANG"] == "C"
 
 
-def test_scriptgen_manifest_maps_real_tools_without_shims(tmp_path: Path) -> None:
-    """manifest解析应一一映射Facade/Job工具并生成稳定逻辑ID。"""
+def test_scriptgen_manifest_keeps_only_job_execution_tools(tmp_path: Path) -> None:
+    """manifest应校验全部映射，但只发布仍受支持的HTTP Job执行工具。"""
 
     output_dir = tmp_path / "tools"
     source_root = tmp_path / "source"
@@ -489,13 +628,97 @@ def test_scriptgen_manifest_maps_real_tools_without_shims(tmp_path: Path) -> Non
     entries, tools, warnings = scanner.parse_output("train-booking-core", source_root, output_dir)
 
     assert warnings == []
-    assert [tool.tool_id for tool in tools] == ["facade.trade.create_order", "job.cancel_order"]
+    assert [tool.tool_id for tool in tools] == ["job.cancel_order"]
     assert {entry.kind for entry in entries} == {KnowledgeNodeKind.FACADE, KnowledgeNodeKind.JOB}
     facade = next(entry for entry in entries if entry.kind == KnowledgeNodeKind.FACADE)
     assert facade.source_id == "com.example.TradeFacade#createOrder"
     assert facade.request_type == "CreateOrderRequest"
-    assert facade.tool_id == "facade.trade.create_order"
+    assert facade.tool_id == ""
+    assert facade.script_path == ""
     assert all("platform" not in Path(tool.script_path).parts for tool in tools)
+
+
+def test_scriptgen_manifest_accepts_unready_retired_facade_descriptors(tmp_path: Path) -> None:
+    """缺少旧Facade网关只能禁用废弃HTTP脚本，不能阻断Facade结构扫描。
+
+    Args:
+        tmp_path: pytest提供的隔离扫描目录。
+
+    Side Effects:
+        创建并改写测试manifest，模拟真实scriptgen在空网关前缀下不生成Facade脚本。
+    """
+
+    output_dir = tmp_path / "tools"
+    source_root = tmp_path / "source"
+    _write_scriptgen_output(output_dir, source_root)
+    tool_path = output_dir / "_meta" / "tool-manifest.json"
+    payload = json.loads(tool_path.read_text(encoding="utf-8"))
+    facade_descriptor = payload["generated_tools"][0]
+    facade_descriptor["default_url"] = ""
+    facade_descriptor["status"] = "invalid"
+    facade_descriptor["validation_errors"] = ["default_url cannot be built"]
+    tool_path.write_text(json.dumps(payload), encoding="utf-8")
+    (output_dir / facade_descriptor["script_rel_path"]).unlink()
+
+    scanner = ScriptgenSourceScanner(ScriptgenConfig.from_value(None))
+    entries, tools, warnings = scanner.parse_output("train-booking-core", source_root, output_dir)
+
+    assert warnings == []
+    assert [tool.tool_id for tool in tools] == ["job.cancel_order"]
+    facade = next(entry for entry in entries if entry.kind == KnowledgeNodeKind.FACADE)
+    assert facade.source_id == "com.example.TradeFacade#createOrder"
+    assert facade.tool_id == ""
+    assert facade.script_path == ""
+
+
+def test_scriptgen_manifest_still_rejects_unready_job_tool(tmp_path: Path) -> None:
+    """仍受支持的HTTP Job没有ready脚本时必须阻断扫描发布。
+
+    Args:
+        tmp_path: pytest提供的隔离扫描目录。
+
+    Side Effects:
+        创建并改写测试manifest以模拟不可执行Job。
+    """
+
+    output_dir = tmp_path / "tools"
+    source_root = tmp_path / "source"
+    _write_scriptgen_output(output_dir, source_root)
+    tool_path = output_dir / "_meta" / "tool-manifest.json"
+    payload = json.loads(tool_path.read_text(encoding="utf-8"))
+    payload["generated_tools"][1]["status"] = "invalid"
+    tool_path.write_text(json.dumps(payload), encoding="utf-8")
+
+    scanner = ScriptgenSourceScanner(ScriptgenConfig.from_value(None))
+    with pytest.raises(KnowledgeValidationError, match="generated tool is not ready"):
+        scanner.parse_output("train-booking-core", source_root, output_dir)
+
+
+def test_scriptgen_manifest_rejects_structurally_invalid_facade_descriptor(tmp_path: Path) -> None:
+    """Facade描述符只有缺旧HTTP地址可忽略，结构性生成错误仍必须阻断。
+
+    Args:
+        tmp_path: pytest提供的隔离扫描目录。
+
+    Side Effects:
+        创建并改写测试manifest以模拟缺少Facade结构路径。
+    """
+
+    output_dir = tmp_path / "tools"
+    source_root = tmp_path / "source"
+    _write_scriptgen_output(output_dir, source_root)
+    tool_path = output_dir / "_meta" / "tool-manifest.json"
+    payload = json.loads(tool_path.read_text(encoding="utf-8"))
+    payload["generated_tools"][0]["status"] = "invalid"
+    payload["generated_tools"][0]["validation_errors"] = [
+        "path is missing",
+        "default_url cannot be built",
+    ]
+    tool_path.write_text(json.dumps(payload), encoding="utf-8")
+
+    scanner = ScriptgenSourceScanner(ScriptgenConfig.from_value(None))
+    with pytest.raises(KnowledgeValidationError, match="facade descriptor is invalid"):
+        scanner.parse_output("train-booking-core", source_root, output_dir)
 
 
 def test_scriptgen_manifest_rejects_fixed_platform_shim(tmp_path: Path) -> None:
@@ -828,6 +1051,123 @@ def test_source_analysis_persists_manifest_and_updates_baseline(tmp_path: Path) 
     assert manifest.tools[0].script_path.startswith(manifest.tool_root)
 
 
+def test_explicit_information_warning_still_publishes_complete_scan(tmp_path: Path) -> None:
+    """显式INFO warning保留诊断但不把可靠扫描误降级为partial。
+
+    Args:
+        tmp_path: pytest隔离源码、知识根和扫描产物目录。
+
+    Returns:
+        None；Manifest和latest均为完整基线且issue不影响完整性时通过。
+    """
+
+    source = tmp_path / "source"
+    source.mkdir()
+    (source / "TradeFacade.java").write_text("class TradeFacade {}\n", encoding="utf-8")
+    store = GitKnowledgeStore(tmp_path / "knowledge")
+    store.register_system(
+        SystemDefinition(
+            system_id="train-booking-core",
+            name="火车票预订",
+            source_path=str(source),
+        )
+    )
+    service = SourceAnalysisService(
+        store,
+        SourceScanArtifactStore(store.root),
+        InformationalScriptgenScanner(),  # type: ignore[arg-type]
+    )
+
+    manifest = service.analyze(SourceScanRequest(system_id="train-booking-core"))
+    scriptgen_result = next(
+        item for item in manifest.component_results if item.component == "scriptgen"
+    )
+
+    assert manifest.completeness == ScanCompleteness.COMPLETE
+    assert manifest.publication_outcome == ScanPublicationOutcome.COMPLETE_BASELINE
+    assert service.get_manifest("train-booking-core").scan_id == manifest.scan_id
+    assert scriptgen_result.status == ScanCompleteness.COMPLETE
+    assert scriptgen_result.issues[0].affects_completeness is False
+
+
+def test_java_parse_warning_keeps_reliable_results_as_partial_projection(
+    tmp_path: Path,
+) -> None:
+    """必需Java文件解析失败时保留可靠入口，但不得发布完整latest。
+
+    Args:
+        tmp_path: pytest隔离源码、知识根和扫描产物目录。
+
+    Returns:
+        None；可靠scriptgen入口可见、失败范围结构化且完整基线不变时通过。
+    """
+
+    source = tmp_path / "source"
+    source.mkdir()
+    (source / "TradeFacade.java").write_text("class TradeFacade {}\n", encoding="utf-8")
+    store = GitKnowledgeStore(tmp_path / "knowledge")
+    store.register_system(
+        SystemDefinition(
+            system_id="train-booking-core",
+            name="火车票预订",
+            source_path=str(source),
+        )
+    )
+    artifacts = SourceScanArtifactStore(store.root)
+    service = SourceAnalysisService(
+        store,
+        artifacts,
+        FakeScriptgenScanner(),  # type: ignore[arg-type]
+        java_scanner=IncompleteJavaStructureScanner(),  # type: ignore[arg-type]
+    )
+
+    manifest = service.analyze(SourceScanRequest(system_id="train-booking-core"))
+    java_result = next(
+        item for item in manifest.component_results if item.component == "java_structure"
+    )
+
+    assert manifest.completeness == ScanCompleteness.PARTIAL
+    assert manifest.publication_outcome == ScanPublicationOutcome.PARTIAL_PROJECTION
+    assert [entry.source_id for entry in manifest.entries] == ["TradeFacade#createOrder"]
+    assert java_result.status == ScanCompleteness.PARTIAL
+    assert java_result.failed_source_scopes == [
+        "app/src/main/java/demo/BrokenListener.java"
+    ]
+    assert java_result.issues[0].affects_completeness is True
+    assert artifacts.read("train-booking-core", manifest.scan_id) == manifest
+    with pytest.raises(KnowledgeNotFoundError):
+        service.get_manifest("train-booking-core")
+
+
+def test_unknown_scanner_warning_is_incomplete_by_default(tmp_path: Path) -> None:
+    """未知warning必须保守降级，不能因未匹配旧前缀而推进baseline。
+
+    Args:
+        tmp_path: pytest隔离的最小知识根。
+
+    Returns:
+        None；未知DSF诊断被标记为partial并使用保守失败范围时通过。
+    """
+
+    store = GitKnowledgeStore(tmp_path / "knowledge")
+    service = SourceAnalysisService(
+        store,
+        SourceScanArtifactStore(store.root),
+        FakeScriptgenScanner(),  # type: ignore[arg-type]
+    )
+
+    # DSF新增的诊断尚未分类时，整组范围都不能被视为已完整读取。
+    component = service._warning_component(
+        "dsf_discovery",
+        "DSF_DISCOVERY_WARNING",
+        ["DSF未知扫描诊断"],
+    )
+
+    assert component.status == ScanCompleteness.PARTIAL
+    assert component.failed_source_scopes == ["."]
+    assert component.issues[0].affects_completeness is True
+
+
 def test_source_analysis_scans_selected_commit_instead_of_dirty_working_tree(
     tmp_path: Path,
 ) -> None:
@@ -983,6 +1323,122 @@ def test_source_analysis_rolls_back_baseline_when_latest_publish_fails(tmp_path:
     assert store.get_system("train-booking-core").baseline == previous.baseline
 
 
+def test_partial_resource_scan_is_visible_without_becoming_complete_baseline(tmp_path: Path) -> None:
+    """首次部分扫描应展示可靠资源，但不得发布知识和Case使用的latest基线。
+
+    Args:
+        tmp_path: Pytest提供的隔离源码和知识目录。
+
+    Side Effects:
+        写入一个有效和一个损坏的生产XML，并保存部分扫描诊断。
+    """
+
+    source = tmp_path / "source"
+    source.mkdir()
+    (source / "TradeFacade.java").write_text("class TradeFacade {}\n", encoding="utf-8")
+    resource_root = source / "app/src/main/resources"
+    resource_root.mkdir(parents=True)
+    (resource_root / "database.xml").write_text(
+        '<beans><bean id="currentDatasource" class="demo.RoutableDataSource">'
+        '<property name="dbName" value="Current"/></bean></beans>',
+        encoding="utf-8",
+    )
+    (resource_root / "broken.xml").write_text("<beans><bean>", encoding="utf-8")
+    store = GitKnowledgeStore(tmp_path / "knowledge")
+    store.register_system(
+        SystemDefinition(system_id="train-booking-core", name="火车票预订", source_path=str(source))
+    )
+    artifacts = SourceScanArtifactStore(store.root)
+    service = SourceAnalysisService(store, artifacts, FakeScriptgenScanner())  # type: ignore[arg-type]
+
+    manifest = service.analyze(SourceScanRequest(system_id="train-booking-core"))
+    discovery = ResourceInventoryService(store, artifacts=artifacts).discover("train-booking-core")
+    resource_component = next(
+        result for result in manifest.component_results if result.component == "resource_inventory"
+    )
+
+    assert manifest.completeness == ScanCompleteness.PARTIAL
+    assert manifest.publication_outcome == ScanPublicationOutcome.PARTIAL_PROJECTION
+    assert resource_component.status == ScanCompleteness.PARTIAL
+    assert resource_component.failed_source_scopes == ["app/src/main/resources/broken.xml"]
+    assert resource_component.issues[0].code == "RESOURCE_XML_PARSE_FAILED"
+    assert discovery.source_scan_id == manifest.scan_id
+    assert discovery.complete_baseline_scan_id == ""
+    assert [resource.logical_name for resource in discovery.resources] == ["currentDatasource"]
+    assert discovery.resources[0].provisional is True
+    assert store.get_system("train-booking-core").baseline is None
+    with pytest.raises(KnowledgeValidationError, match="only a complete scan baseline"):
+        artifacts.publish_latest("train-booking-core", manifest.scan_id)
+    with pytest.raises(KnowledgeNotFoundError):
+        service.get_manifest("train-booking-core")
+
+
+def test_partial_resource_scan_retains_only_failed_scope_until_next_complete_scan(tmp_path: Path) -> None:
+    """部分扫描只保留失败文件的旧资源，后续完整扫描可确认其删除。
+
+    Args:
+        tmp_path: Pytest提供的隔离源码、扫描历史和资源投影目录。
+
+    Side Effects:
+        连续执行完整、部分和再次完整的三次纯本地源码扫描。
+    """
+
+    source = tmp_path / "source"
+    source.mkdir()
+    (source / "TradeFacade.java").write_text("class TradeFacade {}\n", encoding="utf-8")
+    resource_root = source / "app/src/main/resources"
+    resource_root.mkdir(parents=True)
+    database_path = resource_root / "database.xml"
+    redis_path = resource_root / "redis.xml"
+    database_path.write_text(
+        '<beans><bean id="oldDatasource" class="demo.RoutableDataSource">'
+        '<property name="dbName" value="Old"/></bean></beans>',
+        encoding="utf-8",
+    )
+    redis_path.write_text(
+        '<beans><bean id="ordersRedis" class="demo.RedissionProxy">'
+        '<property name="groupName" value="${redis.orders}"/></bean></beans>',
+        encoding="utf-8",
+    )
+    store = GitKnowledgeStore(tmp_path / "knowledge")
+    store.register_system(
+        SystemDefinition(system_id="train-booking-core", name="火车票预订", source_path=str(source))
+    )
+    artifacts = SourceScanArtifactStore(store.root)
+    service = SourceAnalysisService(store, artifacts, FakeScriptgenScanner())  # type: ignore[arg-type]
+    resource_service = ResourceInventoryService(store, artifacts=artifacts)
+    first = service.analyze(SourceScanRequest(system_id="train-booking-core"))
+
+    database_path.write_text(
+        '<beans><bean id="newDatasource" class="demo.RoutableDataSource">'
+        '<property name="dbName" value="New"/></bean></beans>',
+        encoding="utf-8",
+    )
+    redis_path.write_text("<beans><bean>", encoding="utf-8")
+    partial = service.analyze(SourceScanRequest(system_id="train-booking-core"))
+    partial_resources = {resource.logical_name: resource for resource in resource_service.discover("train-booking-core").resources}
+
+    assert service.get_manifest("train-booking-core").scan_id == first.scan_id
+    assert set(partial_resources) == {"newDatasource", "redis.orders"}
+    assert "oldDatasource" not in partial_resources
+    assert partial_resources["newDatasource"].source_scan_id == partial.scan_id
+    assert partial_resources["newDatasource"].retained_from_previous is False
+    assert partial_resources["redis.orders"].retained_from_previous is True
+    assert partial_resources["redis.orders"].retained_from_scan_id == first.scan_id
+
+    # 完整读取redis.xml且未再发现Redis时，旧保留项被确认为删除，不能永久留在主表。
+    redis_path.write_text("<beans/>", encoding="utf-8")
+    complete = service.analyze(SourceScanRequest(system_id="train-booking-core"))
+    complete_resources = resource_service.discover("train-booking-core").resources
+
+    assert complete.completeness == ScanCompleteness.COMPLETE
+    assert service.get_manifest("train-booking-core").scan_id == complete.scan_id
+    assert [resource.logical_name for resource in complete_resources] == ["newDatasource"]
+    assert complete_resources[0].kind == ResourceKind.MYSQL
+    assert complete_resources[0].retained_from_previous is False
+    assert complete_resources[0].provisional is False
+
+
 def test_cli_scan_returns_task_id_and_persists_terminal_result(tmp_path: Path) -> None:
     """CLI scan应复用本地任务语义，返回task_id且最终manifest可查询。"""
 
@@ -1010,3 +1466,57 @@ def test_cli_scan_returns_task_id_and_persists_terminal_result(tmp_path: Path) -
     assert task.task_id.startswith("task-")
     assert terminal.status.value == "completed"
     assert terminal.result["scan_id"] == manifest.scan_id
+    assert terminal.result["completeness"] == "complete"
+    assert terminal.result["publication_outcome"] == "complete_baseline"
+
+
+def test_partial_scan_task_and_history_preserve_manifest_outcome(tmp_path: Path) -> None:
+    """部分扫描任务可正常结束，但结果和历史不得伪装成完整基线。
+
+    Args:
+        tmp_path: pytest隔离源码、知识根、任务和扫描产物目录。
+
+    Returns:
+        None；任务结果与历史均保留Manifest的partial projection语义时通过。
+
+    Side Effects:
+        提交本地只读源码扫描任务并写入隔离任务与Manifest文件；不访问QA。
+    """
+
+    source = tmp_path / "source"
+    source.mkdir()
+    (source / "TradeFacade.java").write_text("class TradeFacade {}\n", encoding="utf-8")
+    application = OpenTestApplication(tmp_path / "knowledge")
+    application.register_system(
+        SystemDefinition(
+            system_id="train-booking-core",
+            name="火车票预订",
+            source_path=str(source),
+        )
+    )
+    application.source_analysis.scriptgen = FakeScriptgenScanner()  # type: ignore[assignment]
+    application.source_analysis.java_scanner = IncompleteJavaStructureScanner()  # type: ignore[assignment]
+
+    task = application.submit_source_scan(
+        SourceScanRequest(
+            system_id="train-booking-core",
+            facade_http_prefix="http://jobs.example.invalid/gateway/train/v2",
+        )
+    )
+    application.close()
+    terminal = application.get_task(task.task_id)
+    manifest = application.get_scan_manifest(
+        "train-booking-core",
+        terminal.result["scan_id"],
+    )
+    history = application.list_scan_history("train-booking-core")
+
+    # 线程任务本身正常结束；业务结果明确说明该Manifest只能用于可靠部分展示。
+    assert terminal.status.value == "completed"
+    assert terminal.result["completeness"] == "partial"
+    assert terminal.result["publication_outcome"] == "partial_projection"
+    assert manifest.completeness == ScanCompleteness.PARTIAL
+    assert history[0].scan_id == manifest.scan_id
+    assert history[0].latest is False
+    assert history[0].completeness == ScanCompleteness.PARTIAL
+    assert history[0].publication_outcome == ScanPublicationOutcome.PARTIAL_PROJECTION

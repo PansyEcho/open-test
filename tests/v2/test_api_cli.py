@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import subprocess
 import time
 from pathlib import Path
 
@@ -16,10 +17,17 @@ from opentest.domain.errors import (
     CaseExecutionConflictError,
     CaseGenerationStateConflictError,
     KnowledgeNotFoundError,
-    ModelProfileValidationError,
-    TaskPartialFailureError,
+    KnowledgeValidationError,
 )
-from opentest.domain.models import AgentRunEvent, SourceBaseline, TaskProgressUpdate, TaskStatus
+from opentest.domain.models import (
+    AgentRunEvent,
+    RuntimeToolSettings,
+    RuntimeToolStatus,
+    SourceBaseline,
+    SystemDefinition,
+    TaskProgressUpdate,
+    TaskStatus,
+)
 
 
 def test_fastapi_registers_multiple_systems_without_overwrite(tmp_path: Path, monkeypatch) -> None:
@@ -51,7 +59,7 @@ def test_fastapi_registers_multiple_systems_without_overwrite(tmp_path: Path, mo
     with TestClient(create_app(application), client=("127.0.0.1", 50000)) as client:
         health = client.get("/api/v2/health").json()
         assert health["status"] == "ok"
-        assert health["page_version"] == "20260903-06"
+        assert health["page_version"] == "20260907-06"
         first_response = client.post(
             "/api/v2/systems",
             json={
@@ -79,6 +87,110 @@ def test_fastapi_registers_multiple_systems_without_overwrite(tmp_path: Path, mo
     assert [item.system_id for item in application.store.list_systems()] == ["settlement-core", "train-booking-core"]
 
 
+def test_source_version_api_registers_and_updates_pin_only_for_loopback(
+    tmp_path: Path,
+    monkeypatch,
+) -> None:
+    """HTTP注册和独立更新端点应返回持久pin，并拒绝远端Git配置写入。
+
+    Args:
+        tmp_path: pytest隔离的Git源码、知识目录和任务记录。
+        monkeypatch: 跳过真实scriptgen并同步执行准备阶段。
+
+    Returns:
+        None；首次revision、显式切换和loopback边界正确时通过。
+
+    Side Effects:
+        在临时Git仓库创建提交和受管tag，并通过测试API写隔离系统配置。
+    """
+
+    source = tmp_path / "refund-source"
+    source.mkdir()
+    subprocess.run(["git", "-C", str(source), "init", "-q"], check=True)
+    subprocess.run(
+        ["git", "-C", str(source), "config", "user.email", "opentest@example.invalid"],
+        check=True,
+    )
+    subprocess.run(
+        ["git", "-C", str(source), "config", "user.name", "OpenTest"],
+        check=True,
+    )
+    source_file = source / "RefundFacade.java"
+    source_file.write_text("interface RefundFacade { void cancel(); }\n", encoding="utf-8")
+    subprocess.run(["git", "-C", str(source), "add", "RefundFacade.java"], check=True)
+    subprocess.run(["git", "-C", str(source), "commit", "-q", "-m", "first"], check=True)
+    first_commit = subprocess.run(
+        ["git", "-C", str(source), "rev-parse", "HEAD"],
+        check=True,
+        capture_output=True,
+        text=True,
+    ).stdout.strip()
+
+    application = OpenTestApplication(tmp_path / "knowledge")
+
+    def submit_scan_without_execution(request, prepare):
+        """同步发布配置并返回完成任务，避免端点测试运行源码扫描器。
+
+        Args:
+            request: API构造的固定系统扫描请求。
+            prepare: 需要在任务记录返回前执行的配置发布函数。
+
+        Returns:
+            已提交到隔离任务管理器的最小扫描任务。
+        """
+
+        prepare()
+        return application.tasks.submit("source-pin-contract", request.system_id, lambda: {})
+
+    monkeypatch.setattr(application, "ensure_scanner_ready", lambda: None)
+    monkeypatch.setattr(application, "submit_prepared_source_scan", submit_scan_without_execution)
+    with TestClient(create_app(application), client=("127.0.0.1", 50100)) as client:
+        registered = client.post(
+            "/api/v2/systems",
+            json={
+                "system_id": "refund-core",
+                "name": "退款核心",
+                "source_path": str(source),
+                "source_revision": first_commit,
+            },
+        )
+        source_file.write_text("interface RefundFacade { void cancel(); void query(); }\n", encoding="utf-8")
+        subprocess.run(["git", "-C", str(source), "add", "RefundFacade.java"], check=True)
+        subprocess.run(["git", "-C", str(source), "commit", "-q", "-m", "second"], check=True)
+        second_commit = subprocess.run(
+            ["git", "-C", str(source), "rev-parse", "HEAD"],
+            check=True,
+            capture_output=True,
+            text=True,
+        ).stdout.strip()
+        changed = client.post(
+            "/api/v2/systems/refund-core/source-version",
+            json={"revision": second_commit},
+        )
+
+    assert registered.status_code == 201
+    assert registered.json()["system"]["source_version"]["commit"] == first_commit
+    assert changed.status_code == 202
+    assert changed.json()["system"]["source_version"]["commit"] == second_commit
+
+    with TestClient(create_app(application), client=("198.51.100.8", 50101)) as remote_client:
+        denied_version = remote_client.post(
+            "/api/v2/systems/refund-core/source-version",
+            json={"revision": first_commit},
+        )
+        denied_update = remote_client.put(
+            "/api/v2/systems/refund-core",
+            json={
+                "name": "远端不得修改",
+                "source_path": str(source),
+            },
+        )
+
+    assert denied_version.status_code == 409
+    assert denied_update.status_code == 409
+    assert application.store.get_system("refund-core").source_version.commit == second_commit
+
+
 def test_console_is_served_and_references_only_versioned_api(tmp_path: Path) -> None:
     """FastAPI应托管版本化控制台，静态客户端不得回退调用legacy项目路由。
 
@@ -96,13 +208,108 @@ def test_console_is_served_and_references_only_versioned_api(tmp_path: Path) -> 
 
     assert console_response.status_code == 200
     assert "<title>OpenTest Console</title>" in console_response.text
-    assert '<meta name="opentest-page-version" content="20260903-06">' in console_response.text
-    assert '/assets/app.js?v=20260903-06' in console_response.text
+    assert '<meta name="opentest-page-version" content="20260907-06">' in console_response.text
+    assert '/assets/app.js?v=20260907-06' in console_response.text
     assert script_response.status_code == 200
     assert 'const API_ROOT = "/api/v2"' in script_response.text
     assert "API_V3_ROOT" not in script_response.text
     assert "API_V4_ROOT" not in script_response.text
     assert "/api/projects" not in script_response.text
+
+
+def test_runtime_settings_put_hides_legacy_models_and_preserves_http_job_settings(
+    tmp_path: Path,
+    monkeypatch,
+) -> None:
+    """运行设置只暴露活动字段，并保留惰性模型键与独立HTTP Job配置。
+
+    Args:
+        tmp_path: Pytest提供的隔离运行设置、系统设置和源码目录。
+        monkeypatch: 替换扫描器诊断，保证请求完全离线。
+
+    Returns:
+        None；只更新页面字段、拒绝旧模型输入且其他本地设置保持时通过。
+
+    Side Effects:
+        通过回环测试客户端更新临时0600设置文件；不启动Agent、Worker或QA调用。
+    """
+
+    source_root = tmp_path / "source"
+    source_root.mkdir()
+    application = OpenTestApplication(tmp_path / "knowledge")
+    application.store.register_system(
+        SystemDefinition(
+            system_id="train-booking-core",
+            name="火车票预订",
+            source_path=str(source_root),
+        )
+    )
+    application.runtime_settings.write(
+        RuntimeToolSettings(
+            knowledge_agent="claude",
+            codex_model="gpt-5.6-sol",
+            codex_reasoning_effort="medium",
+            case_template_v4_model="company-case-model",
+            case_template_v4_reasoning_effort="high",
+            knowledge_agent_prompt_template="旧模板 {{target_id}}",
+        )
+    )
+    application.save_local_settings(
+        "train-booking-core",
+        "job-token-must-remain",
+        "https://jobs.qa.invalid/gateway/v2",
+    )
+
+    def diagnose_without_scanner() -> RuntimeToolStatus:
+        """返回不会探测本机模块或启动子进程的固定扫描器状态。
+
+        Returns:
+            表示离线夹具未配置scriptgen的安全状态。
+        """
+
+        return RuntimeToolStatus(
+            status="MODULE_UNAVAILABLE",
+            source="unset",
+            message="离线测试未配置扫描器",
+        )
+
+    monkeypatch.setattr(
+        application.runtime_settings,
+        "diagnose",
+        diagnose_without_scanner,
+    )
+    # 应用组合根不再持有后台Codex进程或桌面跳转依赖。
+    assert not hasattr(application, "codex_app_server")
+    assert not hasattr(application, "codex_desktop")
+
+    with TestClient(create_app(application), client=("127.0.0.1", 50000)) as client:
+        response = client.put(
+            "/api/v2/local-settings/runtime",
+            json={
+                "scriptgen_pythonpath": "",
+                "knowledge_agent_prompt_template": "新模板 {{target_id}}",
+            },
+        )
+        preserved_job_settings = client.get(
+            "/api/v2/systems/train-booking-core/local-settings"
+        ).json()["local_settings"]
+        removed_field_response = client.put(
+            "/api/v2/local-settings/runtime",
+            json={"codex_model": "gpt-5.6-sol"},
+        )
+
+    assert response.status_code == 200
+    saved = response.json()["settings"]
+    assert set(saved) == {"scriptgen_pythonpath", "knowledge_agent_prompt_template"}
+    assert saved["knowledge_agent_prompt_template"] == "新模板 {{target_id}}"
+    assert removed_field_response.status_code == 422
+    assert "codex_model" in removed_field_response.text
+    # 历史本地键保持惰性可审计，但不再由公开设置接口读取或修改。
+    legacy_settings = application.runtime_settings.read()
+    assert legacy_settings.knowledge_agent == "claude"
+    assert legacy_settings.case_template_v4_model == "company-case-model"
+    assert preserved_job_settings["qa_labrador_token"] == "job-token-must-remain"
+    assert preserved_job_settings["qa_gateway_prefix"] == "https://jobs.qa.invalid/gateway/v2"
 
 
 def test_v2_openapi_contains_single_system_generation_and_execution_workflow(
@@ -114,12 +321,13 @@ def test_v2_openapi_contains_single_system_generation_and_execution_workflow(
         tmp_path: pytest隔离的知识根目录。
 
     Returns:
-        None；扫描、知识、Operation、资源与新Case接口集合正确时通过。
+        None；活动接口集合正确且五类后台Agent写路径未进入OpenAPI时通过。
     """
 
     application = OpenTestApplication(tmp_path / "knowledge")
     with TestClient(create_app(application)) as client:
-        paths = set(client.get("/openapi.json").json()["paths"])
+        openapi_paths = client.get("/openapi.json").json()["paths"]
+        paths = set(openapi_paths)
 
     required_paths = {
         "/api/v2/systems/{system_id}/scans",
@@ -140,7 +348,6 @@ def test_v2_openapi_contains_single_system_generation_and_execution_workflow(
         "/api/v2/systems/{system_id}/case-executions",
         "/api/v2/systems/{system_id}/case-executions/{execution_id}",
         "/api/v2/tasks/{task_id}/progress",
-        "/api/v2/tasks/{task_id}/events",
         "/api/v2/console/activity",
     }
     assert required_paths <= paths
@@ -171,18 +378,31 @@ def test_v2_openapi_contains_single_system_generation_and_execution_workflow(
         "/case-generations/" in path and path.endswith("/confirmations")
         for path in paths
     )
-def test_case_generation_start_returns_ids_thread_link_and_poll_url(
+    retired_agent_paths = {
+        "/api/v2/local-settings/codex-model-catalog",
+        "/api/v2/systems/{system_id}/knowledge/prompt-preview",
+        "/api/v2/knowledge/client-handoffs/{handoff_id}/turns",
+        "/api/v2/tasks/{task_id}/cancel-agent",
+    }
+    # 这些路径会选择模型、构造后台Prompt、启动turn或取消后台进程，原生Agent主流程不得再广告。
+    assert retired_agent_paths.isdisjoint(paths)
+    generation_batch_path = "/api/v2/systems/{system_id}/knowledge/generation-batches"
+    assert "get" in openapi_paths[generation_batch_path]
+    assert "post" not in openapi_paths[generation_batch_path]
+
+
+def test_case_generation_start_returns_prepare_task_without_background_thread(
     tmp_path: Path,
     monkeypatch,
 ) -> None:
-    """确认统一入口只接收生成参数并返回Generation、Codex线程和轮询地址。
+    """确认Case入口先返回当前原生Agent可接手的业务任务和handoff。
 
     Args:
         tmp_path: Pytest隔离应用根。
-        monkeypatch: 替换真实Codex线程创建，验证HTTP契约而不调用模型。
+        monkeypatch: 替换prepare-only应用入口，验证HTTP契约而不调用模型。
 
     Returns:
-        None；POST状态、深链和GET终态投影完整时通过。
+        None；响应不含后台thread/model且GET可读取同一handoff时通过。
     """
 
     application = OpenTestApplication(tmp_path / "knowledge")
@@ -202,118 +422,151 @@ def test_case_generation_start_returns_ids_thread_link_and_poll_url(
                 source_baseline=SourceBaseline(source_path="/private/sample"),
             )
         ],
-        thread_id="thread-v4-api",
-        codex_deep_link="codex://threads/thread-v4-api",
-        turn_id="turn-v4-api",
-        turn_status="inProgress",
-        model_provider="custom",
-        codex_model="company-case-model",
-        reasoning_effort="high",
     )
+    task_id = "task-" + "c" * 16
 
     received_request = {}
 
     def start_v4(_system_id, request):
-        """返回已绑定Codex线程的V4 handoff而不启动真实模型。"""
+        """返回已绑定业务任务的prepare响应而不启动真实模型。
+
+        Args:
+            _system_id: 路由解析出的目标系统。
+            request: 只含目标、幂等身份和可选任务关联的Case准备请求。
+
+        Returns:
+            页面和Agent共享的task/handoff准备结果。
+        """
 
         received_request["value"] = request
-        return handoff
+        return {
+            "task": {
+                "task_id": task_id,
+                "status": "waiting_for_client",
+                "target_id": handoff.entry_id,
+            },
+            "task_id": task_id,
+            "handoff": handoff.model_dump(mode="json"),
+            "handoff_id": handoff_id,
+            "generation_id": generation_id,
+            "status": "WAITING_FOR_AGENT",
+            "continuation_instruction": f"继续 {task_id}",
+        }
 
     def poll_v4(_handoff_id):
-        """返回同一handoff轮询投影。"""
+        """返回同一handoff轮询投影。
+
+        Args:
+            _handoff_id: API路由解析出的handoff身份。
+
+        Returns:
+            不含线程占用信息的同一handoff快照。
+        """
 
         return {"handoff": handoff.model_dump(mode="json"), "generation": None}
 
     monkeypatch.setattr(application, "start_case_template_generation_v4", start_v4)
     monkeypatch.setattr(application, "get_case_template_handoff_v4", poll_v4)
-    monkeypatch.setattr(
-        application,
-        "get_codex_model_catalog",
-        lambda: {
-            "provider_id": "custom",
-            "default_model": "company-case-model",
-            "models": [
-                {
-                    "id": "company-case-model",
-                    "display_name": "Company Case Model",
-                    "is_default": True,
-                    "default_reasoning_effort": "high",
-                    "supported_reasoning_efforts": ["medium", "high"],
-                }
-            ],
-        },
-    )
-
     with TestClient(create_app(application), client=("127.0.0.1", 50000)) as client:
         response = client.post(
             "/api/v2/systems/sample.java.system/case-generations",
             json={
                 "operation_id": "sample.RefundFacade#cancel",
-                "codex_model": "company-case-model",
-                "reasoning_effort": "high",
+                "request_id": "case-start-api-request-0001",
             },
         )
         polled = client.get(f"/api/v2/case-handoffs/{handoff_id}")
-        catalog = client.get("/api/v2/local-settings/codex-model-catalog")
 
     assert response.status_code == 202
-    assert response.json() == {
-        "handoff_id": handoff_id,
-        "generation_id": generation_id,
-        "status": "WAITING_FOR_AGENT",
-        "thread_id": "thread-v4-api",
-        "turn_id": "turn-v4-api",
-        "turn_status": "inProgress",
-        "model_provider": "custom",
-        "codex_model": "company-case-model",
-        "reasoning_effort": "high",
-        "codex_deep_link": "codex://threads/thread-v4-api",
-        "poll_url": f"/api/v2/case-handoffs/{handoff_id}",
-    }
+    assert response.json()["task_id"] == task_id
+    assert response.json()["handoff_id"] == handoff_id
+    assert response.json()["generation_id"] == generation_id
+    assert response.json()["continuation_instruction"] == f"继续 {task_id}"
+    assert "thread_id" not in response.json()
+    assert "codex_model" not in response.json()
     assert polled.status_code == 200
-    assert polled.json()["handoff"]["thread_id"] == "thread-v4-api"
-    assert received_request["value"].codex_model == "company-case-model"
-    assert received_request["value"].reasoning_effort == "high"
+    assert polled.json()["handoff"]["thread_id"] == ""
+    assert received_request["value"].request_id == "case-start-api-request-0001"
+    assert not hasattr(received_request["value"], "codex_model")
+    assert not hasattr(received_request["value"], "reasoning_effort")
     assert not hasattr(received_request["value"], "execution_mode")
-    assert catalog.status_code == 200
-    assert catalog.json()["provider_id"] == "custom"
-    assert catalog.json()["models"][0]["supported_reasoning_efforts"] == ["medium", "high"]
 
 
-def test_case_generation_rejects_unavailable_user_model_before_thread_creation(
+def test_case_generation_rejects_removed_background_model_fields(
     tmp_path: Path,
-    monkeypatch,
 ) -> None:
-    """Case模型或档位不在当前用户目录时应返回明确422。
+    """Case prepare不再接受只能控制后台Agent的模型选择字段。
 
     Args:
         tmp_path: pytest隔离应用根。
-        monkeypatch: 令应用层模拟模型目录校验失败，不调用真实Codex。
 
     Returns:
-        None；HTTP状态和稳定错误码可供配置页直接展示时通过。
+        None；旧字段在进入业务准备前被严格请求模型拒绝时通过。
     """
 
     application = OpenTestApplication(tmp_path / "knowledge")
 
-    def reject_profile(_system_id, _request):
-        """模拟当前Provider没有用户提交的模型。"""
-
-        raise ModelProfileValidationError("Codex模型不在当前用户目录中: missing-model")
-
-    monkeypatch.setattr(application, "start_case_template_generation_v4", reject_profile)
-
     with TestClient(create_app(application), client=("127.0.0.1", 50000)) as client:
         response = client.post(
             "/api/v2/systems/sample.java.system/case-generations",
             json={
                 "operation_id": "sample.RefundFacade#cancel",
+                "request_id": "case-removed-model-field-0001",
                 "codex_model": "missing-model",
             },
         )
 
     assert response.status_code == 422
-    assert response.json()["error"]["code"] == "model_profile_validation_error"
+    assert "codex_model" in response.text
+    assert "extra_forbidden" in response.text
+
+
+def test_case_generation_exposes_short_target_ambiguity_without_creating_handoff(
+    tmp_path: Path,
+    monkeypatch,
+) -> None:
+    """短Facade名不唯一时HTTP返回明确歧义并要求完整限定路径。
+
+    Args:
+        tmp_path: Pytest隔离应用根。
+        monkeypatch: 注入核心服务已确认的latest完整扫描歧义。
+
+    Returns:
+        None；响应保留validation错误和补全限定名提示时通过。
+    """
+
+    application = OpenTestApplication(tmp_path / "knowledge")
+
+    def reject_ambiguous_target(_system_id, _request):
+        """模拟核心解析发现两个同名Facade而不创建handoff。
+
+        Args:
+            _system_id: 路由解析出的目标系统。
+            _request: 包含短Facade路径的Case准备请求。
+
+        Raises:
+            KnowledgeValidationError: latest完整扫描中的短名无法唯一解析。
+        """
+
+        raise KnowledgeValidationError(
+            "CaseTemplate target is ambiguous in the latest complete scan: "
+            "RefundFacade#cancel; use the fully qualified Facade#method"
+        )
+
+    monkeypatch.setattr(application, "start_case_template_generation_v4", reject_ambiguous_target)
+    with TestClient(create_app(application), client=("127.0.0.1", 50000)) as client:
+        response = client.post(
+            "/api/v2/systems/sample.java.system/case-generations",
+            json={
+                "operation_id": "RefundFacade#cancel",
+                "request_id": "case-short-ambiguous-0001",
+            },
+        )
+
+    assert response.status_code == 400
+    assert response.json()["error"]["code"] == "validation_error"
+    assert "ambiguous" in response.json()["error"]["message"]
+    assert "fully qualified Facade#method" in response.json()["error"]["message"]
 
 
 def test_case_execution_conflicts_are_exposed_as_http_409(
@@ -445,14 +698,14 @@ def test_codex_client_handoff_bridge_is_loopback_only_and_preserves_tool_scope(
     assert denied.json()["error"]["code"] == "scope_violation"
 
 
-def test_single_target_generation_rejects_legacy_request_without_agent_confirmation(tmp_path: Path) -> None:
-    """单目标API不得接受缺少明确Agent和费用确认的旧请求。
+def test_single_target_generation_rejects_legacy_request_without_target_and_request_id(tmp_path: Path) -> None:
+    """原生Agent知识准备API拒绝旧entry字段和缺失的稳定幂等身份。
 
     Args:
         tmp_path: pytest隔离的知识根与任务目录。
 
     Returns:
-            None；旧请求在进入业务处理前被结构化契约拒绝时通过。
+        None；旧请求在进入业务处理前被结构化契约拒绝时通过。
     """
 
     application = OpenTestApplication(tmp_path / "knowledge")
@@ -464,17 +717,17 @@ def test_single_target_generation_rejects_legacy_request_without_agent_confirmat
 
     assert response.status_code == 422
     assert "target_id" in response.text
-    assert "agent" in response.text
+    assert "request_id" in response.text
 
 
-def test_compatible_generation_batch_route_requires_explicit_fee_confirmation(tmp_path: Path) -> None:
-    """兼容批次路由也必须在业务查询前拒绝缺少费用确认的请求。
+def test_legacy_generation_batch_start_route_is_removed(tmp_path: Path) -> None:
+    """旧批量后台Agent写入口必须保持下线，只保留批次只读查询。
 
     Args:
         tmp_path: pytest隔离的知识根和本地任务目录。
 
     Returns:
-        None；即使明确Agent和单目标都存在，缺少confirmed仍返回422时通过。
+        None；POST不再匹配旧启动流程并返回405时通过。
     """
 
     application = OpenTestApplication(tmp_path / "knowledge")
@@ -488,97 +741,7 @@ def test_compatible_generation_batch_route_requires_explicit_fee_confirmation(tm
             },
         )
 
-    assert response.status_code == 422
-    assert "confirmed" in response.text
-
-
-def test_task_event_stream_replays_persisted_events_and_honors_last_event_id(
-    tmp_path: Path,
-    monkeypatch,
-) -> None:
-    """SSE应重放已落盘公开事件，并从浏览器最后确认的序号继续。
-
-    Args:
-        tmp_path: pytest隔离的知识根、任务文件和Agent事件目录。
-        monkeypatch: 禁止SSE退回每秒全量扫描的旧读取入口。
-
-    Returns:
-        None；首次读取包含事件且重连不会重复发送相同序号时通过。
-
-    Side Effects:
-        仅在临时知识根写入一条脱敏事件和一个本地完成任务，不启动真实Agent。
-    """
-
-    application = OpenTestApplication(tmp_path / "knowledge")
-    run_id = "agent-1234567890abcdef"
-    evidence_root = application.knowledge_root / ".opentest" / "agent-runs"
-    run_root = evidence_root / run_id
-    run_root.mkdir(parents=True)
-    event = AgentRunEvent(
-        run_id=run_id,
-        sequence=1,
-        agent="codex",
-        target_id="facade:demo.QueryFacade#queryList",
-        event_type="reasoning_summary",
-        text="正在核对查询条件与返回分支。",
-    )
-    (run_root / "events.jsonl").write_text(event.model_dump_json() + "\n", encoding="utf-8")
-
-    def completed_agent_job() -> dict[str, object]:
-        """把隔离事件运行ID绑定到任务后完成，供终态SSE验证。
-
-        Returns:
-            不含业务正文的最小完成摘要。
-
-        Side Effects:
-            在线程内持久化当前任务的Agent运行游标和公开阶段。
-        """
-
-        # 任务进度是API从任务ID安全定位事件目录的唯一关联，不接受客户端直接传入运行路径。
-        report_task_progress(
-            TaskProgressUpdate(
-                stage_code="agent_analysis",
-                stage_name="AI分析",
-                stage_index=2,
-                stage_total=4,
-                completed_units=1,
-                total_units=1,
-                current_item=event.target_id,
-                agent="codex",
-                agent_run_id=run_id,
-                agent_event_cursor=1,
-            )
-        )
-        return {"completed": True}
-
-    task = application.tasks.submit("knowledge-target-generation", "demo", completed_agent_job)
-    for _ in range(200):
-        if application.get_task(task.task_id).status == TaskStatus.COMPLETED:
-            break
-        time.sleep(0.01)
-    assert application.get_task(task.task_id).status == TaskStatus.COMPLETED
-
-    def reject_full_event_scan(*_: object, **__: object) -> list[AgentRunEvent]:
-        """若SSE仍调用旧全量读取入口则立即让契约测试失败。"""
-
-        raise AssertionError("SSE must use per-connection event offsets")
-
-    monkeypatch.setattr(application, "list_task_agent_events", reject_full_event_scan)
-
-    with TestClient(create_app(application)) as client:
-        initial = client.get(f"/api/v2/tasks/{task.task_id}/events")
-        resumed = client.get(
-            f"/api/v2/tasks/{task.task_id}/events",
-            headers={"Last-Event-ID": "1"},
-        )
-
-    assert initial.status_code == 200
-    assert initial.headers["content-type"].startswith("text/event-stream")
-    assert "id: 1" in initial.text
-    assert "reasoning_summary" in initial.text
-    assert "正在核对查询条件与返回分支。" in initial.text
-    assert resumed.status_code == 200
-    assert resumed.text == ""
+    assert response.status_code == 405
 
 
 def test_agent_diagnostics_restore_prompt_public_session_and_source_access(tmp_path: Path) -> None:
@@ -681,49 +844,6 @@ def test_agent_diagnostics_restore_prompt_public_session_and_source_access(tmp_p
     assert diagnostics["source_accesses"][0]["path"] == "src/main/java/demo/QueryInvoker.java"
     assert diagnostics["resume_command"] == "codex resume 01a-session-diagnostics"
     assert "隐藏思维链" in diagnostics["disclosure"]
-
-
-def test_task_event_stream_closes_after_partial_terminal_status(tmp_path: Path) -> None:
-    """Agent部分失败后SSE必须结束，刷新页面不得无限等待原连接。
-
-    Args:
-        tmp_path: pytest隔离的知识根和任务历史目录。
-
-    Returns:
-        None；partial任务可读取且无事件流会立即正常结束时通过。
-    """
-
-    application = OpenTestApplication(tmp_path / "knowledge")
-
-    def partial_agent_job() -> dict[str, object]:
-        """模拟代码事实已保存但Agent失败的知识任务。
-
-        Raises:
-            TaskPartialFailureError: 携带页面应恢复的失败计数与安全摘要。
-        """
-
-        result = {
-            "target_count": 1,
-            "code_only_count": 1,
-            "agent_failed_count": 1,
-            "deterministic_failed_count": 0,
-            "failed_count": 1,
-            "outcomes": [],
-        }
-        raise TaskPartialFailureError(result, "Agent分析失败，已保留确定性代码事实")
-
-    task = application.tasks.submit("knowledge-target-generation", "demo", partial_agent_job)
-    for _ in range(200):
-        if application.get_task(task.task_id).status == TaskStatus.PARTIAL:
-            break
-        time.sleep(0.01)
-    assert application.get_task(task.task_id).status == TaskStatus.PARTIAL
-
-    with TestClient(create_app(application)) as client:
-        response = client.get(f"/api/v2/tasks/{task.task_id}/events")
-
-    assert response.status_code == 200
-    assert response.text == ""
 
 
 def test_fastapi_missing_case_execution_uses_safe_not_found_response(

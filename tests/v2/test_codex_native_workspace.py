@@ -20,7 +20,6 @@ from pydantic import ValidationError
 from fastapi.testclient import TestClient
 
 from opentest.api import create_app
-from opentest.adapters.codex_app_server import CodexAppServerClient
 from opentest.adapters.knowledge_interview import KnowledgeInterviewStore
 from opentest.adapters.knowledge_store import GitKnowledgeStore
 from opentest.adapters.operation_execution_store import OperationExecutionStore
@@ -1098,6 +1097,7 @@ def test_local_facade_provider_executes_the_capability_source_scan(tmp_path: Pat
     source_scan_id = "scan-codex-native-fixed-provider"
     _publish_manifest(artifacts, _manifest(source_root, source_scan_id))
     capability = OperationCapabilityCatalog(store, artifacts).derive(SYSTEM_ID)[0]
+    assert capability.required_local_bindings == []
     dsf_operations = MagicMock()
     dsf_operations.execute_indexed.return_value = DsfExecutionResponse(
         request_id="worker-request-1",
@@ -1433,6 +1433,8 @@ def test_operation_http_api_searches_and_executes_through_loopback(tmp_path: Pat
     application.register_system(
         SystemDefinition(system_id=SYSTEM_ID, name="SaaS退票核心", source_path=str(source_root))
     )
+    # 执行契约必须来自测试隔离目录中的显式环境，不能依赖真实配置或默认猜测。
+    application.save_local_settings(SYSTEM_ID, "", "")
     _publish_manifest(application.source_analysis.artifacts, _manifest(source_root))
     provider = FakeOperationProvider()
     application.operations.provider = provider
@@ -1452,17 +1454,19 @@ def test_operation_http_api_searches_and_executes_through_loopback(tmp_path: Pat
             f"/api/v2/systems/{SYSTEM_ID}/operation-executions",
             json={
                 "operation_id": FACADE_OPERATION_ID,
-                "arguments": {"refundDetailApiDTO": {}, "orderChannelSource": "QA_TEST"},
-                "request_id": "request-http-refund-001",
-            },
+                    "arguments": {"refundDetailApiDTO": {}, "orderChannelSource": "QA_TEST"},
+                    "request_id": "request-http-refund-001",
+                    "environment": "qa",
+                },
         )
         repeated = client.post(
             f"/api/v2/systems/{SYSTEM_ID}/operation-executions",
             json={
                 "operation_id": FACADE_OPERATION_ID,
-                "arguments": {"refundDetailApiDTO": {}, "orderChannelSource": "QA_TEST"},
-                "request_id": "request-http-refund-001",
-            },
+                    "arguments": {"refundDetailApiDTO": {}, "orderChannelSource": "QA_TEST"},
+                    "request_id": "request-http-refund-001",
+                    "environment": "qa",
+                },
         )
         execution_id = executed.json()["execution"]["execution_id"]
         status = client.get(f"/api/v2/operation-executions/{execution_id}")
@@ -1479,11 +1483,11 @@ def test_operation_plugin_and_generated_skill_are_explicit_and_fixed(
     tmp_path: Path,
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    """MCP应暴露完整工作流，凭据不进入工具参数且系统Skill禁止隐式调用。
+    """MCP应暴露原生Agent闭环，且不搬运旧凭据或猜测执行环境。
 
     Args:
-        tmp_path: Pytest隔离的真实FastAPI本机设置存储。
-        monkeypatch: 拦截回环API，证明凭据仅从本机安全设置内部转交。
+        tmp_path: Pytest隔离的应用与源码目录。
+        monkeypatch: 拦截回环API，证明工具只传业务参数与显式环境。
     """
 
     plugin_root = Path(__file__).parents[2] / "opentest-plugin-marketplace/plugins/open-test-knowledge"
@@ -1496,16 +1500,28 @@ def test_operation_plugin_and_generated_skill_are_explicit_and_fixed(
         "execute_operation",
         "get_operation_execution",
         "list_systems",
+        "list_environments",
         "register_system",
         "update_system",
         "start_system_scan",
         "get_task",
+        "list_tasks",
+        "read_task_context",
+        "answer_task_question",
         "sync_system_skills",
         "list_system_source",
         "search_system_source",
         "read_system_source",
         "prepare_knowledge_target",
         "generate_interface_cases",
+        "get_case_handoff",
+        "list_case_source",
+        "search_case_source",
+        "read_case_source",
+        "read_case_outer_api",
+        "revise_case_draft",
+        "publish_case_generation",
+        "continue_case_task",
         "get_case_generation",
         "execute_case_generation",
         "get_case_execution",
@@ -1513,6 +1529,7 @@ def test_operation_plugin_and_generated_skill_are_explicit_and_fixed(
     execute_tool = next(tool for tool in tools if tool["name"] == "execute_operation")
     assert execute_tool["annotations"]["destructiveHint"] is True
     assert execute_tool["annotations"]["idempotentHint"] is True
+    assert "environment_id" in execute_tool["inputSchema"]["required"]
     register_tool = next(tool for tool in tools if tool["name"] == "register_system")
     update_tool = next(tool for tool in tools if tool["name"] == "update_system")
     forbidden_secret_fields = {"qa_labrador_token", "qa_gateway_prefix"}
@@ -1522,14 +1539,6 @@ def test_operation_plugin_and_generated_skill_are_explicit_and_fixed(
     source_root = tmp_path / "source"
     source_root.mkdir()
     application = OpenTestApplication(tmp_path / "knowledge")
-    application.register_system(
-        SystemDefinition(system_id=SYSTEM_ID, name="SaaS退票核心", source_path=str(source_root))
-    )
-    application.save_local_settings(
-        SYSTEM_ID,
-        "fake-local-token",
-        "https://qa-gateway.invalid",
-    )
     api_calls: list[tuple[str, str, dict[str, Any] | None]] = []
 
     def fake_api_request(
@@ -1537,7 +1546,7 @@ def test_operation_plugin_and_generated_skill_are_explicit_and_fixed(
         path: str,
         payload: dict[str, Any] | None = None,
     ) -> dict[str, Any]:
-        """记录MCP回环请求并只在本机设置读取时提供假凭据。
+        """记录MCP回环请求并返回不含真实副作用的固定响应。
 
         Args:
             method: 固定HTTP方法。
@@ -1545,15 +1554,13 @@ def test_operation_plugin_and_generated_skill_are_explicit_and_fixed(
             payload: 可选的严格请求体。
 
         Returns:
-            真实FastAPI本机设置响应，或不启动扫描的注册成功假响应。
+            不启动扫描、Operation或QA调用的固定本地响应。
+
+        Side Effects:
+            只向测试内存追加一次调用记录。
         """
 
         api_calls.append((method, path, payload))
-        if path.endswith("/local-settings"):
-            # 直接读取真实路由形状，防止MCP与FastAPI再次发生字段名漂移。
-            response = client.request(method, f"/api/v2{path}")
-            assert response.status_code == 200
-            return response.json()
         return {"system": {"system_id": "new-system"}}
 
     with TestClient(create_app(application), client=("127.0.0.1", 50000)) as client:
@@ -1564,7 +1571,6 @@ def test_operation_plugin_and_generated_skill_are_explicit_and_fixed(
                 "system_id": "new-system",
                 "name": "新系统",
                 "source_path": "/registered/source",
-                "settings_source_system_id": SYSTEM_ID,
             },
         )
         update = operations._call_tool(
@@ -1575,16 +1581,35 @@ def test_operation_plugin_and_generated_skill_are_explicit_and_fixed(
                 "source_path": str(source_root),
             },
         )
+        environments = operations._call_tool("list_environments", {"system_id": SYSTEM_ID})
+        execution = operations._call_tool(
+            "execute_operation",
+            {
+                "system_id": SYSTEM_ID,
+                "operation_id": "facade:demo.RefundFacade#cancel",
+                "arguments": {},
+                "request_id": "operation-request-0001",
+                "environment_id": "QA1",
+            },
+        )
+        scan = operations._call_tool("start_system_scan", {"system_id": SYSTEM_ID})
 
-    assert api_calls[0][0:2] == ("GET", f"/systems/{SYSTEM_ID}/local-settings")
-    assert api_calls[1][2] is not None
-    assert api_calls[1][2]["qa_labrador_token"] == "fake-local-token"
-    assert api_calls[2][0:2] == ("GET", f"/systems/{SYSTEM_ID}/local-settings")
+    assert [call[:2] for call in api_calls] == [
+        ("POST", "/systems"),
+        ("PUT", f"/systems/{SYSTEM_ID}"),
+        ("GET", f"/systems/{SYSTEM_ID}/environments"),
+        ("POST", f"/systems/{SYSTEM_ID}/operation-executions"),
+        ("POST", f"/systems/{SYSTEM_ID}/scans"),
+    ]
+    assert all(
+        not ({"qa_labrador_token", "qa_gateway_prefix"} & set(payload or {}))
+        for _, _, payload in api_calls
+    )
     assert api_calls[3][2] is not None
-    assert "qa_labrador_token" not in api_calls[3][2]
-    assert api_calls[3][2]["qa_gateway_prefix"] == "https://qa-gateway.invalid"
-    assert "fake-local-token" not in registration["content"][0]["text"]
-    assert "fake-local-token" not in update["content"][0]["text"]
+    assert api_calls[3][2]["environment"] == "QA1"
+    assert api_calls[4][2] is not None
+    assert "environment" not in api_calls[4][2]
+    assert all(result.get("isError") is not True for result in (registration, update, environments, execution, scan))
 
     names = generator.skill_names(
         [
@@ -1604,10 +1629,8 @@ def test_operation_plugin_and_generated_skill_are_explicit_and_fixed(
     assert f"`{SYSTEM_ID}`" in skill
     assert "严格按用户给出的顺序逐个处理" in skill
     assert "有效知识已存在" in skill
-    assert "生成只创建Codex任务、编译并保存Generation，绝不访问QA" in skill
-    assert "只有用户明确要求执行某个Generation时" in skill
+    assert "只有用户明确要求执行某个READY/PARTIAL Generation时" in skill
     assert "同系统对外Facade优先，外部DSF次之" in skill
-    assert "env=qa" in skill and "targetenv=test" in skill
     assert "DELETE和DDL" in skill
     assert "allow_implicit_invocation: false" in metadata
 
@@ -1812,76 +1835,3 @@ def test_legacy_manifest_mq_uses_the_filter_environment_actually_selected(
     )
 
     assert response == {"status": "accepted"}
-
-
-def test_codex_thread_recovery_uses_read_without_resume_or_new_thread(monkeypatch: pytest.MonkeyPatch) -> None:
-    """持久线程核对应只调用thread/read，不恢复、创建或启动模型turn。"""
-
-    client = CodexAppServerClient()
-    calls: list[str] = []
-    process = object()
-
-    def fake_start_process() -> object:
-        """返回无需子进程的测试占位对象。"""
-
-        return process
-
-    def fake_request(
-        supplied_process: object,
-        request_id: int,
-        method: str,
-        params: dict[str, Any],
-    ) -> dict[str, Any]:
-        """记录App Server方法并返回固定线程。
-
-        Args:
-            supplied_process: 测试占位进程。
-            request_id: JSON-RPC请求ID。
-            method: App Server方法名。
-            params: 方法参数。
-
-        Returns:
-            initialize空结果或固定thread/read结果。
-        """
-
-        assert supplied_process is process
-        assert request_id in {1, 2}
-        calls.append(method)
-        if method == "thread/read":
-            return {"thread": {"id": params["threadId"]}}
-        return {}
-
-    def fake_notify(supplied_process: object, method: str, params: dict[str, Any]) -> None:
-        """记录初始化通知且不产生外部副作用。
-
-        Args:
-            supplied_process: 测试占位进程。
-            method: 初始化通知方法。
-            params: 空通知参数。
-        """
-
-        assert supplied_process is process
-        assert params == {}
-        calls.append(method)
-
-    def fake_close(supplied_process: object) -> None:
-        """验证测试占位进程被无条件关闭。
-
-        Args:
-            supplied_process: 测试占位进程。
-        """
-
-        assert supplied_process is process
-        calls.append("closed")
-
-    monkeypatch.setattr(client, "_start_process", fake_start_process)
-    monkeypatch.setattr(client, "_request", fake_request)
-    monkeypatch.setattr(client, "_notify", fake_notify)
-    monkeypatch.setattr(client, "_close_process", fake_close)
-
-    thread = client.read_thread("01a03270-708f-79d1-80a6-62491ecb863d")
-    assert thread.deep_link == "codex://threads/01a03270-708f-79d1-80a6-62491ecb863d"
-    assert calls == ["initialize", "initialized", "thread/read", "closed"]
-    assert "thread/resume" not in calls
-    assert "thread/start" not in calls
-    assert "turn/start" not in calls

@@ -3,12 +3,14 @@
 from __future__ import annotations
 
 import stat
+import subprocess
 import threading
 import time
 from pathlib import Path
 from unittest.mock import MagicMock
 
 import pytest
+import yaml
 
 from opentest.adapters.knowledge_store import GitKnowledgeStore
 from opentest.adapters.runtime_settings import RuntimeToolSettingsStore
@@ -23,6 +25,7 @@ from opentest.domain.models import (
     KnowledgeNodeKind,
     KnowledgeToolIntentRequest,
     RuntimeToolSettings,
+    SourceBaseline,
     SourceScanRequest,
     SystemDefinition,
     TaskStatus,
@@ -71,6 +74,171 @@ def test_update_one_system_preserves_other_registry_and_assets(tmp_path: Path) -
     assert "系统二独立知识" in second_path.read_text(encoding="utf-8")
 
 
+def test_git_system_registration_persists_pin_and_ordinary_actions_cannot_switch_it(
+    tmp_path: Path,
+) -> None:
+    """应用注册应固定Git版本，重启和普通保存沿用pin且普通扫描不能改用HEAD。
+
+    Args:
+        tmp_path: pytest隔离的Git源码、知识目录和替代源码路径。
+
+    Returns:
+        None；tag、持久化、扫描请求及显式切换边界全部满足时通过。
+
+    Side Effects:
+        在临时Git仓库创建两个提交和两个受管tag，并写隔离系统配置。
+    """
+
+    source = tmp_path / "refund-source"
+    source.mkdir()
+    subprocess.run(["git", "-C", str(source), "init", "-q"], check=True)
+    subprocess.run(
+        ["git", "-C", str(source), "config", "user.email", "opentest@example.invalid"],
+        check=True,
+    )
+    subprocess.run(
+        ["git", "-C", str(source), "config", "user.name", "OpenTest"],
+        check=True,
+    )
+    subprocess.run(
+        ["git", "-C", str(source), "checkout", "-q", "-b", "feature/refund"],
+        check=True,
+    )
+    source_file = source / "RefundFacade.java"
+    source_file.write_text("interface RefundFacade { void cancel(); }\n", encoding="utf-8")
+    subprocess.run(["git", "-C", str(source), "add", "RefundFacade.java"], check=True)
+    subprocess.run(["git", "-C", str(source), "commit", "-q", "-m", "first"], check=True)
+
+    knowledge_root = tmp_path / "knowledge"
+    application = OpenTestApplication(knowledge_root)
+    registered = application.register_system(
+        SystemDefinition(
+            system_id="refund-core",
+            name="退款核心",
+            source_path=str(source),
+        )
+    )
+    first_pin = registered.source_version
+
+    assert first_pin is not None
+    assert first_pin.selected_revision == "HEAD"
+    assert first_pin.branch_hint == "feature/refund"
+    assert application._source_scan_request(
+        SourceScanRequest(system_id=registered.system_id)
+    ).source_revision == first_pin.managed_tag
+
+    # 用户继续开发后，普通扫描不能把最初选择的HEAD重新解释成当前HEAD。
+    source_file.write_text("interface RefundFacade { void cancel(); void query(); }\n", encoding="utf-8")
+    subprocess.run(["git", "-C", str(source), "add", "RefundFacade.java"], check=True)
+    subprocess.run(["git", "-C", str(source), "commit", "-q", "-m", "second"], check=True)
+    second_commit = subprocess.run(
+        ["git", "-C", str(source), "rev-parse", "HEAD"],
+        check=True,
+        capture_output=True,
+        text=True,
+    ).stdout.strip()
+    source_file.write_text("local edits stay outside the pin\n", encoding="utf-8")
+    with pytest.raises(KnowledgeValidationError, match="does not match the configured source pin"):
+        application._source_scan_request(
+            SourceScanRequest(system_id=registered.system_id, source_revision="HEAD")
+        )
+
+    updated = application.update_system(
+        registered.system_id,
+        registered.model_copy(update={"name": "退款核心新名称", "source_version": None}),
+    )
+    assert updated.source_version == first_pin
+    other_source = tmp_path / "other-source"
+    other_source.mkdir()
+    with pytest.raises(KnowledgeValidationError, match="source path cannot change"):
+        application.update_system(
+            registered.system_id,
+            updated.model_copy(update={"source_path": str(other_source)}),
+        )
+
+    # 新应用实例必须从source.yaml恢复pin；registry只保留空路由占位而不复制版本真相。
+    restarted = OpenTestApplication(knowledge_root)
+    assert restarted.store.get_system(registered.system_id).source_version == first_pin
+    registry = yaml.safe_load((knowledge_root / "registry/systems.yaml").read_text(encoding="utf-8"))
+    assert registry["systems"][0].get("source_version") is None
+
+    explicitly_updated = restarted.update_source_version(registered.system_id, second_commit)
+    assert explicitly_updated.source_version is not None
+    assert explicitly_updated.source_version.commit == second_commit
+    assert explicitly_updated.source_version.managed_tag.endswith(second_commit)
+    application.close()
+    restarted.close()
+
+
+def test_legacy_git_system_without_pin_uses_last_complete_baseline_not_current_head(
+    tmp_path: Path,
+) -> None:
+    """升级前Git系统首次普通扫描应固定已发布baseline，不得悄悄采用后来HEAD。
+
+    Args:
+        tmp_path: pytest隔离的两提交Git仓库与旧格式知识配置。
+
+    Returns:
+        None；兼容迁移创建的pin仍指向旧完整扫描commit时通过。
+
+    Side Effects:
+        通过底层store写入无pin历史配置，并在临时源码仓库创建受管tag。
+    """
+
+    source = tmp_path / "legacy-source"
+    source.mkdir()
+    subprocess.run(["git", "-C", str(source), "init", "-q"], check=True)
+    subprocess.run(
+        ["git", "-C", str(source), "config", "user.email", "opentest@example.invalid"],
+        check=True,
+    )
+    subprocess.run(
+        ["git", "-C", str(source), "config", "user.name", "OpenTest"],
+        check=True,
+    )
+    source_file = source / "RefundFacade.java"
+    source_file.write_text("interface RefundFacade { void cancel(); }\n", encoding="utf-8")
+    subprocess.run(["git", "-C", str(source), "add", "RefundFacade.java"], check=True)
+    subprocess.run(["git", "-C", str(source), "commit", "-q", "-m", "published baseline"], check=True)
+    published_commit = subprocess.run(
+        ["git", "-C", str(source), "rev-parse", "HEAD"],
+        check=True,
+        capture_output=True,
+        text=True,
+    ).stdout.strip()
+
+    knowledge_root = tmp_path / "knowledge"
+    store = GitKnowledgeStore(knowledge_root)
+    store.register_system(
+        SystemDefinition(
+            system_id="legacy-refund-core",
+            name="历史退款核心",
+            source_path=str(source),
+            baseline=SourceBaseline(
+                source_path=str(source),
+                commit=published_commit,
+                branch="old-feature",
+                revision="HEAD",
+                dirty=False,
+            ),
+        )
+    )
+    source_file.write_text("interface RefundFacade { void cancel(); void query(); }\n", encoding="utf-8")
+    subprocess.run(["git", "-C", str(source), "add", "RefundFacade.java"], check=True)
+    subprocess.run(["git", "-C", str(source), "commit", "-q", "-m", "new head"], check=True)
+
+    application = OpenTestApplication(knowledge_root)
+    effective = application._source_scan_request(
+        SourceScanRequest(system_id="legacy-refund-core")
+    )
+    migrated = application.store.get_system("legacy-refund-core")
+
+    assert migrated.source_version is not None
+    assert migrated.source_version.commit == published_commit
+    assert effective.source_revision == f"opentest/baseline/{published_commit}"
+    application.close()
+
+
 def test_archive_and_restore_verifies_files_and_rebuilds_scope(tmp_path: Path) -> None:
     """归档应移走目标系统文件且可按摘要恢复，不影响另一系统。"""
 
@@ -106,7 +274,9 @@ def test_archive_and_restore_verifies_files_and_rebuilds_scope(tmp_path: Path) -
         "runs/run-001.json",
     }
     assert record.derived_files[0].relative_path == "registry/systems.yaml"
-    assert archives.list_archives()[0].archive_id == record.archive_id
+    listed = archives.list_archives()[0]
+    assert listed.archive_id == record.archive_id
+    assert listed.integrity_status == "valid"
 
     restored = archives.restore(record.archive_id)
     counts = SqliteKnowledgeIndex(store.root / ".opentest/index.sqlite").rebuild(store)
@@ -117,6 +287,7 @@ def test_archive_and_restore_verifies_files_and_rebuilds_scope(tmp_path: Path) -
     assert stat.S_IMODE(local_environment.stat().st_mode) == 0o600
     assert preview_path.is_file()
     assert run_path.is_file()
+    assert archives.list_archives()[0].integrity_status == "restored"
     assert archives.active_codex_client_handoff_count(record.archive_id) == 0
     with pytest.raises(ScopeViolationError, match="system already exists"):
         archives.restore(record.archive_id)
@@ -138,6 +309,49 @@ def test_restore_does_not_publish_derived_archive_registry(tmp_path: Path) -> No
     # 恢复只发布原系统注册，不移动审计registry，因此第二个活动系统仍然存在。
     assert [item.system_id for item in store.list_systems()] == [first.system_id, second.system_id]
     assert (store.root / "archives" / record.archive_id / "knowledge/registry/systems.yaml").is_file()
+
+
+def test_active_handoff_count_ignores_unrelated_corrupt_archive_file(tmp_path: Path) -> None:
+    """活动聊天统计不应被无关归档文件损坏阻断，完整恢复仍必须拒绝。
+
+    Args:
+        tmp_path: Pytest提供的隔离多系统知识目录。
+
+    Returns:
+        None；局部门禁返回零且完整恢复发现摘要错误时通过。
+    """
+
+    store, first, _second = _register_two_systems(tmp_path)
+    node = KnowledgeNode(
+        node_id="facade:FirstFacade#query",
+        system_id=first.system_id,
+        kind=KnowledgeNodeKind.FACADE,
+        title="查询系统一",
+    )
+    node_path = store.write_node(node, "用于验证无关归档损坏的知识正文")
+    archives = SystemArchiveStore(store)
+    record = archives.archive(first.system_id, "验证局部门禁与完整恢复的校验边界")
+    node_record = next(
+        item
+        for item in record.files
+        if item.scope == "knowledge" and item.relative_path == str(node_path.relative_to(store.root))
+    )
+    archived_node = (
+        archives.knowledge_archive_root
+        / record.archive_id
+        / "knowledge"
+        / node_record.relative_path
+    )
+
+    # 模拟与活动聊天统计无关的历史知识文件损坏；不得修复或重算清单摘要。
+    archived_node.write_text("corrupt", encoding="utf-8")
+
+    assert archives.active_codex_client_handoff_count(record.archive_id) == 0
+    listed = archives.list_archives()[0]
+    assert listed.integrity_status == "damaged"
+    assert "archive file digest mismatch" in listed.integrity_error
+    with pytest.raises(KnowledgeValidationError, match="archive file digest mismatch"):
+        archives.restore(record.archive_id)
 
 
 def test_runtime_settings_diagnose_real_scriptgen_without_restart(tmp_path: Path) -> None:
@@ -293,14 +507,14 @@ def test_booking_core_scan_policy_derives_qa_job_url_without_token(tmp_path: Pat
     assert "must-not-enter-scan-request" not in effective.model_dump_json()
 
 
-def test_generic_dsf_scan_uses_local_gateway_and_explicit_prefix_wins(tmp_path: Path) -> None:
-    """普通DSF扫描应动态使用本地网关，同时保留CLI显式前缀优先级。
+def test_generic_dsf_scan_ignores_legacy_facade_gateway(tmp_path: Path) -> None:
+    """普通DSF扫描不得再消费本地或请求中的旧Facade HTTP网关。
 
     Args:
         tmp_path: Pytest隔离的源码、知识与本地系统设置目录。
 
     Returns:
-        None；本地默认test和请求显式uat按优先级生效时通过。
+        None；只有资源环境按优先级生效，Facade前缀始终清空时通过。
 
     Side Effects:
         在隔离知识根写入系统和0600本地设置，不启动源码扫描。
@@ -334,9 +548,9 @@ def test_generic_dsf_scan_uses_local_gateway_and_explicit_prefix_wins(tmp_path: 
         ),
     )
 
-    assert local_request.facade_http_prefix == "http://servicegw.qa.ly.com/gateway/saas.refund.core/qa"
+    assert local_request.facade_http_prefix == ""
     assert local_request.resource_config_environment == "test"
-    assert explicit_request.facade_http_prefix == "https://explicit.qa.example/refund/v2"
+    assert explicit_request.facade_http_prefix == ""
     assert explicit_request.resource_config_environment == "uat"
     assert "must-not-enter-scan-request" not in local_request.model_dump_json()
     application.close()
@@ -437,22 +651,23 @@ def test_prepared_scan_freezes_environment_before_background_execution(
     application.close()
 
 
-def test_generic_dsf_scan_blocks_before_scriptgen_when_gateway_is_missing(tmp_path: Path) -> None:
-    """普通DSF缺少显式及本地网关时应在scriptgen进程启动前给出可操作错误。
+def test_http_job_scan_blocks_before_scriptgen_when_gateway_is_missing(tmp_path: Path) -> None:
+    """保留的HTTP Job扫描缺少专用网关时应在scriptgen启动前失败。
 
     Args:
         tmp_path: Pytest隔离的源码和知识目录。
     """
 
-    source = tmp_path / "missing-gateway-system"
+    system_id = "travelsystem.java.dsf.supplychain.booking.core"
+    source = tmp_path / system_id
     source.mkdir()
     application = OpenTestApplication(tmp_path / "knowledge")
     application.register_system(
-        SystemDefinition(system_id="missing-gateway-system", name="缺少网关", source_path=str(source)),
+        SystemDefinition(system_id=system_id, name="缺少Job网关", source_path=str(source)),
     )
 
-    with pytest.raises(KnowledgeValidationError, match="QA Facade网关前缀"):
-        application._source_scan_request(SourceScanRequest(system_id="missing-gateway-system"))
+    with pytest.raises(KnowledgeValidationError, match="HTTP Job"):
+        application._source_scan_request(SourceScanRequest(system_id=system_id))
 
     application.close()
 
@@ -468,29 +683,30 @@ def test_generic_dsf_scan_blocks_before_scriptgen_when_gateway_is_missing(tmp_pa
         "http://gateway.qa.example/refund/v2#fragment",
     ],
 )
-def test_generic_dsf_scan_rejects_gateway_that_cannot_be_used_as_base_url(
+def test_http_job_scan_rejects_gateway_that_cannot_be_used_as_base_url(
     tmp_path: Path,
     gateway_prefix: str,
 ) -> None:
-    """畸形或携带请求级信息的网关必须稳定转换为可操作配置错误。
+    """HTTP Job的畸形网关必须稳定转换为可操作配置错误。
 
     Args:
         tmp_path: Pytest隔离的源码和知识目录。
         gateway_prefix: 不能安全追加Facade接口后缀的网关输入。
     """
 
-    source = tmp_path / "invalid-gateway-system"
+    system_id = "travelsystem.java.dsf.supplychain.booking.core"
+    source = tmp_path / system_id
     source.mkdir()
     application = OpenTestApplication(tmp_path / "knowledge")
     application.register_system(
-        SystemDefinition(system_id="invalid-gateway-system", name="非法网关", source_path=str(source)),
+        SystemDefinition(system_id=system_id, name="非法Job网关", source_path=str(source)),
     )
 
     # 所有畸形输入都应在scriptgen启动前收敛为同一领域错误，避免泄漏urllib实现异常。
-    with pytest.raises(KnowledgeValidationError, match="QA Facade网关前缀"):
+    with pytest.raises(KnowledgeValidationError, match="HTTP Job"):
         application._source_scan_request(
             SourceScanRequest(
-                system_id="invalid-gateway-system",
+                system_id=system_id,
                 facade_http_prefix=gateway_prefix,
             ),
         )

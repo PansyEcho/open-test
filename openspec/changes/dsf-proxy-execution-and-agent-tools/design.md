@@ -14,7 +14,13 @@ QA Oracle Worker继续只负责MySQL、TiDB、Redis和MQ只读验证。DSF Worke
 
 ## 切换与兼容
 
-内部先并存`generated_cli`与`dsf_proxy`用于离线测试和两个只读金丝雀。Booking.Core自调用与跨Refund.Core调用均成功后，新扫描操作目录只使用`dsf_proxy`并删除Labrador设置/API/UI与执行器。旧Manifest继续可读，但`generated_cli`历史运行被稳定拒绝为不可重放；本地旧配置文件不自动删除。
+当前Facade操作目录与执行只使用`dsf_proxy`，能力门禁、扫描投影和Worker均不读取Labrador Token或Facade HTTP网关；scriptgen仍可为扫描兼容输出`facade_raw`，但该工具不进入持久运行目录，也不能成为执行回退。HTTP Job继续独立使用`generated_cli`和现有本地HTTP配置，不得冒充Facade或DSF能力。
+
+Booking.Core自调用与跨Refund.Core调用两个只读金丝雀均成功、且HTTP Job去留明确后，才删除Labrador页面、设置/API和兼容执行器。旧Manifest继续可读但历史Facade脚本不可重放；本地旧配置文件不自动删除。真实金丝雀未获授权前，代码切流与离线验证不得被描述为已完成外部门禁。
+
+## 环境身份
+
+环境目录只投影canonical ID、显示名、系统内显式aliases和安全可用状态，不返回values、connections或凭据。Operation或Case Execution在创建任何执行记录前，只允许精确canonical ID或当前系统唯一alias；未知、重复或跨系统alias直接拒绝，不把`QA1`猜测成`qa`。解析后的canonical ID贯穿DATA、TARGET、ORACLE和CLEANUP，并参与幂等与并发身份。
 
 ## QA门禁
 

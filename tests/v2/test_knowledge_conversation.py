@@ -621,25 +621,30 @@ def test_analysis_preserves_attached_task_identity_and_superseded_turn_state(tmp
     assert all(question.source != "conversation" for question in application.list_unified_knowledge_questions(SYSTEM_ID))
 
 
-def test_missing_conversation_task_recovers_to_retryable_blocked_state(tmp_path: Path) -> None:
-    """分析中轮次缺少任务文件时应保留消息并恢复显式重试入口。
+def test_missing_conversation_task_remains_read_only_in_historical_listing(tmp_path: Path) -> None:
+    """历史会话GET不得因关联任务缺失而改写原轮次状态或内容。
 
     Args:
         tmp_path: pytest隔离会话与任务目录。
 
     Returns:
-        None；缺失任务不会使历史GET失败或永久停在ANALYZING。
+        None；缺失任务不会使历史GET失败，且原始字节和ANALYZING状态保持不变。
     """
 
     application, _ = _application(tmp_path)
     turn = application.knowledge_conversation.create_turn(SYSTEM_ID, _background_request())
     application.knowledge_conversation.attach_task(SYSTEM_ID, turn.turn_id, "task-does-not-exist")
+    interview_store = application.knowledge.interview_store
+    # 历史GET必须是字节级只读；关联任务缺失也不能隐式迁移原记录。
+    turn_path = interview_store._conversation_root(SYSTEM_ID) / f"{turn.turn_id}.json"
+    original_bytes = turn_path.read_bytes()
 
-    recovered = application.list_knowledge_conversation_turns(SYSTEM_ID)[0]
+    listed = application.list_knowledge_conversation_turns(SYSTEM_ID)[0]
 
-    assert recovered.status == KnowledgeConversationTurnStatus.BLOCKED
-    assert recovered.user_message == turn.user_message
-    assert "可保留原消息重试" in recovered.safe_error
+    assert listed.status == KnowledgeConversationTurnStatus.ANALYZING
+    assert listed.user_message == turn.user_message
+    assert listed.task_id == "task-does-not-exist"
+    assert turn_path.read_bytes() == original_bytes
 
 
 def test_multiple_chinese_candidate_proposals_publish_with_distinct_ids(tmp_path: Path) -> None:
