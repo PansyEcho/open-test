@@ -399,6 +399,12 @@ def test_start_prepares_same_task_without_starting_background_agent(tmp_path: Pa
     )
 
     first = service.start(SYSTEM_ID, request)
+    # 真实升级前start回执缺少interaction_mode；原参数仍须恢复，不能把原任务改成失败。
+    legacy_path = handoffs.root / first.handoff_id / "handoff.json"
+    legacy = json.loads(legacy_path.read_text())
+    legacy["request_receipts"][0]["parameters"].pop("interaction_mode")
+    legacy_path.write_text(json.dumps(legacy))
+    first = handoffs.get(first.handoff_id)
     # 首次结果已经落盘后，即使系统pin切换且新扫描未就绪，同参网络重试也应恢复原结果。
     changed_system = Mock(source_path=str(tmp_path), source_version=Mock())
     store.get_system.return_value = changed_system
@@ -414,6 +420,8 @@ def test_start_prepares_same_task_without_starting_background_agent(tmp_path: Pa
     artifacts.read.assert_called_once_with(SYSTEM_ID, "latest")
     service._input_contract.assert_called_once_with(SYSTEM_ID, OPERATION_ID, SCAN_ID)
     operation_service.execute.assert_not_called()
+    with pytest.raises(CaseTemplateWriteConflictError):
+        service.start(SYSTEM_ID, request.model_copy(update={"interaction_mode": "web"}))
     with pytest.raises(CaseTemplateWriteConflictError) as conflict:
         service.start(
             SYSTEM_ID,

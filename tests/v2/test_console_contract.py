@@ -18,9 +18,9 @@ def test_console_static_client_uses_single_case_workflow_and_safe_rendering() ->
     script = (web_root / "app.js").read_text(encoding="utf-8")
 
     assert "<title>OpenTest Console</title>" in html
-    assert '<meta name="opentest-page-version" content="20260907-06">' in html
-    assert '/assets/app.js?v=20260907-06' in html
-    assert '/assets/styles.css?v=20260907-06' in html
+    assert '<meta name="opentest-page-version" content="20260908-08">' in html
+    assert '/assets/app.js?v=20260908-08' in html
+    assert '/assets/styles.css?v=20260908-08' in html
     assert 'const API_ROOT = "/api/v2"' in script
     assert "API_V3_ROOT" not in script
     assert "API_V4_ROOT" not in script
@@ -51,7 +51,7 @@ def test_console_static_client_uses_single_case_workflow_and_safe_rendering() ->
     assert 'id="start-case-generation"' in html
     assert 'id="execute-case-generation"' in html
     assert "执行本次 Generation 的全部 Variant" in html
-    assert "只生成、不访问QA" in html
+    assert "此阶段不会访问 QA" in html
     start_generation = script[
         script.index("async function startCaseGeneration") : script.index("async function refreshCaseHandoff")
     ]
@@ -59,7 +59,7 @@ def test_console_static_client_uses_single_case_workflow_and_safe_rendering() ->
     assert 'request_id: getOrCreateCaseRequestId("start", operationId)' in start_generation
     assert "execution_mode" not in start_generation
     assert "/case-generations" in start_generation
-    assert "continuation_instruction" in start_generation
+    assert 'interaction_mode: "web"' in start_generation
     assert "task_id" in start_generation
     execute_generation = script[
         script.index("async function executeCaseGeneration") : script.index("function delay")
@@ -396,10 +396,10 @@ def test_console_element_lookups_match_static_dom_contract() -> None:
 
 
 def test_native_agent_task_uses_copyable_instruction_without_starting_background_turn() -> None:
-    """新业务任务必须复制持久指令，且不得启动或接管后台Codex turn。
+    """原生继续指令不启动后台turn，网页运行诊断可以只读链接到已有聊天。
 
     Returns:
-        None；任务可通过task_id恢复，且页面不存在深链、SSE或turn写请求时通过。
+        None；原生任务用task_id恢复，查看聊天不产生SSE或turn写请求时通过。
     """
 
     script_path = Path(__file__).parents[2] / "opentest" / "web" / "app.js"
@@ -413,7 +413,9 @@ def test_native_agent_task_uses_copyable_instruction_without_starting_background
     assert "instruction.includes(task.task_id)" in copier
     assert "/turns" not in script
     assert "EventSource" not in script
-    assert "codex://threads/" not in script
+    # 原生继续指令不做深链跳转；网页诊断仅对读取成功的session构造查看链接。
+    assert "codex://threads/" not in copier
+    assert 'link.href = `codex://threads/${sessionId}`' in script
     assert "waiting_for_client" in script
 
 

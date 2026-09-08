@@ -1,0 +1,15 @@
+# Decisions
+
+- Task interaction mode is `native` by default; the console explicitly requests `web`. A web run uses the existing Codex CLI runner with a task-scoped MCP surface and preserves the configured provider. Native preparation never launches a second Agent.
+- Real Codex rollout evidence showed the default tool output limit truncating the submission schema and saved candidate. Task-mode runs set a sufficient output budget, prioritize the submission contract and avoid repeating frozen instructions in every context read. The provider and model settings remain unchanged.
+- Existing task records, request identities, revision checks, run evidence and locks own continuation. Questions and drafts remain in their existing authoritative handoffs. Answer wakeups and runner settlement use the same task synchronization boundary; browser retries retain both request ID and initial revision. Answers resume only web-owned tasks.
+- A resumed failed task preserves its immutable identity and replaces its old archive location with the latest active record. The reproduced duplicate active/archive record must not prevent service restart. Only the task-bound MCP bridge is approved for unattended execution; shell and unrelated MCP tools remain disabled.
+- QA execution returns its persisted RUNNING identity before performing remote calls, avoiding the reproduced client timeout across six 60-second operations. Callers query the same Execution instead of replaying writes. Stage evidence includes credential-redacted actual requests, responses and assertion outcomes.
+- Missing input knowledge is a linked prerequisite of the requested Case workflow. A current input contract is reused; only the requested interface is generated when knowledge is absent.
+- The reproduced legacy serialization defect is handled at the private storage boundary. Public dynamic sources still reject explicit literal fields; literal null remains valid. No blanket recursive rewrite of arbitrary business payloads is permitted.
+- QA execution authorization includes necessary existing data, setup writes and parameterized DML. DATA may write; ORACLE remains observational. Cleanup is optional, and declared cleanup failures remain visible. Generation alone cannot execute QA.
+- New fields and the scoped runner are required by the user's two interactive entry points: they decide who runs after an answer and prevent web generation from remaining ownerless. Storage compatibility is justified by the reproduced unreadable persisted task. Existing concurrency and persistence machinery is reused.
+
+## Acceptance
+
+Recover task `task-7943e994628fc4d8`, publish and execute cancel Cases through the native workflow, and exercise real web generation with `RefundFacade#queryList` plus the pending knowledge task. Controlled Agent responses cover question/answer, unknown answers, revision conflicts and restart behavior. Real QA business failures must produce complete evidence; unresolved OpenTest engineering failures do not satisfy completion.

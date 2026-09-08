@@ -1,0 +1,3608 @@
+{
+  "generation_id": "case-template-generation-8911642c14a049b08d26",
+  "predecessor_generation_id": "",
+  "continuation_intent": "",
+  "handoff_id": "case-template-handoff-2489f044d0ea4a24872f",
+  "system_id": "ifightchainsaas.java.refund.core",
+  "operation_id": "facade:com.ly.flight.chainsaas.refund.facade.RefundFacade#cancel",
+  "source_scan_id": "scan-20260902095328-66619d80f6-47b8cbc3",
+  "coverage_id": "coverage:facade:com.ly.flight.chainsaas.refund.facade.RefundFacade#cancel",
+  "runtime_registry_version": "runtime-functions/v1",
+  "value_registry_version": "value-functions/v1",
+  "compiler_seed": 1,
+  "status": "READY",
+  "input_contract": {
+    "target_id": "facade:com.ly.flight.chainsaas.refund.facade.RefundFacade#cancel",
+    "request_type": "com.ly.flight.chainsaas.refund.facade.model.request.RefundCancelRequest",
+    "source_scan_id": "scan-20260902095328-66619d80f6-47b8cbc3",
+    "status": "READY",
+    "request_schema": {
+      "type": "object",
+      "properties": {
+        "traceId": {
+          "type": "string"
+        },
+        "operator": {
+          "type": "string"
+        },
+        "refundSerialNo": {
+          "type": "string"
+        },
+        "cancelReasonId": {
+          "type": "string"
+        },
+        "cancelReason": {
+          "type": "string"
+        },
+        "cancelRemark": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": false,
+      "required": [
+        "cancelReason",
+        "cancelReasonId",
+        "cancelRemark",
+        "refundSerialNo"
+      ]
+    },
+    "fields": [
+      {
+        "path": "traceId",
+        "field_name": "traceId",
+        "schema": {
+          "type": "string"
+        },
+        "description": "全链路跟踪标识。",
+        "required": false,
+        "business_identity": false,
+        "requirement_marker": "",
+        "source_ref": {
+          "repository": "",
+          "path": "app/facade/src/main/java/com/ly/flight/chainsaas/refund/facade/model/BaseRequest.java",
+          "symbol": "com.ly.flight.chainsaas.refund.facade.model.BaseRequest#traceId",
+          "line": 21,
+          "commit": "",
+          "content_digest": ""
+        }
+      },
+      {
+        "path": "operator",
+        "field_name": "operator",
+        "schema": {
+          "type": "string"
+        },
+        "description": "发起请求的操作人。",
+        "required": false,
+        "business_identity": false,
+        "requirement_marker": "",
+        "source_ref": {
+          "repository": "",
+          "path": "app/facade/src/main/java/com/ly/flight/chainsaas/refund/facade/model/BaseRequest.java",
+          "symbol": "com.ly.flight.chainsaas.refund.facade.model.BaseRequest#operator",
+          "line": 26,
+          "commit": "",
+          "content_digest": ""
+        }
+      },
+      {
+        "path": "refundSerialNo",
+        "field_name": "refundSerialNo",
+        "schema": {
+          "type": "string"
+        },
+        "description": "退票订单号",
+        "required": true,
+        "business_identity": true,
+        "requirement_marker": "@required",
+        "source_ref": {
+          "repository": "",
+          "path": "app/facade/src/main/java/com/ly/flight/chainsaas/refund/facade/model/request/RefundCancelRequest.java",
+          "symbol": "com.ly.flight.chainsaas.refund.facade.model.request.RefundCancelRequest#refundSerialNo",
+          "line": 17,
+          "commit": "",
+          "content_digest": ""
+        }
+      },
+      {
+        "path": "cancelReasonId",
+        "field_name": "cancelReasonId",
+        "schema": {
+          "type": "string"
+        },
+        "description": "取消原因Id",
+        "required": true,
+        "business_identity": false,
+        "requirement_marker": "@required",
+        "source_ref": {
+          "repository": "",
+          "path": "app/facade/src/main/java/com/ly/flight/chainsaas/refund/facade/model/request/RefundCancelRequest.java",
+          "symbol": "com.ly.flight.chainsaas.refund.facade.model.request.RefundCancelRequest#cancelReasonId",
+          "line": 22,
+          "commit": "",
+          "content_digest": ""
+        }
+      },
+      {
+        "path": "cancelReason",
+        "field_name": "cancelReason",
+        "schema": {
+          "type": "string"
+        },
+        "description": "取消原因",
+        "required": true,
+        "business_identity": false,
+        "requirement_marker": "@required",
+        "source_ref": {
+          "repository": "",
+          "path": "app/facade/src/main/java/com/ly/flight/chainsaas/refund/facade/model/request/RefundCancelRequest.java",
+          "symbol": "com.ly.flight.chainsaas.refund.facade.model.request.RefundCancelRequest#cancelReason",
+          "line": 27,
+          "commit": "",
+          "content_digest": ""
+        }
+      },
+      {
+        "path": "cancelRemark",
+        "field_name": "cancelRemark",
+        "schema": {
+          "type": "string"
+        },
+        "description": "取消原因备注",
+        "required": true,
+        "business_identity": false,
+        "requirement_marker": "@required",
+        "source_ref": {
+          "repository": "",
+          "path": "app/facade/src/main/java/com/ly/flight/chainsaas/refund/facade/model/request/RefundCancelRequest.java",
+          "symbol": "com.ly.flight.chainsaas.refund.facade.model.request.RefundCancelRequest#cancelRemark",
+          "line": 33,
+          "commit": "",
+          "content_digest": ""
+        }
+      }
+    ]
+  },
+  "submission": {
+    "data_functions": [
+      {
+        "name": "select_refund_for_cancel",
+        "description": "每个Variant从真实交易列表取首单、查询关联退票单，复用其平台及已保存取消原因ID，再查询指定状态退票单；任一候选缺失时DATA失败，不调用目标。",
+        "inputs": [
+          {
+            "name": "state_code",
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "steps": [
+          {
+            "step_id": "bookings",
+            "operation": "runtime_call",
+            "function_id": "facade:com.ly.flight.chainsaas.booking.facade.TradeFacade#queryList",
+            "input_source": null,
+            "arguments": {
+              "page": {
+                "kind": "literal",
+                "value": 1,
+                "name": "",
+                "path": "",
+                "step_id": "",
+                "call_id": "",
+                "output_name": ""
+              },
+              "pageSize": {
+                "kind": "literal",
+                "value": 20,
+                "name": "",
+                "path": "",
+                "step_id": "",
+                "call_id": "",
+                "output_name": ""
+              }
+            },
+            "output_schema": {
+              "type": "object",
+              "properties": {
+                "success": {
+                  "type": "boolean"
+                },
+                "list": {
+                  "type": "object",
+                  "properties": {
+                    "pageList": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "orderSerialNo": {
+                            "type": "string"
+                          }
+                        },
+                        "additionalProperties": true
+                      }
+                    }
+                  },
+                  "additionalProperties": true
+                }
+              },
+              "additionalProperties": true
+            },
+            "predicates": [],
+            "fields": []
+          },
+          {
+            "step_id": "booking",
+            "operation": "first",
+            "function_id": "",
+            "input_source": {
+              "kind": "step_output",
+              "name": "",
+              "path": "list.pageList",
+              "step_id": "bookings",
+              "call_id": "",
+              "output_name": ""
+            },
+            "arguments": {},
+            "output_schema": null,
+            "predicates": [],
+            "fields": []
+          },
+          {
+            "step_id": "linked_refunds",
+            "operation": "runtime_call",
+            "function_id": "facade:com.ly.flight.chainsaas.refund.facade.RefundFacade#queryListByOrderNo",
+            "input_source": null,
+            "arguments": {
+              "orderSerialNo": {
+                "kind": "step_output",
+                "name": "",
+                "path": "orderSerialNo",
+                "step_id": "booking",
+                "call_id": "",
+                "output_name": ""
+              }
+            },
+            "output_schema": {
+              "type": "object",
+              "properties": {
+                "success": {
+                  "type": "boolean"
+                },
+                "list": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "refundSerialNo": {
+                        "type": "string"
+                      },
+                      "orderSerialNo": {
+                        "type": "string"
+                      },
+                      "platFormId": {
+                        "type": "string"
+                      },
+                      "cancelReason": {
+                        "type": "string"
+                      },
+                      "refundState": {
+                        "type": "object",
+                        "properties": {
+                          "code": {
+                            "type": "integer"
+                          },
+                          "name": {
+                            "type": "string"
+                          }
+                        },
+                        "additionalProperties": true
+                      }
+                    },
+                    "additionalProperties": true
+                  }
+                }
+              },
+              "additionalProperties": true
+            },
+            "predicates": [],
+            "fields": []
+          },
+          {
+            "step_id": "seed_candidates",
+            "operation": "filter",
+            "function_id": "",
+            "input_source": {
+              "kind": "step_output",
+              "name": "",
+              "path": "list",
+              "step_id": "linked_refunds",
+              "call_id": "",
+              "output_name": ""
+            },
+            "arguments": {},
+            "output_schema": null,
+            "predicates": [
+              {
+                "left": {
+                  "kind": "current_item",
+                  "name": "",
+                  "path": "platFormId",
+                  "step_id": "",
+                  "call_id": "",
+                  "output_name": ""
+                },
+                "operator": "not_null",
+                "right": null
+              },
+              {
+                "left": {
+                  "kind": "current_item",
+                  "name": "",
+                  "path": "platFormId",
+                  "step_id": "",
+                  "call_id": "",
+                  "output_name": ""
+                },
+                "operator": "ne",
+                "right": {
+                  "kind": "literal",
+                  "value": "",
+                  "name": "",
+                  "path": "",
+                  "step_id": "",
+                  "call_id": "",
+                  "output_name": ""
+                }
+              },
+              {
+                "left": {
+                  "kind": "current_item",
+                  "name": "",
+                  "path": "cancelReason",
+                  "step_id": "",
+                  "call_id": "",
+                  "output_name": ""
+                },
+                "operator": "not_null",
+                "right": null
+              },
+              {
+                "left": {
+                  "kind": "current_item",
+                  "name": "",
+                  "path": "cancelReason",
+                  "step_id": "",
+                  "call_id": "",
+                  "output_name": ""
+                },
+                "operator": "ne",
+                "right": {
+                  "kind": "literal",
+                  "value": "",
+                  "name": "",
+                  "path": "",
+                  "step_id": "",
+                  "call_id": "",
+                  "output_name": ""
+                }
+              }
+            ],
+            "fields": []
+          },
+          {
+            "step_id": "seed",
+            "operation": "first",
+            "function_id": "",
+            "input_source": {
+              "kind": "step_output",
+              "name": "",
+              "path": "",
+              "step_id": "seed_candidates",
+              "call_id": "",
+              "output_name": ""
+            },
+            "arguments": {},
+            "output_schema": null,
+            "predicates": [],
+            "fields": []
+          },
+          {
+            "step_id": "refunds",
+            "operation": "runtime_call",
+            "function_id": "facade:com.ly.flight.chainsaas.refund.facade.RefundFacade#queryList",
+            "input_source": null,
+            "arguments": {
+              "page": {
+                "kind": "literal",
+                "value": 1,
+                "name": "",
+                "path": "",
+                "step_id": "",
+                "call_id": "",
+                "output_name": ""
+              },
+              "pageSize": {
+                "kind": "literal",
+                "value": 20,
+                "name": "",
+                "path": "",
+                "step_id": "",
+                "call_id": "",
+                "output_name": ""
+              },
+              "platFormId": {
+                "kind": "step_output",
+                "name": "",
+                "path": "platFormId",
+                "step_id": "seed",
+                "call_id": "",
+                "output_name": ""
+              },
+              "orderState": {
+                "kind": "function_input",
+                "name": "state_code",
+                "path": "",
+                "step_id": "",
+                "call_id": "",
+                "output_name": ""
+              }
+            },
+            "output_schema": {
+              "type": "object",
+              "properties": {
+                "success": {
+                  "type": "boolean"
+                },
+                "list": {
+                  "type": "object",
+                  "properties": {
+                    "pageList": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "refundSerialNo": {
+                            "type": "string"
+                          },
+                          "orderSerialNo": {
+                            "type": "string"
+                          },
+                          "platFormId": {
+                            "type": "string"
+                          },
+                          "cancelReason": {
+                            "type": "string"
+                          },
+                          "refundState": {
+                            "type": "object",
+                            "properties": {
+                              "code": {
+                                "type": "integer"
+                              },
+                              "name": {
+                                "type": "string"
+                              }
+                            },
+                            "additionalProperties": true
+                          }
+                        },
+                        "additionalProperties": true
+                      }
+                    }
+                  },
+                  "additionalProperties": true
+                }
+              },
+              "additionalProperties": true
+            },
+            "predicates": [],
+            "fields": []
+          },
+          {
+            "step_id": "state_matches",
+            "operation": "filter",
+            "function_id": "",
+            "input_source": {
+              "kind": "step_output",
+              "name": "",
+              "path": "list.pageList",
+              "step_id": "refunds",
+              "call_id": "",
+              "output_name": ""
+            },
+            "arguments": {},
+            "output_schema": null,
+            "predicates": [
+              {
+                "left": {
+                  "kind": "current_item",
+                  "name": "",
+                  "path": "refundState.code",
+                  "step_id": "",
+                  "call_id": "",
+                  "output_name": ""
+                },
+                "operator": "eq",
+                "right": {
+                  "kind": "function_input",
+                  "name": "state_code",
+                  "path": "",
+                  "step_id": "",
+                  "call_id": "",
+                  "output_name": ""
+                }
+              },
+              {
+                "left": {
+                  "kind": "current_item",
+                  "name": "",
+                  "path": "refundSerialNo",
+                  "step_id": "",
+                  "call_id": "",
+                  "output_name": ""
+                },
+                "operator": "not_null",
+                "right": null
+              },
+              {
+                "left": {
+                  "kind": "current_item",
+                  "name": "",
+                  "path": "refundSerialNo",
+                  "step_id": "",
+                  "call_id": "",
+                  "output_name": ""
+                },
+                "operator": "ne",
+                "right": {
+                  "kind": "literal",
+                  "value": "",
+                  "name": "",
+                  "path": "",
+                  "step_id": "",
+                  "call_id": "",
+                  "output_name": ""
+                }
+              }
+            ],
+            "fields": []
+          },
+          {
+            "step_id": "selected",
+            "operation": "first",
+            "function_id": "",
+            "input_source": {
+              "kind": "step_output",
+              "name": "",
+              "path": "",
+              "step_id": "state_matches",
+              "call_id": "",
+              "output_name": ""
+            },
+            "arguments": {},
+            "output_schema": null,
+            "predicates": [],
+            "fields": []
+          }
+        ],
+        "outputs": [
+          {
+            "output_name": "refund_no",
+            "step_id": "selected",
+            "path": "refundSerialNo"
+          },
+          {
+            "output_name": "reason_id",
+            "step_id": "seed",
+            "path": "cancelReason"
+          }
+        ],
+        "evidence": [
+          {
+            "source_system_id": "ifightchainsaas.java.booking.core",
+            "path": "app/facade/src/main/java/com/ly/flight/chainsaas/booking/facade/model/response/OrderListResponse.java",
+            "symbol": "com.ly.flight.chainsaas.booking.facade.model.response.OrderListResponse#list",
+            "line": 18
+          },
+          {
+            "source_system_id": "ifightchainsaas.java.booking.core",
+            "path": "app/model/src/main/java/com/ly/flight/chainsaas/booking/model/PageVO.java",
+            "symbol": "com.ly.flight.chainsaas.booking.model.PageVO#pageList",
+            "line": 13
+          },
+          {
+            "source_system_id": "ifightchainsaas.java.booking.core",
+            "path": "app/model/src/main/java/com/ly/flight/chainsaas/booking/model/CoreVO.java",
+            "symbol": "com.ly.flight.chainsaas.booking.model.CoreVO#orderSerialNo",
+            "line": 35
+          },
+          {
+            "source_system_id": "ifightchainsaas.java.refund.core",
+            "path": "app/facade/src/main/java/com/ly/flight/chainsaas/refund/facade/model/response/OrderRefundInfoListResponse.java",
+            "symbol": "com.ly.flight.chainsaas.refund.facade.model.response.OrderRefundInfoListResponse#list",
+            "line": 15
+          },
+          {
+            "source_system_id": "ifightchainsaas.java.refund.core",
+            "path": "app/model/src/main/java/com/ly/flight/chainsaas/refund/model/CoreVO.java",
+            "symbol": "com.ly.flight.chainsaas.refund.model.CoreVO#refundSerialNo",
+            "line": 30
+          },
+          {
+            "source_system_id": "ifightchainsaas.java.refund.core",
+            "path": "app/model/src/main/java/com/ly/flight/chainsaas/refund/model/SaasRefundOrderVO.java",
+            "symbol": "com.ly.flight.chainsaas.refund.model.SaasRefundOrderVO#platFormId",
+            "line": 107
+          },
+          {
+            "source_system_id": "ifightchainsaas.java.refund.core",
+            "path": "app/model/src/main/java/com/ly/flight/chainsaas/refund/model/SaasRefundOrderVO.java",
+            "symbol": "com.ly.flight.chainsaas.refund.model.SaasRefundOrderVO#refundState",
+            "line": 55
+          },
+          {
+            "source_system_id": "ifightchainsaas.java.refund.core",
+            "path": "app/model/src/main/java/com/ly/flight/chainsaas/refund/model/SaasRefundOrderVO.java",
+            "symbol": "com.ly.flight.chainsaas.refund.model.SaasRefundOrderVO#cancelReason",
+            "line": 157
+          },
+          {
+            "source_system_id": "ifightchainsaas.java.refund.core",
+            "path": "app/biz/src/main/java/com/ly/flight/chainsaas/refund/biz/ordertask/processor/UpdateCancelReasonTaskProcessor.java",
+            "symbol": "com.ly.flight.chainsaas.refund.biz.ordertask.processor.UpdateCancelReasonTaskProcessor#doProcess",
+            "line": 22
+          },
+          {
+            "source_system_id": "ifightchainsaas.java.refund.core",
+            "path": "app/facade/src/main/java/com/ly/flight/chainsaas/refund/facade/model/response/RefundOrderListResponse.java",
+            "symbol": "com.ly.flight.chainsaas.refund.facade.model.response.RefundOrderListResponse#list",
+            "line": 16
+          },
+          {
+            "source_system_id": "ifightchainsaas.java.refund.core",
+            "path": "app/model/src/main/java/com/ly/flight/chainsaas/refund/model/PageVO.java",
+            "symbol": "com.ly.flight.chainsaas.refund.model.PageVO#pageList",
+            "line": 13
+          }
+        ]
+      }
+    ],
+    "case_templates": [
+      {
+        "template_id": "cancel.state_0",
+        "title": "退票申请订单取消成功",
+        "coverage_kind": "business",
+        "data_calls": [
+          {
+            "call_id": "candidate",
+            "function_name": "select_refund_for_cancel",
+            "arguments": {
+              "state_code": {
+                "kind": "parameter",
+                "name": "candidate_state",
+                "path": "code",
+                "step_id": "",
+                "call_id": "",
+                "output_name": ""
+              }
+            }
+          }
+        ],
+        "parameters": [
+          {
+            "name": "candidate_state",
+            "target_field": "",
+            "function_id": "enum.values",
+            "arguments": {
+              "values": [
+                {
+                  "code": 0,
+                  "name": "PENDING_APPLY"
+                }
+              ]
+            },
+            "base_source": null
+          }
+        ],
+        "constraints": [],
+        "request_bindings": [
+          {
+            "field": "refundSerialNo",
+            "source": {
+              "kind": "data_output",
+              "name": "",
+              "path": "",
+              "step_id": "",
+              "call_id": "candidate",
+              "output_name": "refund_no"
+            }
+          },
+          {
+            "field": "cancelReasonId",
+            "source": {
+              "kind": "data_output",
+              "name": "",
+              "path": "",
+              "step_id": "",
+              "call_id": "candidate",
+              "output_name": "reason_id"
+            }
+          },
+          {
+            "field": "cancelReason",
+            "source": {
+              "kind": "literal",
+              "value": "OpenTest取消接口测试",
+              "name": "",
+              "path": "",
+              "step_id": "",
+              "call_id": "",
+              "output_name": ""
+            }
+          },
+          {
+            "field": "cancelRemark",
+            "source": {
+              "kind": "literal",
+              "value": "OpenTest RefundFacade#cancel 状态验证",
+              "name": "",
+              "path": "",
+              "step_id": "",
+              "call_id": "",
+              "output_name": ""
+            }
+          },
+          {
+            "field": "operator",
+            "source": {
+              "kind": "literal",
+              "value": "OpenTest",
+              "name": "",
+              "path": "",
+              "step_id": "",
+              "call_id": "",
+              "output_name": ""
+            }
+          }
+        ],
+        "combination": "each",
+        "oracles": [
+          {
+            "oracle_id": "cancel.response",
+            "channel": "response",
+            "function_id": "",
+            "statement": "",
+            "arguments": {},
+            "observer_output_schema": null,
+            "assertions": [
+              {
+                "actual_path": "success",
+                "operator": "eq",
+                "expected": {
+                  "kind": "literal",
+                  "value": true,
+                  "name": "",
+                  "path": "",
+                  "step_id": "",
+                  "call_id": "",
+                  "output_name": ""
+                }
+              },
+              {
+                "actual_path": "orderSerialNo",
+                "operator": "eq",
+                "expected": {
+                  "kind": "request_field",
+                  "name": "",
+                  "path": "refundSerialNo",
+                  "step_id": "",
+                  "call_id": "",
+                  "output_name": ""
+                }
+              }
+            ],
+            "evidence": []
+          },
+          {
+            "oracle_id": "cancel.persisted_state",
+            "channel": "operation",
+            "function_id": "facade:com.ly.flight.chainsaas.refund.facade.RefundFacade#queryDetailByRefundNo",
+            "statement": "",
+            "arguments": {
+              "refundSerialNo": {
+                "kind": "request_field",
+                "name": "",
+                "path": "refundSerialNo",
+                "step_id": "",
+                "call_id": "",
+                "output_name": ""
+              }
+            },
+            "observer_output_schema": {
+              "type": "object",
+              "properties": {
+                "success": {
+                  "type": "boolean"
+                },
+                "saasRefundOrderVO": {
+                  "type": "object",
+                  "properties": {
+                    "refundSerialNo": {
+                      "type": "string"
+                    },
+                    "orderSerialNo": {
+                      "type": "string"
+                    },
+                    "platFormId": {
+                      "type": "string"
+                    },
+                    "cancelReason": {
+                      "type": "string"
+                    },
+                    "refundState": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "integer"
+                        },
+                        "name": {
+                          "type": "string"
+                        }
+                      },
+                      "additionalProperties": true
+                    }
+                  },
+                  "additionalProperties": true
+                }
+              },
+              "additionalProperties": true
+            },
+            "assertions": [
+              {
+                "actual_path": "success",
+                "operator": "eq",
+                "expected": {
+                  "kind": "literal",
+                  "value": true,
+                  "name": "",
+                  "path": "",
+                  "step_id": "",
+                  "call_id": "",
+                  "output_name": ""
+                }
+              },
+              {
+                "actual_path": "saasRefundOrderVO.refundSerialNo",
+                "operator": "eq",
+                "expected": {
+                  "kind": "request_field",
+                  "name": "",
+                  "path": "refundSerialNo",
+                  "step_id": "",
+                  "call_id": "",
+                  "output_name": ""
+                }
+              },
+              {
+                "actual_path": "saasRefundOrderVO.refundState.code",
+                "operator": "eq",
+                "expected": {
+                  "kind": "literal",
+                  "value": 6,
+                  "name": "",
+                  "path": "",
+                  "step_id": "",
+                  "call_id": "",
+                  "output_name": ""
+                }
+              }
+            ],
+            "evidence": [
+              {
+                "source_system_id": "ifightchainsaas.java.refund.core",
+                "path": "app/facade/src/main/java/com/ly/flight/chainsaas/refund/facade/model/response/RefundOrderDetailResponse.java",
+                "symbol": "com.ly.flight.chainsaas.refund.facade.model.response.RefundOrderDetailResponse#saasRefundOrderVO",
+                "line": 16
+              },
+              {
+                "source_system_id": "ifightchainsaas.java.refund.core",
+                "path": "app/model/src/main/java/com/ly/flight/chainsaas/refund/model/CoreVO.java",
+                "symbol": "com.ly.flight.chainsaas.refund.model.CoreVO#refundSerialNo",
+                "line": 30
+              },
+              {
+                "source_system_id": "ifightchainsaas.java.refund.core",
+                "path": "app/model/src/main/java/com/ly/flight/chainsaas/refund/model/SaasRefundOrderVO.java",
+                "symbol": "com.ly.flight.chainsaas.refund.model.SaasRefundOrderVO#refundState",
+                "line": 55
+              },
+              {
+                "source_system_id": "ifightchainsaas.java.refund.core",
+                "path": "app/model/src/main/java/com/ly/flight/chainsaas/refund/enums/RefundOrderStateEnum.java",
+                "symbol": "com.ly.flight.chainsaas.refund.enums.RefundOrderStateEnum",
+                "line": 12
+              }
+            ]
+          }
+        ],
+        "cleanup": null,
+        "evidence": [
+          {
+            "source_system_id": "ifightchainsaas.java.refund.core",
+            "path": "app/biz/src/main/java/com/ly/flight/chainsaas/refund/biz/manager/refund/RefundCancelServiceInvoker.java",
+            "symbol": "com.ly.flight.chainsaas.refund.biz.manager.refund.RefundCancelServiceInvoker#doInvoke",
+            "line": 114
+          },
+          {
+            "source_system_id": "ifightchainsaas.java.refund.core",
+            "path": "app/model/src/main/java/com/ly/flight/chainsaas/refund/enums/RefundOrderStateEnum.java",
+            "symbol": "com.ly.flight.chainsaas.refund.enums.RefundOrderStateEnum",
+            "line": 12
+          },
+          {
+            "source_system_id": "ifightchainsaas.java.refund.core",
+            "path": "app/biz/src/main/java/com/ly/flight/chainsaas/refund/biz/manager/refund/RefundCancelServiceInvoker.java",
+            "symbol": "com.ly.flight.chainsaas.refund.biz.manager.refund.RefundCancelServiceInvoker#buildSuccessResp",
+            "line": 163
+          },
+          {
+            "source_system_id": "ifightchainsaas.java.refund.core",
+            "path": "app/facade-impl/src/main/java/com/ly/flight/chainsaas/refund/facade/validator/trade/RefundCancelValidator.java",
+            "symbol": "com.ly.flight.chainsaas.refund.facade.validator.trade.RefundCancelValidator#validate",
+            "line": 19
+          }
+        ]
+      },
+      {
+        "template_id": "cancel.state_8",
+        "title": "核价中订单取消成功",
+        "coverage_kind": "business",
+        "data_calls": [
+          {
+            "call_id": "candidate",
+            "function_name": "select_refund_for_cancel",
+            "arguments": {
+              "state_code": {
+                "kind": "parameter",
+                "name": "candidate_state",
+                "path": "code",
+                "step_id": "",
+                "call_id": "",
+                "output_name": ""
+              }
+            }
+          }
+        ],
+        "parameters": [
+          {
+            "name": "candidate_state",
+            "target_field": "",
+            "function_id": "enum.values",
+            "arguments": {
+              "values": [
+                {
+                  "code": 8,
+                  "name": "RESHOPING"
+                }
+              ]
+            },
+            "base_source": null
+          }
+        ],
+        "constraints": [],
+        "request_bindings": [
+          {
+            "field": "refundSerialNo",
+            "source": {
+              "kind": "data_output",
+              "name": "",
+              "path": "",
+              "step_id": "",
+              "call_id": "candidate",
+              "output_name": "refund_no"
+            }
+          },
+          {
+            "field": "cancelReasonId",
+            "source": {
+              "kind": "data_output",
+              "name": "",
+              "path": "",
+              "step_id": "",
+              "call_id": "candidate",
+              "output_name": "reason_id"
+            }
+          },
+          {
+            "field": "cancelReason",
+            "source": {
+              "kind": "literal",
+              "value": "OpenTest取消接口测试",
+              "name": "",
+              "path": "",
+              "step_id": "",
+              "call_id": "",
+              "output_name": ""
+            }
+          },
+          {
+            "field": "cancelRemark",
+            "source": {
+              "kind": "literal",
+              "value": "OpenTest RefundFacade#cancel 状态验证",
+              "name": "",
+              "path": "",
+              "step_id": "",
+              "call_id": "",
+              "output_name": ""
+            }
+          },
+          {
+            "field": "operator",
+            "source": {
+              "kind": "literal",
+              "value": "OpenTest",
+              "name": "",
+              "path": "",
+              "step_id": "",
+              "call_id": "",
+              "output_name": ""
+            }
+          }
+        ],
+        "combination": "each",
+        "oracles": [
+          {
+            "oracle_id": "cancel.response",
+            "channel": "response",
+            "function_id": "",
+            "statement": "",
+            "arguments": {},
+            "observer_output_schema": null,
+            "assertions": [
+              {
+                "actual_path": "success",
+                "operator": "eq",
+                "expected": {
+                  "kind": "literal",
+                  "value": true,
+                  "name": "",
+                  "path": "",
+                  "step_id": "",
+                  "call_id": "",
+                  "output_name": ""
+                }
+              },
+              {
+                "actual_path": "orderSerialNo",
+                "operator": "eq",
+                "expected": {
+                  "kind": "request_field",
+                  "name": "",
+                  "path": "refundSerialNo",
+                  "step_id": "",
+                  "call_id": "",
+                  "output_name": ""
+                }
+              }
+            ],
+            "evidence": []
+          },
+          {
+            "oracle_id": "cancel.persisted_state",
+            "channel": "operation",
+            "function_id": "facade:com.ly.flight.chainsaas.refund.facade.RefundFacade#queryDetailByRefundNo",
+            "statement": "",
+            "arguments": {
+              "refundSerialNo": {
+                "kind": "request_field",
+                "name": "",
+                "path": "refundSerialNo",
+                "step_id": "",
+                "call_id": "",
+                "output_name": ""
+              }
+            },
+            "observer_output_schema": {
+              "type": "object",
+              "properties": {
+                "success": {
+                  "type": "boolean"
+                },
+                "saasRefundOrderVO": {
+                  "type": "object",
+                  "properties": {
+                    "refundSerialNo": {
+                      "type": "string"
+                    },
+                    "orderSerialNo": {
+                      "type": "string"
+                    },
+                    "platFormId": {
+                      "type": "string"
+                    },
+                    "cancelReason": {
+                      "type": "string"
+                    },
+                    "refundState": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "integer"
+                        },
+                        "name": {
+                          "type": "string"
+                        }
+                      },
+                      "additionalProperties": true
+                    }
+                  },
+                  "additionalProperties": true
+                }
+              },
+              "additionalProperties": true
+            },
+            "assertions": [
+              {
+                "actual_path": "success",
+                "operator": "eq",
+                "expected": {
+                  "kind": "literal",
+                  "value": true,
+                  "name": "",
+                  "path": "",
+                  "step_id": "",
+                  "call_id": "",
+                  "output_name": ""
+                }
+              },
+              {
+                "actual_path": "saasRefundOrderVO.refundSerialNo",
+                "operator": "eq",
+                "expected": {
+                  "kind": "request_field",
+                  "name": "",
+                  "path": "refundSerialNo",
+                  "step_id": "",
+                  "call_id": "",
+                  "output_name": ""
+                }
+              },
+              {
+                "actual_path": "saasRefundOrderVO.refundState.code",
+                "operator": "eq",
+                "expected": {
+                  "kind": "literal",
+                  "value": 6,
+                  "name": "",
+                  "path": "",
+                  "step_id": "",
+                  "call_id": "",
+                  "output_name": ""
+                }
+              }
+            ],
+            "evidence": [
+              {
+                "source_system_id": "ifightchainsaas.java.refund.core",
+                "path": "app/facade/src/main/java/com/ly/flight/chainsaas/refund/facade/model/response/RefundOrderDetailResponse.java",
+                "symbol": "com.ly.flight.chainsaas.refund.facade.model.response.RefundOrderDetailResponse#saasRefundOrderVO",
+                "line": 16
+              },
+              {
+                "source_system_id": "ifightchainsaas.java.refund.core",
+                "path": "app/model/src/main/java/com/ly/flight/chainsaas/refund/model/CoreVO.java",
+                "symbol": "com.ly.flight.chainsaas.refund.model.CoreVO#refundSerialNo",
+                "line": 30
+              },
+              {
+                "source_system_id": "ifightchainsaas.java.refund.core",
+                "path": "app/model/src/main/java/com/ly/flight/chainsaas/refund/model/SaasRefundOrderVO.java",
+                "symbol": "com.ly.flight.chainsaas.refund.model.SaasRefundOrderVO#refundState",
+                "line": 55
+              },
+              {
+                "source_system_id": "ifightchainsaas.java.refund.core",
+                "path": "app/model/src/main/java/com/ly/flight/chainsaas/refund/enums/RefundOrderStateEnum.java",
+                "symbol": "com.ly.flight.chainsaas.refund.enums.RefundOrderStateEnum",
+                "line": 12
+              }
+            ]
+          }
+        ],
+        "cleanup": null,
+        "evidence": [
+          {
+            "source_system_id": "ifightchainsaas.java.refund.core",
+            "path": "app/biz/src/main/java/com/ly/flight/chainsaas/refund/biz/manager/refund/RefundCancelServiceInvoker.java",
+            "symbol": "com.ly.flight.chainsaas.refund.biz.manager.refund.RefundCancelServiceInvoker#doInvoke",
+            "line": 114
+          },
+          {
+            "source_system_id": "ifightchainsaas.java.refund.core",
+            "path": "app/model/src/main/java/com/ly/flight/chainsaas/refund/enums/RefundOrderStateEnum.java",
+            "symbol": "com.ly.flight.chainsaas.refund.enums.RefundOrderStateEnum",
+            "line": 12
+          },
+          {
+            "source_system_id": "ifightchainsaas.java.refund.core",
+            "path": "app/biz/src/main/java/com/ly/flight/chainsaas/refund/biz/manager/refund/RefundCancelServiceInvoker.java",
+            "symbol": "com.ly.flight.chainsaas.refund.biz.manager.refund.RefundCancelServiceInvoker#buildSuccessResp",
+            "line": 163
+          },
+          {
+            "source_system_id": "ifightchainsaas.java.refund.core",
+            "path": "app/facade-impl/src/main/java/com/ly/flight/chainsaas/refund/facade/validator/trade/RefundCancelValidator.java",
+            "symbol": "com.ly.flight.chainsaas.refund.facade.validator.trade.RefundCancelValidator#validate",
+            "line": 19
+          }
+        ]
+      },
+      {
+        "template_id": "cancel.state_1",
+        "title": "审核通过订单取消成功",
+        "coverage_kind": "business",
+        "data_calls": [
+          {
+            "call_id": "candidate",
+            "function_name": "select_refund_for_cancel",
+            "arguments": {
+              "state_code": {
+                "kind": "parameter",
+                "name": "candidate_state",
+                "path": "code",
+                "step_id": "",
+                "call_id": "",
+                "output_name": ""
+              }
+            }
+          }
+        ],
+        "parameters": [
+          {
+            "name": "candidate_state",
+            "target_field": "",
+            "function_id": "enum.values",
+            "arguments": {
+              "values": [
+                {
+                  "code": 1,
+                  "name": "AUDITED"
+                }
+              ]
+            },
+            "base_source": null
+          }
+        ],
+        "constraints": [],
+        "request_bindings": [
+          {
+            "field": "refundSerialNo",
+            "source": {
+              "kind": "data_output",
+              "name": "",
+              "path": "",
+              "step_id": "",
+              "call_id": "candidate",
+              "output_name": "refund_no"
+            }
+          },
+          {
+            "field": "cancelReasonId",
+            "source": {
+              "kind": "data_output",
+              "name": "",
+              "path": "",
+              "step_id": "",
+              "call_id": "candidate",
+              "output_name": "reason_id"
+            }
+          },
+          {
+            "field": "cancelReason",
+            "source": {
+              "kind": "literal",
+              "value": "OpenTest取消接口测试",
+              "name": "",
+              "path": "",
+              "step_id": "",
+              "call_id": "",
+              "output_name": ""
+            }
+          },
+          {
+            "field": "cancelRemark",
+            "source": {
+              "kind": "literal",
+              "value": "OpenTest RefundFacade#cancel 状态验证",
+              "name": "",
+              "path": "",
+              "step_id": "",
+              "call_id": "",
+              "output_name": ""
+            }
+          },
+          {
+            "field": "operator",
+            "source": {
+              "kind": "literal",
+              "value": "OpenTest",
+              "name": "",
+              "path": "",
+              "step_id": "",
+              "call_id": "",
+              "output_name": ""
+            }
+          }
+        ],
+        "combination": "each",
+        "oracles": [
+          {
+            "oracle_id": "cancel.response",
+            "channel": "response",
+            "function_id": "",
+            "statement": "",
+            "arguments": {},
+            "observer_output_schema": null,
+            "assertions": [
+              {
+                "actual_path": "success",
+                "operator": "eq",
+                "expected": {
+                  "kind": "literal",
+                  "value": true,
+                  "name": "",
+                  "path": "",
+                  "step_id": "",
+                  "call_id": "",
+                  "output_name": ""
+                }
+              },
+              {
+                "actual_path": "orderSerialNo",
+                "operator": "eq",
+                "expected": {
+                  "kind": "request_field",
+                  "name": "",
+                  "path": "refundSerialNo",
+                  "step_id": "",
+                  "call_id": "",
+                  "output_name": ""
+                }
+              }
+            ],
+            "evidence": []
+          },
+          {
+            "oracle_id": "cancel.persisted_state",
+            "channel": "operation",
+            "function_id": "facade:com.ly.flight.chainsaas.refund.facade.RefundFacade#queryDetailByRefundNo",
+            "statement": "",
+            "arguments": {
+              "refundSerialNo": {
+                "kind": "request_field",
+                "name": "",
+                "path": "refundSerialNo",
+                "step_id": "",
+                "call_id": "",
+                "output_name": ""
+              }
+            },
+            "observer_output_schema": {
+              "type": "object",
+              "properties": {
+                "success": {
+                  "type": "boolean"
+                },
+                "saasRefundOrderVO": {
+                  "type": "object",
+                  "properties": {
+                    "refundSerialNo": {
+                      "type": "string"
+                    },
+                    "orderSerialNo": {
+                      "type": "string"
+                    },
+                    "platFormId": {
+                      "type": "string"
+                    },
+                    "cancelReason": {
+                      "type": "string"
+                    },
+                    "refundState": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "integer"
+                        },
+                        "name": {
+                          "type": "string"
+                        }
+                      },
+                      "additionalProperties": true
+                    }
+                  },
+                  "additionalProperties": true
+                }
+              },
+              "additionalProperties": true
+            },
+            "assertions": [
+              {
+                "actual_path": "success",
+                "operator": "eq",
+                "expected": {
+                  "kind": "literal",
+                  "value": true,
+                  "name": "",
+                  "path": "",
+                  "step_id": "",
+                  "call_id": "",
+                  "output_name": ""
+                }
+              },
+              {
+                "actual_path": "saasRefundOrderVO.refundSerialNo",
+                "operator": "eq",
+                "expected": {
+                  "kind": "request_field",
+                  "name": "",
+                  "path": "refundSerialNo",
+                  "step_id": "",
+                  "call_id": "",
+                  "output_name": ""
+                }
+              },
+              {
+                "actual_path": "saasRefundOrderVO.refundState.code",
+                "operator": "eq",
+                "expected": {
+                  "kind": "literal",
+                  "value": 6,
+                  "name": "",
+                  "path": "",
+                  "step_id": "",
+                  "call_id": "",
+                  "output_name": ""
+                }
+              }
+            ],
+            "evidence": [
+              {
+                "source_system_id": "ifightchainsaas.java.refund.core",
+                "path": "app/facade/src/main/java/com/ly/flight/chainsaas/refund/facade/model/response/RefundOrderDetailResponse.java",
+                "symbol": "com.ly.flight.chainsaas.refund.facade.model.response.RefundOrderDetailResponse#saasRefundOrderVO",
+                "line": 16
+              },
+              {
+                "source_system_id": "ifightchainsaas.java.refund.core",
+                "path": "app/model/src/main/java/com/ly/flight/chainsaas/refund/model/CoreVO.java",
+                "symbol": "com.ly.flight.chainsaas.refund.model.CoreVO#refundSerialNo",
+                "line": 30
+              },
+              {
+                "source_system_id": "ifightchainsaas.java.refund.core",
+                "path": "app/model/src/main/java/com/ly/flight/chainsaas/refund/model/SaasRefundOrderVO.java",
+                "symbol": "com.ly.flight.chainsaas.refund.model.SaasRefundOrderVO#refundState",
+                "line": 55
+              },
+              {
+                "source_system_id": "ifightchainsaas.java.refund.core",
+                "path": "app/model/src/main/java/com/ly/flight/chainsaas/refund/enums/RefundOrderStateEnum.java",
+                "symbol": "com.ly.flight.chainsaas.refund.enums.RefundOrderStateEnum",
+                "line": 12
+              }
+            ]
+          }
+        ],
+        "cleanup": null,
+        "evidence": [
+          {
+            "source_system_id": "ifightchainsaas.java.refund.core",
+            "path": "app/biz/src/main/java/com/ly/flight/chainsaas/refund/biz/manager/refund/RefundCancelServiceInvoker.java",
+            "symbol": "com.ly.flight.chainsaas.refund.biz.manager.refund.RefundCancelServiceInvoker#doInvoke",
+            "line": 114
+          },
+          {
+            "source_system_id": "ifightchainsaas.java.refund.core",
+            "path": "app/model/src/main/java/com/ly/flight/chainsaas/refund/enums/RefundOrderStateEnum.java",
+            "symbol": "com.ly.flight.chainsaas.refund.enums.RefundOrderStateEnum",
+            "line": 12
+          },
+          {
+            "source_system_id": "ifightchainsaas.java.refund.core",
+            "path": "app/biz/src/main/java/com/ly/flight/chainsaas/refund/biz/manager/refund/RefundCancelServiceInvoker.java",
+            "symbol": "com.ly.flight.chainsaas.refund.biz.manager.refund.RefundCancelServiceInvoker#buildSuccessResp",
+            "line": 163
+          },
+          {
+            "source_system_id": "ifightchainsaas.java.refund.core",
+            "path": "app/facade-impl/src/main/java/com/ly/flight/chainsaas/refund/facade/validator/trade/RefundCancelValidator.java",
+            "symbol": "com.ly.flight.chainsaas.refund.facade.validator.trade.RefundCancelValidator#validate",
+            "line": 19
+          }
+        ]
+      },
+      {
+        "template_id": "cancel.state_2",
+        "title": "待退票订单取消成功",
+        "coverage_kind": "business",
+        "data_calls": [
+          {
+            "call_id": "candidate",
+            "function_name": "select_refund_for_cancel",
+            "arguments": {
+              "state_code": {
+                "kind": "parameter",
+                "name": "candidate_state",
+                "path": "code",
+                "step_id": "",
+                "call_id": "",
+                "output_name": ""
+              }
+            }
+          }
+        ],
+        "parameters": [
+          {
+            "name": "candidate_state",
+            "target_field": "",
+            "function_id": "enum.values",
+            "arguments": {
+              "values": [
+                {
+                  "code": 2,
+                  "name": "WAIT_REFUND"
+                }
+              ]
+            },
+            "base_source": null
+          }
+        ],
+        "constraints": [],
+        "request_bindings": [
+          {
+            "field": "refundSerialNo",
+            "source": {
+              "kind": "data_output",
+              "name": "",
+              "path": "",
+              "step_id": "",
+              "call_id": "candidate",
+              "output_name": "refund_no"
+            }
+          },
+          {
+            "field": "cancelReasonId",
+            "source": {
+              "kind": "data_output",
+              "name": "",
+              "path": "",
+              "step_id": "",
+              "call_id": "candidate",
+              "output_name": "reason_id"
+            }
+          },
+          {
+            "field": "cancelReason",
+            "source": {
+              "kind": "literal",
+              "value": "OpenTest取消接口测试",
+              "name": "",
+              "path": "",
+              "step_id": "",
+              "call_id": "",
+              "output_name": ""
+            }
+          },
+          {
+            "field": "cancelRemark",
+            "source": {
+              "kind": "literal",
+              "value": "OpenTest RefundFacade#cancel 状态验证",
+              "name": "",
+              "path": "",
+              "step_id": "",
+              "call_id": "",
+              "output_name": ""
+            }
+          },
+          {
+            "field": "operator",
+            "source": {
+              "kind": "literal",
+              "value": "OpenTest",
+              "name": "",
+              "path": "",
+              "step_id": "",
+              "call_id": "",
+              "output_name": ""
+            }
+          }
+        ],
+        "combination": "each",
+        "oracles": [
+          {
+            "oracle_id": "cancel.response",
+            "channel": "response",
+            "function_id": "",
+            "statement": "",
+            "arguments": {},
+            "observer_output_schema": null,
+            "assertions": [
+              {
+                "actual_path": "success",
+                "operator": "eq",
+                "expected": {
+                  "kind": "literal",
+                  "value": true,
+                  "name": "",
+                  "path": "",
+                  "step_id": "",
+                  "call_id": "",
+                  "output_name": ""
+                }
+              },
+              {
+                "actual_path": "orderSerialNo",
+                "operator": "eq",
+                "expected": {
+                  "kind": "request_field",
+                  "name": "",
+                  "path": "refundSerialNo",
+                  "step_id": "",
+                  "call_id": "",
+                  "output_name": ""
+                }
+              }
+            ],
+            "evidence": []
+          },
+          {
+            "oracle_id": "cancel.persisted_state",
+            "channel": "operation",
+            "function_id": "facade:com.ly.flight.chainsaas.refund.facade.RefundFacade#queryDetailByRefundNo",
+            "statement": "",
+            "arguments": {
+              "refundSerialNo": {
+                "kind": "request_field",
+                "name": "",
+                "path": "refundSerialNo",
+                "step_id": "",
+                "call_id": "",
+                "output_name": ""
+              }
+            },
+            "observer_output_schema": {
+              "type": "object",
+              "properties": {
+                "success": {
+                  "type": "boolean"
+                },
+                "saasRefundOrderVO": {
+                  "type": "object",
+                  "properties": {
+                    "refundSerialNo": {
+                      "type": "string"
+                    },
+                    "orderSerialNo": {
+                      "type": "string"
+                    },
+                    "platFormId": {
+                      "type": "string"
+                    },
+                    "cancelReason": {
+                      "type": "string"
+                    },
+                    "refundState": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "integer"
+                        },
+                        "name": {
+                          "type": "string"
+                        }
+                      },
+                      "additionalProperties": true
+                    }
+                  },
+                  "additionalProperties": true
+                }
+              },
+              "additionalProperties": true
+            },
+            "assertions": [
+              {
+                "actual_path": "success",
+                "operator": "eq",
+                "expected": {
+                  "kind": "literal",
+                  "value": true,
+                  "name": "",
+                  "path": "",
+                  "step_id": "",
+                  "call_id": "",
+                  "output_name": ""
+                }
+              },
+              {
+                "actual_path": "saasRefundOrderVO.refundSerialNo",
+                "operator": "eq",
+                "expected": {
+                  "kind": "request_field",
+                  "name": "",
+                  "path": "refundSerialNo",
+                  "step_id": "",
+                  "call_id": "",
+                  "output_name": ""
+                }
+              },
+              {
+                "actual_path": "saasRefundOrderVO.refundState.code",
+                "operator": "eq",
+                "expected": {
+                  "kind": "literal",
+                  "value": 6,
+                  "name": "",
+                  "path": "",
+                  "step_id": "",
+                  "call_id": "",
+                  "output_name": ""
+                }
+              }
+            ],
+            "evidence": [
+              {
+                "source_system_id": "ifightchainsaas.java.refund.core",
+                "path": "app/facade/src/main/java/com/ly/flight/chainsaas/refund/facade/model/response/RefundOrderDetailResponse.java",
+                "symbol": "com.ly.flight.chainsaas.refund.facade.model.response.RefundOrderDetailResponse#saasRefundOrderVO",
+                "line": 16
+              },
+              {
+                "source_system_id": "ifightchainsaas.java.refund.core",
+                "path": "app/model/src/main/java/com/ly/flight/chainsaas/refund/model/CoreVO.java",
+                "symbol": "com.ly.flight.chainsaas.refund.model.CoreVO#refundSerialNo",
+                "line": 30
+              },
+              {
+                "source_system_id": "ifightchainsaas.java.refund.core",
+                "path": "app/model/src/main/java/com/ly/flight/chainsaas/refund/model/SaasRefundOrderVO.java",
+                "symbol": "com.ly.flight.chainsaas.refund.model.SaasRefundOrderVO#refundState",
+                "line": 55
+              },
+              {
+                "source_system_id": "ifightchainsaas.java.refund.core",
+                "path": "app/model/src/main/java/com/ly/flight/chainsaas/refund/enums/RefundOrderStateEnum.java",
+                "symbol": "com.ly.flight.chainsaas.refund.enums.RefundOrderStateEnum",
+                "line": 12
+              }
+            ]
+          }
+        ],
+        "cleanup": null,
+        "evidence": [
+          {
+            "source_system_id": "ifightchainsaas.java.refund.core",
+            "path": "app/biz/src/main/java/com/ly/flight/chainsaas/refund/biz/manager/refund/RefundCancelServiceInvoker.java",
+            "symbol": "com.ly.flight.chainsaas.refund.biz.manager.refund.RefundCancelServiceInvoker#doInvoke",
+            "line": 114
+          },
+          {
+            "source_system_id": "ifightchainsaas.java.refund.core",
+            "path": "app/model/src/main/java/com/ly/flight/chainsaas/refund/enums/RefundOrderStateEnum.java",
+            "symbol": "com.ly.flight.chainsaas.refund.enums.RefundOrderStateEnum",
+            "line": 12
+          },
+          {
+            "source_system_id": "ifightchainsaas.java.refund.core",
+            "path": "app/biz/src/main/java/com/ly/flight/chainsaas/refund/biz/manager/refund/RefundCancelServiceInvoker.java",
+            "symbol": "com.ly.flight.chainsaas.refund.biz.manager.refund.RefundCancelServiceInvoker#buildSuccessResp",
+            "line": 163
+          },
+          {
+            "source_system_id": "ifightchainsaas.java.refund.core",
+            "path": "app/facade-impl/src/main/java/com/ly/flight/chainsaas/refund/facade/validator/trade/RefundCancelValidator.java",
+            "symbol": "com.ly.flight.chainsaas.refund.facade.validator.trade.RefundCancelValidator#validate",
+            "line": 19
+          }
+        ]
+      },
+      {
+        "template_id": "cancel.state_5",
+        "title": "退票失败订单取消成功",
+        "coverage_kind": "business",
+        "data_calls": [
+          {
+            "call_id": "candidate",
+            "function_name": "select_refund_for_cancel",
+            "arguments": {
+              "state_code": {
+                "kind": "parameter",
+                "name": "candidate_state",
+                "path": "code",
+                "step_id": "",
+                "call_id": "",
+                "output_name": ""
+              }
+            }
+          }
+        ],
+        "parameters": [
+          {
+            "name": "candidate_state",
+            "target_field": "",
+            "function_id": "enum.values",
+            "arguments": {
+              "values": [
+                {
+                  "code": 5,
+                  "name": "REFUND_FAIL"
+                }
+              ]
+            },
+            "base_source": null
+          }
+        ],
+        "constraints": [],
+        "request_bindings": [
+          {
+            "field": "refundSerialNo",
+            "source": {
+              "kind": "data_output",
+              "name": "",
+              "path": "",
+              "step_id": "",
+              "call_id": "candidate",
+              "output_name": "refund_no"
+            }
+          },
+          {
+            "field": "cancelReasonId",
+            "source": {
+              "kind": "data_output",
+              "name": "",
+              "path": "",
+              "step_id": "",
+              "call_id": "candidate",
+              "output_name": "reason_id"
+            }
+          },
+          {
+            "field": "cancelReason",
+            "source": {
+              "kind": "literal",
+              "value": "OpenTest取消接口测试",
+              "name": "",
+              "path": "",
+              "step_id": "",
+              "call_id": "",
+              "output_name": ""
+            }
+          },
+          {
+            "field": "cancelRemark",
+            "source": {
+              "kind": "literal",
+              "value": "OpenTest RefundFacade#cancel 状态验证",
+              "name": "",
+              "path": "",
+              "step_id": "",
+              "call_id": "",
+              "output_name": ""
+            }
+          },
+          {
+            "field": "operator",
+            "source": {
+              "kind": "literal",
+              "value": "OpenTest",
+              "name": "",
+              "path": "",
+              "step_id": "",
+              "call_id": "",
+              "output_name": ""
+            }
+          }
+        ],
+        "combination": "each",
+        "oracles": [
+          {
+            "oracle_id": "cancel.response",
+            "channel": "response",
+            "function_id": "",
+            "statement": "",
+            "arguments": {},
+            "observer_output_schema": null,
+            "assertions": [
+              {
+                "actual_path": "success",
+                "operator": "eq",
+                "expected": {
+                  "kind": "literal",
+                  "value": true,
+                  "name": "",
+                  "path": "",
+                  "step_id": "",
+                  "call_id": "",
+                  "output_name": ""
+                }
+              },
+              {
+                "actual_path": "orderSerialNo",
+                "operator": "eq",
+                "expected": {
+                  "kind": "request_field",
+                  "name": "",
+                  "path": "refundSerialNo",
+                  "step_id": "",
+                  "call_id": "",
+                  "output_name": ""
+                }
+              }
+            ],
+            "evidence": []
+          },
+          {
+            "oracle_id": "cancel.persisted_state",
+            "channel": "operation",
+            "function_id": "facade:com.ly.flight.chainsaas.refund.facade.RefundFacade#queryDetailByRefundNo",
+            "statement": "",
+            "arguments": {
+              "refundSerialNo": {
+                "kind": "request_field",
+                "name": "",
+                "path": "refundSerialNo",
+                "step_id": "",
+                "call_id": "",
+                "output_name": ""
+              }
+            },
+            "observer_output_schema": {
+              "type": "object",
+              "properties": {
+                "success": {
+                  "type": "boolean"
+                },
+                "saasRefundOrderVO": {
+                  "type": "object",
+                  "properties": {
+                    "refundSerialNo": {
+                      "type": "string"
+                    },
+                    "orderSerialNo": {
+                      "type": "string"
+                    },
+                    "platFormId": {
+                      "type": "string"
+                    },
+                    "cancelReason": {
+                      "type": "string"
+                    },
+                    "refundState": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "integer"
+                        },
+                        "name": {
+                          "type": "string"
+                        }
+                      },
+                      "additionalProperties": true
+                    }
+                  },
+                  "additionalProperties": true
+                }
+              },
+              "additionalProperties": true
+            },
+            "assertions": [
+              {
+                "actual_path": "success",
+                "operator": "eq",
+                "expected": {
+                  "kind": "literal",
+                  "value": true,
+                  "name": "",
+                  "path": "",
+                  "step_id": "",
+                  "call_id": "",
+                  "output_name": ""
+                }
+              },
+              {
+                "actual_path": "saasRefundOrderVO.refundSerialNo",
+                "operator": "eq",
+                "expected": {
+                  "kind": "request_field",
+                  "name": "",
+                  "path": "refundSerialNo",
+                  "step_id": "",
+                  "call_id": "",
+                  "output_name": ""
+                }
+              },
+              {
+                "actual_path": "saasRefundOrderVO.refundState.code",
+                "operator": "eq",
+                "expected": {
+                  "kind": "literal",
+                  "value": 6,
+                  "name": "",
+                  "path": "",
+                  "step_id": "",
+                  "call_id": "",
+                  "output_name": ""
+                }
+              }
+            ],
+            "evidence": [
+              {
+                "source_system_id": "ifightchainsaas.java.refund.core",
+                "path": "app/facade/src/main/java/com/ly/flight/chainsaas/refund/facade/model/response/RefundOrderDetailResponse.java",
+                "symbol": "com.ly.flight.chainsaas.refund.facade.model.response.RefundOrderDetailResponse#saasRefundOrderVO",
+                "line": 16
+              },
+              {
+                "source_system_id": "ifightchainsaas.java.refund.core",
+                "path": "app/model/src/main/java/com/ly/flight/chainsaas/refund/model/CoreVO.java",
+                "symbol": "com.ly.flight.chainsaas.refund.model.CoreVO#refundSerialNo",
+                "line": 30
+              },
+              {
+                "source_system_id": "ifightchainsaas.java.refund.core",
+                "path": "app/model/src/main/java/com/ly/flight/chainsaas/refund/model/SaasRefundOrderVO.java",
+                "symbol": "com.ly.flight.chainsaas.refund.model.SaasRefundOrderVO#refundState",
+                "line": 55
+              },
+              {
+                "source_system_id": "ifightchainsaas.java.refund.core",
+                "path": "app/model/src/main/java/com/ly/flight/chainsaas/refund/enums/RefundOrderStateEnum.java",
+                "symbol": "com.ly.flight.chainsaas.refund.enums.RefundOrderStateEnum",
+                "line": 12
+              }
+            ]
+          }
+        ],
+        "cleanup": null,
+        "evidence": [
+          {
+            "source_system_id": "ifightchainsaas.java.refund.core",
+            "path": "app/biz/src/main/java/com/ly/flight/chainsaas/refund/biz/manager/refund/RefundCancelServiceInvoker.java",
+            "symbol": "com.ly.flight.chainsaas.refund.biz.manager.refund.RefundCancelServiceInvoker#doInvoke",
+            "line": 114
+          },
+          {
+            "source_system_id": "ifightchainsaas.java.refund.core",
+            "path": "app/model/src/main/java/com/ly/flight/chainsaas/refund/enums/RefundOrderStateEnum.java",
+            "symbol": "com.ly.flight.chainsaas.refund.enums.RefundOrderStateEnum",
+            "line": 12
+          },
+          {
+            "source_system_id": "ifightchainsaas.java.refund.core",
+            "path": "app/biz/src/main/java/com/ly/flight/chainsaas/refund/biz/manager/refund/RefundCancelServiceInvoker.java",
+            "symbol": "com.ly.flight.chainsaas.refund.biz.manager.refund.RefundCancelServiceInvoker#buildSuccessResp",
+            "line": 163
+          },
+          {
+            "source_system_id": "ifightchainsaas.java.refund.core",
+            "path": "app/facade-impl/src/main/java/com/ly/flight/chainsaas/refund/facade/validator/trade/RefundCancelValidator.java",
+            "symbol": "com.ly.flight.chainsaas.refund.facade.validator.trade.RefundCancelValidator#validate",
+            "line": 19
+          }
+        ]
+      },
+      {
+        "template_id": "cancel.state_6",
+        "title": "已取消订单再次取消保持成功",
+        "coverage_kind": "state_validation",
+        "data_calls": [
+          {
+            "call_id": "candidate",
+            "function_name": "select_refund_for_cancel",
+            "arguments": {
+              "state_code": {
+                "kind": "parameter",
+                "name": "candidate_state",
+                "path": "code",
+                "step_id": "",
+                "call_id": "",
+                "output_name": ""
+              }
+            }
+          }
+        ],
+        "parameters": [
+          {
+            "name": "candidate_state",
+            "target_field": "",
+            "function_id": "enum.values",
+            "arguments": {
+              "values": [
+                {
+                  "code": 6,
+                  "name": "REFUND_CANCEL"
+                }
+              ]
+            },
+            "base_source": null
+          }
+        ],
+        "constraints": [],
+        "request_bindings": [
+          {
+            "field": "refundSerialNo",
+            "source": {
+              "kind": "data_output",
+              "name": "",
+              "path": "",
+              "step_id": "",
+              "call_id": "candidate",
+              "output_name": "refund_no"
+            }
+          },
+          {
+            "field": "cancelReasonId",
+            "source": {
+              "kind": "data_output",
+              "name": "",
+              "path": "",
+              "step_id": "",
+              "call_id": "candidate",
+              "output_name": "reason_id"
+            }
+          },
+          {
+            "field": "cancelReason",
+            "source": {
+              "kind": "literal",
+              "value": "OpenTest取消接口测试",
+              "name": "",
+              "path": "",
+              "step_id": "",
+              "call_id": "",
+              "output_name": ""
+            }
+          },
+          {
+            "field": "cancelRemark",
+            "source": {
+              "kind": "literal",
+              "value": "OpenTest RefundFacade#cancel 状态验证",
+              "name": "",
+              "path": "",
+              "step_id": "",
+              "call_id": "",
+              "output_name": ""
+            }
+          },
+          {
+            "field": "operator",
+            "source": {
+              "kind": "literal",
+              "value": "OpenTest",
+              "name": "",
+              "path": "",
+              "step_id": "",
+              "call_id": "",
+              "output_name": ""
+            }
+          }
+        ],
+        "combination": "each",
+        "oracles": [
+          {
+            "oracle_id": "cancel.response",
+            "channel": "response",
+            "function_id": "",
+            "statement": "",
+            "arguments": {},
+            "observer_output_schema": null,
+            "assertions": [
+              {
+                "actual_path": "success",
+                "operator": "eq",
+                "expected": {
+                  "kind": "literal",
+                  "value": true,
+                  "name": "",
+                  "path": "",
+                  "step_id": "",
+                  "call_id": "",
+                  "output_name": ""
+                }
+              },
+              {
+                "actual_path": "orderSerialNo",
+                "operator": "eq",
+                "expected": {
+                  "kind": "request_field",
+                  "name": "",
+                  "path": "refundSerialNo",
+                  "step_id": "",
+                  "call_id": "",
+                  "output_name": ""
+                }
+              }
+            ],
+            "evidence": []
+          },
+          {
+            "oracle_id": "cancel.persisted_state",
+            "channel": "operation",
+            "function_id": "facade:com.ly.flight.chainsaas.refund.facade.RefundFacade#queryDetailByRefundNo",
+            "statement": "",
+            "arguments": {
+              "refundSerialNo": {
+                "kind": "request_field",
+                "name": "",
+                "path": "refundSerialNo",
+                "step_id": "",
+                "call_id": "",
+                "output_name": ""
+              }
+            },
+            "observer_output_schema": {
+              "type": "object",
+              "properties": {
+                "success": {
+                  "type": "boolean"
+                },
+                "saasRefundOrderVO": {
+                  "type": "object",
+                  "properties": {
+                    "refundSerialNo": {
+                      "type": "string"
+                    },
+                    "orderSerialNo": {
+                      "type": "string"
+                    },
+                    "platFormId": {
+                      "type": "string"
+                    },
+                    "cancelReason": {
+                      "type": "string"
+                    },
+                    "refundState": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "integer"
+                        },
+                        "name": {
+                          "type": "string"
+                        }
+                      },
+                      "additionalProperties": true
+                    }
+                  },
+                  "additionalProperties": true
+                }
+              },
+              "additionalProperties": true
+            },
+            "assertions": [
+              {
+                "actual_path": "success",
+                "operator": "eq",
+                "expected": {
+                  "kind": "literal",
+                  "value": true,
+                  "name": "",
+                  "path": "",
+                  "step_id": "",
+                  "call_id": "",
+                  "output_name": ""
+                }
+              },
+              {
+                "actual_path": "saasRefundOrderVO.refundSerialNo",
+                "operator": "eq",
+                "expected": {
+                  "kind": "request_field",
+                  "name": "",
+                  "path": "refundSerialNo",
+                  "step_id": "",
+                  "call_id": "",
+                  "output_name": ""
+                }
+              },
+              {
+                "actual_path": "saasRefundOrderVO.refundState.code",
+                "operator": "eq",
+                "expected": {
+                  "kind": "literal",
+                  "value": 6,
+                  "name": "",
+                  "path": "",
+                  "step_id": "",
+                  "call_id": "",
+                  "output_name": ""
+                }
+              }
+            ],
+            "evidence": [
+              {
+                "source_system_id": "ifightchainsaas.java.refund.core",
+                "path": "app/facade/src/main/java/com/ly/flight/chainsaas/refund/facade/model/response/RefundOrderDetailResponse.java",
+                "symbol": "com.ly.flight.chainsaas.refund.facade.model.response.RefundOrderDetailResponse#saasRefundOrderVO",
+                "line": 16
+              },
+              {
+                "source_system_id": "ifightchainsaas.java.refund.core",
+                "path": "app/model/src/main/java/com/ly/flight/chainsaas/refund/model/CoreVO.java",
+                "symbol": "com.ly.flight.chainsaas.refund.model.CoreVO#refundSerialNo",
+                "line": 30
+              },
+              {
+                "source_system_id": "ifightchainsaas.java.refund.core",
+                "path": "app/model/src/main/java/com/ly/flight/chainsaas/refund/model/SaasRefundOrderVO.java",
+                "symbol": "com.ly.flight.chainsaas.refund.model.SaasRefundOrderVO#refundState",
+                "line": 55
+              },
+              {
+                "source_system_id": "ifightchainsaas.java.refund.core",
+                "path": "app/model/src/main/java/com/ly/flight/chainsaas/refund/enums/RefundOrderStateEnum.java",
+                "symbol": "com.ly.flight.chainsaas.refund.enums.RefundOrderStateEnum",
+                "line": 12
+              }
+            ]
+          }
+        ],
+        "cleanup": null,
+        "evidence": [
+          {
+            "source_system_id": "ifightchainsaas.java.refund.core",
+            "path": "app/biz/src/main/java/com/ly/flight/chainsaas/refund/biz/manager/refund/RefundCancelServiceInvoker.java",
+            "symbol": "com.ly.flight.chainsaas.refund.biz.manager.refund.RefundCancelServiceInvoker#doInvoke",
+            "line": 114
+          },
+          {
+            "source_system_id": "ifightchainsaas.java.refund.core",
+            "path": "app/model/src/main/java/com/ly/flight/chainsaas/refund/enums/RefundOrderStateEnum.java",
+            "symbol": "com.ly.flight.chainsaas.refund.enums.RefundOrderStateEnum",
+            "line": 12
+          },
+          {
+            "source_system_id": "ifightchainsaas.java.refund.core",
+            "path": "app/biz/src/main/java/com/ly/flight/chainsaas/refund/biz/manager/refund/RefundCancelServiceInvoker.java",
+            "symbol": "com.ly.flight.chainsaas.refund.biz.manager.refund.RefundCancelServiceInvoker#buildSuccessResp",
+            "line": 163
+          },
+          {
+            "source_system_id": "ifightchainsaas.java.refund.core",
+            "path": "app/facade-impl/src/main/java/com/ly/flight/chainsaas/refund/facade/validator/trade/RefundCancelValidator.java",
+            "symbol": "com.ly.flight.chainsaas.refund.facade.validator.trade.RefundCancelValidator#validate",
+            "line": 19
+          }
+        ]
+      }
+    ],
+    "unresolved": []
+  },
+  "issues": [],
+  "variants": [
+    {
+      "variant_id": "case-variant-v4-03b6708a31347a62939c",
+      "template_id": "cancel.state_8",
+      "ordinal": 1,
+      "parameter_values": {
+        "candidate_state": {
+          "code": 8,
+          "name": "RESHOPING"
+        }
+      },
+      "request_values": {
+        "refundSerialNo": {
+          "kind": "data_output",
+          "call_id": "candidate",
+          "output_name": "refund_no"
+        },
+        "cancelReasonId": {
+          "kind": "data_output",
+          "call_id": "candidate",
+          "output_name": "reason_id"
+        },
+        "cancelReason": "OpenTest取消接口测试",
+        "cancelRemark": "OpenTest RefundFacade#cancel 状态验证",
+        "operator": "OpenTest"
+      },
+      "data_calls": [
+        {
+          "call_id": "candidate",
+          "function_name": "select_refund_for_cancel",
+          "arguments": {
+            "state_code": {
+              "kind": "parameter",
+              "name": "candidate_state",
+              "path": "code",
+              "step_id": "",
+              "call_id": "",
+              "output_name": ""
+            }
+          }
+        }
+      ],
+      "oracles": [
+        {
+          "oracle_id": "cancel.response",
+          "channel": "response",
+          "function_id": "",
+          "statement": "",
+          "arguments": {},
+          "observer_output_schema": null,
+          "assertions": [
+            {
+              "actual_path": "success",
+              "operator": "eq",
+              "expected": {
+                "kind": "literal",
+                "value": true,
+                "name": "",
+                "path": "",
+                "step_id": "",
+                "call_id": "",
+                "output_name": ""
+              }
+            },
+            {
+              "actual_path": "orderSerialNo",
+              "operator": "eq",
+              "expected": {
+                "kind": "request_field",
+                "name": "",
+                "path": "refundSerialNo",
+                "step_id": "",
+                "call_id": "",
+                "output_name": ""
+              }
+            }
+          ],
+          "evidence": []
+        },
+        {
+          "oracle_id": "cancel.persisted_state",
+          "channel": "operation",
+          "function_id": "facade:com.ly.flight.chainsaas.refund.facade.RefundFacade#queryDetailByRefundNo",
+          "statement": "",
+          "arguments": {
+            "refundSerialNo": {
+              "kind": "request_field",
+              "name": "",
+              "path": "refundSerialNo",
+              "step_id": "",
+              "call_id": "",
+              "output_name": ""
+            }
+          },
+          "observer_output_schema": {
+            "type": "object",
+            "properties": {
+              "success": {
+                "type": "boolean"
+              },
+              "saasRefundOrderVO": {
+                "type": "object",
+                "properties": {
+                  "refundSerialNo": {
+                    "type": "string"
+                  },
+                  "orderSerialNo": {
+                    "type": "string"
+                  },
+                  "platFormId": {
+                    "type": "string"
+                  },
+                  "cancelReason": {
+                    "type": "string"
+                  },
+                  "refundState": {
+                    "type": "object",
+                    "properties": {
+                      "code": {
+                        "type": "integer"
+                      },
+                      "name": {
+                        "type": "string"
+                      }
+                    },
+                    "additionalProperties": true
+                  }
+                },
+                "additionalProperties": true
+              }
+            },
+            "additionalProperties": true
+          },
+          "assertions": [
+            {
+              "actual_path": "success",
+              "operator": "eq",
+              "expected": {
+                "kind": "literal",
+                "value": true,
+                "name": "",
+                "path": "",
+                "step_id": "",
+                "call_id": "",
+                "output_name": ""
+              }
+            },
+            {
+              "actual_path": "saasRefundOrderVO.refundSerialNo",
+              "operator": "eq",
+              "expected": {
+                "kind": "request_field",
+                "name": "",
+                "path": "refundSerialNo",
+                "step_id": "",
+                "call_id": "",
+                "output_name": ""
+              }
+            },
+            {
+              "actual_path": "saasRefundOrderVO.refundState.code",
+              "operator": "eq",
+              "expected": {
+                "kind": "literal",
+                "value": 6,
+                "name": "",
+                "path": "",
+                "step_id": "",
+                "call_id": "",
+                "output_name": ""
+              }
+            }
+          ],
+          "evidence": [
+            {
+              "source_system_id": "ifightchainsaas.java.refund.core",
+              "path": "app/facade/src/main/java/com/ly/flight/chainsaas/refund/facade/model/response/RefundOrderDetailResponse.java",
+              "symbol": "com.ly.flight.chainsaas.refund.facade.model.response.RefundOrderDetailResponse#saasRefundOrderVO",
+              "line": 16
+            },
+            {
+              "source_system_id": "ifightchainsaas.java.refund.core",
+              "path": "app/model/src/main/java/com/ly/flight/chainsaas/refund/model/CoreVO.java",
+              "symbol": "com.ly.flight.chainsaas.refund.model.CoreVO#refundSerialNo",
+              "line": 30
+            },
+            {
+              "source_system_id": "ifightchainsaas.java.refund.core",
+              "path": "app/model/src/main/java/com/ly/flight/chainsaas/refund/model/SaasRefundOrderVO.java",
+              "symbol": "com.ly.flight.chainsaas.refund.model.SaasRefundOrderVO#refundState",
+              "line": 55
+            },
+            {
+              "source_system_id": "ifightchainsaas.java.refund.core",
+              "path": "app/model/src/main/java/com/ly/flight/chainsaas/refund/enums/RefundOrderStateEnum.java",
+              "symbol": "com.ly.flight.chainsaas.refund.enums.RefundOrderStateEnum",
+              "line": 12
+            }
+          ]
+        }
+      ],
+      "cleanup": null,
+      "blocked_reason": ""
+    },
+    {
+      "variant_id": "case-variant-v4-1b21a4a30eab762a67dc",
+      "template_id": "cancel.state_5",
+      "ordinal": 2,
+      "parameter_values": {
+        "candidate_state": {
+          "code": 5,
+          "name": "REFUND_FAIL"
+        }
+      },
+      "request_values": {
+        "refundSerialNo": {
+          "kind": "data_output",
+          "call_id": "candidate",
+          "output_name": "refund_no"
+        },
+        "cancelReasonId": {
+          "kind": "data_output",
+          "call_id": "candidate",
+          "output_name": "reason_id"
+        },
+        "cancelReason": "OpenTest取消接口测试",
+        "cancelRemark": "OpenTest RefundFacade#cancel 状态验证",
+        "operator": "OpenTest"
+      },
+      "data_calls": [
+        {
+          "call_id": "candidate",
+          "function_name": "select_refund_for_cancel",
+          "arguments": {
+            "state_code": {
+              "kind": "parameter",
+              "name": "candidate_state",
+              "path": "code",
+              "step_id": "",
+              "call_id": "",
+              "output_name": ""
+            }
+          }
+        }
+      ],
+      "oracles": [
+        {
+          "oracle_id": "cancel.response",
+          "channel": "response",
+          "function_id": "",
+          "statement": "",
+          "arguments": {},
+          "observer_output_schema": null,
+          "assertions": [
+            {
+              "actual_path": "success",
+              "operator": "eq",
+              "expected": {
+                "kind": "literal",
+                "value": true,
+                "name": "",
+                "path": "",
+                "step_id": "",
+                "call_id": "",
+                "output_name": ""
+              }
+            },
+            {
+              "actual_path": "orderSerialNo",
+              "operator": "eq",
+              "expected": {
+                "kind": "request_field",
+                "name": "",
+                "path": "refundSerialNo",
+                "step_id": "",
+                "call_id": "",
+                "output_name": ""
+              }
+            }
+          ],
+          "evidence": []
+        },
+        {
+          "oracle_id": "cancel.persisted_state",
+          "channel": "operation",
+          "function_id": "facade:com.ly.flight.chainsaas.refund.facade.RefundFacade#queryDetailByRefundNo",
+          "statement": "",
+          "arguments": {
+            "refundSerialNo": {
+              "kind": "request_field",
+              "name": "",
+              "path": "refundSerialNo",
+              "step_id": "",
+              "call_id": "",
+              "output_name": ""
+            }
+          },
+          "observer_output_schema": {
+            "type": "object",
+            "properties": {
+              "success": {
+                "type": "boolean"
+              },
+              "saasRefundOrderVO": {
+                "type": "object",
+                "properties": {
+                  "refundSerialNo": {
+                    "type": "string"
+                  },
+                  "orderSerialNo": {
+                    "type": "string"
+                  },
+                  "platFormId": {
+                    "type": "string"
+                  },
+                  "cancelReason": {
+                    "type": "string"
+                  },
+                  "refundState": {
+                    "type": "object",
+                    "properties": {
+                      "code": {
+                        "type": "integer"
+                      },
+                      "name": {
+                        "type": "string"
+                      }
+                    },
+                    "additionalProperties": true
+                  }
+                },
+                "additionalProperties": true
+              }
+            },
+            "additionalProperties": true
+          },
+          "assertions": [
+            {
+              "actual_path": "success",
+              "operator": "eq",
+              "expected": {
+                "kind": "literal",
+                "value": true,
+                "name": "",
+                "path": "",
+                "step_id": "",
+                "call_id": "",
+                "output_name": ""
+              }
+            },
+            {
+              "actual_path": "saasRefundOrderVO.refundSerialNo",
+              "operator": "eq",
+              "expected": {
+                "kind": "request_field",
+                "name": "",
+                "path": "refundSerialNo",
+                "step_id": "",
+                "call_id": "",
+                "output_name": ""
+              }
+            },
+            {
+              "actual_path": "saasRefundOrderVO.refundState.code",
+              "operator": "eq",
+              "expected": {
+                "kind": "literal",
+                "value": 6,
+                "name": "",
+                "path": "",
+                "step_id": "",
+                "call_id": "",
+                "output_name": ""
+              }
+            }
+          ],
+          "evidence": [
+            {
+              "source_system_id": "ifightchainsaas.java.refund.core",
+              "path": "app/facade/src/main/java/com/ly/flight/chainsaas/refund/facade/model/response/RefundOrderDetailResponse.java",
+              "symbol": "com.ly.flight.chainsaas.refund.facade.model.response.RefundOrderDetailResponse#saasRefundOrderVO",
+              "line": 16
+            },
+            {
+              "source_system_id": "ifightchainsaas.java.refund.core",
+              "path": "app/model/src/main/java/com/ly/flight/chainsaas/refund/model/CoreVO.java",
+              "symbol": "com.ly.flight.chainsaas.refund.model.CoreVO#refundSerialNo",
+              "line": 30
+            },
+            {
+              "source_system_id": "ifightchainsaas.java.refund.core",
+              "path": "app/model/src/main/java/com/ly/flight/chainsaas/refund/model/SaasRefundOrderVO.java",
+              "symbol": "com.ly.flight.chainsaas.refund.model.SaasRefundOrderVO#refundState",
+              "line": 55
+            },
+            {
+              "source_system_id": "ifightchainsaas.java.refund.core",
+              "path": "app/model/src/main/java/com/ly/flight/chainsaas/refund/enums/RefundOrderStateEnum.java",
+              "symbol": "com.ly.flight.chainsaas.refund.enums.RefundOrderStateEnum",
+              "line": 12
+            }
+          ]
+        }
+      ],
+      "cleanup": null,
+      "blocked_reason": ""
+    },
+    {
+      "variant_id": "case-variant-v4-3c8de1dda30aae53798f",
+      "template_id": "cancel.state_2",
+      "ordinal": 3,
+      "parameter_values": {
+        "candidate_state": {
+          "code": 2,
+          "name": "WAIT_REFUND"
+        }
+      },
+      "request_values": {
+        "refundSerialNo": {
+          "kind": "data_output",
+          "call_id": "candidate",
+          "output_name": "refund_no"
+        },
+        "cancelReasonId": {
+          "kind": "data_output",
+          "call_id": "candidate",
+          "output_name": "reason_id"
+        },
+        "cancelReason": "OpenTest取消接口测试",
+        "cancelRemark": "OpenTest RefundFacade#cancel 状态验证",
+        "operator": "OpenTest"
+      },
+      "data_calls": [
+        {
+          "call_id": "candidate",
+          "function_name": "select_refund_for_cancel",
+          "arguments": {
+            "state_code": {
+              "kind": "parameter",
+              "name": "candidate_state",
+              "path": "code",
+              "step_id": "",
+              "call_id": "",
+              "output_name": ""
+            }
+          }
+        }
+      ],
+      "oracles": [
+        {
+          "oracle_id": "cancel.response",
+          "channel": "response",
+          "function_id": "",
+          "statement": "",
+          "arguments": {},
+          "observer_output_schema": null,
+          "assertions": [
+            {
+              "actual_path": "success",
+              "operator": "eq",
+              "expected": {
+                "kind": "literal",
+                "value": true,
+                "name": "",
+                "path": "",
+                "step_id": "",
+                "call_id": "",
+                "output_name": ""
+              }
+            },
+            {
+              "actual_path": "orderSerialNo",
+              "operator": "eq",
+              "expected": {
+                "kind": "request_field",
+                "name": "",
+                "path": "refundSerialNo",
+                "step_id": "",
+                "call_id": "",
+                "output_name": ""
+              }
+            }
+          ],
+          "evidence": []
+        },
+        {
+          "oracle_id": "cancel.persisted_state",
+          "channel": "operation",
+          "function_id": "facade:com.ly.flight.chainsaas.refund.facade.RefundFacade#queryDetailByRefundNo",
+          "statement": "",
+          "arguments": {
+            "refundSerialNo": {
+              "kind": "request_field",
+              "name": "",
+              "path": "refundSerialNo",
+              "step_id": "",
+              "call_id": "",
+              "output_name": ""
+            }
+          },
+          "observer_output_schema": {
+            "type": "object",
+            "properties": {
+              "success": {
+                "type": "boolean"
+              },
+              "saasRefundOrderVO": {
+                "type": "object",
+                "properties": {
+                  "refundSerialNo": {
+                    "type": "string"
+                  },
+                  "orderSerialNo": {
+                    "type": "string"
+                  },
+                  "platFormId": {
+                    "type": "string"
+                  },
+                  "cancelReason": {
+                    "type": "string"
+                  },
+                  "refundState": {
+                    "type": "object",
+                    "properties": {
+                      "code": {
+                        "type": "integer"
+                      },
+                      "name": {
+                        "type": "string"
+                      }
+                    },
+                    "additionalProperties": true
+                  }
+                },
+                "additionalProperties": true
+              }
+            },
+            "additionalProperties": true
+          },
+          "assertions": [
+            {
+              "actual_path": "success",
+              "operator": "eq",
+              "expected": {
+                "kind": "literal",
+                "value": true,
+                "name": "",
+                "path": "",
+                "step_id": "",
+                "call_id": "",
+                "output_name": ""
+              }
+            },
+            {
+              "actual_path": "saasRefundOrderVO.refundSerialNo",
+              "operator": "eq",
+              "expected": {
+                "kind": "request_field",
+                "name": "",
+                "path": "refundSerialNo",
+                "step_id": "",
+                "call_id": "",
+                "output_name": ""
+              }
+            },
+            {
+              "actual_path": "saasRefundOrderVO.refundState.code",
+              "operator": "eq",
+              "expected": {
+                "kind": "literal",
+                "value": 6,
+                "name": "",
+                "path": "",
+                "step_id": "",
+                "call_id": "",
+                "output_name": ""
+              }
+            }
+          ],
+          "evidence": [
+            {
+              "source_system_id": "ifightchainsaas.java.refund.core",
+              "path": "app/facade/src/main/java/com/ly/flight/chainsaas/refund/facade/model/response/RefundOrderDetailResponse.java",
+              "symbol": "com.ly.flight.chainsaas.refund.facade.model.response.RefundOrderDetailResponse#saasRefundOrderVO",
+              "line": 16
+            },
+            {
+              "source_system_id": "ifightchainsaas.java.refund.core",
+              "path": "app/model/src/main/java/com/ly/flight/chainsaas/refund/model/CoreVO.java",
+              "symbol": "com.ly.flight.chainsaas.refund.model.CoreVO#refundSerialNo",
+              "line": 30
+            },
+            {
+              "source_system_id": "ifightchainsaas.java.refund.core",
+              "path": "app/model/src/main/java/com/ly/flight/chainsaas/refund/model/SaasRefundOrderVO.java",
+              "symbol": "com.ly.flight.chainsaas.refund.model.SaasRefundOrderVO#refundState",
+              "line": 55
+            },
+            {
+              "source_system_id": "ifightchainsaas.java.refund.core",
+              "path": "app/model/src/main/java/com/ly/flight/chainsaas/refund/enums/RefundOrderStateEnum.java",
+              "symbol": "com.ly.flight.chainsaas.refund.enums.RefundOrderStateEnum",
+              "line": 12
+            }
+          ]
+        }
+      ],
+      "cleanup": null,
+      "blocked_reason": ""
+    },
+    {
+      "variant_id": "case-variant-v4-6fc3896863f2613e39af",
+      "template_id": "cancel.state_1",
+      "ordinal": 4,
+      "parameter_values": {
+        "candidate_state": {
+          "code": 1,
+          "name": "AUDITED"
+        }
+      },
+      "request_values": {
+        "refundSerialNo": {
+          "kind": "data_output",
+          "call_id": "candidate",
+          "output_name": "refund_no"
+        },
+        "cancelReasonId": {
+          "kind": "data_output",
+          "call_id": "candidate",
+          "output_name": "reason_id"
+        },
+        "cancelReason": "OpenTest取消接口测试",
+        "cancelRemark": "OpenTest RefundFacade#cancel 状态验证",
+        "operator": "OpenTest"
+      },
+      "data_calls": [
+        {
+          "call_id": "candidate",
+          "function_name": "select_refund_for_cancel",
+          "arguments": {
+            "state_code": {
+              "kind": "parameter",
+              "name": "candidate_state",
+              "path": "code",
+              "step_id": "",
+              "call_id": "",
+              "output_name": ""
+            }
+          }
+        }
+      ],
+      "oracles": [
+        {
+          "oracle_id": "cancel.response",
+          "channel": "response",
+          "function_id": "",
+          "statement": "",
+          "arguments": {},
+          "observer_output_schema": null,
+          "assertions": [
+            {
+              "actual_path": "success",
+              "operator": "eq",
+              "expected": {
+                "kind": "literal",
+                "value": true,
+                "name": "",
+                "path": "",
+                "step_id": "",
+                "call_id": "",
+                "output_name": ""
+              }
+            },
+            {
+              "actual_path": "orderSerialNo",
+              "operator": "eq",
+              "expected": {
+                "kind": "request_field",
+                "name": "",
+                "path": "refundSerialNo",
+                "step_id": "",
+                "call_id": "",
+                "output_name": ""
+              }
+            }
+          ],
+          "evidence": []
+        },
+        {
+          "oracle_id": "cancel.persisted_state",
+          "channel": "operation",
+          "function_id": "facade:com.ly.flight.chainsaas.refund.facade.RefundFacade#queryDetailByRefundNo",
+          "statement": "",
+          "arguments": {
+            "refundSerialNo": {
+              "kind": "request_field",
+              "name": "",
+              "path": "refundSerialNo",
+              "step_id": "",
+              "call_id": "",
+              "output_name": ""
+            }
+          },
+          "observer_output_schema": {
+            "type": "object",
+            "properties": {
+              "success": {
+                "type": "boolean"
+              },
+              "saasRefundOrderVO": {
+                "type": "object",
+                "properties": {
+                  "refundSerialNo": {
+                    "type": "string"
+                  },
+                  "orderSerialNo": {
+                    "type": "string"
+                  },
+                  "platFormId": {
+                    "type": "string"
+                  },
+                  "cancelReason": {
+                    "type": "string"
+                  },
+                  "refundState": {
+                    "type": "object",
+                    "properties": {
+                      "code": {
+                        "type": "integer"
+                      },
+                      "name": {
+                        "type": "string"
+                      }
+                    },
+                    "additionalProperties": true
+                  }
+                },
+                "additionalProperties": true
+              }
+            },
+            "additionalProperties": true
+          },
+          "assertions": [
+            {
+              "actual_path": "success",
+              "operator": "eq",
+              "expected": {
+                "kind": "literal",
+                "value": true,
+                "name": "",
+                "path": "",
+                "step_id": "",
+                "call_id": "",
+                "output_name": ""
+              }
+            },
+            {
+              "actual_path": "saasRefundOrderVO.refundSerialNo",
+              "operator": "eq",
+              "expected": {
+                "kind": "request_field",
+                "name": "",
+                "path": "refundSerialNo",
+                "step_id": "",
+                "call_id": "",
+                "output_name": ""
+              }
+            },
+            {
+              "actual_path": "saasRefundOrderVO.refundState.code",
+              "operator": "eq",
+              "expected": {
+                "kind": "literal",
+                "value": 6,
+                "name": "",
+                "path": "",
+                "step_id": "",
+                "call_id": "",
+                "output_name": ""
+              }
+            }
+          ],
+          "evidence": [
+            {
+              "source_system_id": "ifightchainsaas.java.refund.core",
+              "path": "app/facade/src/main/java/com/ly/flight/chainsaas/refund/facade/model/response/RefundOrderDetailResponse.java",
+              "symbol": "com.ly.flight.chainsaas.refund.facade.model.response.RefundOrderDetailResponse#saasRefundOrderVO",
+              "line": 16
+            },
+            {
+              "source_system_id": "ifightchainsaas.java.refund.core",
+              "path": "app/model/src/main/java/com/ly/flight/chainsaas/refund/model/CoreVO.java",
+              "symbol": "com.ly.flight.chainsaas.refund.model.CoreVO#refundSerialNo",
+              "line": 30
+            },
+            {
+              "source_system_id": "ifightchainsaas.java.refund.core",
+              "path": "app/model/src/main/java/com/ly/flight/chainsaas/refund/model/SaasRefundOrderVO.java",
+              "symbol": "com.ly.flight.chainsaas.refund.model.SaasRefundOrderVO#refundState",
+              "line": 55
+            },
+            {
+              "source_system_id": "ifightchainsaas.java.refund.core",
+              "path": "app/model/src/main/java/com/ly/flight/chainsaas/refund/enums/RefundOrderStateEnum.java",
+              "symbol": "com.ly.flight.chainsaas.refund.enums.RefundOrderStateEnum",
+              "line": 12
+            }
+          ]
+        }
+      ],
+      "cleanup": null,
+      "blocked_reason": ""
+    },
+    {
+      "variant_id": "case-variant-v4-ca605f52202a8b13b7cd",
+      "template_id": "cancel.state_0",
+      "ordinal": 5,
+      "parameter_values": {
+        "candidate_state": {
+          "code": 0,
+          "name": "PENDING_APPLY"
+        }
+      },
+      "request_values": {
+        "refundSerialNo": {
+          "kind": "data_output",
+          "call_id": "candidate",
+          "output_name": "refund_no"
+        },
+        "cancelReasonId": {
+          "kind": "data_output",
+          "call_id": "candidate",
+          "output_name": "reason_id"
+        },
+        "cancelReason": "OpenTest取消接口测试",
+        "cancelRemark": "OpenTest RefundFacade#cancel 状态验证",
+        "operator": "OpenTest"
+      },
+      "data_calls": [
+        {
+          "call_id": "candidate",
+          "function_name": "select_refund_for_cancel",
+          "arguments": {
+            "state_code": {
+              "kind": "parameter",
+              "name": "candidate_state",
+              "path": "code",
+              "step_id": "",
+              "call_id": "",
+              "output_name": ""
+            }
+          }
+        }
+      ],
+      "oracles": [
+        {
+          "oracle_id": "cancel.response",
+          "channel": "response",
+          "function_id": "",
+          "statement": "",
+          "arguments": {},
+          "observer_output_schema": null,
+          "assertions": [
+            {
+              "actual_path": "success",
+              "operator": "eq",
+              "expected": {
+                "kind": "literal",
+                "value": true,
+                "name": "",
+                "path": "",
+                "step_id": "",
+                "call_id": "",
+                "output_name": ""
+              }
+            },
+            {
+              "actual_path": "orderSerialNo",
+              "operator": "eq",
+              "expected": {
+                "kind": "request_field",
+                "name": "",
+                "path": "refundSerialNo",
+                "step_id": "",
+                "call_id": "",
+                "output_name": ""
+              }
+            }
+          ],
+          "evidence": []
+        },
+        {
+          "oracle_id": "cancel.persisted_state",
+          "channel": "operation",
+          "function_id": "facade:com.ly.flight.chainsaas.refund.facade.RefundFacade#queryDetailByRefundNo",
+          "statement": "",
+          "arguments": {
+            "refundSerialNo": {
+              "kind": "request_field",
+              "name": "",
+              "path": "refundSerialNo",
+              "step_id": "",
+              "call_id": "",
+              "output_name": ""
+            }
+          },
+          "observer_output_schema": {
+            "type": "object",
+            "properties": {
+              "success": {
+                "type": "boolean"
+              },
+              "saasRefundOrderVO": {
+                "type": "object",
+                "properties": {
+                  "refundSerialNo": {
+                    "type": "string"
+                  },
+                  "orderSerialNo": {
+                    "type": "string"
+                  },
+                  "platFormId": {
+                    "type": "string"
+                  },
+                  "cancelReason": {
+                    "type": "string"
+                  },
+                  "refundState": {
+                    "type": "object",
+                    "properties": {
+                      "code": {
+                        "type": "integer"
+                      },
+                      "name": {
+                        "type": "string"
+                      }
+                    },
+                    "additionalProperties": true
+                  }
+                },
+                "additionalProperties": true
+              }
+            },
+            "additionalProperties": true
+          },
+          "assertions": [
+            {
+              "actual_path": "success",
+              "operator": "eq",
+              "expected": {
+                "kind": "literal",
+                "value": true,
+                "name": "",
+                "path": "",
+                "step_id": "",
+                "call_id": "",
+                "output_name": ""
+              }
+            },
+            {
+              "actual_path": "saasRefundOrderVO.refundSerialNo",
+              "operator": "eq",
+              "expected": {
+                "kind": "request_field",
+                "name": "",
+                "path": "refundSerialNo",
+                "step_id": "",
+                "call_id": "",
+                "output_name": ""
+              }
+            },
+            {
+              "actual_path": "saasRefundOrderVO.refundState.code",
+              "operator": "eq",
+              "expected": {
+                "kind": "literal",
+                "value": 6,
+                "name": "",
+                "path": "",
+                "step_id": "",
+                "call_id": "",
+                "output_name": ""
+              }
+            }
+          ],
+          "evidence": [
+            {
+              "source_system_id": "ifightchainsaas.java.refund.core",
+              "path": "app/facade/src/main/java/com/ly/flight/chainsaas/refund/facade/model/response/RefundOrderDetailResponse.java",
+              "symbol": "com.ly.flight.chainsaas.refund.facade.model.response.RefundOrderDetailResponse#saasRefundOrderVO",
+              "line": 16
+            },
+            {
+              "source_system_id": "ifightchainsaas.java.refund.core",
+              "path": "app/model/src/main/java/com/ly/flight/chainsaas/refund/model/CoreVO.java",
+              "symbol": "com.ly.flight.chainsaas.refund.model.CoreVO#refundSerialNo",
+              "line": 30
+            },
+            {
+              "source_system_id": "ifightchainsaas.java.refund.core",
+              "path": "app/model/src/main/java/com/ly/flight/chainsaas/refund/model/SaasRefundOrderVO.java",
+              "symbol": "com.ly.flight.chainsaas.refund.model.SaasRefundOrderVO#refundState",
+              "line": 55
+            },
+            {
+              "source_system_id": "ifightchainsaas.java.refund.core",
+              "path": "app/model/src/main/java/com/ly/flight/chainsaas/refund/enums/RefundOrderStateEnum.java",
+              "symbol": "com.ly.flight.chainsaas.refund.enums.RefundOrderStateEnum",
+              "line": 12
+            }
+          ]
+        }
+      ],
+      "cleanup": null,
+      "blocked_reason": ""
+    },
+    {
+      "variant_id": "case-variant-v4-e0b2d8a56fa2c40eeafb",
+      "template_id": "cancel.state_6",
+      "ordinal": 6,
+      "parameter_values": {
+        "candidate_state": {
+          "code": 6,
+          "name": "REFUND_CANCEL"
+        }
+      },
+      "request_values": {
+        "refundSerialNo": {
+          "kind": "data_output",
+          "call_id": "candidate",
+          "output_name": "refund_no"
+        },
+        "cancelReasonId": {
+          "kind": "data_output",
+          "call_id": "candidate",
+          "output_name": "reason_id"
+        },
+        "cancelReason": "OpenTest取消接口测试",
+        "cancelRemark": "OpenTest RefundFacade#cancel 状态验证",
+        "operator": "OpenTest"
+      },
+      "data_calls": [
+        {
+          "call_id": "candidate",
+          "function_name": "select_refund_for_cancel",
+          "arguments": {
+            "state_code": {
+              "kind": "parameter",
+              "name": "candidate_state",
+              "path": "code",
+              "step_id": "",
+              "call_id": "",
+              "output_name": ""
+            }
+          }
+        }
+      ],
+      "oracles": [
+        {
+          "oracle_id": "cancel.response",
+          "channel": "response",
+          "function_id": "",
+          "statement": "",
+          "arguments": {},
+          "observer_output_schema": null,
+          "assertions": [
+            {
+              "actual_path": "success",
+              "operator": "eq",
+              "expected": {
+                "kind": "literal",
+                "value": true,
+                "name": "",
+                "path": "",
+                "step_id": "",
+                "call_id": "",
+                "output_name": ""
+              }
+            },
+            {
+              "actual_path": "orderSerialNo",
+              "operator": "eq",
+              "expected": {
+                "kind": "request_field",
+                "name": "",
+                "path": "refundSerialNo",
+                "step_id": "",
+                "call_id": "",
+                "output_name": ""
+              }
+            }
+          ],
+          "evidence": []
+        },
+        {
+          "oracle_id": "cancel.persisted_state",
+          "channel": "operation",
+          "function_id": "facade:com.ly.flight.chainsaas.refund.facade.RefundFacade#queryDetailByRefundNo",
+          "statement": "",
+          "arguments": {
+            "refundSerialNo": {
+              "kind": "request_field",
+              "name": "",
+              "path": "refundSerialNo",
+              "step_id": "",
+              "call_id": "",
+              "output_name": ""
+            }
+          },
+          "observer_output_schema": {
+            "type": "object",
+            "properties": {
+              "success": {
+                "type": "boolean"
+              },
+              "saasRefundOrderVO": {
+                "type": "object",
+                "properties": {
+                  "refundSerialNo": {
+                    "type": "string"
+                  },
+                  "orderSerialNo": {
+                    "type": "string"
+                  },
+                  "platFormId": {
+                    "type": "string"
+                  },
+                  "cancelReason": {
+                    "type": "string"
+                  },
+                  "refundState": {
+                    "type": "object",
+                    "properties": {
+                      "code": {
+                        "type": "integer"
+                      },
+                      "name": {
+                        "type": "string"
+                      }
+                    },
+                    "additionalProperties": true
+                  }
+                },
+                "additionalProperties": true
+              }
+            },
+            "additionalProperties": true
+          },
+          "assertions": [
+            {
+              "actual_path": "success",
+              "operator": "eq",
+              "expected": {
+                "kind": "literal",
+                "value": true,
+                "name": "",
+                "path": "",
+                "step_id": "",
+                "call_id": "",
+                "output_name": ""
+              }
+            },
+            {
+              "actual_path": "saasRefundOrderVO.refundSerialNo",
+              "operator": "eq",
+              "expected": {
+                "kind": "request_field",
+                "name": "",
+                "path": "refundSerialNo",
+                "step_id": "",
+                "call_id": "",
+                "output_name": ""
+              }
+            },
+            {
+              "actual_path": "saasRefundOrderVO.refundState.code",
+              "operator": "eq",
+              "expected": {
+                "kind": "literal",
+                "value": 6,
+                "name": "",
+                "path": "",
+                "step_id": "",
+                "call_id": "",
+                "output_name": ""
+              }
+            }
+          ],
+          "evidence": [
+            {
+              "source_system_id": "ifightchainsaas.java.refund.core",
+              "path": "app/facade/src/main/java/com/ly/flight/chainsaas/refund/facade/model/response/RefundOrderDetailResponse.java",
+              "symbol": "com.ly.flight.chainsaas.refund.facade.model.response.RefundOrderDetailResponse#saasRefundOrderVO",
+              "line": 16
+            },
+            {
+              "source_system_id": "ifightchainsaas.java.refund.core",
+              "path": "app/model/src/main/java/com/ly/flight/chainsaas/refund/model/CoreVO.java",
+              "symbol": "com.ly.flight.chainsaas.refund.model.CoreVO#refundSerialNo",
+              "line": 30
+            },
+            {
+              "source_system_id": "ifightchainsaas.java.refund.core",
+              "path": "app/model/src/main/java/com/ly/flight/chainsaas/refund/model/SaasRefundOrderVO.java",
+              "symbol": "com.ly.flight.chainsaas.refund.model.SaasRefundOrderVO#refundState",
+              "line": 55
+            },
+            {
+              "source_system_id": "ifightchainsaas.java.refund.core",
+              "path": "app/model/src/main/java/com/ly/flight/chainsaas/refund/enums/RefundOrderStateEnum.java",
+              "symbol": "com.ly.flight.chainsaas.refund.enums.RefundOrderStateEnum",
+              "line": 12
+            }
+          ]
+        }
+      ],
+      "cleanup": null,
+      "blocked_reason": ""
+    }
+  ],
+  "created_at": "2026-09-07T19:01:09.196714+00:00"
+}

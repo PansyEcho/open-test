@@ -3763,8 +3763,12 @@ def test_dynamic_facade_agent_must_read_and_publish_downstream_source_refs(tmp_p
     forged_symbol_envelope["source_refs"][2] = forged_service_reference
     forged_symbol_envelope["trace_steps"][2]["source_ref"] = forged_service_reference
     output_path.write_text(json.dumps(forged_symbol_envelope, ensure_ascii=False), encoding="utf-8")
-    with pytest.raises(KnowledgeValidationError, match="source symbol"):
+    with pytest.raises(KnowledgeValidationError, match="source symbol") as invalid_symbol:
         service._validate_agent_evidence(request, manifest, nodes, evidence, str(source_root))
+    # 网页Agent需要具体位置才能只修订错误引用，错误中不能只有笼统的符号失败。
+    assert f"path={service_reference['path']}" in str(invalid_symbol.value)
+    assert "symbol=FakeService#queryOrderList" in str(invalid_symbol.value)
+    assert f"line={service_reference['line']}" in str(invalid_symbol.value)
 
     # 每个符号分别存在也不能组成虚构链；Service没有调用DAO时必须拒绝相邻步骤。
     output_path.write_text(json.dumps(envelope, ensure_ascii=False), encoding="utf-8")
@@ -3776,6 +3780,29 @@ def test_dynamic_facade_agent_must_read_and_publish_downstream_source_refs(tmp_p
     )
     with pytest.raises(KnowledgeValidationError, match="not connected"):
         service._validate_agent_evidence(request, manifest, nodes, evidence, str(source_root))
+
+
+def test_client_java_signature_does_not_split_parameter_commas(tmp_path: Path) -> None:
+    """多参数及泛型方法签名保持单一方法身份，真实声明仍决定是否可发布。
+
+    Args:
+        tmp_path: 隔离知识服务与源码证据。
+    Returns:
+        None；合法签名可验证，未读行和不存在方法仍不能被规范化放行。
+    """
+    service, _, _ = _knowledge_service(tmp_path)
+    lines = ["class Monitor {", "  void add(java.util.Map<String, String> keys, String id) {}", "}"]
+    reference = AgentKnowledgeSourceReference(path="Monitor.java", line=2,
+        symbol="Monitor#add(java.util.Map<java.lang.String,java.lang.String>,java.lang.String)")
+    normalized = service._normalize_client_source_reference(reference, lines, [(1, 3)])
+    assert normalized.symbol == "Monitor#add"
+    service._validate_agent_source_symbol(normalized, lines)
+    # 规范化必须保持原读取边界，并把不存在的方法交给严格符号校验拒绝。
+    assert service._normalize_client_source_reference(reference, lines, [(1, 1)]) == reference
+    forged = reference.model_copy(update={"symbol": "Monitor#missing(String,String)"})
+    normalized_forgery = service._normalize_client_source_reference(forged, lines, [(1, 3)])
+    with pytest.raises(KnowledgeValidationError, match="method is absent"):
+        service._validate_agent_source_symbol(normalized_forgery, lines)
 
 
 def test_agent_java_reference_binds_declared_type_line_and_overload(tmp_path: Path) -> None:

@@ -1173,8 +1173,11 @@ def test_runtime_registry_is_derived_from_operations_without_refund_fixture() ->
         [facade, database, mq_sender],
     )
 
-    assert {item.function_id for item in registry.functions} == {facade.operation_id, DATABASE_ID}
+    assert {item.function_id for item in registry.functions} == {facade.operation_id, DATABASE_ID, f"{DATABASE_ID}:data"}
     assert {item.kind for item in registry.functions} == {"dsf", "mysql"}
+    database_data = next(item for item in registry.functions if item.function_id.endswith(":data"))
+    assert database_data.allowed_phases == ["DATA"]
+    assert not database_data.read_only
     assert all("refund_order.get" not in item.function_id for item in registry.functions)
 
 
@@ -1887,7 +1890,7 @@ def test_operation_limit_blocks_template_before_qa_execution() -> None:
 
 
 def test_cancel_executor_runs_dynamic_data_target_detail_and_mysql() -> None:
-    """确认五个cancel Variant逐次跨系统选单并保留脱敏阶段摘要和断言明细。
+    """确认五个cancel Variant逐次跨系统选单并保留完整业务请求、响应与断言。
 
     Returns:
         None；五个Variant完成动态取数、目标调用和结构化Oracle执行时通过。
@@ -1950,8 +1953,8 @@ def test_cancel_executor_runs_dynamic_data_target_detail_and_mysql() -> None:
         [item.model_dump(mode="json") for item in results],
         ensure_ascii=False,
     )
-    assert "RF-0" not in serialized_report
-    assert "OWNER-100" not in serialized_report
+    assert "RF-0" in serialized_report
+    assert "OWNER-100" in serialized_report
 
 
 def test_blocked_data_call_preserves_completed_operation_summaries() -> None:
@@ -1999,7 +2002,7 @@ def test_provider_failure_is_failed_and_preserves_operation_trace() -> None:
     """确认QA Provider失败不会被误报为动态数据BLOCKED。
 
     Returns:
-        None；全部Variant为FAILED且保留失败booking execution时通过。
+        None；全部Variant为FAILED且保留失败booking的请求、响应、错误和执行身份时通过。
     """
 
     variants, issues = _compile_golden()
@@ -2029,8 +2032,12 @@ def test_provider_failure_is_failed_and_preserves_operation_trace() -> None:
     assert all(item.operations[0].status == "FAILED" for item in results)
     assert all(item.operations[0].execution_id for item in results)
     assert all("QA_PROVIDER_FAILED" in item.error for item in results)
-    assert all(item.operations[0].error == "QA_PROVIDER_FAILED" for item in results)
-    assert all("booking QA provider failed" not in item.error for item in results)
+    assert all(item.operations[0].error.startswith("QA_PROVIDER_FAILED:") for item in results)
+    assert all("booking QA provider failed" in item.error for item in results)
+    # 即使Provider判为失败，报告仍保留实际请求和已返回的正文，不能只剩摘要或异常类型。
+    assert all(item.operations[0].actual_request == {"page": 1, "pageSize": 20} for item in results)
+    assert all(item.operations[0].actual_response["output"]["list"]["pageList"] == [{"ownerId": "OWNER-100"}]
+               for item in results)
 
 
 def test_operation_request_identity_is_stable_and_binds_actual_arguments() -> None:
@@ -2676,11 +2683,11 @@ def test_executor_propagates_canonical_environment_to_every_operation_phase() ->
     assert [operation.phase for operation in create_results[0].operations] == ["TARGET", "CLEANUP"]
 
 
-def test_execution_report_does_not_copy_provider_error_message() -> None:
-    """Provider原始错误中的PNR或订单号不得复制到Execution报告。
+def test_execution_report_preserves_provider_business_error_message() -> None:
+    """Provider业务错误中的PNR和订单号应保留到Execution报告。
 
     Returns:
-        None；目标阶段和Variant只保存稳定错误码且序列化结果不含敏感值时通过。
+        None；目标阶段和Variant同时保存错误码与业务原因，配置凭据仍由Provider边界移除。
     """
 
     sensitive_pnr = "SENSITIVE-PNR-781234567890"
@@ -2700,8 +2707,8 @@ def test_execution_report_does_not_copy_provider_error_message() -> None:
         ensure_ascii=False,
     )
     assert results[0].status == "FAILED"
-    assert results[0].operations[0].error == "OPERATION_FAILED"
-    assert sensitive_pnr not in serialized_report
+    assert results[0].operations[0].error.startswith("OPERATION_FAILED:")
+    assert sensitive_pnr in serialized_report
 
 
 @pytest.mark.parametrize(

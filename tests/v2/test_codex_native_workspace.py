@@ -1483,11 +1483,11 @@ def test_operation_plugin_and_generated_skill_are_explicit_and_fixed(
     tmp_path: Path,
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    """MCP应暴露原生Agent闭环，且不搬运旧凭据或猜测执行环境。
+    """MCP应暴露原生Agent闭环，默认QA且保留明确环境，不搬运旧凭据。
 
     Args:
         tmp_path: Pytest隔离的应用与源码目录。
-        monkeypatch: 拦截回环API，证明工具只传业务参数与显式环境。
+        monkeypatch: 拦截回环API，证明工具只传业务参数与默认或显式环境。
     """
 
     plugin_root = Path(__file__).parents[2] / "opentest-plugin-marketplace/plugins/open-test-knowledge"
@@ -1529,7 +1529,8 @@ def test_operation_plugin_and_generated_skill_are_explicit_and_fixed(
     execute_tool = next(tool for tool in tools if tool["name"] == "execute_operation")
     assert execute_tool["annotations"]["destructiveHint"] is True
     assert execute_tool["annotations"]["idempotentHint"] is True
-    assert "environment_id" in execute_tool["inputSchema"]["required"]
+    assert "environment_id" not in execute_tool["inputSchema"]["required"]
+    assert execute_tool["inputSchema"]["properties"]["environment_id"]["default"] == "qa"
     register_tool = next(tool for tool in tools if tool["name"] == "register_system")
     update_tool = next(tool for tool in tools if tool["name"] == "update_system")
     forbidden_secret_fields = {"qa_labrador_token", "qa_gateway_prefix"}
@@ -1631,7 +1632,7 @@ def test_operation_plugin_and_generated_skill_are_explicit_and_fixed(
     assert "有效知识已存在" in skill
     assert "只有用户明确要求执行某个READY/PARTIAL Generation时" in skill
     assert "同系统对外Facade优先，外部DSF次之" in skill
-    assert "DELETE和DDL" in skill
+    assert "DELETE" in skill and "不重复询问" in skill
     assert "allow_implicit_invocation: false" in metadata
 
 

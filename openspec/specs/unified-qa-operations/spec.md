@@ -25,17 +25,17 @@ The operation catalog SHALL derive an MQ send operation from each scanned consum
 
 ### Requirement: Database operations are restricted and purpose-bound
 
-The operation catalog SHALL expose scanned databases only for a single parameterized `SELECT`, `SHOW`, `EXPLAIN`, `INSERT` or `UPDATE`. Database use SHALL require interface insufficiency, an explicit user request, or a Case database step.
+The operation catalog SHALL expose scanned databases only for a single parameterized `SELECT`, `SHOW`, `EXPLAIN`, `INSERT`, `UPDATE` or `DELETE`. Database use SHALL require interface insufficiency, an explicit user request, or a Case database step.
 
 #### Scenario: Explicit database write
 
-- **WHEN** an explicit write request or Case submits one parameterized INSERT or UPDATE
+- **WHEN** an explicit write request or Case submits one parameterized INSERT, UPDATE or DELETE
 - **THEN** the Worker selects the WRITE pool and commits the transaction
 - **AND** rolls back on failure
 
 #### Scenario: Unsafe SQL
 
-- **WHEN** SQL contains multiple statements, DELETE, DDL, comments or a parameter-count mismatch
+- **WHEN** SQL contains multiple statements, DDL, comments or a parameter-count mismatch
 - **THEN** execution fails before a database connection is opened
 
 ### Requirement: QA results preserve business data but not credentials

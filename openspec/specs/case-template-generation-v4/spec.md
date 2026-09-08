@@ -5,35 +5,35 @@ TBD - created by archiving change reconcile-v4-case-and-versioned-console. Updat
 ## Requirements
 ### Requirement: V4 resolves any eligible latest Facade entry
 
-The system SHALL accept a raw `fully.qualified.Facade#method` or canonical Facade Entry ID, resolve exactly one Entry from the target system's latest scan, and require current READY input knowledge before creating a Case generation handoff.
+The system SHALL resolve one current Facade entry and reuse valid target knowledge or prepare a linked knowledge prerequisite before Case compilation.
 
 #### Scenario: Start generation for an eligible Facade
 
-- **WHEN** a caller posts an existing latest READY Facade identity to `/api/v4/systems/{system_id}/case-generations`
-- **THEN** the system returns `202` with a handoff ID, thread ID, turn ID, polling URL and Codex deep link
-- **AND** the handoff freezes the target Entry, source scan and directly authorized source-system scopes
+- **WHEN** a caller prepares an existing latest Facade through the v2 Case API
+- **THEN** the result identifies a persisted task and frozen handoff, or its linked knowledge prerequisite
+- **AND** web mode starts execution while native mode remains in the calling Agent
 
 #### Scenario: Target or required knowledge is unavailable
 
-- **WHEN** the identity is absent, ambiguous, stale or lacks READY input knowledge
-- **THEN** the system rejects the request before model execution
-- **AND** it does not fabricate a request, Variant or successful QA result
+- **WHEN** the target is valid but required knowledge is missing
+- **THEN** only knowledge needed for that interface is prepared and Case generation continues after publication
+- **AND** absent or ambiguous targets remain precise errors without fabricated QA results
 
 ### Requirement: V4 uses the current Codex user Provider and validated model profile
 
-The system SHALL obtain the visible model catalog from Codex App Server `model/list`, SHALL NOT read or copy Provider credentials, and SHALL resolve model settings in the order request override, saved V4 default, then Codex catalog default.
+Web generation SHALL use the existing local Codex runner, native Provider configuration and saved project model settings without copying credentials. Native generation SHALL use the current Agent.
 
 #### Scenario: Create the first V4 turn
 
-- **WHEN** the selected model and reasoning effort are supported by the current user's Provider
-- **THEN** one App Server owner starts the thread, verifies the scoped MCP server, names the thread and starts the first turn in the same App Server session with the frozen Provider, model and effort
-- **AND** the first prompt is the turn input with the V4 tool scope
+- **WHEN** a web task starts
+- **THEN** one local runner receives only task-scoped OpenTest tools and the configured model and effort
+- **AND** its output can update only the bound workflow and its linked prerequisite
 
 #### Scenario: Model profile is invalid or Provider authorization fails
 
-- **WHEN** the model is absent, the effort is unsupported, or thread/turn startup returns a Provider error
-- **THEN** the request is rejected before thread creation or the handoff converges to `FAILED`
-- **AND** it does not remain indefinitely in `WAITING_FOR_AGENT`
+- **WHEN** Codex rejects model settings or Provider authorization
+- **THEN** the task displays the recoverable run failure with its existing draft intact
+- **AND** no successful generation is claimed without a readable published artifact
 
 ### Requirement: V4 source and outer-interface discovery is scoped and version-frozen
 

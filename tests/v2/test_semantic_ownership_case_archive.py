@@ -19,6 +19,63 @@ SYSTEM_ID = "refund-core"
 ENTRY_ID = "facade:demo.RefundFacade#cancel"
 
 
+def test_failed_web_handoff_resumes_and_publishes_without_archive_collision(tmp_path):
+    """失败归档在同ID续跑后可以从RUNNING发布，重启只保留最新完整状态。
+
+    Args:
+        tmp_path: 隔离任务与归档目录。
+    Returns:
+        None；失败、续跑、发布和重启的权威记录一致时通过。
+    """
+    root = tmp_path / "tasks"
+    manager = LocalTaskManager(root)
+    try:
+        waiting = manager.create_waiting_task("knowledge-codex-client-handoff", SYSTEM_ID,
+                                             TaskStatus.WAITING_FOR_CLIENT, _handoff("task-aaaaaaaaaaaaaaaa"))
+        failed = manager.transition_waiting_task(waiting.task_id, TaskStatus.FAILED, waiting.client_handoff)
+        assert manager._archive_path(failed.task_id).exists()
+        # 模拟网页重新启动同一任务，不重建handoff、不删除草稿。
+        running = manager.save_business_record(failed.model_copy(update={
+            "status": TaskStatus.RUNNING, "interaction_mode": "web", "ended_at": None,
+        }))
+        assert not manager._archive_path(running.task_id).exists()
+        published = running.client_handoff.model_copy(update={"status": KnowledgeClientHandoffStatus.PUBLISHED})
+        manager.transition_waiting_task(running.task_id, TaskStatus.COMPLETED, published)
+    finally:
+        manager.close()
+    restarted = LocalTaskManager(root)
+    try:
+        assert restarted.get(waiting.task_id).status == TaskStatus.COMPLETED
+        assert not restarted._path(waiting.task_id).exists()
+    finally:
+        restarted.close()
+
+
+def test_restart_preserves_latest_same_identity_archive_record(tmp_path):
+    """恢复旧版已产生的活动/归档双记录时保留get一直返回的最新活动状态。
+
+    Args:
+        tmp_path: 隔离状态目录。
+    Returns:
+        None；启动不碰撞且不回退原revision时通过。
+    """
+    root = tmp_path / "tasks"
+    manager = LocalTaskManager(root)
+    waiting = manager.create_waiting_task("knowledge-codex-client-handoff", SYSTEM_ID,
+                                         TaskStatus.WAITING_FOR_CLIENT, _handoff("task-aaaaaaaaaaaaaaaa"))
+    failed = manager.transition_waiting_task(waiting.task_id, TaskStatus.FAILED, waiting.client_handoff)
+    # 直接构造旧格式故障；正常写入路径已不会生成第二份同ID文件。
+    newer = failed.model_copy(update={"error": "latest failure", "web_run_id": "agent-1111111111111111"})
+    manager._path(waiting.task_id).write_text(newer.model_dump_json())
+    manager.close()
+    restarted = LocalTaskManager(root)
+    try:
+        assert restarted.get(waiting.task_id).error == "latest failure"
+        assert restarted.get(waiting.task_id).web_run_id == newer.web_run_id
+    finally:
+        restarted.close()
+
+
 def _handoff(task_id: str, suffix: str = "a") -> KnowledgeClientHandoff:
     """构造绑定稳定任务和知识目标的最小Codex handoff。
 

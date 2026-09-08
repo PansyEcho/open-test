@@ -23,6 +23,18 @@ source_refs:
   commit: ''
   content_digest: ''
 - repository: ''
+  path: app/facade-impl/src/main/java/com/ly/flight/chainsaas/refund/facade/validator/trade/CreateRefundOrderValidator.java
+  symbol: com.ly.flight.chainsaas.refund.facade.validator.trade.CreateRefundOrderValidator#validate
+  line: 28
+  commit: ''
+  content_digest: ''
+- repository: ''
+  path: app/biz/src/main/java/com/ly/flight/chainsaas/refund/biz/manager/refund/CreateRefundOrderInvoker.java
+  symbol: com.ly.flight.chainsaas.refund.biz.manager.refund.CreateRefundOrderInvoker
+  line: 82
+  commit: ''
+  content_digest: ''
+- repository: ''
   path: app/biz/src/main/java/com/ly/flight/chainsaas/refund/biz/manager/refund/CreateRefundOrderInvoker.java
   symbol: com.ly.flight.chainsaas.refund.biz.manager.refund.CreateRefundOrderInvoker#invoke
   line: 125
@@ -35,9 +47,33 @@ source_refs:
   commit: ''
   content_digest: ''
 - repository: ''
-  path: app/biz/src/main/java/com/ly/flight/chainsaas/refund/biz/builder/impl/OrderBuilder.java
-  symbol: com.ly.flight.chainsaas.refund.biz.builder.impl.OrderBuilder#buildOrder
-  line: 97
+  path: app/biz/src/main/java/com/ly/flight/chainsaas/refund/biz/manager/refund/CreateRefundOrderInvoker.java
+  symbol: com.ly.flight.chainsaas.refund.biz.manager.refund.CreateRefundOrderInvoker
+  line: 88
+  commit: ''
+  content_digest: ''
+- repository: ''
+  path: app/biz/src/main/java/com/ly/flight/chainsaas/refund/biz/manager/AbstractOrderServiceInvoker.java
+  symbol: com.ly.flight.chainsaas.refund.biz.manager.AbstractOrderServiceInvoker
+  line: 36
+  commit: ''
+  content_digest: ''
+- repository: ''
+  path: app/biz/src/main/java/com/ly/flight/chainsaas/refund/biz/manager/AbstractOrderServiceInvoker.java
+  symbol: com.ly.flight.chainsaas.refund.biz.manager.AbstractOrderServiceInvoker
+  line: 52
+  commit: ''
+  content_digest: ''
+- repository: ''
+  path: app/biz/src/main/java/com/ly/flight/chainsaas/refund/biz/service/OrderService.java
+  symbol: com.ly.flight.chainsaas.refund.biz.service.OrderService#saveOrder
+  line: 107
+  commit: ''
+  content_digest: ''
+- repository: ''
+  path: app/biz/src/main/java/com/ly/flight/chainsaas/refund/biz/service/impl/OrderServiceImpl.java
+  symbol: com.ly.flight.chainsaas.refund.biz.service.impl.OrderServiceImpl
+  line: 56
   commit: ''
   content_digest: ''
 - repository: ''
@@ -47,9 +83,9 @@ source_refs:
   commit: ''
   content_digest: ''
 - repository: ''
-  path: app/biz/src/main/java/com/ly/flight/chainsaas/refund/biz/converter/OrderConverter.java
-  symbol: com.ly.flight.chainsaas.refund.biz.converter.OrderConverter#vo2do
-  line: 28
+  path: app/biz/src/main/java/com/ly/flight/chainsaas/refund/biz/service/AbstractOrderService.java
+  symbol: com.ly.flight.chainsaas.refund.biz.service.AbstractOrderService
+  line: 11
   commit: ''
   content_digest: ''
 - repository: ''
@@ -70,34 +106,24 @@ source_refs:
   line: 308
   commit: ''
   content_digest: ''
-- repository: ''
-  path: app/biz/src/main/java/com/ly/flight/chainsaas/refund/biz/service/OrderService.java
-  symbol: com.ly.flight.chainsaas.refund.biz.service.OrderService#saveOrder
-  line: 107
-  commit: ''
-  content_digest: ''
-- repository: ''
-  path: app/biz/src/main/java/com/ly/flight/chainsaas/refund/biz/manager/refund/CreateRefundOrderInvoker.java
-  symbol: com.ly.flight.chainsaas.refund.biz.manager.refund.CreateRefundOrderInvoker#innerInvoke
-  line: 208
-  commit: ''
-  content_digest: ''
-- repository: ''
-  path: app/biz/src/main/java/com/ly/flight/chainsaas/refund/biz/service/AbstractOrderService.java
-  symbol: com.ly.flight.chainsaas.refund.biz.service.AbstractOrderService
-  line: 8
-  commit: ''
-  content_digest: ''
 status: inferred
 confidence: 1.0
 tags: []
 test_points:
 - kind: common_rule
-  title: 生成监控键
-  condition: 退票单包含原订单及PSI关系
-  expected_outcome: 按固定格式派生监控键
+  title: 乘客和航段键均为空
+  condition: passengerKey为空且segmentKeys为null或空集合
+  expected_outcome: 不向keys集合添加监控键。
+- kind: common_rule
+  title: 仅有乘客键
+  condition: passengerKey非空且segmentKeys为null或空集合
+  expected_outcome: 将passengerKey直接加入keys集合。
+- kind: common_rule
+  title: 乘客与航段组合
+  condition: segmentKeys包含非空值，passengerKey为空或非空，且可能包含空航段键
+  expected_outcome: 空航段键跳过；每个非空航段生成segmentKey或passengerKey@segmentKey并加入keys。
 metadata:
-  scan_id: scan-20260827223314-a0f437c374-27423ce1
+  scan_id: scan-20260902095328-66619d80f6-47b8cbc3
   analysis_depth: semantic
   resolution_status: resolved
   reuse_entry_count: 2
@@ -109,8 +135,9 @@ metadata:
   - com.ly.flight.chainsaas.refund.biz.mq.sender.MonitorEventListener#onEvent(com.ly.flight.chainsaas.refund.biz.event.AutoRefundMonitorEvent)
   patterns: []
 invocation_contract: null
+input_contract: null
 entry_fact_knowledge: null
-updated_at: '2026-08-27T23:21:07.959037Z'
+updated_at: '2026-09-07T21:09:34.924308Z'
 ---
 
 
@@ -134,7 +161,7 @@ updated_at: '2026-08-27T23:21:07.959037Z'
 
 ## Agent代码解释（INFERRED）
 
-buildRefundMonitorKey只为持久化实体派生稳定监控键，不新增Case输入组合。
+MonitorEventListener.addMonitorKeys把乘客键和航段键加入退票监控集合：两者都为空时跳过；没有航段键时直接加入乘客键；有航段键时跳过空值，并按passengerKey@segmentKey或单独segmentKey组合加入集合。
 <!-- kb:auto-end -->
 
 ## 补充说明
