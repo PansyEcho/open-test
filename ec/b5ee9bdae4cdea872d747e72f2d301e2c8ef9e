@@ -1,0 +1,416 @@
+tests/v2/test_case_dsl_persistence.py
+  s_0669d97b9ec4f7::t_d872053f3df08f 113
+  s_0669d97b9ec4f7::t_651c79a16fd98b 55-65,71-74,76-78,108-112,114-149
+  s_0669d97b9ec4f7::t_bfbc64ee135ee1 67
+  s_0669d97b9ec4f7::t_e6fe9926bc062f 66,68-70,75,79-107
+  s_0669d97b9ec4f7::t_3a9b9f6ad9ea4a 1-54
+opentest-plugin-marketplace/plugins/open-test-knowledge/skills/open-test-ifightchainsaas-java-booking-core/agents/openai.yaml
+  s_0669d97b9ec4f7::t_a5376db2baa7c6 1-6
+openspec/changes/archive/2026-09-08-explain-case-revisions-and-open-run/proposal.md
+  s_0669d97b9ec4f7::t_f9e40df7cafc96 1-12
+opentest-plugin-marketplace/plugins/open-test-knowledge/skills/open-test-ifightchainsaas-java-booking-core/.opentest-generated-system-skill.json
+  s_0669d97b9ec4f7::t_251ac4826a3057 1-4
+openspec/changes/archive/2026-09-08-readable-case-and-execution-console/tasks.md
+  s_17cfb4040c69e8::t_16bb9991d2c155 1-7
+openspec/specs/unified-qa-operations/spec.md
+  s_0669d97b9ec4f7::t_dbd1d06546b16f 28,32,38
+tests/v2/test_web_run_diagnostics.py
+  s_0669d97b9ec4f7::t_f14d08dd4a0492 1-28,30,36-44,46-75
+  s_0669d97b9ec4f7::t_46b7e9f1f08bd8 29,31-34,45
+  s_0669d97b9ec4f7::t_f5327d10d73473 35
+tests/v2/test_case_template_v4.py
+  s_0669d97b9ec4f7::t_91e93eb43aae41 2005,2035-2040
+  s_0669d97b9ec4f7::t_0efbdb7bf21deb 1176,1178-1180
+  s_0669d97b9ec4f7::t_d81c2205d93130 1893,1956-1957,2686-2687,2690,2710-2711
+open-test-knowledge/systems/ifightchainsaas.java.refund.core/cases/v4/generations/case-template-generation-4bddcbd793174a0f95c3.json
+  s_3eef5715c5768c::t_257c2fa37fcf5f 1-2283
+opentest/application/knowledge.py
+  s_0669d97b9ec4f7::t_363ebdb32f30bd 6955,6963,6966-6969
+  s_0669d97b9ec4f7::t_c2429bcd9a9b9f 4785-4790
+  s_0669d97b9ec4f7::t_cae77857b77707 4793-4795,7073-7077,7136-7138
+  s_0669d97b9ec4f7::t_c80743be6f6ec9 5337-5339,5485-5489
+opentest/adapters/case_template_v4_store.py
+  s_0669d97b9ec4f7::t_6df248035b6f78 21,503,538-548
+  s_0669d97b9ec4f7::t_7b31ed6fae3f41 467-468
+opentest/application/case_template_v4.py
+  s_0669d97b9ec4f7::t_7559441acbb41c 50,2991-2992,2994
+  s_0669d97b9ec4f7::t_e6e3b06e5750db 301-304
+  s_0669d97b9ec4f7::t_5c32f7f642651b 2213,2414,2422,2425,2479-2494,2498,2500,2507
+  s_0669d97b9ec4f7::t_88035060fcc6a2 2446-2447,2463-2475
+  s_0669d97b9ec4f7::t_5e18ce44d2ca5c 2476-2478
+  s_0669d97b9ec4f7::t_7b31ed6fae3f41 70,74,80-82,2158,2176-2177
+openspec/specs/interactive-generation-workflows/spec.md
+  s_0669d97b9ec4f7::t_dbd1d06546b16f 1-84
+  s_0669d97b9ec4f7::t_c274bfbac661ff 85-108
+opentest-plugin-marketplace/plugins/open-test-knowledge/skills/open-test-ifightchainsaas-java-refund-core/SKILL.md
+  s_0669d97b9ec4f7::t_5f481d612a13a7 8,13,31,39,44,52,55
+open-test-knowledge/systems/ifightchainsaas.java.refund.core/references/facades/entry-com.ly.flight.chainsaas.refund.facade.RefundFacade-createOrder-5b2594fdac65.md
+  s_b7b51702046c51::t_0088ca37abc11c 16,22,28-34,43-69,79-81,107-110,112-114,116-118,120,130-143,232,238,242,246,250,254,258,262,266
+opentest/application/operations.py
+  s_0669d97b9ec4f7::t_bb0a5567802696 215,230,1300,1748-1749,1768,1770,1773,1776-1777
+openspec/changes/archive/2026-09-07-restore-usable-knowledge-case-workflows/design.md
+  s_0669d97b9ec4f7::t_f1a14e63c1c22e 1-15
+opentest-plugin-marketplace/plugins/open-test-knowledge/scripts/opentest_operations_mcp.py
+  s_0669d97b9ec4f7::t_f68ab4e1b0d59b 154-155,223,481,682,736,925
+open-test-knowledge/systems/ifightchainsaas.java.refund.core/cases/v4/generations/case-template-generation-8911642c14a049b08d26.json
+  s_b8f89414599b23::t_323096df6a559d 1-3608
+tests/v2/test_web_generation.py
+  s_0669d97b9ec4f7::t_db129fcecadf7f 213-236
+  s_0669d97b9ec4f7::t_8233f6b0dc59fc 5,137,191,350-372,378-383,389-413
+  s_0669d97b9ec4f7::t_056d5c6d0e727e 161-164
+  s_0669d97b9ec4f7::t_80e79be524b363 286
+  s_0669d97b9ec4f7::t_f70a139e801810 37-39,50-52
+  s_0669d97b9ec4f7::t_4b19164e7992ad 133
+  s_0669d97b9ec4f7::t_34250bc431310c 260-285,287-289
+  s_0669d97b9ec4f7::t_c1abb5c3997785 54
+  s_0669d97b9ec4f7::t_62ccf8c2727d85 1-3
+  s_0669d97b9ec4f7::t_95201e57f08865 166
+  s_0669d97b9ec4f7::t_180aedc97e085c 58-60
+  s_0669d97b9ec4f7::t_61d16e77248e29 62-64,87-89
+  s_0669d97b9ec4f7::t_80bdf46df5a9b7 159-160,184,186,211-212,290-306,447-448
+  s_0669d97b9ec4f7::t_5bb31b7594b891 61,237-259
+  s_0669d97b9ec4f7::t_558c38dd969c66 91-93,129-131
+  s_0669d97b9ec4f7::t_77a4b734dfd8a6 135
+  s_0669d97b9ec4f7::t_30cb46f2b4bed3 4,53,55,57,132,134,136,138-141,147,153,165,167-169,192-195,307-349,414-446
+  s_0669d97b9ec4f7::t_6690b4ebfc80bd 9-10,40-49,65-86,94-128,173-180,199,207
+  s_0669d97b9ec4f7::t_2087cc930dfe85 203
+  s_0669d97b9ec4f7::t_90df2b36141d68 204-206,208-210
+  s_0669d97b9ec4f7::t_923a51f1a3d55e 185
+  s_0669d97b9ec4f7::t_91c1e2c82fe42f 56
+  s_0669d97b9ec4f7::t_3a49749e9b2f6b 196-198,200-202
+  s_0669d97b9ec4f7::t_c00f6d37d61122 154-158
+  s_0669d97b9ec4f7::t_8c36f4e792586f 170-172,181-183
+  s_0669d97b9ec4f7::t_99a85baa2c193b 90,373-377,384-388
+  s_0669d97b9ec4f7::t_5c349f95be3edc 6-8,11-13
+  s_0669d97b9ec4f7::t_68ec3ed94d250a 148-152
+  s_0669d97b9ec4f7::t_b3702715532f01 14-36
+  s_0669d97b9ec4f7::t_5cee74c7c7340f 142-146
+  s_0669d97b9ec4f7::t_eb50837d1170e2 187-190
+openspec/specs/codex-knowledge-continuation/spec.md
+  s_0669d97b9ec4f7::t_dbd1d06546b16f 8,12-20,34,38-40
+opentest/web/index.html
+  s_0669d97b9ec4f7::t_e53bdf13bbe434 92
+  s_17cfb4040c69e8::t_ff2ef38e6863d0 208-212,214-219,221-245
+  s_0669d97b9ec4f7::t_39744d202db89f 58,152,172
+  s_17cfb4040c69e8::t_bb3537d7cc8571 6,8,255-256
+opentest/application/web_generation.py
+  s_0669d97b9ec4f7::t_cdabffb3be132d 128,336-339,345-349
+  s_0669d97b9ec4f7::t_e6e3b06e5750db 51,57,66,70-72,107-110,131,135,221
+  s_0669d97b9ec4f7::t_940f167ca63028 120-121
+  s_0669d97b9ec4f7::t_b2bac01e61e1fe 310-312,317-319
+  s_0669d97b9ec4f7::t_9848c6da64638b 94
+  s_0669d97b9ec4f7::t_c39e0dfa149558 226-228
+  s_0669d97b9ec4f7::t_99c055e9587db5 15
+  s_0669d97b9ec4f7::t_0782b514042d44 136-137
+  s_0669d97b9ec4f7::t_5fe0c5e611cda1 197,201-202,276,279-280,313-316
+  s_0669d97b9ec4f7::t_a70130ee9f9b00 199-200
+  s_0669d97b9ec4f7::t_4dd21226b781d9 84-89
+  s_0669d97b9ec4f7::t_c2fc3b6f8e3788 123
+  s_0669d97b9ec4f7::t_5b33cf68a42479 125
+  s_0669d97b9ec4f7::t_dbc27847bf2f7f 126-127,238-260
+  s_0669d97b9ec4f7::t_0a8f028771c253 116-118
+  s_0669d97b9ec4f7::t_80bdf46df5a9b7 39-47,49
+  s_0669d97b9ec4f7::t_651db36e257f85 105-106,162-168
+  s_0669d97b9ec4f7::t_573c26b420a47c 1-14,16-38,48,50,52-56,58-65,67-69,73-83,90-93,95-104,111-115,119,122,124,129-130,138-161,169-196,198,203-220,222-225,229-237,261-275,277-278,281-309,320-335,340-344,350-370
+  s_0669d97b9ec4f7::t_a96463d5563811 132-134
+opentest/application/tasks.py
+  s_0669d97b9ec4f7::t_99a85baa2c193b 441
+  s_0669d97b9ec4f7::t_5de2ab25a15646 455-480
+  s_0669d97b9ec4f7::t_e74adc7c49eeca 773,1150,1157-1161,1164-1184,1368,1392,1410-1412
+opentest-plugin-marketplace/plugins/open-test-knowledge/scripts/sync_system_skills.py
+  s_0669d97b9ec4f7::t_0de5478de67d09 124,129,150,167,170-171,180,184-185
+openspec/specs/v2-api/spec.md
+  s_17cfb4040c69e8::t_16bb9991d2c155 22-36
+tests/v2/test_api_cli.py
+  s_17cfb4040c69e8::t_988efaa9eb4e24 12,212-214
+  s_9247aff4edfb47::t_655b3950c7c43e 63
+  s_17cfb4040c69e8::t_ebd17c4254271d 62
+opentest/domain/case_template_v4.py
+  s_ec465f255992fd::t_128a2e985870c3 584-585,729
+  s_0669d97b9ec4f7::t_deb3ede3fa7a1f 87
+  s_0669d97b9ec4f7::t_c547cd18b04551 562,569-570
+  s_0669d97b9ec4f7::t_6df248035b6f78 8,51-86
+  s_0669d97b9ec4f7::t_06a6ddc2bdda8a 639
+tests/v2/test_usable_qa_workflows.py
+  s_0669d97b9ec4f7::t_997ed5dae50815 1-12,14-15,17,19-98
+  s_0669d97b9ec4f7::t_a84e51dcee2c17 13,16,18,99-141
+workers/qa-oracle-worker/src/test/java/com/opentest/qaoracle/active/ActiveOperationServiceTest.java
+  s_0669d97b9ec4f7::t_6ca24689140d34 79
+  s_0669d97b9ec4f7::t_71f2ed0204847c 5,7-12,16,23-78
+  s_0669d97b9ec4f7::t_3ec23a8f0fca2d 83,92-97,106,115
+open-test-knowledge/systems/ifightchainsaas.java.refund.core/references/shared/common-logic/logic-semantic-667bf78e8dcd0a7706b9-acb22181700d.md
+  s_b7b51702046c51::t_c956741ee1a006 25-36,50-76,86-88,114-124,126,138,140,164
+openspec/specs/case-template-generation-v4/spec.md
+  s_0669d97b9ec4f7::t_dbd1d06546b16f 8,12-14,18-20,24,28-30,34-36
+opentest/web/case-view.js
+  s_17cfb4040c69e8::t_178fe7ee87547a 299-301,625,634-635
+  s_17cfb4040c69e8::t_14deb0b2e50393 1-25,27-46,48-163,165-166,173-210,212-264,268-298,302-312,330-365,367-407,413-514,516-601,608-624,626-633,636-880
+  s_17cfb4040c69e8::t_367d2e60aba6d5 602-607
+  s_17cfb4040c69e8::t_988efaa9eb4e24 26,313-329,366
+  s_17cfb4040c69e8::t_eb98600e16f266 47,164,167-172,211,265-267,408-412,515
+open-test-knowledge/systems/ifightchainsaas.java.refund.core/references/shared/common-logic/logic-semantic-acb7510b9a51202eba9c-05025c71a7f2.md
+  s_b7b51702046c51::t_a4ed126175e9d9 25-36,50-76,86-88,113-124,126,138,140,164
+opentest-plugin-marketplace/plugins/open-test-knowledge/.codex-plugin/plugin.json
+  s_0669d97b9ec4f7::t_b36d7fbc51b941 3
+tests/v2/test_semantic_ownership_case_archive.py
+  s_0669d97b9ec4f7::t_db129fcecadf7f 22-78
+openspec/changes/archive/2026-09-08-explain-case-revisions-and-open-run/tasks.md
+  s_0669d97b9ec4f7::t_c274bfbac661ff 1-5
+tests/v2/test_case_template_v4_revision.py
+  s_0669d97b9ec4f7::t_30cb46f2b4bed3 402-407,423-424
+opentest/web/app.js
+  s_0669d97b9ec4f7::t_6501fff02bcee2 1394
+  s_0669d97b9ec4f7::t_8be24aa39472bb 1348,1352,1375,1379-1381,1385-1388
+  s_0669d97b9ec4f7::t_f161ef60e4c29b 1545-1548,1560-1563
+  s_17cfb4040c69e8::t_a695558626d684 5078-5081
+  s_0669d97b9ec4f7::t_e6e3b06e5750db 1315-1323,1340
+  s_17cfb4040c69e8::t_988efaa9eb4e24 1706,5583
+  s_fc0b868764374c::t_4bac110ad8e35a 5264-5266,5273-5275
+  s_fc0b868764374c::t_44c507e85d2975 4707
+  s_0669d97b9ec4f7::t_ad868fa4068dee 391-393,1324-1337
+  s_0669d97b9ec4f7::t_a70130ee9f9b00 1450
+  s_17cfb4040c69e8::t_178fe7ee87547a 434-437,4708
+  s_17cfb4040c69e8::t_4664b278125dfb 513-516
+  s_17cfb4040c69e8::t_3c3849755c4593 597-600,2851,4673,4680-4681,4684-4685,4702-4706,4766-4775,4777-4778,4781-4782,4787,5083-5085,5087-5088,5109-5112,5123-5127,5137-5140,5148,5152,5154-5156,5182-5184,5203-5205,5210-5211,5213,5217-5219,5282-5283,5505-5519,5522-5523,5535-5542,5546
+  s_0669d97b9ec4f7::t_39744d202db89f 1069-1071,1073,1299-1303,1576-1577,1614,1630,1653,1655,1657,1665,1738-1739,4021,4023,4025,4042,4056,4108,4111,4165,4171,4183,4188,4836,4860,4907,4909,4911,4914-4915,4926,4960,4977-4982,5003,5005,5007,5013,5062-5063,5159,5565-5570
+  s_0669d97b9ec4f7::t_b30ca4387b0c4d 1129,1132,1214,1216,1218,1227,1358-1360,1378,1382-1384,1389
+  s_0669d97b9ec4f7::t_4dd21226b781d9 4835,4843
+  s_0669d97b9ec4f7::t_2c852e183b76f5 5158
+  s_0669d97b9ec4f7::t_0efbdb7bf21deb 1308-1314,1338-1339,1341-1347,1349-1351,1353-1357,1361-1374,1376-1377,1390-1393,1395-1435,1439,1444-1449,1451-1454,1467-1469,1477-1479
+  s_0669d97b9ec4f7::t_f02edd793538ab 1135-1136,1156,1175,1182-1193,1230,1436-1438,1440-1443
+  s_0669d97b9ec4f7::t_651db36e257f85 1455-1465
+  s_0669d97b9ec4f7::t_441ecfa6330fe4 1005,1023,1256,1268-1271
+  s_0669d97b9ec4f7::t_6cfc5e98063a2a 5153
+  s_0669d97b9ec4f7::t_c823d730385bd0 5150-5151
+  s_0669d97b9ec4f7::t_a56ca932ec66a0 1466,1470-1476,5157
+  s_17cfb4040c69e8::t_99f831c23d3f72 1707,4722,5252,5584
+tests/v2/test_console_contract.py
+  s_0669d97b9ec4f7::t_f5327d10d73473 399,402,416-418
+  s_fc0b868764374c::t_0c80e677ec16f8 53
+  s_0669d97b9ec4f7::t_9c310ba824abc6 54
+  s_0669d97b9ec4f7::t_b3702715532f01 62
+  s_17cfb4040c69e8::t_1c65fa161d4f56 21-23
+tests/v2/test_knowledge_case_continuation.py
+  s_0669d97b9ec4f7::t_2087cc930dfe85 61-64
+  s_0669d97b9ec4f7::t_5bb31b7594b891 1-43,45-60,65-129
+  s_0669d97b9ec4f7::t_2c19dcbe5a6fc2 44
+openspec/changes/archive/2026-09-07-restore-usable-knowledge-case-workflows/specs/codex-knowledge-continuation/spec.md
+  s_0669d97b9ec4f7::t_737a06fed00d3e 1-27
+tests/v2/test_knowledge_tracing.py
+  s_0669d97b9ec4f7::t_efc542370a88d2 3785-3807
+  s_0669d97b9ec4f7::t_c2429bcd9a9b9f 3766,3768-3771
+opentest/application/foundation.py
+  s_0669d97b9ec4f7::t_7559441acbb41c 66,4613-4614,4626-4679,4717,5473-5477
+  s_0669d97b9ec4f7::t_a70130ee9f9b00 3841-3844,5491-5500,5509-5510
+  s_0669d97b9ec4f7::t_f02edd793538ab 4314,4317,4323,4330-4337
+  s_0669d97b9ec4f7::t_8f7bc65036981e 3845-3848,5482-5490,5506-5508
+  s_0669d97b9ec4f7::t_651db36e257f85 4585,4592,4615-4619
+  s_0669d97b9ec4f7::t_5de2ab25a15646 4781-4793,4795-4825
+  s_0669d97b9ec4f7::t_80bdf46df5a9b7 5512
+  s_0669d97b9ec4f7::t_9c5df87972b25a 5189,5206
+  s_0669d97b9ec4f7::t_5fe0c5e611cda1 3857-3863,3872
+  s_0669d97b9ec4f7::t_75a76e2ff58386 104
+  s_0669d97b9ec4f7::t_c80743be6f6ec9 3866-3867
+  s_0669d97b9ec4f7::t_db27bbd0b88838 5801
+  s_0669d97b9ec4f7::t_cae77857b77707 3864-3865,3870-3871
+  s_0669d97b9ec4f7::t_99a85baa2c193b 4776
+  s_0669d97b9ec4f7::t_99c055e9587db5 283-284,5800
+  s_0669d97b9ec4f7::t_f68728d84efb42 3868-3869
+  s_0669d97b9ec4f7::t_d0836429d288e5 5573,5593-5599,5621,5649,5659-5667,5680-5683
+workers/qa-oracle-worker/src/main/java/com/opentest/qaoracle/active/ActiveOperationService.java
+  s_0669d97b9ec4f7::t_3d13dd0369e799 37,148,174,215,244,247
+open-test-knowledge/systems/ifightchainsaas.java.refund.core/cases/v4/generations/case-template-generation-dfaa1445e69644d1ba1b.json
+  s_0669d97b9ec4f7::t_6051cb6e638926 1-3510
+opentest/api.py
+  s_0669d97b9ec4f7::t_815abd71ddc1d3 1127,1131,1134,1141,1729,1733,1736,1739
+  s_17cfb4040c69e8::t_80582fb3f2c5d7 1932,1944,1947,1955,1967,1970
+  s_0669d97b9ec4f7::t_80bdf46df5a9b7 397
+  s_0669d97b9ec4f7::t_f02edd793538ab 2219,2222,2225,2231
+  s_0669d97b9ec4f7::t_39744d202db89f 11,16,2129-2130,2132
+  s_0669d97b9ec4f7::t_75a76e2ff58386 5
+  s_0669d97b9ec4f7::t_99c055e9587db5 258,274-281,1147,1154-1156,1158-1159,1742,1746-1748,1750-1751,2086-2112,2114-2128,2167,2174-2177,2179-2181
+  s_0669d97b9ec4f7::t_e6e3b06e5750db 1157,1749
+  s_0669d97b9ec4f7::t_5fe0c5e611cda1 2113
+  s_0669d97b9ec4f7::t_fcbeea8fbe441d 2136-2141
+  s_0669d97b9ec4f7::t_8f7bc65036981e 2131,2133-2135,2142-2144
+  s_0669d97b9ec4f7::t_66ce0f6b54bb8c 220,2145,2178
+  s_17cfb4040c69e8::t_fac67064e49cfc 106
+opentest/application/case_template_executor_v4.py
+  s_0669d97b9ec4f7::t_365e97ce518d72 5-6,679-681,699-700
+  s_0669d97b9ec4f7::t_c547cd18b04551 843
+  s_0669d97b9ec4f7::t_a84e51dcee2c17 866-868,874-877
+opentest/domain/models.py
+  s_0669d97b9ec4f7::t_2da9e7054af753 4829
+  s_0669d97b9ec4f7::t_00efad889cd415 4830
+  s_0669d97b9ec4f7::t_06a6ddc2bdda8a 3664-3667,4827-4828,4831
+  s_0669d97b9ec4f7::t_5fe0c5e611cda1 3333-3337
+opentest/adapters/agent_runner.py
+  s_0669d97b9ec4f7::t_129b4eb02df63d 8,660-662
+  s_0669d97b9ec4f7::t_80e79be524b363 653
+  s_0669d97b9ec4f7::t_e74adc7c49eeca 649-651
+  s_0669d97b9ec4f7::t_99c055e9587db5 16,598-601,611,648,654-659,663-666
+  s_0669d97b9ec4f7::t_cdabffb3be132d 652
+opentest/adapters/task_agent_mcp.py
+  s_0669d97b9ec4f7::t_99c055e9587db5 1-96
+opentest/application/case_template_compiler_v4.py
+  s_0669d97b9ec4f7::t_5744cec3c38ef5 1604,1609,1617
+  s_0669d97b9ec4f7::t_c4ff3dc4f21c8b 323,571-574,1346
+  s_0669d97b9ec4f7::t_7b31ed6fae3f41 833-834
+openspec/changes/archive/2026-09-07-restore-usable-knowledge-case-workflows/proposal.md
+  s_0669d97b9ec4f7::t_854702461f429b 1-17
+opentest/domain/errors.py
+  s_0669d97b9ec4f7::t_2da9e7054af753 14-17
+openspec/specs/v2-console/spec.md
+  s_17cfb4040c69e8::t_16bb9991d2c155 57,61-63,66-69,73-75,138-186
+  s_e3e4bd4c1f59cb::t_e1ea5012aee3b0 60,72
+  s_dd6ae313b13d0d::t_b31ed598cbb6f7 187
+tests/web/case-view.test.js
+  s_17cfb4040c69e8::t_21aa989ff99747 14,27,30,37,44,48,56,63,69,76,81-115,128,135
+  s_17cfb4040c69e8::t_eb98600e16f266 68
+  s_17cfb4040c69e8::t_6ec308c3d4251a 1-13,15-26,28-29,31-36,38-43,45-47,49-55,57-62,64-67,70-75,77-80,116-127,129-134
+openspec/changes/archive/2026-09-07-restore-usable-knowledge-case-workflows/specs/unified-qa-operations/spec.md
+  s_0669d97b9ec4f7::t_f4c5abb04ed77e 1-17
+openspec/changes/archive/2026-09-08-explain-case-revisions-and-open-run/specs/interactive-generation-workflows/spec.md
+  s_0669d97b9ec4f7::t_2273407ac3f37b 1-25
+openspec/changes/archive/2026-09-07-restore-usable-knowledge-case-workflows/specs/interactive-generation-workflows/spec.md
+  s_0669d97b9ec4f7::t_01e63170b85a01 1-80
+openspec/changes/archive/2026-09-07-restore-usable-knowledge-case-workflows/specs/case-template-generation-v4/spec.md
+  s_0669d97b9ec4f7::t_b6181680fb15ee 1-33
+openspec/changes/archive/2026-09-07-restore-usable-knowledge-case-workflows/tasks.md
+  s_0669d97b9ec4f7::t_dbd1d06546b16f 1-10
+opentest/web/styles.css
+  s_17cfb4040c69e8::t_eb98600e16f266 444-446
+  s_17cfb4040c69e8::t_4664b278125dfb 408-443,447-501
+  s_0669d97b9ec4f7::t_0efbdb7bf21deb 402-407
+opentest/application/case_template_registries.py
+  s_0669d97b9ec4f7::t_d2deaf16dc2192 72-88
+  s_0669d97b9ec4f7::t_7b31ed6fae3f41 109,115,124-125
+open-test-knowledge/systems/ifightchainsaas.java.refund.core/cases/v4/generations/case-template-generation-f542f68adc424725bf59.json
+  s_a5bf8c5903d008::t_5162cc040b085f 1-2476
+tests/web/case_fixture_server.py
+  s_17cfb4040c69e8::t_47a19a212d028f 3-116
+  s_17cfb4040c69e8::t_e227b4884e3e7e 1-2,117-122
+tests/v2/test_codex_native_workspace.py
+  s_0669d97b9ec4f7::t_b3702715532f01 1486,1490,1532-1533
+  s_0669d97b9ec4f7::t_9c310ba824abc6 1635
+opentest-plugin-marketplace/plugins/open-test-knowledge/skills/open-test-ifightchainsaas-java-booking-core/SKILL.md
+  s_0669d97b9ec4f7::t_3308cb52d1331a 1-55
+openspec/changes/archive/2026-09-08-readable-case-and-execution-console/.openspec.yaml
+  s_17cfb4040c69e8::t_bd875970cba37d 1-2
+tests/v2/test_case_presentation.py
+  s_17cfb4040c69e8::t_636da818c04595 1-73
+open-test-knowledge/systems/ifightchainsaas.java.refund.core/cases/v4/generations/case-template-generation-a3042aba04fa413c8b60.json
+  s_35b58172d10838::t_bf8c875a0e73fd 1-2686
+openspec/changes/archive/2026-09-08-readable-case-and-execution-console/design.md
+  s_17cfb4040c69e8::t_f3c0d50c8f3af7 1-11
+openspec/changes/archive/2026-09-08-readable-case-and-execution-console/proposal.md
+  s_17cfb4040c69e8::t_334bc783a29437 1-17
+openspec/changes/archive/2026-09-08-readable-case-and-execution-console/specs/v2-api/spec.md
+  s_17cfb4040c69e8::t_de96aa1f26510b 1-16
+openspec/changes/archive/2026-09-08-readable-case-and-execution-console/specs/v2-console/spec.md
+  s_17cfb4040c69e8::t_24e7b136cef7f2 1-75
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.24",
+  "base_commit_sha": "ecb5ee9bdae4cdea872d747e72f2d301e2c8ef9e",
+  "prompts": {},
+  "sessions": {
+    "s_0669d97b9ec4f7": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a07d0d-6a73-7492-bd27-f23daf269b37",
+        "model": "gpt-6-astra"
+      },
+      "human_author": "shizhen <yuuu.shizhen@gmail.com>"
+    },
+    "s_17cfb4040c69e8": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a0805a-3b7c-71f3-a547-9f586724fd6c",
+        "model": "gpt-6-astra"
+      },
+      "human_author": null
+    },
+    "s_35b58172d10838": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a07fbc-abae-7990-a493-4c10858dd309",
+        "model": "unknown"
+      },
+      "human_author": "shizhen <yuuu.shizhen@gmail.com>"
+    },
+    "s_3eef5715c5768c": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a07db7-48be-78c3-8b05-b4921807fb0b",
+        "model": "unknown"
+      },
+      "human_author": "shizhen <yuuu.shizhen@gmail.com>"
+    },
+    "s_9247aff4edfb47": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a07621-a8c6-7c72-9a6e-e2e30f606154",
+        "model": "gpt-5.6-sol"
+      },
+      "human_author": "shizhen <yuuu.shizhen@gmail.com>"
+    },
+    "s_a5bf8c5903d008": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a07f9e-9714-7802-be33-10013769eb84",
+        "model": "unknown"
+      },
+      "human_author": "shizhen <yuuu.shizhen@gmail.com>"
+    },
+    "s_b7b51702046c51": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a07daa-57b0-7251-a815-e420e5ec2d00",
+        "model": "unknown"
+      },
+      "human_author": "shizhen <yuuu.shizhen@gmail.com>"
+    },
+    "s_b8f89414599b23": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a07d11-b0f3-7d63-80d3-3f5d897e9e4b",
+        "model": "unknown"
+      },
+      "human_author": "shizhen <yuuu.shizhen@gmail.com>"
+    },
+    "s_dd6ae313b13d0d": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019fef82-2a2c-7652-ad03-63eecfd2754c",
+        "model": "gpt-5.6-sol"
+      },
+      "human_author": "shizhen <yuuu.shizhen@gmail.com>"
+    },
+    "s_e3e4bd4c1f59cb": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a05aeb-8bea-7652-b8ff-6e5e7ece97f0",
+        "model": "gpt-5.6-sol"
+      },
+      "human_author": "shizhen <yuuu.shizhen@gmail.com>"
+    },
+    "s_ec465f255992fd": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a07d64-f8bf-7f60-96ee-e97986bac4ef",
+        "model": "unknown"
+      },
+      "human_author": "shizhen <yuuu.shizhen@gmail.com>"
+    },
+    "s_fc0b868764374c": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a065b8-3a29-7762-af3b-5b2044b55299",
+        "model": "gpt-5.6-sol"
+      },
+      "human_author": "shizhen <yuuu.shizhen@gmail.com>"
+    }
+  }
+}
