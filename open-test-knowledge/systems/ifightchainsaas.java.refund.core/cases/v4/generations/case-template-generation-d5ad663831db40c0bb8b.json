@@ -1,0 +1,2988 @@
+{
+  "generation_id": "case-template-generation-d5ad663831db40c0bb8b",
+  "predecessor_generation_id": "",
+  "continuation_intent": "",
+  "handoff_id": "case-template-handoff-15ec4d0d75494cc6bc0c",
+  "system_id": "ifightchainsaas.java.refund.core",
+  "operation_id": "facade:com.ly.flight.chainsaas.refund.facade.RefundFacade#createOrder",
+  "source_scan_id": "scan-20260902095328-66619d80f6-47b8cbc3",
+  "coverage_id": "coverage:facade:com.ly.flight.chainsaas.refund.facade.RefundFacade#createOrder",
+  "runtime_registry_version": "runtime-functions/v1",
+  "value_registry_version": "value-functions/v1",
+  "compiler_seed": 1,
+  "status": "READY",
+  "input_contract": {
+    "target_id": "facade:com.ly.flight.chainsaas.refund.facade.RefundFacade#createOrder",
+    "request_type": "com.ly.flight.chainsaas.refund.facade.model.request.CreateRefundOrderRequest",
+    "source_scan_id": "scan-20260902095328-66619d80f6-47b8cbc3",
+    "status": "READY",
+    "request_schema": {
+      "type": "object",
+      "properties": {
+        "traceId": {
+          "type": "string"
+        },
+        "operator": {
+          "type": "string"
+        },
+        "refundDetailApiDTO": {
+          "type": "object",
+          "properties": {
+            "orderRefundInfo": {
+              "type": "object",
+              "properties": {
+                "orderSerialNo": {
+                  "type": "string"
+                },
+                "refundSerialNo": {
+                  "type": "string"
+                },
+                "otherSerialNo": {
+                  "type": "string"
+                },
+                "refundSubCategory": {
+                  "type": "integer"
+                },
+                "involuntaryRefundType": {
+                  "type": "integer"
+                },
+                "vouchers": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "name": {
+                        "type": "string"
+                      },
+                      "url": {
+                        "type": "string"
+                      }
+                    },
+                    "additionalProperties": false
+                  }
+                }
+              },
+              "additionalProperties": false,
+              "required": [
+                "orderSerialNo",
+                "refundSerialNo",
+                "refundSubCategory"
+              ]
+            },
+            "segmentRefundInfos": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "sequence": {
+                    "type": "integer"
+                  },
+                  "flightNo": {
+                    "type": "string"
+                  },
+                  "carrierName": {
+                    "type": "string"
+                  },
+                  "carrierCode": {
+                    "type": "string"
+                  },
+                  "actualCarrierCode": {
+                    "type": "string"
+                  },
+                  "departureCityCode": {
+                    "type": "string"
+                  },
+                  "departureCity": {
+                    "type": "string"
+                  },
+                  "arrivalCityCode": {
+                    "type": "string"
+                  },
+                  "arrivalCity": {
+                    "type": "string"
+                  },
+                  "departureAirportCode": {
+                    "type": "string"
+                  },
+                  "departureAirport": {
+                    "type": "string"
+                  },
+                  "arrivalAirportCode": {
+                    "type": "string"
+                  },
+                  "arrivalAirport": {
+                    "type": "string"
+                  },
+                  "gmtTakeOff": {
+                    "type": "string"
+                  },
+                  "gmtArrival": {
+                    "type": "string"
+                  }
+                },
+                "additionalProperties": false
+              }
+            },
+            "refundItemInfos": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "passenger": {
+                    "type": "object",
+                    "properties": {
+                      "lastName": {
+                        "type": "string"
+                      },
+                      "firstName": {
+                        "type": "string"
+                      },
+                      "gender": {
+                        "type": "integer"
+                      },
+                      "passengerType": {
+                        "type": "integer"
+                      },
+                      "creditType": {
+                        "type": "integer"
+                      },
+                      "creditNo": {
+                        "type": "string"
+                      },
+                      "gmtCreditValidate": {
+                        "type": "string"
+                      },
+                      "birthday": {
+                        "type": "string"
+                      },
+                      "nationCode": {
+                        "type": "string"
+                      }
+                    },
+                    "additionalProperties": false
+                  },
+                  "passSegs": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "segmentInfo": {
+                          "type": "object",
+                          "properties": {
+                            "sequence": {
+                              "type": "integer"
+                            },
+                            "flightNo": {
+                              "type": "string"
+                            },
+                            "carrierName": {
+                              "type": "string"
+                            },
+                            "carrierCode": {
+                              "type": "string"
+                            },
+                            "actualCarrierCode": {
+                              "type": "string"
+                            },
+                            "departureCityCode": {
+                              "type": "string"
+                            },
+                            "departureCity": {
+                              "type": "string"
+                            },
+                            "arrivalCityCode": {
+                              "type": "string"
+                            },
+                            "arrivalCity": {
+                              "type": "string"
+                            },
+                            "departureAirportCode": {
+                              "type": "string"
+                            },
+                            "departureAirport": {
+                              "type": "string"
+                            },
+                            "arrivalAirportCode": {
+                              "type": "string"
+                            },
+                            "arrivalAirport": {
+                              "type": "string"
+                            },
+                            "gmtTakeOff": {
+                              "type": "string"
+                            },
+                            "gmtArrival": {
+                              "type": "string"
+                            }
+                          },
+                          "additionalProperties": false
+                        }
+                      },
+                      "additionalProperties": false
+                    }
+                  }
+                },
+                "additionalProperties": false
+              }
+            }
+          },
+          "additionalProperties": false,
+          "required": [
+            "orderRefundInfo",
+            "refundItemInfos",
+            "segmentRefundInfos"
+          ]
+        },
+        "contactInfoDTO": {
+          "type": "object",
+          "properties": {
+            "name": {
+              "type": "string"
+            },
+            "address": {
+              "type": "string"
+            },
+            "postCode": {
+              "type": "string"
+            },
+            "areaCode": {
+              "type": "string"
+            },
+            "mobile": {
+              "type": "string"
+            },
+            "email": {
+              "type": "string"
+            },
+            "country": {
+              "type": "string"
+            }
+          },
+          "additionalProperties": false
+        },
+        "orderChannelSource": {
+          "type": "integer"
+        },
+        "passengerIds": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "segmentIds": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "memberId": {
+          "type": "string"
+        },
+        "language": {
+          "type": "string"
+        },
+        "isAuto": {
+          "type": "boolean"
+        },
+        "channelEnum": {
+          "type": "string"
+        },
+        "refundSource": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": false,
+      "required": [
+        "orderChannelSource",
+        "refundDetailApiDTO"
+      ]
+    },
+    "fields": [
+      {
+        "path": "traceId",
+        "field_name": "traceId",
+        "schema": {
+          "type": "string"
+        },
+        "description": "全链路跟踪标识。",
+        "required": false,
+        "business_identity": false,
+        "requirement_marker": "",
+        "source_ref": {
+          "repository": "",
+          "path": "app/facade/src/main/java/com/ly/flight/chainsaas/refund/facade/model/BaseRequest.java",
+          "symbol": "com.ly.flight.chainsaas.refund.facade.model.BaseRequest#traceId",
+          "line": 21,
+          "commit": "",
+          "content_digest": ""
+        }
+      },
+      {
+        "path": "operator",
+        "field_name": "operator",
+        "schema": {
+          "type": "string"
+        },
+        "description": "发起请求的操作人。",
+        "required": false,
+        "business_identity": false,
+        "requirement_marker": "",
+        "source_ref": {
+          "repository": "",
+          "path": "app/facade/src/main/java/com/ly/flight/chainsaas/refund/facade/model/BaseRequest.java",
+          "symbol": "com.ly.flight.chainsaas.refund.facade.model.BaseRequest#operator",
+          "line": 26,
+          "commit": "",
+          "content_digest": ""
+        }
+      },
+      {
+        "path": "refundDetailApiDTO.orderRefundInfo.orderSerialNo",
+        "field_name": "orderSerialNo",
+        "schema": {
+          "type": "string"
+        },
+        "description": "同程订单号",
+        "required": true,
+        "business_identity": false,
+        "requirement_marker": "@required",
+        "source_ref": {
+          "repository": "",
+          "path": "app/facade/src/main/java/com/ly/flight/chainsaas/refund/facade/model/dto/RefundOrderInfoApiDTO.java",
+          "symbol": "com.ly.flight.chainsaas.refund.facade.model.dto.RefundOrderInfoApiDTO#orderSerialNo",
+          "line": 23,
+          "commit": "",
+          "content_digest": ""
+        }
+      },
+      {
+        "path": "refundDetailApiDTO.orderRefundInfo.refundSerialNo",
+        "field_name": "refundSerialNo",
+        "schema": {
+          "type": "string"
+        },
+        "description": "变更单号",
+        "required": true,
+        "business_identity": false,
+        "requirement_marker": "@required",
+        "source_ref": {
+          "repository": "",
+          "path": "app/facade/src/main/java/com/ly/flight/chainsaas/refund/facade/model/dto/RefundOrderInfoApiDTO.java",
+          "symbol": "com.ly.flight.chainsaas.refund.facade.model.dto.RefundOrderInfoApiDTO#refundSerialNo",
+          "line": 27,
+          "commit": "",
+          "content_digest": ""
+        }
+      },
+      {
+        "path": "refundDetailApiDTO.orderRefundInfo.otherSerialNo",
+        "field_name": "otherSerialNo",
+        "schema": {
+          "type": "string"
+        },
+        "description": "第三方订单号",
+        "required": false,
+        "business_identity": false,
+        "requirement_marker": "",
+        "source_ref": {
+          "repository": "",
+          "path": "app/facade/src/main/java/com/ly/flight/chainsaas/refund/facade/model/dto/RefundOrderInfoApiDTO.java",
+          "symbol": "com.ly.flight.chainsaas.refund.facade.model.dto.RefundOrderInfoApiDTO#otherSerialNo",
+          "line": 31,
+          "commit": "",
+          "content_digest": ""
+        }
+      },
+      {
+        "path": "refundDetailApiDTO.orderRefundInfo.refundSubCategory",
+        "field_name": "refundSubCategory",
+        "schema": {
+          "type": "integer"
+        },
+        "description": "退票类型(1-自愿退票,2-当日作废,3-航变全退,4-病退全退,5-拒签全退/ 7-航变全退(全免))",
+        "required": true,
+        "business_identity": false,
+        "requirement_marker": "@required",
+        "source_ref": {
+          "repository": "",
+          "path": "app/facade/src/main/java/com/ly/flight/chainsaas/refund/facade/model/dto/RefundOrderInfoApiDTO.java",
+          "symbol": "com.ly.flight.chainsaas.refund.facade.model.dto.RefundOrderInfoApiDTO#refundSubCategory",
+          "line": 35,
+          "commit": "",
+          "content_digest": ""
+        }
+      },
+      {
+        "path": "refundDetailApiDTO.orderRefundInfo.involuntaryRefundType",
+        "field_name": "involuntaryRefundType",
+        "schema": {
+          "type": "integer"
+        },
+        "description": "不自愿退票类型(1-航变退,2-病退,3-拒签退,4-错购退)",
+        "required": false,
+        "business_identity": false,
+        "requirement_marker": "",
+        "source_ref": {
+          "repository": "",
+          "path": "app/facade/src/main/java/com/ly/flight/chainsaas/refund/facade/model/dto/RefundOrderInfoApiDTO.java",
+          "symbol": "com.ly.flight.chainsaas.refund.facade.model.dto.RefundOrderInfoApiDTO#involuntaryRefundType",
+          "line": 38,
+          "commit": "",
+          "content_digest": ""
+        }
+      },
+      {
+        "path": "refundDetailApiDTO.orderRefundInfo.vouchers",
+        "field_name": "vouchers",
+        "schema": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "name": {
+                "type": "string"
+              },
+              "url": {
+                "type": "string"
+              }
+            },
+            "additionalProperties": false
+          }
+        },
+        "description": "凭证",
+        "required": false,
+        "business_identity": false,
+        "requirement_marker": "",
+        "source_ref": {
+          "repository": "",
+          "path": "app/facade/src/main/java/com/ly/flight/chainsaas/refund/facade/model/dto/RefundOrderInfoApiDTO.java",
+          "symbol": "com.ly.flight.chainsaas.refund.facade.model.dto.RefundOrderInfoApiDTO#vouchers",
+          "line": 43,
+          "commit": "",
+          "content_digest": ""
+        }
+      },
+      {
+        "path": "refundDetailApiDTO.segmentRefundInfos",
+        "field_name": "segmentRefundInfos",
+        "schema": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "sequence": {
+                "type": "integer"
+              },
+              "flightNo": {
+                "type": "string"
+              },
+              "carrierName": {
+                "type": "string"
+              },
+              "carrierCode": {
+                "type": "string"
+              },
+              "actualCarrierCode": {
+                "type": "string"
+              },
+              "departureCityCode": {
+                "type": "string"
+              },
+              "departureCity": {
+                "type": "string"
+              },
+              "arrivalCityCode": {
+                "type": "string"
+              },
+              "arrivalCity": {
+                "type": "string"
+              },
+              "departureAirportCode": {
+                "type": "string"
+              },
+              "departureAirport": {
+                "type": "string"
+              },
+              "arrivalAirportCode": {
+                "type": "string"
+              },
+              "arrivalAirport": {
+                "type": "string"
+              },
+              "gmtTakeOff": {
+                "type": "string"
+              },
+              "gmtArrival": {
+                "type": "string"
+              }
+            },
+            "additionalProperties": false
+          }
+        },
+        "description": "退订订单基础航班信息",
+        "required": true,
+        "business_identity": false,
+        "requirement_marker": "@required",
+        "source_ref": {
+          "repository": "",
+          "path": "app/facade/src/main/java/com/ly/flight/chainsaas/refund/facade/model/dto/RefundDetailApiDTO.java",
+          "symbol": "com.ly.flight.chainsaas.refund.facade.model.dto.RefundDetailApiDTO#segmentRefundInfos",
+          "line": 25,
+          "commit": "",
+          "content_digest": ""
+        }
+      },
+      {
+        "path": "refundDetailApiDTO.refundItemInfos",
+        "field_name": "refundItemInfos",
+        "schema": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "passenger": {
+                "type": "object",
+                "properties": {
+                  "lastName": {
+                    "type": "string"
+                  },
+                  "firstName": {
+                    "type": "string"
+                  },
+                  "gender": {
+                    "type": "integer"
+                  },
+                  "passengerType": {
+                    "type": "integer"
+                  },
+                  "creditType": {
+                    "type": "integer"
+                  },
+                  "creditNo": {
+                    "type": "string"
+                  },
+                  "gmtCreditValidate": {
+                    "type": "string"
+                  },
+                  "birthday": {
+                    "type": "string"
+                  },
+                  "nationCode": {
+                    "type": "string"
+                  }
+                },
+                "additionalProperties": false
+              },
+              "passSegs": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "segmentInfo": {
+                      "type": "object",
+                      "properties": {
+                        "sequence": {
+                          "type": "integer"
+                        },
+                        "flightNo": {
+                          "type": "string"
+                        },
+                        "carrierName": {
+                          "type": "string"
+                        },
+                        "carrierCode": {
+                          "type": "string"
+                        },
+                        "actualCarrierCode": {
+                          "type": "string"
+                        },
+                        "departureCityCode": {
+                          "type": "string"
+                        },
+                        "departureCity": {
+                          "type": "string"
+                        },
+                        "arrivalCityCode": {
+                          "type": "string"
+                        },
+                        "arrivalCity": {
+                          "type": "string"
+                        },
+                        "departureAirportCode": {
+                          "type": "string"
+                        },
+                        "departureAirport": {
+                          "type": "string"
+                        },
+                        "arrivalAirportCode": {
+                          "type": "string"
+                        },
+                        "arrivalAirport": {
+                          "type": "string"
+                        },
+                        "gmtTakeOff": {
+                          "type": "string"
+                        },
+                        "gmtArrival": {
+                          "type": "string"
+                        }
+                      },
+                      "additionalProperties": false
+                    }
+                  },
+                  "additionalProperties": false
+                }
+              }
+            },
+            "additionalProperties": false
+          }
+        },
+        "description": "退票乘客明细",
+        "required": true,
+        "business_identity": false,
+        "requirement_marker": "@required",
+        "source_ref": {
+          "repository": "",
+          "path": "app/facade/src/main/java/com/ly/flight/chainsaas/refund/facade/model/dto/RefundDetailApiDTO.java",
+          "symbol": "com.ly.flight.chainsaas.refund.facade.model.dto.RefundDetailApiDTO#refundItemInfos",
+          "line": 29,
+          "commit": "",
+          "content_digest": ""
+        }
+      },
+      {
+        "path": "contactInfoDTO.name",
+        "field_name": "name",
+        "schema": {
+          "type": "string"
+        },
+        "description": "",
+        "required": false,
+        "business_identity": false,
+        "requirement_marker": "",
+        "source_ref": {
+          "repository": "",
+          "path": "app/model/src/main/java/com/ly/flight/chainsaas/refund/model/ContactInfoDTO.java",
+          "symbol": "com.ly.flight.chainsaas.refund.model.ContactInfoDTO#name",
+          "line": 16,
+          "commit": "",
+          "content_digest": ""
+        }
+      },
+      {
+        "path": "contactInfoDTO.address",
+        "field_name": "address",
+        "schema": {
+          "type": "string"
+        },
+        "description": "",
+        "required": false,
+        "business_identity": false,
+        "requirement_marker": "",
+        "source_ref": {
+          "repository": "",
+          "path": "app/model/src/main/java/com/ly/flight/chainsaas/refund/model/ContactInfoDTO.java",
+          "symbol": "com.ly.flight.chainsaas.refund.model.ContactInfoDTO#address",
+          "line": 17,
+          "commit": "",
+          "content_digest": ""
+        }
+      },
+      {
+        "path": "contactInfoDTO.postCode",
+        "field_name": "postCode",
+        "schema": {
+          "type": "string"
+        },
+        "description": "",
+        "required": false,
+        "business_identity": false,
+        "requirement_marker": "",
+        "source_ref": {
+          "repository": "",
+          "path": "app/model/src/main/java/com/ly/flight/chainsaas/refund/model/ContactInfoDTO.java",
+          "symbol": "com.ly.flight.chainsaas.refund.model.ContactInfoDTO#postCode",
+          "line": 18,
+          "commit": "",
+          "content_digest": ""
+        }
+      },
+      {
+        "path": "contactInfoDTO.areaCode",
+        "field_name": "areaCode",
+        "schema": {
+          "type": "string"
+        },
+        "description": "",
+        "required": false,
+        "business_identity": false,
+        "requirement_marker": "",
+        "source_ref": {
+          "repository": "",
+          "path": "app/model/src/main/java/com/ly/flight/chainsaas/refund/model/ContactInfoDTO.java",
+          "symbol": "com.ly.flight.chainsaas.refund.model.ContactInfoDTO#areaCode",
+          "line": 19,
+          "commit": "",
+          "content_digest": ""
+        }
+      },
+      {
+        "path": "contactInfoDTO.mobile",
+        "field_name": "mobile",
+        "schema": {
+          "type": "string"
+        },
+        "description": "",
+        "required": false,
+        "business_identity": false,
+        "requirement_marker": "",
+        "source_ref": {
+          "repository": "",
+          "path": "app/model/src/main/java/com/ly/flight/chainsaas/refund/model/ContactInfoDTO.java",
+          "symbol": "com.ly.flight.chainsaas.refund.model.ContactInfoDTO#mobile",
+          "line": 20,
+          "commit": "",
+          "content_digest": ""
+        }
+      },
+      {
+        "path": "contactInfoDTO.email",
+        "field_name": "email",
+        "schema": {
+          "type": "string"
+        },
+        "description": "",
+        "required": false,
+        "business_identity": false,
+        "requirement_marker": "",
+        "source_ref": {
+          "repository": "",
+          "path": "app/model/src/main/java/com/ly/flight/chainsaas/refund/model/ContactInfoDTO.java",
+          "symbol": "com.ly.flight.chainsaas.refund.model.ContactInfoDTO#email",
+          "line": 21,
+          "commit": "",
+          "content_digest": ""
+        }
+      },
+      {
+        "path": "contactInfoDTO.country",
+        "field_name": "country",
+        "schema": {
+          "type": "string"
+        },
+        "description": "国家",
+        "required": false,
+        "business_identity": false,
+        "requirement_marker": "",
+        "source_ref": {
+          "repository": "",
+          "path": "app/model/src/main/java/com/ly/flight/chainsaas/refund/model/ContactInfoDTO.java",
+          "symbol": "com.ly.flight.chainsaas.refund.model.ContactInfoDTO#country",
+          "line": 25,
+          "commit": "",
+          "content_digest": ""
+        }
+      },
+      {
+        "path": "orderChannelSource",
+        "field_name": "orderChannelSource",
+        "schema": {
+          "type": "integer"
+        },
+        "description": "渠道",
+        "required": true,
+        "business_identity": false,
+        "requirement_marker": "@required",
+        "source_ref": {
+          "repository": "",
+          "path": "app/facade/src/main/java/com/ly/flight/chainsaas/refund/facade/model/request/CreateRefundOrderRequest.java",
+          "symbol": "com.ly.flight.chainsaas.refund.facade.model.request.CreateRefundOrderRequest#orderChannelSource",
+          "line": 35,
+          "commit": "",
+          "content_digest": ""
+        }
+      },
+      {
+        "path": "passengerIds",
+        "field_name": "passengerIds",
+        "schema": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "description": "",
+        "required": false,
+        "business_identity": false,
+        "requirement_marker": "",
+        "source_ref": {
+          "repository": "",
+          "path": "app/facade/src/main/java/com/ly/flight/chainsaas/refund/facade/model/request/CreateRefundOrderRequest.java",
+          "symbol": "com.ly.flight.chainsaas.refund.facade.model.request.CreateRefundOrderRequest#passengerIds",
+          "line": 37,
+          "commit": "",
+          "content_digest": ""
+        }
+      },
+      {
+        "path": "segmentIds",
+        "field_name": "segmentIds",
+        "schema": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "description": "",
+        "required": false,
+        "business_identity": false,
+        "requirement_marker": "",
+        "source_ref": {
+          "repository": "",
+          "path": "app/facade/src/main/java/com/ly/flight/chainsaas/refund/facade/model/request/CreateRefundOrderRequest.java",
+          "symbol": "com.ly.flight.chainsaas.refund.facade.model.request.CreateRefundOrderRequest#segmentIds",
+          "line": 39,
+          "commit": "",
+          "content_digest": ""
+        }
+      },
+      {
+        "path": "memberId",
+        "field_name": "memberId",
+        "schema": {
+          "type": "string"
+        },
+        "description": "",
+        "required": false,
+        "business_identity": false,
+        "requirement_marker": "",
+        "source_ref": {
+          "repository": "",
+          "path": "app/facade/src/main/java/com/ly/flight/chainsaas/refund/facade/model/request/CreateRefundOrderRequest.java",
+          "symbol": "com.ly.flight.chainsaas.refund.facade.model.request.CreateRefundOrderRequest#memberId",
+          "line": 41,
+          "commit": "",
+          "content_digest": ""
+        }
+      },
+      {
+        "path": "language",
+        "field_name": "language",
+        "schema": {
+          "type": "string"
+        },
+        "description": "语种",
+        "required": false,
+        "business_identity": false,
+        "requirement_marker": "",
+        "source_ref": {
+          "repository": "",
+          "path": "app/facade/src/main/java/com/ly/flight/chainsaas/refund/facade/model/request/CreateRefundOrderRequest.java",
+          "symbol": "com.ly.flight.chainsaas.refund.facade.model.request.CreateRefundOrderRequest#language",
+          "line": 45,
+          "commit": "",
+          "content_digest": ""
+        }
+      },
+      {
+        "path": "isAuto",
+        "field_name": "isAuto",
+        "schema": {
+          "type": "boolean"
+        },
+        "description": "是否自动退票请求",
+        "required": false,
+        "business_identity": false,
+        "requirement_marker": "",
+        "source_ref": {
+          "repository": "",
+          "path": "app/facade/src/main/java/com/ly/flight/chainsaas/refund/facade/model/request/CreateRefundOrderRequest.java",
+          "symbol": "com.ly.flight.chainsaas.refund.facade.model.request.CreateRefundOrderRequest#isAuto",
+          "line": 50,
+          "commit": "",
+          "content_digest": ""
+        }
+      },
+      {
+        "path": "channelEnum",
+        "field_name": "channelEnum",
+        "schema": {
+          "type": "string"
+        },
+        "description": "退票单渠道",
+        "required": false,
+        "business_identity": false,
+        "requirement_marker": "",
+        "source_ref": {
+          "repository": "",
+          "path": "app/facade/src/main/java/com/ly/flight/chainsaas/refund/facade/model/request/CreateRefundOrderRequest.java",
+          "symbol": "com.ly.flight.chainsaas.refund.facade.model.request.CreateRefundOrderRequest#channelEnum",
+          "line": 55,
+          "commit": "",
+          "content_digest": ""
+        }
+      },
+      {
+        "path": "refundSource",
+        "field_name": "refundSource",
+        "schema": {
+          "type": "string"
+        },
+        "description": "退票单来源",
+        "required": false,
+        "business_identity": false,
+        "requirement_marker": "",
+        "source_ref": {
+          "repository": "",
+          "path": "app/facade/src/main/java/com/ly/flight/chainsaas/refund/facade/model/request/CreateRefundOrderRequest.java",
+          "symbol": "com.ly.flight.chainsaas.refund.facade.model.request.CreateRefundOrderRequest#refundSource",
+          "line": 60,
+          "commit": "",
+          "content_digest": ""
+        }
+      }
+    ]
+  },
+  "submission": {
+    "data_functions": [
+      {
+        "name": "discover_platform",
+        "description": "从预订只读列表取得真实采购归属平台；不使用固定平台种子。",
+        "inputs": [],
+        "steps": [
+          {
+            "step_id": "orders",
+            "operation": "runtime_call",
+            "function_id": "facade:com.ly.flight.chainsaas.booking.facade.TradeFacade#queryList",
+            "input_source": null,
+            "arguments": {},
+            "output_schema": {
+              "type": "object",
+              "properties": {
+                "list": {
+                  "type": "object",
+                  "properties": {
+                    "pageList": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "ownerId": {
+                            "type": "string"
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            },
+            "predicates": [],
+            "fields": []
+          },
+          {
+            "step_id": "eligible",
+            "operation": "filter",
+            "function_id": "",
+            "input_source": {
+              "kind": "step_output",
+              "name": "",
+              "path": "list.pageList",
+              "step_id": "orders",
+              "call_id": "",
+              "output_name": ""
+            },
+            "arguments": {},
+            "output_schema": null,
+            "predicates": [
+              {
+                "left": {
+                  "kind": "current_item",
+                  "name": "",
+                  "path": "ownerId",
+                  "step_id": "",
+                  "call_id": "",
+                  "output_name": ""
+                },
+                "operator": "not_null",
+                "right": null
+              },
+              {
+                "left": {
+                  "kind": "current_item",
+                  "name": "",
+                  "path": "ownerId",
+                  "step_id": "",
+                  "call_id": "",
+                  "output_name": ""
+                },
+                "operator": "ne",
+                "right": {
+                  "kind": "literal",
+                  "value": "",
+                  "name": "",
+                  "path": "",
+                  "step_id": "",
+                  "call_id": "",
+                  "output_name": ""
+                }
+              }
+            ],
+            "fields": []
+          },
+          {
+            "step_id": "selected",
+            "operation": "first",
+            "function_id": "",
+            "input_source": {
+              "kind": "step_output",
+              "name": "",
+              "path": "",
+              "step_id": "eligible",
+              "call_id": "",
+              "output_name": ""
+            },
+            "arguments": {},
+            "output_schema": null,
+            "predicates": [],
+            "fields": []
+          }
+        ],
+        "outputs": [
+          {
+            "output_name": "platform_id",
+            "step_id": "selected",
+            "path": "ownerId"
+          }
+        ],
+        "evidence": [
+          {
+            "source_system_id": "ifightchainsaas.java.booking.core",
+            "path": "app/facade/src/main/java/com/ly/flight/chainsaas/booking/facade/model/response/OrderListResponse.java",
+            "symbol": "list",
+            "line": 18
+          },
+          {
+            "source_system_id": "ifightchainsaas.java.booking.core",
+            "path": "app/model/src/main/java/com/ly/flight/chainsaas/booking/model/PageVO.java",
+            "symbol": "pageList",
+            "line": 13
+          },
+          {
+            "source_system_id": "ifightchainsaas.java.booking.core",
+            "path": "app/model/src/main/java/com/ly/flight/chainsaas/booking/model/SaasOrderVO.java",
+            "symbol": "ownerId",
+            "line": 247
+          }
+        ]
+      },
+      {
+        "name": "existing_refund_passenger",
+        "description": "按源码Changing状态查询真实既有退票单，排除SAPL及IJ专项分支；查询退票详情取得原乘客，再从原单详情选取同乘客的真实航段。请求保留最小已校验明细，passSegs为空仅隔离姓名航班重复单检查，不展开空值矩阵；预期在创建前返回404。",
+        "inputs": [
+          {
+            "name": "platform_id",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "refund_state",
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "steps": [
+          {
+            "step_id": "refunds",
+            "operation": "runtime_call",
+            "function_id": "facade:com.ly.flight.chainsaas.refund.facade.RefundFacade#queryList",
+            "input_source": null,
+            "arguments": {
+              "platFormId": {
+                "kind": "function_input",
+                "name": "platform_id",
+                "path": "",
+                "step_id": "",
+                "call_id": "",
+                "output_name": ""
+              },
+              "orderState": {
+                "kind": "function_input",
+                "name": "refund_state",
+                "path": "",
+                "step_id": "",
+                "call_id": "",
+                "output_name": ""
+              }
+            },
+            "output_schema": {
+              "type": "object",
+              "properties": {
+                "list": {
+                  "type": "object",
+                  "properties": {
+                    "pageList": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "refundSerialNo": {
+                            "type": "string"
+                          },
+                          "orderSerialNo": {
+                            "type": "string"
+                          },
+                          "gds": {
+                            "type": "string"
+                          },
+                          "ticketAirline": {
+                            "type": "string"
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            },
+            "predicates": [],
+            "fields": []
+          },
+          {
+            "step_id": "eligible",
+            "operation": "filter",
+            "function_id": "",
+            "input_source": {
+              "kind": "step_output",
+              "name": "",
+              "path": "list.pageList",
+              "step_id": "refunds",
+              "call_id": "",
+              "output_name": ""
+            },
+            "arguments": {},
+            "output_schema": null,
+            "predicates": [
+              {
+                "left": {
+                  "kind": "current_item",
+                  "name": "",
+                  "path": "gds",
+                  "step_id": "",
+                  "call_id": "",
+                  "output_name": ""
+                },
+                "operator": "not_null",
+                "right": null
+              },
+              {
+                "left": {
+                  "kind": "current_item",
+                  "name": "",
+                  "path": "gds",
+                  "step_id": "",
+                  "call_id": "",
+                  "output_name": ""
+                },
+                "operator": "ne",
+                "right": {
+                  "kind": "literal",
+                  "value": "SAPL",
+                  "name": "",
+                  "path": "",
+                  "step_id": "",
+                  "call_id": "",
+                  "output_name": ""
+                }
+              },
+              {
+                "left": {
+                  "kind": "current_item",
+                  "name": "",
+                  "path": "ticketAirline",
+                  "step_id": "",
+                  "call_id": "",
+                  "output_name": ""
+                },
+                "operator": "not_null",
+                "right": null
+              },
+              {
+                "left": {
+                  "kind": "current_item",
+                  "name": "",
+                  "path": "ticketAirline",
+                  "step_id": "",
+                  "call_id": "",
+                  "output_name": ""
+                },
+                "operator": "ne",
+                "right": {
+                  "kind": "literal",
+                  "value": "IJ",
+                  "name": "",
+                  "path": "",
+                  "step_id": "",
+                  "call_id": "",
+                  "output_name": ""
+                }
+              },
+              {
+                "left": {
+                  "kind": "current_item",
+                  "name": "",
+                  "path": "ticketAirline",
+                  "step_id": "",
+                  "call_id": "",
+                  "output_name": ""
+                },
+                "operator": "ne",
+                "right": {
+                  "kind": "literal",
+                  "value": "ij",
+                  "name": "",
+                  "path": "",
+                  "step_id": "",
+                  "call_id": "",
+                  "output_name": ""
+                }
+              },
+              {
+                "left": {
+                  "kind": "current_item",
+                  "name": "",
+                  "path": "ticketAirline",
+                  "step_id": "",
+                  "call_id": "",
+                  "output_name": ""
+                },
+                "operator": "ne",
+                "right": {
+                  "kind": "literal",
+                  "value": "Ij",
+                  "name": "",
+                  "path": "",
+                  "step_id": "",
+                  "call_id": "",
+                  "output_name": ""
+                }
+              },
+              {
+                "left": {
+                  "kind": "current_item",
+                  "name": "",
+                  "path": "ticketAirline",
+                  "step_id": "",
+                  "call_id": "",
+                  "output_name": ""
+                },
+                "operator": "ne",
+                "right": {
+                  "kind": "literal",
+                  "value": "iJ",
+                  "name": "",
+                  "path": "",
+                  "step_id": "",
+                  "call_id": "",
+                  "output_name": ""
+                }
+              }
+            ],
+            "fields": []
+          },
+          {
+            "step_id": "selected",
+            "operation": "first",
+            "function_id": "",
+            "input_source": {
+              "kind": "step_output",
+              "name": "",
+              "path": "",
+              "step_id": "eligible",
+              "call_id": "",
+              "output_name": ""
+            },
+            "arguments": {},
+            "output_schema": null,
+            "predicates": [],
+            "fields": []
+          },
+          {
+            "step_id": "detail",
+            "operation": "runtime_call",
+            "function_id": "facade:com.ly.flight.chainsaas.refund.facade.RefundFacade#queryDetailByRefundNo",
+            "input_source": null,
+            "arguments": {
+              "refundSerialNo": {
+                "kind": "step_output",
+                "name": "",
+                "path": "refundSerialNo",
+                "step_id": "selected",
+                "call_id": "",
+                "output_name": ""
+              }
+            },
+            "output_schema": {
+              "type": "object",
+              "properties": {
+                "saasRefundOrderVO": {
+                  "type": "object",
+                  "properties": {
+                    "refundSerialNo": {
+                      "type": "string"
+                    },
+                    "orderSerialNo": {
+                      "type": "string"
+                    },
+                    "orderChannelSource": {
+                      "type": "integer"
+                    },
+                    "psis": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "passenger": {
+                            "type": "object",
+                            "properties": {
+                              "orderPassengerId": {
+                                "type": "string"
+                              },
+                              "firstName": {
+                                "type": "string"
+                              },
+                              "lastName": {
+                                "type": "string"
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            },
+            "predicates": [],
+            "fields": []
+          },
+          {
+            "step_id": "passengers",
+            "operation": "filter",
+            "function_id": "",
+            "input_source": {
+              "kind": "step_output",
+              "name": "",
+              "path": "saasRefundOrderVO.psis",
+              "step_id": "detail",
+              "call_id": "",
+              "output_name": ""
+            },
+            "arguments": {},
+            "output_schema": null,
+            "predicates": [
+              {
+                "left": {
+                  "kind": "current_item",
+                  "name": "",
+                  "path": "passenger.orderPassengerId",
+                  "step_id": "",
+                  "call_id": "",
+                  "output_name": ""
+                },
+                "operator": "not_null",
+                "right": null
+              },
+              {
+                "left": {
+                  "kind": "current_item",
+                  "name": "",
+                  "path": "passenger.firstName",
+                  "step_id": "",
+                  "call_id": "",
+                  "output_name": ""
+                },
+                "operator": "not_null",
+                "right": null
+              },
+              {
+                "left": {
+                  "kind": "current_item",
+                  "name": "",
+                  "path": "passenger.lastName",
+                  "step_id": "",
+                  "call_id": "",
+                  "output_name": ""
+                },
+                "operator": "not_null",
+                "right": null
+              }
+            ],
+            "fields": []
+          },
+          {
+            "step_id": "passenger",
+            "operation": "first",
+            "function_id": "",
+            "input_source": {
+              "kind": "step_output",
+              "name": "",
+              "path": "",
+              "step_id": "passengers",
+              "call_id": "",
+              "output_name": ""
+            },
+            "arguments": {},
+            "output_schema": null,
+            "predicates": [],
+            "fields": []
+          },
+          {
+            "step_id": "booking",
+            "operation": "runtime_call",
+            "function_id": "facade:com.ly.flight.chainsaas.booking.facade.TradeFacade#queryDetail",
+            "input_source": null,
+            "arguments": {
+              "orderSerialNo": {
+                "kind": "step_output",
+                "name": "",
+                "path": "orderSerialNo",
+                "step_id": "selected",
+                "call_id": "",
+                "output_name": ""
+              }
+            },
+            "output_schema": {
+              "type": "object",
+              "properties": {
+                "saasOrderVO": {
+                  "type": "object",
+                  "properties": {
+                    "gds": {
+                      "type": "string"
+                    },
+                    "psis": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "passenger": {
+                            "type": "object",
+                            "properties": {
+                              "passengerId": {
+                                "type": "string"
+                              }
+                            }
+                          },
+                          "segment": {
+                            "type": "object",
+                            "properties": {
+                              "segmentId": {
+                                "type": "string"
+                              },
+                              "sequence": {
+                                "type": "integer"
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            },
+            "predicates": [],
+            "fields": []
+          },
+          {
+            "step_id": "matching",
+            "operation": "filter",
+            "function_id": "",
+            "input_source": {
+              "kind": "step_output",
+              "name": "",
+              "path": "saasOrderVO.psis",
+              "step_id": "booking",
+              "call_id": "",
+              "output_name": ""
+            },
+            "arguments": {},
+            "output_schema": null,
+            "predicates": [
+              {
+                "left": {
+                  "kind": "current_item",
+                  "name": "",
+                  "path": "passenger.passengerId",
+                  "step_id": "",
+                  "call_id": "",
+                  "output_name": ""
+                },
+                "operator": "eq",
+                "right": {
+                  "kind": "step_output",
+                  "name": "",
+                  "path": "passenger.orderPassengerId",
+                  "step_id": "passenger",
+                  "call_id": "",
+                  "output_name": ""
+                }
+              },
+              {
+                "left": {
+                  "kind": "current_item",
+                  "name": "",
+                  "path": "segment.segmentId",
+                  "step_id": "",
+                  "call_id": "",
+                  "output_name": ""
+                },
+                "operator": "not_null",
+                "right": null
+              }
+            ],
+            "fields": []
+          },
+          {
+            "step_id": "segment",
+            "operation": "first",
+            "function_id": "",
+            "input_source": {
+              "kind": "step_output",
+              "name": "",
+              "path": "",
+              "step_id": "matching",
+              "call_id": "",
+              "output_name": ""
+            },
+            "arguments": {},
+            "output_schema": null,
+            "predicates": [],
+            "fields": []
+          }
+        ],
+        "outputs": [
+          {
+            "output_name": "refund_no",
+            "step_id": "detail",
+            "path": "saasRefundOrderVO.refundSerialNo"
+          },
+          {
+            "output_name": "order_no",
+            "step_id": "detail",
+            "path": "saasRefundOrderVO.orderSerialNo"
+          },
+          {
+            "output_name": "channel",
+            "step_id": "detail",
+            "path": "saasRefundOrderVO.orderChannelSource"
+          },
+          {
+            "output_name": "passenger_id",
+            "step_id": "passenger",
+            "path": "passenger.orderPassengerId"
+          },
+          {
+            "output_name": "first_name",
+            "step_id": "passenger",
+            "path": "passenger.firstName"
+          },
+          {
+            "output_name": "last_name",
+            "step_id": "passenger",
+            "path": "passenger.lastName"
+          },
+          {
+            "output_name": "segment_id",
+            "step_id": "segment",
+            "path": "segment.segmentId"
+          },
+          {
+            "output_name": "sequence",
+            "step_id": "segment",
+            "path": "segment.sequence"
+          }
+        ],
+        "evidence": [
+          {
+            "source_system_id": "ifightchainsaas.java.refund.core",
+            "path": "app/facade/src/main/java/com/ly/flight/chainsaas/refund/facade/model/response/RefundOrderListResponse.java",
+            "symbol": "list",
+            "line": 16
+          },
+          {
+            "source_system_id": "ifightchainsaas.java.refund.core",
+            "path": "app/model/src/main/java/com/ly/flight/chainsaas/refund/model/PageVO.java",
+            "symbol": "pageList",
+            "line": 13
+          },
+          {
+            "source_system_id": "ifightchainsaas.java.refund.core",
+            "path": "app/facade/src/main/java/com/ly/flight/chainsaas/refund/facade/model/response/RefundOrderDetailResponse.java",
+            "symbol": "saasRefundOrderVO",
+            "line": 16
+          },
+          {
+            "source_system_id": "ifightchainsaas.java.refund.core",
+            "path": "app/model/src/main/java/com/ly/flight/chainsaas/refund/model/CoreVO.java",
+            "symbol": "refundSerialNo",
+            "line": 30
+          },
+          {
+            "source_system_id": "ifightchainsaas.java.refund.core",
+            "path": "app/model/src/main/java/com/ly/flight/chainsaas/refund/model/CoreVO.java",
+            "symbol": "orderSerialNo",
+            "line": 35
+          },
+          {
+            "source_system_id": "ifightchainsaas.java.refund.core",
+            "path": "app/model/src/main/java/com/ly/flight/chainsaas/refund/model/SaasRefundOrderVO.java",
+            "symbol": "orderChannelSource",
+            "line": 67
+          },
+          {
+            "source_system_id": "ifightchainsaas.java.refund.core",
+            "path": "app/model/src/main/java/com/ly/flight/chainsaas/refund/model/SaasRefundOrderVO.java",
+            "symbol": "gds",
+            "line": 147
+          },
+          {
+            "source_system_id": "ifightchainsaas.java.refund.core",
+            "path": "app/model/src/main/java/com/ly/flight/chainsaas/refund/model/SaasRefundOrderVO.java",
+            "symbol": "ticketAirline",
+            "line": 127
+          },
+          {
+            "source_system_id": "ifightchainsaas.java.refund.core",
+            "path": "app/model/src/main/java/com/ly/flight/chainsaas/refund/model/SaasRefundOrderVO.java",
+            "symbol": "psis",
+            "line": 256
+          },
+          {
+            "source_system_id": "ifightchainsaas.java.refund.core",
+            "path": "app/model/src/main/java/com/ly/flight/chainsaas/refund/model/SaasRefundOrderPsiVO.java",
+            "symbol": "passenger",
+            "line": 15
+          },
+          {
+            "source_system_id": "ifightchainsaas.java.refund.core",
+            "path": "app/model/src/main/java/com/ly/flight/chainsaas/refund/model/SaasRefundOrderPassagerVO.java",
+            "symbol": "orderPassengerId",
+            "line": 41
+          },
+          {
+            "source_system_id": "ifightchainsaas.java.refund.core",
+            "path": "app/model/src/main/java/com/ly/flight/chainsaas/refund/model/SaasRefundOrderPassagerVO.java",
+            "symbol": "firstName",
+            "line": 51
+          },
+          {
+            "source_system_id": "ifightchainsaas.java.refund.core",
+            "path": "app/model/src/main/java/com/ly/flight/chainsaas/refund/model/SaasRefundOrderPassagerVO.java",
+            "symbol": "lastName",
+            "line": 46
+          },
+          {
+            "source_system_id": "ifightchainsaas.java.booking.core",
+            "path": "app/facade/src/main/java/com/ly/flight/chainsaas/booking/facade/model/response/OrderDetailResponse.java",
+            "symbol": "saasOrderVO",
+            "line": 17
+          },
+          {
+            "source_system_id": "ifightchainsaas.java.booking.core",
+            "path": "app/model/src/main/java/com/ly/flight/chainsaas/booking/model/SaasOrderVO.java",
+            "symbol": "psis",
+            "line": 350
+          },
+          {
+            "source_system_id": "ifightchainsaas.java.booking.core",
+            "path": "app/model/src/main/java/com/ly/flight/chainsaas/booking/model/SaasOrderPsiVO.java",
+            "symbol": "passenger",
+            "line": 17
+          },
+          {
+            "source_system_id": "ifightchainsaas.java.booking.core",
+            "path": "app/model/src/main/java/com/ly/flight/chainsaas/booking/model/SaasOrderPsiVO.java",
+            "symbol": "segment",
+            "line": 22
+          },
+          {
+            "source_system_id": "ifightchainsaas.java.booking.core",
+            "path": "app/model/src/main/java/com/ly/flight/chainsaas/booking/model/SaasOrderPassagerVO.java",
+            "symbol": "passengerId",
+            "line": 40
+          },
+          {
+            "source_system_id": "ifightchainsaas.java.booking.core",
+            "path": "app/model/src/main/java/com/ly/flight/chainsaas/booking/model/SaasOrderSegmentVO.java",
+            "symbol": "segmentId",
+            "line": 32
+          },
+          {
+            "source_system_id": "ifightchainsaas.java.booking.core",
+            "path": "app/model/src/main/java/com/ly/flight/chainsaas/booking/model/SaasOrderSegmentVO.java",
+            "symbol": "sequence",
+            "line": 37
+          }
+        ]
+      }
+    ],
+    "case_templates": [
+      {
+        "template_id": "create.existing-refund-state",
+        "title": "已有受Changing保护的退票单时，同原单乘客再次创建返回404",
+        "coverage_kind": "state_validation",
+        "data_calls": [
+          {
+            "call_id": "platform",
+            "function_name": "discover_platform",
+            "arguments": {}
+          },
+          {
+            "call_id": "existing",
+            "function_name": "existing_refund_passenger",
+            "arguments": {
+              "platform_id": {
+                "kind": "data_output",
+                "name": "",
+                "path": "",
+                "step_id": "",
+                "call_id": "platform",
+                "output_name": "platform_id"
+              },
+              "refund_state": {
+                "kind": "parameter",
+                "name": "existing_state",
+                "path": "code",
+                "step_id": "",
+                "call_id": "",
+                "output_name": ""
+              }
+            }
+          }
+        ],
+        "parameters": [
+          {
+            "name": "existing_state",
+            "target_field": "",
+            "function_id": "enum.values",
+            "arguments": {
+              "values": [
+                {
+                  "code": 0,
+                  "name": "PENDING_APPLY"
+                },
+                {
+                  "code": 8,
+                  "name": "RESHOPING"
+                },
+                {
+                  "code": 2,
+                  "name": "WAIT_REFUND"
+                },
+                {
+                  "code": 3,
+                  "name": "REFUNDING"
+                },
+                {
+                  "code": 4,
+                  "name": "REFUND_SUCCESS"
+                }
+              ]
+            },
+            "base_source": null
+          },
+          {
+            "name": "refund_type",
+            "target_field": "refundDetailApiDTO.orderRefundInfo.refundSubCategory",
+            "function_id": "enum.values",
+            "arguments": {
+              "values": [
+                {
+                  "code": 1,
+                  "name": "VOLUNTARY"
+                }
+              ]
+            },
+            "base_source": null
+          }
+        ],
+        "constraints": [],
+        "request_bindings": [
+          {
+            "field": "orderChannelSource",
+            "source": {
+              "kind": "data_output",
+              "name": "",
+              "path": "",
+              "step_id": "",
+              "call_id": "existing",
+              "output_name": "channel"
+            }
+          },
+          {
+            "field": "refundDetailApiDTO.orderRefundInfo.orderSerialNo",
+            "source": {
+              "kind": "data_output",
+              "name": "",
+              "path": "",
+              "step_id": "",
+              "call_id": "existing",
+              "output_name": "order_no"
+            }
+          },
+          {
+            "field": "refundDetailApiDTO.orderRefundInfo.refundSerialNo",
+            "source": {
+              "kind": "data_output",
+              "name": "",
+              "path": "",
+              "step_id": "",
+              "call_id": "existing",
+              "output_name": "refund_no"
+            }
+          },
+          {
+            "field": "refundDetailApiDTO.orderRefundInfo.refundSubCategory",
+            "source": {
+              "kind": "parameter",
+              "name": "refund_type",
+              "path": "code",
+              "step_id": "",
+              "call_id": "",
+              "output_name": ""
+            }
+          },
+          {
+            "field": "refundDetailApiDTO.segmentRefundInfos",
+            "source": {
+              "kind": "literal",
+              "value": [
+                {}
+              ],
+              "name": "",
+              "path": "",
+              "step_id": "",
+              "call_id": "",
+              "output_name": ""
+            }
+          },
+          {
+            "field": "refundDetailApiDTO.refundItemInfos",
+            "source": {
+              "kind": "literal",
+              "value": [
+                {
+                  "passenger": {},
+                  "passSegs": []
+                }
+              ],
+              "name": "",
+              "path": "",
+              "step_id": "",
+              "call_id": "",
+              "output_name": ""
+            }
+          },
+          {
+            "field": "refundDetailApiDTO.segmentRefundInfos.0.sequence",
+            "source": {
+              "kind": "data_output",
+              "name": "",
+              "path": "",
+              "step_id": "",
+              "call_id": "existing",
+              "output_name": "sequence"
+            }
+          },
+          {
+            "field": "refundDetailApiDTO.refundItemInfos.0.passenger.firstName",
+            "source": {
+              "kind": "data_output",
+              "name": "",
+              "path": "",
+              "step_id": "",
+              "call_id": "existing",
+              "output_name": "first_name"
+            }
+          },
+          {
+            "field": "refundDetailApiDTO.refundItemInfos.0.passenger.lastName",
+            "source": {
+              "kind": "data_output",
+              "name": "",
+              "path": "",
+              "step_id": "",
+              "call_id": "existing",
+              "output_name": "last_name"
+            }
+          },
+          {
+            "field": "passengerIds.0",
+            "source": {
+              "kind": "data_output",
+              "name": "",
+              "path": "",
+              "step_id": "",
+              "call_id": "existing",
+              "output_name": "passenger_id"
+            }
+          },
+          {
+            "field": "segmentIds.0",
+            "source": {
+              "kind": "data_output",
+              "name": "",
+              "path": "",
+              "step_id": "",
+              "call_id": "existing",
+              "output_name": "segment_id"
+            }
+          }
+        ],
+        "combination": "cartesian",
+        "oracles": [
+          {
+            "oracle_id": "response.existing-refund",
+            "channel": "response",
+            "function_id": "",
+            "statement": "",
+            "arguments": {},
+            "observer_output_schema": null,
+            "assertions": [
+              {
+                "actual_path": "success",
+                "operator": "eq",
+                "expected": {
+                  "kind": "literal",
+                  "value": false,
+                  "name": "",
+                  "path": "",
+                  "step_id": "",
+                  "call_id": "",
+                  "output_name": ""
+                }
+              },
+              {
+                "actual_path": "code",
+                "operator": "eq",
+                "expected": {
+                  "kind": "literal",
+                  "value": "404",
+                  "name": "",
+                  "path": "",
+                  "step_id": "",
+                  "call_id": "",
+                  "output_name": ""
+                }
+              },
+              {
+                "actual_path": "message",
+                "operator": "eq",
+                "expected": {
+                  "kind": "literal",
+                  "value": "存在处理中的单子",
+                  "name": "",
+                  "path": "",
+                  "step_id": "",
+                  "call_id": "",
+                  "output_name": ""
+                }
+              },
+              {
+                "actual_path": "existOrderDTO.orderSerialNo",
+                "operator": "not_null",
+                "expected": null
+              },
+              {
+                "actual_path": "existOrderDTO.orderStatus",
+                "operator": "in",
+                "expected": {
+                  "kind": "literal",
+                  "value": [
+                    "PENDING_APPLY",
+                    "RESHOPING",
+                    "AUDITED",
+                    "WAIT_REFUND",
+                    "REFUNDING",
+                    "REFUND_SUCCESS",
+                    "REFUND_DONE"
+                  ],
+                  "name": "",
+                  "path": "",
+                  "step_id": "",
+                  "call_id": "",
+                  "output_name": ""
+                }
+              }
+            ],
+            "evidence": []
+          }
+        ],
+        "cleanup": null,
+        "evidence": [
+          {
+            "source_system_id": "ifightchainsaas.java.refund.core",
+            "path": "app/biz/src/main/java/com/ly/flight/chainsaas/refund/biz/manager/refund/CreateRefundOrderInvoker.java",
+            "symbol": "innerInvoke",
+            "line": 145
+          },
+          {
+            "source_system_id": "ifightchainsaas.java.refund.core",
+            "path": "app/biz/src/main/java/com/ly/flight/chainsaas/refund/biz/manager/refund/CreateRefundOrderInvoker.java",
+            "symbol": "checkDuplicateorder",
+            "line": 347
+          },
+          {
+            "source_system_id": "ifightchainsaas.java.refund.core",
+            "path": "app/biz/src/main/java/com/ly/flight/chainsaas/refund/biz/service/validator/RefundValidator.java",
+            "symbol": "createRefundValidator",
+            "line": 70
+          },
+          {
+            "source_system_id": "ifightchainsaas.java.refund.core",
+            "path": "app/biz/src/main/java/com/ly/flight/chainsaas/refund/biz/service/validator/RefundValidator.java",
+            "symbol": "refunding",
+            "line": 157
+          },
+          {
+            "source_system_id": "ifightchainsaas.java.refund.core",
+            "path": "app/model/src/main/java/com/ly/flight/chainsaas/refund/enums/RefundOrderStateEnum.java",
+            "symbol": "PENDING_APPLY",
+            "line": 15
+          },
+          {
+            "source_system_id": "ifightchainsaas.java.refund.core",
+            "path": "app/model/src/main/java/com/ly/flight/chainsaas/refund/enums/RefundOrderStateEnum.java",
+            "symbol": "RESHOPING",
+            "line": 17
+          },
+          {
+            "source_system_id": "ifightchainsaas.java.refund.core",
+            "path": "app/model/src/main/java/com/ly/flight/chainsaas/refund/enums/RefundOrderStateEnum.java",
+            "symbol": "WAIT_REFUND",
+            "line": 21
+          },
+          {
+            "source_system_id": "ifightchainsaas.java.refund.core",
+            "path": "app/model/src/main/java/com/ly/flight/chainsaas/refund/enums/RefundOrderStateEnum.java",
+            "symbol": "REFUNDING",
+            "line": 23
+          },
+          {
+            "source_system_id": "ifightchainsaas.java.refund.core",
+            "path": "app/model/src/main/java/com/ly/flight/chainsaas/refund/enums/RefundOrderStateEnum.java",
+            "symbol": "REFUND_SUCCESS",
+            "line": 25
+          },
+          {
+            "source_system_id": "ifightchainsaas.java.refund.core",
+            "path": "app/model/src/main/java/com/ly/flight/chainsaas/refund/enums/RefundOrderStateEnum.java",
+            "symbol": "Changing",
+            "line": 45
+          },
+          {
+            "source_system_id": "ifightchainsaas.java.refund.core",
+            "path": "app/model/src/main/java/com/ly/flight/chainsaas/refund/enums/OrderRefundTypeEnum.java",
+            "symbol": "VOLUNTARY",
+            "line": 27
+          },
+          {
+            "source_system_id": "ifightchainsaas.java.refund.core",
+            "path": "app/facade-impl/src/main/java/com/ly/flight/chainsaas/refund/facade/validator/trade/CreateRefundOrderValidator.java",
+            "symbol": "validate",
+            "line": 28
+          }
+        ]
+      }
+    ],
+    "unresolved": []
+  },
+  "issues": [],
+  "variants": [
+    {
+      "variant_id": "case-variant-v4-2421b2db3ef1e0885da4",
+      "template_id": "create.existing-refund-state",
+      "ordinal": 1,
+      "parameter_values": {
+        "existing_state": {
+          "code": 8,
+          "name": "RESHOPING"
+        },
+        "refund_type": {
+          "code": 1,
+          "name": "VOLUNTARY"
+        }
+      },
+      "request_values": {
+        "orderChannelSource": {
+          "kind": "data_output",
+          "call_id": "existing",
+          "output_name": "channel"
+        },
+        "refundDetailApiDTO.orderRefundInfo.orderSerialNo": {
+          "kind": "data_output",
+          "call_id": "existing",
+          "output_name": "order_no"
+        },
+        "refundDetailApiDTO.orderRefundInfo.refundSerialNo": {
+          "kind": "data_output",
+          "call_id": "existing",
+          "output_name": "refund_no"
+        },
+        "refundDetailApiDTO.orderRefundInfo.refundSubCategory": 1,
+        "refundDetailApiDTO.segmentRefundInfos": [
+          {}
+        ],
+        "refundDetailApiDTO.refundItemInfos": [
+          {
+            "passenger": {},
+            "passSegs": []
+          }
+        ],
+        "refundDetailApiDTO.segmentRefundInfos.0.sequence": {
+          "kind": "data_output",
+          "call_id": "existing",
+          "output_name": "sequence"
+        },
+        "refundDetailApiDTO.refundItemInfos.0.passenger.firstName": {
+          "kind": "data_output",
+          "call_id": "existing",
+          "output_name": "first_name"
+        },
+        "refundDetailApiDTO.refundItemInfos.0.passenger.lastName": {
+          "kind": "data_output",
+          "call_id": "existing",
+          "output_name": "last_name"
+        },
+        "passengerIds.0": {
+          "kind": "data_output",
+          "call_id": "existing",
+          "output_name": "passenger_id"
+        },
+        "segmentIds.0": {
+          "kind": "data_output",
+          "call_id": "existing",
+          "output_name": "segment_id"
+        }
+      },
+      "data_calls": [
+        {
+          "call_id": "platform",
+          "function_name": "discover_platform",
+          "arguments": {}
+        },
+        {
+          "call_id": "existing",
+          "function_name": "existing_refund_passenger",
+          "arguments": {
+            "platform_id": {
+              "kind": "data_output",
+              "name": "",
+              "path": "",
+              "step_id": "",
+              "call_id": "platform",
+              "output_name": "platform_id"
+            },
+            "refund_state": {
+              "kind": "parameter",
+              "name": "existing_state",
+              "path": "code",
+              "step_id": "",
+              "call_id": "",
+              "output_name": ""
+            }
+          }
+        }
+      ],
+      "oracles": [
+        {
+          "oracle_id": "response.existing-refund",
+          "channel": "response",
+          "function_id": "",
+          "statement": "",
+          "arguments": {},
+          "observer_output_schema": null,
+          "assertions": [
+            {
+              "actual_path": "success",
+              "operator": "eq",
+              "expected": {
+                "kind": "literal",
+                "value": false,
+                "name": "",
+                "path": "",
+                "step_id": "",
+                "call_id": "",
+                "output_name": ""
+              }
+            },
+            {
+              "actual_path": "code",
+              "operator": "eq",
+              "expected": {
+                "kind": "literal",
+                "value": "404",
+                "name": "",
+                "path": "",
+                "step_id": "",
+                "call_id": "",
+                "output_name": ""
+              }
+            },
+            {
+              "actual_path": "message",
+              "operator": "eq",
+              "expected": {
+                "kind": "literal",
+                "value": "存在处理中的单子",
+                "name": "",
+                "path": "",
+                "step_id": "",
+                "call_id": "",
+                "output_name": ""
+              }
+            },
+            {
+              "actual_path": "existOrderDTO.orderSerialNo",
+              "operator": "not_null",
+              "expected": null
+            },
+            {
+              "actual_path": "existOrderDTO.orderStatus",
+              "operator": "in",
+              "expected": {
+                "kind": "literal",
+                "value": [
+                  "PENDING_APPLY",
+                  "RESHOPING",
+                  "AUDITED",
+                  "WAIT_REFUND",
+                  "REFUNDING",
+                  "REFUND_SUCCESS",
+                  "REFUND_DONE"
+                ],
+                "name": "",
+                "path": "",
+                "step_id": "",
+                "call_id": "",
+                "output_name": ""
+              }
+            }
+          ],
+          "evidence": []
+        }
+      ],
+      "cleanup": null,
+      "blocked_reason": ""
+    },
+    {
+      "variant_id": "case-variant-v4-5de704412ea0f22e7dc3",
+      "template_id": "create.existing-refund-state",
+      "ordinal": 2,
+      "parameter_values": {
+        "existing_state": {
+          "code": 2,
+          "name": "WAIT_REFUND"
+        },
+        "refund_type": {
+          "code": 1,
+          "name": "VOLUNTARY"
+        }
+      },
+      "request_values": {
+        "orderChannelSource": {
+          "kind": "data_output",
+          "call_id": "existing",
+          "output_name": "channel"
+        },
+        "refundDetailApiDTO.orderRefundInfo.orderSerialNo": {
+          "kind": "data_output",
+          "call_id": "existing",
+          "output_name": "order_no"
+        },
+        "refundDetailApiDTO.orderRefundInfo.refundSerialNo": {
+          "kind": "data_output",
+          "call_id": "existing",
+          "output_name": "refund_no"
+        },
+        "refundDetailApiDTO.orderRefundInfo.refundSubCategory": 1,
+        "refundDetailApiDTO.segmentRefundInfos": [
+          {}
+        ],
+        "refundDetailApiDTO.refundItemInfos": [
+          {
+            "passenger": {},
+            "passSegs": []
+          }
+        ],
+        "refundDetailApiDTO.segmentRefundInfos.0.sequence": {
+          "kind": "data_output",
+          "call_id": "existing",
+          "output_name": "sequence"
+        },
+        "refundDetailApiDTO.refundItemInfos.0.passenger.firstName": {
+          "kind": "data_output",
+          "call_id": "existing",
+          "output_name": "first_name"
+        },
+        "refundDetailApiDTO.refundItemInfos.0.passenger.lastName": {
+          "kind": "data_output",
+          "call_id": "existing",
+          "output_name": "last_name"
+        },
+        "passengerIds.0": {
+          "kind": "data_output",
+          "call_id": "existing",
+          "output_name": "passenger_id"
+        },
+        "segmentIds.0": {
+          "kind": "data_output",
+          "call_id": "existing",
+          "output_name": "segment_id"
+        }
+      },
+      "data_calls": [
+        {
+          "call_id": "platform",
+          "function_name": "discover_platform",
+          "arguments": {}
+        },
+        {
+          "call_id": "existing",
+          "function_name": "existing_refund_passenger",
+          "arguments": {
+            "platform_id": {
+              "kind": "data_output",
+              "name": "",
+              "path": "",
+              "step_id": "",
+              "call_id": "platform",
+              "output_name": "platform_id"
+            },
+            "refund_state": {
+              "kind": "parameter",
+              "name": "existing_state",
+              "path": "code",
+              "step_id": "",
+              "call_id": "",
+              "output_name": ""
+            }
+          }
+        }
+      ],
+      "oracles": [
+        {
+          "oracle_id": "response.existing-refund",
+          "channel": "response",
+          "function_id": "",
+          "statement": "",
+          "arguments": {},
+          "observer_output_schema": null,
+          "assertions": [
+            {
+              "actual_path": "success",
+              "operator": "eq",
+              "expected": {
+                "kind": "literal",
+                "value": false,
+                "name": "",
+                "path": "",
+                "step_id": "",
+                "call_id": "",
+                "output_name": ""
+              }
+            },
+            {
+              "actual_path": "code",
+              "operator": "eq",
+              "expected": {
+                "kind": "literal",
+                "value": "404",
+                "name": "",
+                "path": "",
+                "step_id": "",
+                "call_id": "",
+                "output_name": ""
+              }
+            },
+            {
+              "actual_path": "message",
+              "operator": "eq",
+              "expected": {
+                "kind": "literal",
+                "value": "存在处理中的单子",
+                "name": "",
+                "path": "",
+                "step_id": "",
+                "call_id": "",
+                "output_name": ""
+              }
+            },
+            {
+              "actual_path": "existOrderDTO.orderSerialNo",
+              "operator": "not_null",
+              "expected": null
+            },
+            {
+              "actual_path": "existOrderDTO.orderStatus",
+              "operator": "in",
+              "expected": {
+                "kind": "literal",
+                "value": [
+                  "PENDING_APPLY",
+                  "RESHOPING",
+                  "AUDITED",
+                  "WAIT_REFUND",
+                  "REFUNDING",
+                  "REFUND_SUCCESS",
+                  "REFUND_DONE"
+                ],
+                "name": "",
+                "path": "",
+                "step_id": "",
+                "call_id": "",
+                "output_name": ""
+              }
+            }
+          ],
+          "evidence": []
+        }
+      ],
+      "cleanup": null,
+      "blocked_reason": ""
+    },
+    {
+      "variant_id": "case-variant-v4-8fa9ea06a1d1efae2cb2",
+      "template_id": "create.existing-refund-state",
+      "ordinal": 3,
+      "parameter_values": {
+        "existing_state": {
+          "code": 0,
+          "name": "PENDING_APPLY"
+        },
+        "refund_type": {
+          "code": 1,
+          "name": "VOLUNTARY"
+        }
+      },
+      "request_values": {
+        "orderChannelSource": {
+          "kind": "data_output",
+          "call_id": "existing",
+          "output_name": "channel"
+        },
+        "refundDetailApiDTO.orderRefundInfo.orderSerialNo": {
+          "kind": "data_output",
+          "call_id": "existing",
+          "output_name": "order_no"
+        },
+        "refundDetailApiDTO.orderRefundInfo.refundSerialNo": {
+          "kind": "data_output",
+          "call_id": "existing",
+          "output_name": "refund_no"
+        },
+        "refundDetailApiDTO.orderRefundInfo.refundSubCategory": 1,
+        "refundDetailApiDTO.segmentRefundInfos": [
+          {}
+        ],
+        "refundDetailApiDTO.refundItemInfos": [
+          {
+            "passenger": {},
+            "passSegs": []
+          }
+        ],
+        "refundDetailApiDTO.segmentRefundInfos.0.sequence": {
+          "kind": "data_output",
+          "call_id": "existing",
+          "output_name": "sequence"
+        },
+        "refundDetailApiDTO.refundItemInfos.0.passenger.firstName": {
+          "kind": "data_output",
+          "call_id": "existing",
+          "output_name": "first_name"
+        },
+        "refundDetailApiDTO.refundItemInfos.0.passenger.lastName": {
+          "kind": "data_output",
+          "call_id": "existing",
+          "output_name": "last_name"
+        },
+        "passengerIds.0": {
+          "kind": "data_output",
+          "call_id": "existing",
+          "output_name": "passenger_id"
+        },
+        "segmentIds.0": {
+          "kind": "data_output",
+          "call_id": "existing",
+          "output_name": "segment_id"
+        }
+      },
+      "data_calls": [
+        {
+          "call_id": "platform",
+          "function_name": "discover_platform",
+          "arguments": {}
+        },
+        {
+          "call_id": "existing",
+          "function_name": "existing_refund_passenger",
+          "arguments": {
+            "platform_id": {
+              "kind": "data_output",
+              "name": "",
+              "path": "",
+              "step_id": "",
+              "call_id": "platform",
+              "output_name": "platform_id"
+            },
+            "refund_state": {
+              "kind": "parameter",
+              "name": "existing_state",
+              "path": "code",
+              "step_id": "",
+              "call_id": "",
+              "output_name": ""
+            }
+          }
+        }
+      ],
+      "oracles": [
+        {
+          "oracle_id": "response.existing-refund",
+          "channel": "response",
+          "function_id": "",
+          "statement": "",
+          "arguments": {},
+          "observer_output_schema": null,
+          "assertions": [
+            {
+              "actual_path": "success",
+              "operator": "eq",
+              "expected": {
+                "kind": "literal",
+                "value": false,
+                "name": "",
+                "path": "",
+                "step_id": "",
+                "call_id": "",
+                "output_name": ""
+              }
+            },
+            {
+              "actual_path": "code",
+              "operator": "eq",
+              "expected": {
+                "kind": "literal",
+                "value": "404",
+                "name": "",
+                "path": "",
+                "step_id": "",
+                "call_id": "",
+                "output_name": ""
+              }
+            },
+            {
+              "actual_path": "message",
+              "operator": "eq",
+              "expected": {
+                "kind": "literal",
+                "value": "存在处理中的单子",
+                "name": "",
+                "path": "",
+                "step_id": "",
+                "call_id": "",
+                "output_name": ""
+              }
+            },
+            {
+              "actual_path": "existOrderDTO.orderSerialNo",
+              "operator": "not_null",
+              "expected": null
+            },
+            {
+              "actual_path": "existOrderDTO.orderStatus",
+              "operator": "in",
+              "expected": {
+                "kind": "literal",
+                "value": [
+                  "PENDING_APPLY",
+                  "RESHOPING",
+                  "AUDITED",
+                  "WAIT_REFUND",
+                  "REFUNDING",
+                  "REFUND_SUCCESS",
+                  "REFUND_DONE"
+                ],
+                "name": "",
+                "path": "",
+                "step_id": "",
+                "call_id": "",
+                "output_name": ""
+              }
+            }
+          ],
+          "evidence": []
+        }
+      ],
+      "cleanup": null,
+      "blocked_reason": ""
+    },
+    {
+      "variant_id": "case-variant-v4-a7f247ec1265d7eeca79",
+      "template_id": "create.existing-refund-state",
+      "ordinal": 4,
+      "parameter_values": {
+        "existing_state": {
+          "code": 3,
+          "name": "REFUNDING"
+        },
+        "refund_type": {
+          "code": 1,
+          "name": "VOLUNTARY"
+        }
+      },
+      "request_values": {
+        "orderChannelSource": {
+          "kind": "data_output",
+          "call_id": "existing",
+          "output_name": "channel"
+        },
+        "refundDetailApiDTO.orderRefundInfo.orderSerialNo": {
+          "kind": "data_output",
+          "call_id": "existing",
+          "output_name": "order_no"
+        },
+        "refundDetailApiDTO.orderRefundInfo.refundSerialNo": {
+          "kind": "data_output",
+          "call_id": "existing",
+          "output_name": "refund_no"
+        },
+        "refundDetailApiDTO.orderRefundInfo.refundSubCategory": 1,
+        "refundDetailApiDTO.segmentRefundInfos": [
+          {}
+        ],
+        "refundDetailApiDTO.refundItemInfos": [
+          {
+            "passenger": {},
+            "passSegs": []
+          }
+        ],
+        "refundDetailApiDTO.segmentRefundInfos.0.sequence": {
+          "kind": "data_output",
+          "call_id": "existing",
+          "output_name": "sequence"
+        },
+        "refundDetailApiDTO.refundItemInfos.0.passenger.firstName": {
+          "kind": "data_output",
+          "call_id": "existing",
+          "output_name": "first_name"
+        },
+        "refundDetailApiDTO.refundItemInfos.0.passenger.lastName": {
+          "kind": "data_output",
+          "call_id": "existing",
+          "output_name": "last_name"
+        },
+        "passengerIds.0": {
+          "kind": "data_output",
+          "call_id": "existing",
+          "output_name": "passenger_id"
+        },
+        "segmentIds.0": {
+          "kind": "data_output",
+          "call_id": "existing",
+          "output_name": "segment_id"
+        }
+      },
+      "data_calls": [
+        {
+          "call_id": "platform",
+          "function_name": "discover_platform",
+          "arguments": {}
+        },
+        {
+          "call_id": "existing",
+          "function_name": "existing_refund_passenger",
+          "arguments": {
+            "platform_id": {
+              "kind": "data_output",
+              "name": "",
+              "path": "",
+              "step_id": "",
+              "call_id": "platform",
+              "output_name": "platform_id"
+            },
+            "refund_state": {
+              "kind": "parameter",
+              "name": "existing_state",
+              "path": "code",
+              "step_id": "",
+              "call_id": "",
+              "output_name": ""
+            }
+          }
+        }
+      ],
+      "oracles": [
+        {
+          "oracle_id": "response.existing-refund",
+          "channel": "response",
+          "function_id": "",
+          "statement": "",
+          "arguments": {},
+          "observer_output_schema": null,
+          "assertions": [
+            {
+              "actual_path": "success",
+              "operator": "eq",
+              "expected": {
+                "kind": "literal",
+                "value": false,
+                "name": "",
+                "path": "",
+                "step_id": "",
+                "call_id": "",
+                "output_name": ""
+              }
+            },
+            {
+              "actual_path": "code",
+              "operator": "eq",
+              "expected": {
+                "kind": "literal",
+                "value": "404",
+                "name": "",
+                "path": "",
+                "step_id": "",
+                "call_id": "",
+                "output_name": ""
+              }
+            },
+            {
+              "actual_path": "message",
+              "operator": "eq",
+              "expected": {
+                "kind": "literal",
+                "value": "存在处理中的单子",
+                "name": "",
+                "path": "",
+                "step_id": "",
+                "call_id": "",
+                "output_name": ""
+              }
+            },
+            {
+              "actual_path": "existOrderDTO.orderSerialNo",
+              "operator": "not_null",
+              "expected": null
+            },
+            {
+              "actual_path": "existOrderDTO.orderStatus",
+              "operator": "in",
+              "expected": {
+                "kind": "literal",
+                "value": [
+                  "PENDING_APPLY",
+                  "RESHOPING",
+                  "AUDITED",
+                  "WAIT_REFUND",
+                  "REFUNDING",
+                  "REFUND_SUCCESS",
+                  "REFUND_DONE"
+                ],
+                "name": "",
+                "path": "",
+                "step_id": "",
+                "call_id": "",
+                "output_name": ""
+              }
+            }
+          ],
+          "evidence": []
+        }
+      ],
+      "cleanup": null,
+      "blocked_reason": ""
+    },
+    {
+      "variant_id": "case-variant-v4-cf301d4cca8f0df827c5",
+      "template_id": "create.existing-refund-state",
+      "ordinal": 5,
+      "parameter_values": {
+        "existing_state": {
+          "code": 4,
+          "name": "REFUND_SUCCESS"
+        },
+        "refund_type": {
+          "code": 1,
+          "name": "VOLUNTARY"
+        }
+      },
+      "request_values": {
+        "orderChannelSource": {
+          "kind": "data_output",
+          "call_id": "existing",
+          "output_name": "channel"
+        },
+        "refundDetailApiDTO.orderRefundInfo.orderSerialNo": {
+          "kind": "data_output",
+          "call_id": "existing",
+          "output_name": "order_no"
+        },
+        "refundDetailApiDTO.orderRefundInfo.refundSerialNo": {
+          "kind": "data_output",
+          "call_id": "existing",
+          "output_name": "refund_no"
+        },
+        "refundDetailApiDTO.orderRefundInfo.refundSubCategory": 1,
+        "refundDetailApiDTO.segmentRefundInfos": [
+          {}
+        ],
+        "refundDetailApiDTO.refundItemInfos": [
+          {
+            "passenger": {},
+            "passSegs": []
+          }
+        ],
+        "refundDetailApiDTO.segmentRefundInfos.0.sequence": {
+          "kind": "data_output",
+          "call_id": "existing",
+          "output_name": "sequence"
+        },
+        "refundDetailApiDTO.refundItemInfos.0.passenger.firstName": {
+          "kind": "data_output",
+          "call_id": "existing",
+          "output_name": "first_name"
+        },
+        "refundDetailApiDTO.refundItemInfos.0.passenger.lastName": {
+          "kind": "data_output",
+          "call_id": "existing",
+          "output_name": "last_name"
+        },
+        "passengerIds.0": {
+          "kind": "data_output",
+          "call_id": "existing",
+          "output_name": "passenger_id"
+        },
+        "segmentIds.0": {
+          "kind": "data_output",
+          "call_id": "existing",
+          "output_name": "segment_id"
+        }
+      },
+      "data_calls": [
+        {
+          "call_id": "platform",
+          "function_name": "discover_platform",
+          "arguments": {}
+        },
+        {
+          "call_id": "existing",
+          "function_name": "existing_refund_passenger",
+          "arguments": {
+            "platform_id": {
+              "kind": "data_output",
+              "name": "",
+              "path": "",
+              "step_id": "",
+              "call_id": "platform",
+              "output_name": "platform_id"
+            },
+            "refund_state": {
+              "kind": "parameter",
+              "name": "existing_state",
+              "path": "code",
+              "step_id": "",
+              "call_id": "",
+              "output_name": ""
+            }
+          }
+        }
+      ],
+      "oracles": [
+        {
+          "oracle_id": "response.existing-refund",
+          "channel": "response",
+          "function_id": "",
+          "statement": "",
+          "arguments": {},
+          "observer_output_schema": null,
+          "assertions": [
+            {
+              "actual_path": "success",
+              "operator": "eq",
+              "expected": {
+                "kind": "literal",
+                "value": false,
+                "name": "",
+                "path": "",
+                "step_id": "",
+                "call_id": "",
+                "output_name": ""
+              }
+            },
+            {
+              "actual_path": "code",
+              "operator": "eq",
+              "expected": {
+                "kind": "literal",
+                "value": "404",
+                "name": "",
+                "path": "",
+                "step_id": "",
+                "call_id": "",
+                "output_name": ""
+              }
+            },
+            {
+              "actual_path": "message",
+              "operator": "eq",
+              "expected": {
+                "kind": "literal",
+                "value": "存在处理中的单子",
+                "name": "",
+                "path": "",
+                "step_id": "",
+                "call_id": "",
+                "output_name": ""
+              }
+            },
+            {
+              "actual_path": "existOrderDTO.orderSerialNo",
+              "operator": "not_null",
+              "expected": null
+            },
+            {
+              "actual_path": "existOrderDTO.orderStatus",
+              "operator": "in",
+              "expected": {
+                "kind": "literal",
+                "value": [
+                  "PENDING_APPLY",
+                  "RESHOPING",
+                  "AUDITED",
+                  "WAIT_REFUND",
+                  "REFUNDING",
+                  "REFUND_SUCCESS",
+                  "REFUND_DONE"
+                ],
+                "name": "",
+                "path": "",
+                "step_id": "",
+                "call_id": "",
+                "output_name": ""
+              }
+            }
+          ],
+          "evidence": []
+        }
+      ],
+      "cleanup": null,
+      "blocked_reason": ""
+    }
+  ],
+  "created_at": "2026-09-09T11:11:32.868194+00:00"
+}
