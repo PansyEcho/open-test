@@ -1,0 +1,19 @@
+open-test-knowledge/systems/ifightchainsaas.java.refund.core/cases/v4/generations/case-template-generation-d5ad663831db40c0bb8b.json
+  s_7caf18df570138::t_69c7bca33ed45b 1-2988
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.2",
+  "base_commit_sha": "7e54c5f33507fd7a455872218caca06706a90f6d",
+  "prompts": {},
+  "sessions": {
+    "s_7caf18df570138": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a085d3-0e2f-7690-b3c8-e86f86239022",
+        "model": "unknown"
+      },
+      "human_author": "shizhen <yuuu.shizhen@gmail.com>"
+    }
+  }
+}
