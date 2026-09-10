@@ -1,0 +1,159 @@
+openspec/changes/archive/2026-09-08-readable-case-and-execution-console/specs/v2-console/spec.md
+  s_17cfb4040c69e8::t_24e7b136cef7f2 1-75
+tests/v2/test_case_template_v4.py
+  s_4e159e4e10ca4e::t_20190d662e861c 3446-3451,3460-3464,3524-3525
+  s_4e159e4e10ca4e::t_df314bc036b66f 3783-3852
+tests/v2/test_case_presentation.py
+  s_17cfb4040c69e8::t_636da818c04595 1-73
+openspec/changes/archive/2026-09-08-readable-case-and-execution-console/design.md
+  s_17cfb4040c69e8::t_f3c0d50c8f3af7 1-11
+opentest/api.py
+  s_4e159e4e10ca4e::t_196c9bf6721d7c 106
+  s_17cfb4040c69e8::t_80582fb3f2c5d7 1932,1944,1947,1955,1967,1970
+tests/v2/test_api_cli.py
+  s_17cfb4040c69e8::t_988efaa9eb4e24 12,212-214
+  s_9247aff4edfb47::t_655b3950c7c43e 63
+  s_17cfb4040c69e8::t_ebd17c4254271d 62
+opentest/application/case_template_v4.py
+  s_4e159e4e10ca4e::t_360607944f6e44 2971,2979,3001,3004,3010-3012
+  s_4e159e4e10ca4e::t_28a748686f9269 3013
+openspec/changes/archive/2026-09-08-readable-case-and-execution-console/specs/v2-api/spec.md
+  s_17cfb4040c69e8::t_de96aa1f26510b 1-16
+openspec/specs/v2-console/spec.md
+  s_17cfb4040c69e8::t_16bb9991d2c155 57,61-63,66-69,73-75,138-186
+  s_e3e4bd4c1f59cb::t_e1ea5012aee3b0 60,72
+  s_4e159e4e10ca4e::t_f06e032654b99c 188-213
+  s_dd6ae313b13d0d::t_b31ed598cbb6f7 187
+opentest/application/catalogs.py
+  s_4e159e4e10ca4e::t_a834e75dcde8de 10,25,50-51,120-125,186,193-198,201-275,1281-1282
+openspec/changes/archive/2026-09-08-readable-case-and-execution-console/tasks.md
+  s_17cfb4040c69e8::t_16bb9991d2c155 1-7
+openspec/changes/archive/2026-09-08-readable-case-and-execution-console/.openspec.yaml
+  s_17cfb4040c69e8::t_bd875970cba37d 1-2
+opentest/web/styles.css
+  s_17cfb4040c69e8::t_eb98600e16f266 453-455
+  s_17cfb4040c69e8::t_4664b278125dfb 408-413,423-452,456-510
+  s_4e159e4e10ca4e::t_a8421ae8fc56d6 414-422
+opentest/application/operations.py
+  s_4e159e4e10ca4e::t_360607944f6e44 563-566
+  s_4e159e4e10ca4e::t_58fca23086dd94 557-558
+opentest/adapters/source_analysis.py
+  s_4e159e4e10ca4e::t_af37b16d4201d1 2568-2589
+tests/v2/test_console_contract.py
+  s_fc0b868764374c::t_0c80e677ec16f8 53
+  s_0669d97b9ec4f7::t_9c310ba824abc6 54
+  s_4e159e4e10ca4e::t_976913bf941646 21-23
+opentest/web/app.js
+  s_17cfb4040c69e8::t_988efaa9eb4e24 1712,5615
+  s_17cfb4040c69e8::t_178fe7ee87547a 434-437,4734
+  s_fc0b868764374c::t_44c507e85d2975 4733
+  s_17cfb4040c69e8::t_99f831c23d3f72 1713,4748,5278,5616
+  s_fc0b868764374c::t_4bac110ad8e35a 5290-5292,5299-5301
+  s_17cfb4040c69e8::t_4664b278125dfb 513-516
+  s_0669d97b9ec4f7::t_39744d202db89f 4940-4941
+  s_4e159e4e10ca4e::t_a8421ae8fc56d6 600,861-862,1696-1697,1721,1728-1748,1754-1757,5531-5537
+  s_17cfb4040c69e8::t_a695558626d684 5104-5107
+  s_4e159e4e10ca4e::t_24b63c4e9a071a 863,1698
+  s_17cfb4040c69e8::t_3c3849755c4593 597-599,601,2877,4699,4706-4707,4710-4711,4728-4732,4792-4801,4803-4804,4807-4808,4813,5109-5111,5113-5114,5135-5138,5149-5153,5163-5166,5174,5178,5180-5182,5208-5210,5229-5231,5236-5237,5239,5243-5245,5308-5309,5538-5552,5555-5556,5568-5575,5579
+openspec/changes/archive/2026-09-09-fix-case-environment-loading-and-input-schema/tasks.md
+  s_4e159e4e10ca4e::t_f06e032654b99c 1-7
+tests/web/case_fixture_server.py
+  s_4e159e4e10ca4e::t_cdf83e75886fee 7,105-109,115-129
+  s_17cfb4040c69e8::t_e227b4884e3e7e 1-2,134-139
+  s_17cfb4040c69e8::t_47a19a212d028f 3-6,8-104,110-114,130-133
+tests/web/case-view.test.js
+  s_17cfb4040c69e8::t_eb98600e16f266 68
+  s_17cfb4040c69e8::t_21aa989ff99747 14,27,30,37,44,48,56,63,69,76,81-115,128,135
+  s_17cfb4040c69e8::t_6ec308c3d4251a 1-13,15-26,28-29,31-36,38-43,45-47,49-55,57-62,64-67,70-75,77-80,116-127,129-134
+openspec/specs/knowledge-workspace-cache/spec.md
+  s_4e159e4e10ca4e::t_f06e032654b99c 32-44
+openspec/changes/archive/2026-09-08-readable-case-and-execution-console/proposal.md
+  s_17cfb4040c69e8::t_334bc783a29437 1-17
+openspec/specs/v2-api/spec.md
+  s_17cfb4040c69e8::t_16bb9991d2c155 22-36
+tests/v2/test_semantic_catalog.py
+  s_4e159e4e10ca4e::t_24b63c4e9a071a 15,311-315
+  s_4e159e4e10ca4e::t_20190d662e861c 8,18,326-343,345,353-389,399-414,425-436
+  s_4e159e4e10ca4e::t_58fca23086dd94 344,346-352,390-398,415-424
+  s_4e159e4e10ca4e::t_513dd72d12730b 437-438
+openspec/specs/case-template-generation-v4/spec.md
+  s_4e159e4e10ca4e::t_f06e032654b99c 97-121
+opentest/web/case-view.js
+  s_17cfb4040c69e8::t_988efaa9eb4e24 28,315-331,368
+  s_17cfb4040c69e8::t_eb98600e16f266 49,166,169-174,213,267-269,410-414,517
+  s_17cfb4040c69e8::t_178fe7ee87547a 301-303,627,636-637
+  s_4e159e4e10ca4e::t_a8421ae8fc56d6 6-7,852-856,870-1025
+  s_17cfb4040c69e8::t_367d2e60aba6d5 604-609
+  s_17cfb4040c69e8::t_14deb0b2e50393 1-5,8-27,29-48,50-165,167-168,175-212,214-266,270-300,304-314,332-367,369-409,415-516,518-603,610-626,628-635,638-851,857-869,1026-1042
+opentest/web/index.html
+  s_17cfb4040c69e8::t_ff2ef38e6863d0 208-209,216-217,219-224,226-250
+  s_4e159e4e10ca4e::t_196c9bf6721d7c 6,8,260-261
+  s_4e159e4e10ca4e::t_a8421ae8fc56d6 210-215
+opentest/application/operation_input_knowledge.py
+  s_4e159e4e10ca4e::t_360607944f6e44 97-100
+  s_4e159e4e10ca4e::t_58fca23086dd94 34
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.2",
+  "base_commit_sha": "d7143cc621aa95875b8a18aab38b6abbe8e6fb1f",
+  "prompts": {},
+  "sessions": {
+    "s_0669d97b9ec4f7": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a07d0d-6a73-7492-bd27-f23daf269b37",
+        "model": "gpt-6-astra"
+      },
+      "human_author": "shizhen <yuuu.shizhen@gmail.com>"
+    },
+    "s_17cfb4040c69e8": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a0805a-3b7c-71f3-a547-9f586724fd6c",
+        "model": "gpt-6-astra"
+      },
+      "human_author": null
+    },
+    "s_4e159e4e10ca4e": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a0846b-2129-7820-a2da-2e82e5571073",
+        "model": "gpt-6-astra"
+      },
+      "human_author": null
+    },
+    "s_9247aff4edfb47": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a07621-a8c6-7c72-9a6e-e2e30f606154",
+        "model": "gpt-5.6-sol"
+      },
+      "human_author": "shizhen <yuuu.shizhen@gmail.com>"
+    },
+    "s_dd6ae313b13d0d": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019fef82-2a2c-7652-ad03-63eecfd2754c",
+        "model": "gpt-5.6-sol"
+      },
+      "human_author": "shizhen <yuuu.shizhen@gmail.com>"
+    },
+    "s_e3e4bd4c1f59cb": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a05aeb-8bea-7652-b8ff-6e5e7ece97f0",
+        "model": "gpt-5.6-sol"
+      },
+      "human_author": "shizhen <yuuu.shizhen@gmail.com>"
+    },
+    "s_fc0b868764374c": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a065b8-3a29-7762-af3b-5b2044b55299",
+        "model": "gpt-5.6-sol"
+      },
+      "human_author": "shizhen <yuuu.shizhen@gmail.com>"
+    }
+  }
+}
