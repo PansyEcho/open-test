@@ -18,9 +18,9 @@ def test_console_static_client_uses_single_case_workflow_and_safe_rendering() ->
     script = (web_root / "app.js").read_text(encoding="utf-8")
 
     assert "<title>OpenTest Console</title>" in html
-    assert '<meta name="opentest-page-version" content="20260908-08">' in html
-    assert '/assets/app.js?v=20260908-08' in html
-    assert '/assets/styles.css?v=20260908-08' in html
+    assert '<meta name="opentest-page-version" content="20260909-01">' in html
+    assert '/assets/app.js?v=20260909-01' in html
+    assert '/assets/styles.css?v=20260909-01' in html
     assert 'const API_ROOT = "/api/v2"' in script
     assert "API_V3_ROOT" not in script
     assert "API_V4_ROOT" not in script
@@ -50,8 +50,8 @@ def test_console_static_client_uses_single_case_workflow_and_safe_rendering() ->
     # Case生成请求不含执行模式；QA只能由第二个显式动作触发。
     assert 'id="start-case-generation"' in html
     assert 'id="execute-case-generation"' in html
-    assert "执行本次 Generation 的全部 Variant" in html
-    assert "此阶段不会访问 QA" in html
+    assert "执行本版本用例" in html
+    assert "生成阶段不会访问 QA" in html
     start_generation = script[
         script.index("async function startCaseGeneration") : script.index("async function refreshCaseHandoff")
     ]

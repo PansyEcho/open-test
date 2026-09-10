@@ -3443,8 +3443,12 @@ def test_case_start_rejects_latest_scan_from_previous_source_pin(tmp_path: Path)
     )
 
 
-def test_v4_service_rebuilds_stale_input_contract_from_current_scan_operation() -> None:
-    """确认源码重扫后无需重发自然语言知识即可重建请求契约。
+@pytest.mark.parametrize("stored_state", ["stale", "blocked"])
+def test_v4_service_rebuilds_stale_input_contract_from_current_scan_operation(stored_state: str) -> None:
+    """确认旧代际或当前BLOCKED契约可重新推导，无需重发自然语言知识。
+
+    Args:
+        stored_state: 旧scan或当前scan上的程序阻塞。
 
     Returns:
         None；返回契约绑定新scan且保留源码声明必填字段时通过。
@@ -3453,6 +3457,11 @@ def test_v4_service_rebuilds_stale_input_contract_from_current_scan_operation() 
     stale_contract = _cancel_contract().model_copy(
         update={"source_scan_id": "scan-refund-v4-stale"}
     )
+    if stored_state == "blocked":
+        # 模拟程序历史上保存的路径冲突，恢复不能依赖scan ID发生变化。
+        stale_contract = _cancel_contract().model_copy(update={
+            "status": "BLOCKED", "fields": [], "blocked_reason": "请求字段Schema路径冲突：channelEnum.code",
+        })
     node = KnowledgeNode(
         node_id="entry-refund-cancel",
         system_id=SYSTEM_ID,
@@ -3512,6 +3521,8 @@ def test_v4_service_rebuilds_stale_input_contract_from_current_scan_operation() 
     assert contract.source_scan_id == SCAN_ID
     assert contract.status == "READY"
     assert contract.request_schema["required"] == ["refundSerialNo"]
+    assert node.input_contract == stale_contract
+    catalog.derive.assert_called_once_with(SYSTEM_ID, SCAN_ID)
 
 
 def test_input_contract_merges_duplicate_inherited_field_paths() -> None:
@@ -3769,3 +3780,73 @@ def test_handoff_catalog_never_exposes_registered_source_root() -> None:
     assert catalog["handoff"]["source_scopes"] == [
         {"source_system_id": SYSTEM_ID, "source_scan_id": SCAN_ID}
     ]
+
+
+def test_enum_leaf_and_collection_schema_share_normalized_contract() -> None:
+    """真实语义模型同时覆盖枚举内部字段、嵌套DTO和集合items必填整理，返回READY契约。"""
+
+    reference = SourceReference(path="Request.java", symbol="example.Request", line=1)
+    channel = SemanticTypeDefinition(
+        symbol_id="example.Channel", qualified_class_name="example.Channel", simple_name="Channel", kind="enum",
+        fields=[SemanticFieldDefinition(field_name="code", declared_type="String", source_ref=reference)], source_ref=reference,
+    )
+    detail = SemanticTypeDefinition(
+        symbol_id="example.Detail", qualified_class_name="example.Detail", simple_name="Detail",
+        fields=[SemanticFieldDefinition(field_name="name", declared_type="String", runtime_required=True, source_ref=reference)], source_ref=reference,
+    )
+    request = SemanticTypeDefinition(
+        symbol_id="example.Request", qualified_class_name="example.Request", simple_name="Request",
+        fields=[
+            SemanticFieldDefinition(field_name="channelEnum", declared_type="example.Channel", referenced_type="example.Channel", documentation_required=True, source_ref=reference),
+            SemanticFieldDefinition(field_name="details", declared_type="List<example.Detail>", referenced_type="example.Detail", collection=True, source_ref=reference),
+            SemanticFieldDefinition(field_name="detail", declared_type="example.Detail", referenced_type="example.Detail", source_ref=reference),
+        ], source_ref=reference,
+    )
+    analysis = SemanticAnalysisResult(system_id=SYSTEM_ID, types=[channel, detail, request])
+    catalog = OperationCapabilityCatalog.__new__(OperationCapabilityCatalog)
+    fields = catalog._type_field_evidence(request, analysis)
+    schema = catalog._publication_schema_for_semantic_type(request, analysis)
+    operation = OperationCapability(
+        operation_id=CANCEL_ID, system_id=SYSTEM_ID, business_name="输入契约验证", kind=OperationKind.FACADE,
+        mutability=OperationMutability.WRITE, input_schema=schema, publication_input_schema=schema,
+        input_fields=fields, source_scan_id=SCAN_ID,
+    )
+    node = KnowledgeNode(node_id="entry-contract-test", system_id=SYSTEM_ID, kind=KnowledgeNodeKind.FACADE, title="输入契约")
+    # 枚举只保留业务字段，但普通嵌套DTO继续提供子路径；数组作为完整绑定叶子。
+    assert [field.field_path for field in fields] == ["channelEnum", "details", "detail", "detail.name"]
+    contract = OperationInputKnowledgeBuilder().build(operation, node, SCAN_ID)
+    assert contract.status == "READY"
+    by_path = {field.path: field for field in contract.fields}
+    assert by_path["channelEnum"].schema == {"type": "string"}
+    assert by_path["channelEnum"].required
+    assert by_path["details"].schema == contract.request_schema["properties"]["details"]
+    assert "required" not in by_path["details"].schema["items"]
+    assert not by_path["detail.name"].required
+    # 规范化不能反向改写Operation的原始运行时约束。
+    assert schema["properties"]["details"]["items"]["required"] == ["name"]
+
+
+def test_rebuilt_input_contract_keeps_real_conflicts_blocked() -> None:
+    """当前BLOCKED契约重新推导后仍有标量子路径冲突时保持阻塞，不修改正式知识。"""
+
+    stored = _cancel_contract().model_copy(update={"status": "BLOCKED", "blocked_reason": "旧阻塞", "fields": []})
+    node = KnowledgeNode(node_id="entry-conflict", system_id=SYSTEM_ID, kind=KnowledgeNodeKind.FACADE,
+                         title="冲突", aliases=[CANCEL_ID], input_contract=stored)
+    operation = OperationCapability(
+        operation_id=CANCEL_ID, system_id=SYSTEM_ID, business_name="冲突", kind=OperationKind.FACADE,
+        mutability=OperationMutability.WRITE,
+        input_schema={"type": "object", "properties": {"text": {"type": "string"}}},
+        input_fields=[OperationFieldEvidence(field_path="text.child", field_name="child", declared_type="String")], source_scan_id=SCAN_ID,
+    )
+    store = Mock()
+    store.list_nodes.return_value = [(node, Path("node.md"), "")]
+    catalog = Mock()
+    catalog.derive.return_value = [operation]
+    service = CaseTemplateV4Service(store, Mock(), Mock(), Mock(), CaseTemplateV4RuntimeServices(
+        operation_catalog=catalog, operation_service=Mock(), environment_provider=default_case_template_environment_values,
+    ))
+    # 只重建派生契约，不跳过校验，也不能把任意BLOCKED状态当作成功。
+    contract = service._input_contract(SYSTEM_ID, CANCEL_ID, SCAN_ID)
+    assert contract.status == "BLOCKED"
+    assert "text.child" in contract.blocked_reason
+    assert node.input_contract == stored

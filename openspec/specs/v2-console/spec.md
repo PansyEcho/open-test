@@ -54,19 +54,25 @@ TBD - created by archiving change v2-api-and-console-cutover. Update Purpose aft
 
 ### Requirement: Case页面必须使用Entry与Scenario业务视图
 
-系统 SHALL 在入口页只显示业务摘要与Scenario列表，并在Scenario详情中显示概述、前置准备、覆盖、Variant、断言回收和最近结果六个区域。
+系统 SHALL 在回归 Case 页提供“用例”和“执行结果”，按现有模板关联子用例形成测试场景，不新增场景实体。场景详情 SHALL 在唯一抽屉内展示准备规则、子用例对比和共同预期，并在同一抽屉切换子用例详情。
 
 #### Scenario: 普通用户查看Scenario
-- **WHEN** 用户打开一个Scenario详情
-- **THEN** 主视图不显示原始BLOCKED码、scan/asset/rule ID、read_only、对象链或JSON，技术信息在默认折叠区域可查
+
+- **WHEN** 用户从场景列表打开详情并选择子用例
+- **THEN** 同一抽屉展示变化项、计划字段树、最终有效预期和折叠的清理与技术详情
+- **AND** 返回场景恢复内容与查看位置，关闭抽屉保留列表搜索和版本选择
 
 #### Scenario: Entry和Scenario按需读取
-- **WHEN** 用户先打开Entry再点击其中一个Scenario
-- **THEN** Entry接口只返回业务摘要和Scenario列表，独立Scenario接口返回六区业务DTO，原始Generation与Attempt仅位于该Scenario的折叠技术详情
+
+- **WHEN** 用户选择入口和不可变用例版本
+- **THEN** 场景、子用例及字段来源使用该版本已有产物作只读展示，不调用准备工具、业务接口或取值函数
+- **AND** 字段描述和枚举只使用可靠证据，没有说明时保留原字段名
 
 #### Scenario: 同Generation中的另一个Scenario失败
-- **WHEN** 用户查看尚未运行且可执行的Scenario，而另一个Scenario的最新Attempt失败
-- **THEN** 当前Scenario不继承对方的缺失项、建议动作、失败状态或技术详情
+
+- **WHEN** 同版本不同场景有不同执行结果
+- **THEN** 每个场景只统计所选环境最新单个批次中属于自身的子用例
+- **AND** 没有执行记录时显示未执行，不从其他批次补取结果
 
 ### Requirement: Case页面必须区分四类状态
 
@@ -128,4 +134,80 @@ The console SHALL allow a user to enter any eligible Facade path, choose generat
 
 - **WHEN** 真实工具、断言、Oracle或清理失败
 - **THEN** 页面展示步骤状态、简洁错误和结构化diff，不显示QA密钥
+
+### Requirement: Case fields distinguish variation, source and actual observation
+
+The console SHALL use reusable read-only field trees, variant comparisons and assertion comparisons. Variation SHALL derive from template parameters, compiled selections and explicit dependencies, never from differences between runtime JSON payloads. Planned and actual values SHALL remain distinct.
+
+#### Scenario: Preparation varies a business state
+
+- **WHEN** a varied parameter selects preparation conditions while the request identity comes from a data output
+- **THEN** the preparation condition is a variation and the dynamic identity remains a preparation-sourced field without an automatic variation badge
+
+#### Scenario: Nested values and missing observations
+
+- **WHEN** a field contains an object, array, long string, mixed type, unknown schema field or an empty value
+- **THEN** all recorded content remains inspectable through collapsed field trees and complete-value details
+- **AND** absent, null, empty object, empty array, empty string, zero, false, unevaluated and unrecorded states are not conflated
+
+#### Scenario: Effective assertions differ by subcase
+
+- **WHEN** variants have overridden or parameter-dependent assertions
+- **THEN** only genuinely common effective rules appear as common expectations and each subcase shows its own final rules
+
+### Requirement: Execution console follows one evidenced batch and preserves reading state
+
+The console SHALL show one batch with its bound version, environment, subcase list, conclusion, evidenced stages, assertion outcomes, actual request and actual response. Existing polling SHALL refresh only the active scope without resetting the user's selection, filters, expanded details or viewing position.
+
+#### Scenario: Batch is still running
+
+- **WHEN** a batch has not yet recorded results for all included subcases
+- **THEN** the list retains all subcases whose inclusion is proved by the execution contract and exact bound generation
+- **AND** missing result records do not imply waiting, running, unexecuted or passed statuses
+- **AND** when the complete inclusion set cannot be proved, the summary says only how many results are recorded
+- **AND** a RUNNING batch never appears wholly passed merely because all currently recorded results passed
+
+#### Scenario: Scope changes during polling
+
+- **WHEN** the user changes system, entry, version, environment or batch while an older read is in flight
+- **THEN** neither the old success nor the old failure changes the new view
+
+#### Scenario: Negative checks, preparation failures and cleanup anomalies
+
+- **WHEN** existing records show expected rejection, preparation blocking, operation failure, assertion failure or cleanup failure
+- **THEN** the display follows recorded assertion outcomes and stage evidence without judging success from an HTTP or business error code
+- **AND** successful business checks followed by cleanup failure display “业务校验通过 · 清理异常”
+- **AND** counts represent subcases rather than assertions and each subcase is counted once
+
+#### Scenario: History and actual browser acceptance
+
+- **WHEN** the user views a historical execution or the changed UI is verified
+- **THEN** definitions belong to the exact recorded generation, absent evidence is explicit, and raw details remain collapsed and inspectable
+- **AND** acceptance exercises the running HTTP page in a real browser, including the four-screen path, field expansion, batch switching and isolated running-result updates
+
+### Requirement: Case entry selector supports local filtering
+
+The console SHALL provide a searchable single-selection entry combobox matching display names, canonical paths and entry types without case sensitivity. Search text SHALL remain separate from committed selection; only confirmation changes the entry, versions and generation target.
+
+#### Scenario: Search and confirm an entry
+- **WHEN** a user types part of an entry name or path
+- **THEN** matching current and historical entries are shown, with all entries for empty search and a clear empty-result message
+- **AND** mouse or arrow keys and Enter can confirm a result; Escape or blur cancels search and restores the committed label
+
+#### Scenario: Refresh or switch the system
+- **WHEN** the current system directory refreshes or another system is selected
+- **THEN** refresh preserves a valid committed entry and a system change clears search and selection
+- **AND** stale responses cannot restore another system's entries
+
+### Requirement: Environment selection loads before slow workspace catalogs
+
+The console SHALL load configured environments as soon as the system is selected, before waiting for local settings, scan history or other system catalogs. It SHALL distinguish loading, empty configuration and request failure.
+
+#### Scenario: Scan history is slow
+- **WHEN** scan history takes several seconds
+- **THEN** environments are already selectable and environment rendering does not wait for history
+
+#### Scenario: Environment read fails or system changes
+- **WHEN** the environment request fails or belongs to an obsolete system
+- **THEN** failure is visible without blocking other catalogs and obsolete responses do not update current selectors
 

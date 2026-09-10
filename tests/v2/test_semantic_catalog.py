@@ -5,15 +5,17 @@ from __future__ import annotations
 import hashlib
 import json
 from pathlib import Path
+from unittest.mock import patch
 
 import pytest
 
 from opentest.adapters.knowledge_interview import KnowledgeInterviewStore
 from opentest.adapters.knowledge_store import GitKnowledgeStore
 from opentest.adapters.knowledge_tracing import JavaKnowledgeTracer
+from opentest.adapters.source_analysis import SourceScanArtifactStore
 from opentest.application.catalogs import ScanCatalogService
 from opentest.application.knowledge_discovery import KnowledgeDiscoveryService
-from opentest.domain.errors import KnowledgeNotFoundError
+from opentest.domain.errors import KnowledgeNotFoundError, KnowledgeValidationError
 from opentest.domain.models import (
     EntryPoint,
     KnowledgeContextCandidateCreate,
@@ -306,7 +308,11 @@ def test_scan_history_exposes_fixed_git_revision_for_console(tmp_path: Path) -> 
     versioned_manifest = manifest.model_copy(update={"baseline": baseline})
 
     # 页面列表只读取轻量历史；该投影必须保留用户扫描时选择的原始revision。
-    history = ScanCatalogService(store, FixedManifestArtifacts(versioned_manifest)).list_history(SYSTEM_ID)
+    artifacts = SourceScanArtifactStore(store.root)
+    scan_root = artifacts.scan_root / SYSTEM_ID
+    scan_root.mkdir(parents=True)
+    (scan_root / f"{versioned_manifest.scan_id}.json").write_text(versioned_manifest.model_dump_json())
+    history = ScanCatalogService(store, artifacts).list_history(SYSTEM_ID)
 
     assert history[0].scan_id == versioned_manifest.scan_id
     assert history[0].commit == baseline.commit
@@ -315,6 +321,119 @@ def test_scan_history_exposes_fixed_git_revision_for_console(tmp_path: Path) -> 
     # 旧Manifest没有显式完整性字段时，领域默认值继续兼容为历史完整基线。
     assert history[0].completeness == ScanCompleteness.COMPLETE
     assert history[0].publication_outcome == ScanPublicationOutcome.COMPLETE_BASELINE
+
+
+def _write_history_manifest(artifacts: SourceScanArtifactStore, manifest: ScanManifest) -> Path:
+    """在隔离目录写入历史夹具，返回用于模拟文件增删改的路径。
+
+    Args:
+        artifacts: pytest临时扫描存储。
+        manifest: 需要查询的扫描正文。
+
+    Returns:
+        写入的Manifest路径；不会发布latest或接触真实知识库。
+    """
+
+    path = artifacts.scan_root / manifest.system_id / f"{manifest.scan_id}.json"
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(manifest.model_dump_json())
+    return path
+
+
+def test_history_cache_reuses_summaries_and_tracks_file_changes(tmp_path: Path) -> None:
+    """验证摘要复用、文件增删改及latest更新，不让返回值修改污染缓存。
+
+    Args:
+        tmp_path: pytest隔离的注册系统和扫描目录。
+
+    Returns:
+        None；实际文件读取次数、身份与摘要内容符合预期时通过。
+    """
+
+    store, source_root = _store(tmp_path)
+    artifacts = SourceScanArtifactStore(store.root)
+    first = _manifest(source_root)
+    first_path = _write_history_manifest(artifacts, first)
+    latest_path = first_path.parent / "latest.json"
+    latest_path.write_text(json.dumps({"scan_id": first.scan_id}))
+    service = ScanCatalogService(store, artifacts)
+    with patch.object(artifacts, "read", wraps=artifacts.read) as read:
+        initial = service.list_history(SYSTEM_ID)
+        assert read.call_count == 1
+        initial[0].counts["facade"] = -1
+        assert service.list_history(SYSTEM_ID)[0].counts["facade"] >= 0
+        assert read.call_count == 1
+
+        # 增加历史文件和移动latest都不应重新解析原文件。
+        second = first.model_copy(update={"scan_id": "scan-second"})
+        second_path = _write_history_manifest(artifacts, second)
+        latest_path.write_text(json.dumps({"scan_id": second.scan_id}))
+        history = service.list_history(SYSTEM_ID)
+        assert read.call_count == 2
+        assert [item.scan_id for item in history if item.latest] == [second.scan_id]
+        changed = second.model_copy(update={"baseline": second.baseline.model_copy(update={"revision": "changed-tag"})})
+        _write_history_manifest(artifacts, changed)
+        assert any(item.revision == "changed-tag" for item in service.list_history(SYSTEM_ID))
+        assert read.call_count == 3
+
+        # 已删除的latest文件仍允许浏览其余历史，但不能展示缓存中的已删扫描。
+        second_path.unlink()
+        history = service.list_history(SYSTEM_ID)
+        assert [item.scan_id for item in history] == [first.scan_id]
+        assert not history[0].latest
+        assert read.call_count == 3
+        assert len(service._history_cache) == 1
+
+
+@pytest.mark.parametrize("damage", ["json", "system"])
+def test_history_cache_rejects_changed_invalid_files(tmp_path: Path, damage: str) -> None:
+    """缓存命中后文件损坏或跨系统替换仍报错，不使用旧摘要掩盖错误。
+
+    Args:
+        tmp_path: pytest隔离文件目录。
+        damage: JSON语法损坏或系统身份替换的测试分支。
+
+    Returns:
+        None；重新读取抛出领域错误且旧摘要被移除时通过。
+    """
+
+    store, source_root = _store(tmp_path)
+    artifacts = SourceScanArtifactStore(store.root)
+    manifest = _manifest(source_root)
+    path = _write_history_manifest(artifacts, manifest)
+    service = ScanCatalogService(store, artifacts)
+    service.list_history(SYSTEM_ID)
+    # 两种异常均改变文件状态，触发重新读取和正式模型/归属校验。
+    path.write_text("broken" if damage == "json" else manifest.model_copy(update={"system_id": "another-system"}).model_dump_json())
+    with pytest.raises(KnowledgeValidationError):
+        service.list_history(SYSTEM_ID)
+    assert not service._history_cache
+
+
+@pytest.mark.parametrize("limit", ["entries", "bytes"])
+def test_history_cache_enforces_limits(tmp_path: Path, monkeypatch: pytest.MonkeyPatch, limit: str) -> None:
+    """条目或字节上限均限制摘要驻留，不截断当前响应中的历史记录。
+
+    Args:
+        tmp_path: pytest隔离文件目录。
+        monkeypatch: 当前测试内临时调整缓存容量并在结束时恢复。
+        limit: 待验证的条目上限或字节上限。
+
+    Returns:
+        None；完整响应保留两条记录且缓存没有超限时通过。
+    """
+
+    store, source_root = _store(tmp_path)
+    artifacts = SourceScanArtifactStore(store.root)
+    manifest = _manifest(source_root)
+    _write_history_manifest(artifacts, manifest)
+    _write_history_manifest(artifacts, manifest.model_copy(update={"scan_id": "scan-second"}))
+    # 极小容量能稳定覆盖逐出和单条超限分支，无需生成大体积测试文件。
+    monkeypatch.setattr("opentest.application.catalogs.HISTORY_CACHE_MAX_ENTRIES" if limit == "entries"
+                        else "opentest.application.catalogs.HISTORY_CACHE_MAX_BYTES", 1)
+    service = ScanCatalogService(store, artifacts)
+    assert len(service.list_history(SYSTEM_ID)) == 2
+    assert len(service._history_cache) == (1 if limit == "entries" else 0)
 
 
 def test_catalog_freshness_uses_git_identity_for_node_scan_without_workflow_batch(

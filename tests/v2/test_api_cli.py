@@ -9,7 +9,7 @@ from pathlib import Path
 
 from fastapi.testclient import TestClient
 
-from opentest.api import create_app
+from opentest.api import CONSOLE_PAGE_VERSION, create_app
 from opentest.application.foundation import OpenTestApplication
 from opentest.application.tasks import report_task_progress
 from opentest.domain.case_template_v4 import CaseTemplateHandoffV4, CaseTemplateSourceScope
@@ -59,7 +59,8 @@ def test_fastapi_registers_multiple_systems_without_overwrite(tmp_path: Path, mo
     with TestClient(create_app(application), client=("127.0.0.1", 50000)) as client:
         health = client.get("/api/v2/health").json()
         assert health["status"] == "ok"
-        assert health["page_version"] == "20260907-06"
+        # 页面健康版本应跟随本次资产发布，避免与HTML检查使用不同常量。
+        assert health["page_version"] == CONSOLE_PAGE_VERSION
         first_response = client.post(
             "/api/v2/systems",
             json={
@@ -208,8 +209,9 @@ def test_console_is_served_and_references_only_versioned_api(tmp_path: Path) -> 
 
     assert console_response.status_code == 200
     assert "<title>OpenTest Console</title>" in console_response.text
-    assert '<meta name="opentest-page-version" content="20260907-06">' in console_response.text
-    assert '/assets/app.js?v=20260907-06' in console_response.text
+    # 页面身份与服务端健康检查必须使用同一版本，静态资产随本次行为更新。
+    assert f'<meta name="opentest-page-version" content="{CONSOLE_PAGE_VERSION}">' in console_response.text
+    assert f'/assets/app.js?v={CONSOLE_PAGE_VERSION}' in console_response.text
     assert script_response.status_code == 200
     assert 'const API_ROOT = "/api/v2"' in script_response.text
     assert "API_V3_ROOT" not in script_response.text
