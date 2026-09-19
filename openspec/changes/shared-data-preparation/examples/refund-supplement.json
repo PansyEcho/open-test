@@ -1,0 +1,1546 @@
+{
+  "status": "DESIGN_EXAMPLE_NOT_PUBLISHED_NOT_QA_EXECUTED",
+  "schema_note": "所有schema都是依据下列源码挑选的场景投影，供方案讨论；不是已扫描的完整接口契约。required表示本示例读取路径的前提，不等于该接口的全部业务必填约束。根对象是文档包装，不能直接提交发布API。",
+  "source_note": "读取的是三个本地源码工作区，尚未选择或证明生产版本A；以下预期仅反映已读实现，必须在生产A固定扫描下重新确认后才能形成G1。未复制任何QA真实ID、凭据或业务数据。",
+  "consumer_system_id": "ifightchainsaas.java.refund.core",
+  "target_operation_id": "facade:com.ly.flight.chainsaas.refund.facade.RefundFacade#billSupplement",
+  "checked_contract_corrections": [
+    "ReportUniqueKeyRequest声明transactionType/queryDate/ticketNo/passengerName/pnr；父类traceId被实际Validator要求。该唯一键查询没有ownerId，主体/采购商/供应商必须检查report响应。",
+    "实际QueryReportByUniqueKeyValidator要求traceId、transactionType、queryDate、ticketNo；仅TICKETING(2)路径额外要求PNR和乘客姓名。本例REFUND(3)仍传入用户条件，并在响应验证。",
+    "ReportSingleResponse的report可为null，即使success=true；只有业务成功且明确null才属于无数据。",
+    "report.id为Long；report.ownerId/buyerId/merchantId为String；transactionType和isSaveDb为Integer。REFUND=3、NOT_RECORD=0；不能使用Boolean false。",
+    "report.ext应解析为DistributionReportExt，其退款ARC键为arcRefundAccount；transactionType位于report本体，不能放到ext顶层。",
+    "saveReport入参为traceId+report对象+arcRefundAccount等账单对象，不是顶层ownerId/ticketNo。saveReport可能返回票号+PNR+交易类型已有记录，仍须按原条件回查验证。",
+    "Refund BillSupplementRequest实际字段id/billDate/reportSource/arcBillVO/bspBillVO；ARC分支传arcBillVO，id必须来自分销report.id。",
+    "queryDetailByRefundNo返回saasRefundOrderVO，主体字段是platFormId，JSON ext内的supplementId由BillRefundConverter保存。"
+  ],
+  "data_capability_draft": {
+    "capability_id": "refund_arc_report_with_booking",
+    "name": "核验ARC退票报表与已出票原单",
+    "purpose": "方案样例：限定已有ARC退票报表、一个出票原单和一个票号PSI，验证主体/采购/供应商/票号/PNR后为billSupplement提供真实动态输入。缺原始数据时报告缺口，不伪造报表。",
+    "inputs": [
+      {
+        "name": "owner_id",
+        "schema": {
+          "type": "string"
+        }
+      },
+      {
+        "name": "buyer_id",
+        "schema": {
+          "type": "string"
+        }
+      },
+      {
+        "name": "merchant_id",
+        "schema": {
+          "type": "string"
+        }
+      },
+      {
+        "name": "ticket_no",
+        "schema": {
+          "type": "string"
+        }
+      },
+      {
+        "name": "pnr",
+        "schema": {
+          "type": "string"
+        }
+      },
+      {
+        "name": "passenger_name",
+        "schema": {
+          "type": "string"
+        }
+      },
+      {
+        "name": "query_date",
+        "schema": {
+          "type": "string"
+        }
+      }
+    ],
+    "query_steps": [
+      {
+        "step_id": "query_report",
+        "operation": "runtime_call",
+        "function_id": "facade:com.ly.flight.chainsaas.account.supplement.core.facade.ReportFacade#queryReportByUniqueKey",
+        "arguments": {
+          "traceId": {
+            "kind": "runtime_context",
+            "name": "trace_id"
+          },
+          "transactionType": {
+            "kind": "literal",
+            "value": 3
+          },
+          "queryDate": {
+            "kind": "function_input",
+            "name": "query_date"
+          },
+          "ticketNo": {
+            "kind": "function_input",
+            "name": "ticket_no"
+          },
+          "passengerName": {
+            "kind": "function_input",
+            "name": "passenger_name"
+          },
+          "pnr": {
+            "kind": "function_input",
+            "name": "pnr"
+          }
+        },
+        "output_schema": {
+          "type": "object",
+          "properties": {
+            "success": {
+              "type": "boolean"
+            },
+            "report": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "integer"
+                },
+                "ownerId": {
+                  "type": "string"
+                },
+                "buyerId": {
+                  "type": "string"
+                },
+                "merchantId": {
+                  "type": "string"
+                },
+                "pnr": {
+                  "type": "string"
+                },
+                "transactionType": {
+                  "type": "integer"
+                },
+                "isSaveDb": {
+                  "type": "integer"
+                },
+                "queryData": {
+                  "type": "string"
+                },
+                "ticketNo": {
+                  "type": "string"
+                },
+                "source": {
+                  "type": "string"
+                },
+                "passengerName": {
+                  "type": "string"
+                },
+                "ext": {
+                  "type": "string"
+                }
+              },
+              "required": [],
+              "additionalProperties": true
+            }
+          },
+          "required": [],
+          "additionalProperties": true
+        }
+      },
+      {
+        "step_id": "query_report_succeeded",
+        "operation": "assert",
+        "check_kind": "result",
+        "predicates": [
+          {
+            "left": {
+              "kind": "step_output",
+              "step_id": "query_report",
+              "path": "success"
+            },
+            "operator": "eq",
+            "right": {
+              "kind": "literal",
+              "value": true
+            }
+          }
+        ]
+      }
+    ],
+    "match_source": {
+      "kind": "step_output",
+      "step_id": "query_report",
+      "path": "report"
+    },
+    "create_steps": [],
+    "adjust_steps": [],
+    "verify_steps": [
+      {
+        "step_id": "decode_report_ext",
+        "operation": "json_decode",
+        "input_source": {
+          "kind": "step_output",
+          "step_id": "query_report",
+          "path": "report.ext"
+        },
+        "output_schema": {
+          "type": "object",
+          "properties": {
+            "arcRefundAccount": {
+              "type": "object",
+              "properties": {
+                "ownerId": {
+                  "type": "integer"
+                },
+                "ticketNo": {
+                  "type": "string"
+                },
+                "pnr": {
+                  "type": "string"
+                },
+                "passenger": {
+                  "type": "object",
+                  "properties": {
+                    "name": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [],
+                  "additionalProperties": true
+                },
+                "refundDate": {
+                  "type": "string"
+                },
+                "refundType": {
+                  "type": "string"
+                },
+                "rfTotal": {
+                  "type": "string"
+                },
+                "rfFare": {
+                  "type": "string"
+                },
+                "rfTax": {
+                  "type": "string"
+                },
+                "penalty": {
+                  "type": "string"
+                },
+                "financialDetail": {
+                  "type": "object"
+                },
+                "segments": {
+                  "type": "array",
+                  "items": {
+                    "type": "object"
+                  }
+                }
+              },
+              "required": [
+                "ticketNo",
+                "pnr",
+                "passenger"
+              ],
+              "additionalProperties": true
+            }
+          },
+          "required": [
+            "arcRefundAccount"
+          ],
+          "additionalProperties": true
+        }
+      },
+      {
+        "step_id": "verify_report_identity",
+        "operation": "assert",
+        "check_kind": "identity",
+        "predicates": [
+          {
+            "left": {
+              "kind": "step_output",
+              "step_id": "query_report",
+              "path": "report.id"
+            },
+            "operator": "not_null"
+          },
+          {
+            "left": {
+              "kind": "step_output",
+              "step_id": "query_report",
+              "path": "report.ownerId"
+            },
+            "operator": "eq",
+            "right": {
+              "kind": "function_input",
+              "name": "owner_id"
+            }
+          },
+          {
+            "left": {
+              "kind": "step_output",
+              "step_id": "query_report",
+              "path": "report.buyerId"
+            },
+            "operator": "eq",
+            "right": {
+              "kind": "function_input",
+              "name": "buyer_id"
+            }
+          },
+          {
+            "left": {
+              "kind": "step_output",
+              "step_id": "query_report",
+              "path": "report.merchantId"
+            },
+            "operator": "eq",
+            "right": {
+              "kind": "function_input",
+              "name": "merchant_id"
+            }
+          },
+          {
+            "left": {
+              "kind": "step_output",
+              "step_id": "query_report",
+              "path": "report.ticketNo"
+            },
+            "operator": "eq",
+            "right": {
+              "kind": "function_input",
+              "name": "ticket_no"
+            }
+          },
+          {
+            "left": {
+              "kind": "step_output",
+              "step_id": "query_report",
+              "path": "report.pnr"
+            },
+            "operator": "eq",
+            "right": {
+              "kind": "function_input",
+              "name": "pnr"
+            }
+          },
+          {
+            "left": {
+              "kind": "step_output",
+              "step_id": "query_report",
+              "path": "report.passengerName"
+            },
+            "operator": "eq",
+            "right": {
+              "kind": "function_input",
+              "name": "passenger_name"
+            }
+          },
+          {
+            "left": {
+              "kind": "step_output",
+              "step_id": "query_report",
+              "path": "report.queryData"
+            },
+            "operator": "eq",
+            "right": {
+              "kind": "function_input",
+              "name": "query_date"
+            }
+          },
+          {
+            "left": {
+              "kind": "step_output",
+              "step_id": "decode_report_ext",
+              "path": "arcRefundAccount.ticketNo"
+            },
+            "operator": "eq",
+            "right": {
+              "kind": "step_output",
+              "step_id": "query_report",
+              "path": "report.ticketNo"
+            }
+          },
+          {
+            "left": {
+              "kind": "step_output",
+              "step_id": "decode_report_ext",
+              "path": "arcRefundAccount.pnr"
+            },
+            "operator": "eq",
+            "right": {
+              "kind": "step_output",
+              "step_id": "query_report",
+              "path": "report.pnr"
+            }
+          },
+          {
+            "left": {
+              "kind": "step_output",
+              "step_id": "decode_report_ext",
+              "path": "arcRefundAccount.passenger.name"
+            },
+            "operator": "eq",
+            "right": {
+              "kind": "step_output",
+              "step_id": "query_report",
+              "path": "report.passengerName"
+            }
+          }
+        ]
+      },
+      {
+        "step_id": "query_booking",
+        "operation": "runtime_call",
+        "function_id": "facade:com.ly.flight.chainsaas.booking.facade.TradeFacade#queryList",
+        "arguments": {
+          "traceId": {
+            "kind": "runtime_context",
+            "name": "trace_id"
+          },
+          "page": {
+            "kind": "literal",
+            "value": 1
+          },
+          "pageSize": {
+            "kind": "literal",
+            "value": 20
+          },
+          "ticketNo": {
+            "kind": "step_output",
+            "step_id": "query_report",
+            "path": "report.ticketNo"
+          },
+          "orderState": {
+            "kind": "literal",
+            "value": 3
+          }
+        },
+        "output_schema": {
+          "type": "object",
+          "properties": {
+            "success": {
+              "type": "boolean"
+            },
+            "list": {
+              "type": "object",
+              "properties": {
+                "pageList": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "orderSerialNo": {
+                        "type": "string"
+                      },
+                      "ownerId": {
+                        "type": "string"
+                      },
+                      "buyer": {
+                        "type": "string"
+                      },
+                      "merchantId": {
+                        "type": "string"
+                      },
+                      "gmtIssue": {},
+                      "orderState": {},
+                      "psis": {
+                        "type": "array",
+                        "items": {
+                          "type": "object",
+                          "properties": {
+                            "passenger": {
+                              "type": "object",
+                              "properties": {
+                                "passengerId": {
+                                  "type": "string"
+                                },
+                                "lastName": {
+                                  "type": "string"
+                                },
+                                "firstName": {
+                                  "type": "string"
+                                }
+                              },
+                              "required": [],
+                              "additionalProperties": true
+                            },
+                            "item": {
+                              "type": "object",
+                              "properties": {
+                                "ticketNo": {
+                                  "type": "string"
+                                },
+                                "pnr": {
+                                  "type": "string"
+                                }
+                              },
+                              "required": [],
+                              "additionalProperties": true
+                            }
+                          },
+                          "required": [],
+                          "additionalProperties": true
+                        }
+                      }
+                    },
+                    "required": [],
+                    "additionalProperties": true
+                  }
+                }
+              },
+              "required": [],
+              "additionalProperties": true
+            }
+          },
+          "required": [],
+          "additionalProperties": true
+        }
+      },
+      {
+        "step_id": "booking_query_succeeded",
+        "operation": "assert",
+        "check_kind": "result",
+        "predicates": [
+          {
+            "left": {
+              "kind": "step_output",
+              "step_id": "query_booking",
+              "path": "success"
+            },
+            "operator": "eq",
+            "right": {
+              "kind": "literal",
+              "value": true
+            }
+          }
+        ]
+      },
+      {
+        "step_id": "one_booking_candidate",
+        "operation": "assert",
+        "check_kind": "result",
+        "predicates": [
+          {
+            "left": {
+              "kind": "step_output",
+              "step_id": "query_booking",
+              "path": "list.pageList"
+            },
+            "operator": "size_eq",
+            "right": {
+              "kind": "literal",
+              "value": 1
+            }
+          }
+        ]
+      },
+      {
+        "step_id": "select_booking",
+        "operation": "first",
+        "input_source": {
+          "kind": "step_output",
+          "step_id": "query_booking",
+          "path": "list.pageList"
+        }
+      },
+      {
+        "step_id": "booking_detail",
+        "operation": "runtime_call",
+        "function_id": "facade:com.ly.flight.chainsaas.booking.facade.TradeFacade#queryDetail",
+        "arguments": {
+          "traceId": {
+            "kind": "runtime_context",
+            "name": "trace_id"
+          },
+          "orderSerialNo": {
+            "kind": "step_output",
+            "step_id": "select_booking",
+            "path": "orderSerialNo"
+          }
+        },
+        "output_schema": {
+          "type": "object",
+          "properties": {
+            "success": {
+              "type": "boolean"
+            },
+            "saasOrderVO": {
+              "type": "object",
+              "properties": {
+                "orderSerialNo": {
+                  "type": "string"
+                },
+                "ownerId": {
+                  "type": "string"
+                },
+                "buyer": {
+                  "type": "string"
+                },
+                "merchantId": {
+                  "type": "string"
+                },
+                "gmtIssue": {},
+                "orderState": {},
+                "psis": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "passenger": {
+                        "type": "object",
+                        "properties": {
+                          "passengerId": {
+                            "type": "string"
+                          },
+                          "lastName": {
+                            "type": "string"
+                          },
+                          "firstName": {
+                            "type": "string"
+                          }
+                        },
+                        "required": [],
+                        "additionalProperties": true
+                      },
+                      "item": {
+                        "type": "object",
+                        "properties": {
+                          "ticketNo": {
+                            "type": "string"
+                          },
+                          "pnr": {
+                            "type": "string"
+                          }
+                        },
+                        "required": [],
+                        "additionalProperties": true
+                      }
+                    },
+                    "required": [],
+                    "additionalProperties": true
+                  }
+                }
+              },
+              "required": [],
+              "additionalProperties": true
+            }
+          },
+          "required": [],
+          "additionalProperties": true
+        }
+      },
+      {
+        "step_id": "booking_detail_succeeded",
+        "operation": "assert",
+        "check_kind": "result",
+        "predicates": [
+          {
+            "left": {
+              "kind": "step_output",
+              "step_id": "booking_detail",
+              "path": "success"
+            },
+            "operator": "eq",
+            "right": {
+              "kind": "literal",
+              "value": true
+            }
+          }
+        ]
+      },
+      {
+        "step_id": "matching_ticket_psis",
+        "operation": "filter",
+        "input_source": {
+          "kind": "step_output",
+          "step_id": "booking_detail",
+          "path": "saasOrderVO.psis"
+        },
+        "predicates": [
+          {
+            "left": {
+              "kind": "current_item",
+              "path": "item.ticketNo"
+            },
+            "operator": "eq",
+            "right": {
+              "kind": "step_output",
+              "step_id": "query_report",
+              "path": "report.ticketNo"
+            }
+          }
+        ]
+      },
+      {
+        "step_id": "one_matching_psi",
+        "operation": "assert",
+        "check_kind": "result",
+        "predicates": [
+          {
+            "left": {
+              "kind": "step_output",
+              "step_id": "matching_ticket_psis"
+            },
+            "operator": "size_eq",
+            "right": {
+              "kind": "literal",
+              "value": 1
+            }
+          }
+        ]
+      },
+      {
+        "step_id": "ticket_psi",
+        "operation": "first",
+        "input_source": {
+          "kind": "step_output",
+          "step_id": "matching_ticket_psis"
+        }
+      },
+      {
+        "step_id": "verify_order_relationship",
+        "operation": "assert",
+        "check_kind": "identity",
+        "predicates": [
+          {
+            "left": {
+              "kind": "step_output",
+              "step_id": "booking_detail",
+              "path": "saasOrderVO.orderSerialNo"
+            },
+            "operator": "eq",
+            "right": {
+              "kind": "step_output",
+              "step_id": "select_booking",
+              "path": "orderSerialNo"
+            }
+          },
+          {
+            "left": {
+              "kind": "step_output",
+              "step_id": "booking_detail",
+              "path": "saasOrderVO.ownerId"
+            },
+            "operator": "eq",
+            "right": {
+              "kind": "step_output",
+              "step_id": "query_report",
+              "path": "report.ownerId"
+            }
+          },
+          {
+            "left": {
+              "kind": "step_output",
+              "step_id": "booking_detail",
+              "path": "saasOrderVO.buyer"
+            },
+            "operator": "eq",
+            "right": {
+              "kind": "step_output",
+              "step_id": "query_report",
+              "path": "report.buyerId"
+            }
+          },
+          {
+            "left": {
+              "kind": "step_output",
+              "step_id": "booking_detail",
+              "path": "saasOrderVO.merchantId"
+            },
+            "operator": "eq",
+            "right": {
+              "kind": "step_output",
+              "step_id": "query_report",
+              "path": "report.merchantId"
+            }
+          },
+          {
+            "left": {
+              "kind": "step_output",
+              "step_id": "ticket_psi",
+              "path": "item.pnr"
+            },
+            "operator": "eq",
+            "right": {
+              "kind": "step_output",
+              "step_id": "query_report",
+              "path": "report.pnr"
+            }
+          },
+          {
+            "left": {
+              "kind": "step_output",
+              "step_id": "ticket_psi",
+              "path": "passenger.passengerId"
+            },
+            "operator": "not_null"
+          }
+        ]
+      },
+      {
+        "step_id": "query_existing_refunds",
+        "operation": "runtime_call",
+        "function_id": "facade:com.ly.flight.chainsaas.refund.facade.RefundFacade#queryList",
+        "arguments": {
+          "traceId": {
+            "kind": "runtime_context",
+            "name": "trace_id"
+          },
+          "page": {
+            "kind": "literal",
+            "value": 1
+          },
+          "pageSize": {
+            "kind": "literal",
+            "value": 20
+          },
+          "ticketNo": {
+            "kind": "step_output",
+            "step_id": "query_report",
+            "path": "report.ticketNo"
+          }
+        },
+        "output_schema": {
+          "type": "object",
+          "properties": {
+            "success": {
+              "type": "boolean"
+            },
+            "list": {
+              "type": "object",
+              "properties": {
+                "pageList": {
+                  "type": "array",
+                  "items": {
+                    "type": "object"
+                  }
+                }
+              },
+              "required": [],
+              "additionalProperties": true
+            }
+          },
+          "required": [],
+          "additionalProperties": true
+        }
+      },
+      {
+        "step_id": "refund_query_succeeded",
+        "operation": "assert",
+        "check_kind": "result",
+        "predicates": [
+          {
+            "left": {
+              "kind": "step_output",
+              "step_id": "query_existing_refunds",
+              "path": "success"
+            },
+            "operator": "eq",
+            "right": {
+              "kind": "literal",
+              "value": true
+            }
+          }
+        ]
+      },
+      {
+        "step_id": "no_existing_refund",
+        "operation": "assert",
+        "check_kind": "result",
+        "predicates": [
+          {
+            "left": {
+              "kind": "step_output",
+              "step_id": "query_existing_refunds",
+              "path": "list.pageList"
+            },
+            "operator": "size_eq",
+            "right": {
+              "kind": "literal",
+              "value": 0
+            }
+          }
+        ]
+      },
+      {
+        "step_id": "verify_report_state",
+        "operation": "assert",
+        "check_kind": "state",
+        "predicates": [
+          {
+            "left": {
+              "kind": "step_output",
+              "step_id": "query_report",
+              "path": "report.transactionType"
+            },
+            "operator": "eq",
+            "right": {
+              "kind": "literal",
+              "value": 3
+            }
+          },
+          {
+            "left": {
+              "kind": "step_output",
+              "step_id": "query_report",
+              "path": "report.source"
+            },
+            "operator": "eq",
+            "right": {
+              "kind": "literal",
+              "value": "ARC"
+            }
+          },
+          {
+            "left": {
+              "kind": "step_output",
+              "step_id": "query_report",
+              "path": "report.isSaveDb"
+            },
+            "operator": "eq",
+            "right": {
+              "kind": "literal",
+              "value": 0
+            }
+          }
+        ]
+      }
+    ],
+    "outputs": [
+      {
+        "output_name": "report_id",
+        "step_id": "query_report",
+        "path": "report.id"
+      },
+      {
+        "output_name": "bill_date",
+        "step_id": "query_report",
+        "path": "report.queryData"
+      },
+      {
+        "output_name": "arc_bill",
+        "step_id": "decode_report_ext",
+        "path": "arcRefundAccount"
+      },
+      {
+        "output_name": "order_serial_no",
+        "step_id": "booking_detail",
+        "path": "saasOrderVO.orderSerialNo"
+      },
+      {
+        "output_name": "owner_id",
+        "step_id": "booking_detail",
+        "path": "saasOrderVO.ownerId"
+      },
+      {
+        "output_name": "buyer_id",
+        "step_id": "booking_detail",
+        "path": "saasOrderVO.buyer"
+      },
+      {
+        "output_name": "merchant_id",
+        "step_id": "booking_detail",
+        "path": "saasOrderVO.merchantId"
+      },
+      {
+        "output_name": "ticket_no",
+        "step_id": "ticket_psi",
+        "path": "item.ticketNo"
+      },
+      {
+        "output_name": "ticket_pnr",
+        "step_id": "ticket_psi",
+        "path": "item.pnr"
+      },
+      {
+        "output_name": "passenger_last_name",
+        "step_id": "ticket_psi",
+        "path": "passenger.lastName"
+      },
+      {
+        "output_name": "passenger_first_name",
+        "step_id": "ticket_psi",
+        "path": "passenger.firstName"
+      }
+    ],
+    "evidence": [
+      {
+        "source_system_id": "ifightchainsaas.java.account.supplement.core",
+        "path": "app/facade/src/main/java/com/ly/flight/chainsaas/account/supplement/core/facade/ReportFacade.java",
+        "symbol": "com.ly.flight.chainsaas.account.supplement.core.facade.ReportFacade#queryReportByUniqueKey",
+        "line": 64
+      },
+      {
+        "source_system_id": "ifightchainsaas.java.account.supplement.core",
+        "path": "app/biz/src/main/java/com/ly/flight/chainsaas/account/supplement/core/biz/manager/distribution/QueryReportByUniqueKeyInvoker.java",
+        "symbol": "QueryReportByUniqueKeyInvoker#invoke",
+        "line": 34
+      },
+      {
+        "source_system_id": "ifightchainsaas.java.account.supplement.core",
+        "path": "app/biz/src/main/java/com/ly/flight/chainsaas/account/supplement/core/biz/service/impl/DistributionReportPnrServiceImpl.java",
+        "symbol": "DistributionReportPnrServiceImpl#buildDistributionReportExt",
+        "line": 319
+      },
+      {
+        "source_system_id": "ifightchainsaas.java.booking.core",
+        "path": "app/facade/src/main/java/com/ly/flight/chainsaas/booking/facade/TradeFacade.java",
+        "symbol": "com.ly.flight.chainsaas.booking.facade.TradeFacade#queryList",
+        "line": 26
+      },
+      {
+        "source_system_id": "ifightchainsaas.java.booking.core",
+        "path": "app/facade/src/main/java/com/ly/flight/chainsaas/booking/facade/TradeFacade.java",
+        "symbol": "com.ly.flight.chainsaas.booking.facade.TradeFacade#queryDetail",
+        "line": 142
+      },
+      {
+        "source_system_id": "ifightchainsaas.java.refund.core",
+        "path": "app/biz/src/main/java/com/ly/flight/chainsaas/refund/biz/service/bill/ArcReportDataProcess.java",
+        "symbol": "ArcReportDataProcess#process",
+        "line": 81
+      }
+    ]
+  },
+  "case_template_draft": {
+    "template_id": "refund.bill-supplement.arc-new",
+    "title": "ARC退票报表关联一个真实出票原单后补单",
+    "coverage_kind": "business",
+    "combination": "each",
+    "parameters": [],
+    "data_calls": [
+      {
+        "call_id": "arc_report",
+        "function_name": "refund_arc_report_with_booking",
+        "arguments": {
+          "owner_id": {
+            "kind": "literal",
+            "value": "<QA_CONDITION_OWNER_ID>"
+          },
+          "buyer_id": {
+            "kind": "literal",
+            "value": "<QA_CONDITION_BUYER_ID>"
+          },
+          "merchant_id": {
+            "kind": "literal",
+            "value": "<QA_CONDITION_MERCHANT_ID>"
+          },
+          "ticket_no": {
+            "kind": "literal",
+            "value": "<QA_CONDITION_TICKET_NO>"
+          },
+          "pnr": {
+            "kind": "literal",
+            "value": "<QA_CONDITION_PNR>"
+          },
+          "passenger_name": {
+            "kind": "literal",
+            "value": "<QA_CONDITION_PASSENGER_NAME>"
+          },
+          "query_date": {
+            "kind": "literal",
+            "value": "<QA_CONDITION_QUERY_DATE>"
+          }
+        }
+      }
+    ],
+    "request_bindings": [
+      {
+        "field": "id",
+        "source": {
+          "kind": "data_output",
+          "call_id": "arc_report",
+          "output_name": "report_id"
+        }
+      },
+      {
+        "field": "reportSource",
+        "source": {
+          "kind": "literal",
+          "value": "ARC"
+        }
+      },
+      {
+        "field": "billDate",
+        "source": {
+          "kind": "data_output",
+          "call_id": "arc_report",
+          "output_name": "bill_date"
+        }
+      },
+      {
+        "field": "arcBillVO",
+        "source": {
+          "kind": "data_output",
+          "call_id": "arc_report",
+          "output_name": "arc_bill"
+        }
+      }
+    ],
+    "oracles": [
+      {
+        "oracle_id": "supplement.accepted",
+        "channel": "response",
+        "assertions": [
+          {
+            "actual_path": "success",
+            "operator": "eq",
+            "expected": {
+              "kind": "literal",
+              "value": true
+            }
+          },
+          {
+            "actual_path": "supplementStatus",
+            "operator": "eq",
+            "expected": {
+              "kind": "literal",
+              "value": "PROCESSING"
+            }
+          },
+          {
+            "actual_path": "needConfirm",
+            "operator": "eq",
+            "expected": {
+              "kind": "literal",
+              "value": false
+            }
+          },
+          {
+            "actual_path": "tradeOrderSerialNo",
+            "operator": "eq",
+            "expected": {
+              "kind": "data_output",
+              "call_id": "arc_report",
+              "output_name": "order_serial_no"
+            }
+          },
+          {
+            "actual_path": "refundSerialNo",
+            "operator": "not_null"
+          },
+          {
+            "actual_path": "ticketPnr",
+            "operator": "eq",
+            "expected": {
+              "kind": "data_output",
+              "call_id": "arc_report",
+              "output_name": "ticket_pnr"
+            }
+          }
+        ]
+      },
+      {
+        "oracle_id": "supplement.persisted-relationship",
+        "channel": "operation",
+        "function_id": "facade:com.ly.flight.chainsaas.refund.facade.RefundFacade#queryDetailByRefundNo",
+        "arguments": {
+          "traceId": {
+            "kind": "runtime_context",
+            "name": "trace_id"
+          },
+          "refundSerialNo": {
+            "kind": "target_response",
+            "path": "refundSerialNo"
+          }
+        },
+        "observer_output_schema": {
+          "type": "object",
+          "properties": {
+            "success": {
+              "type": "boolean"
+            },
+            "saasRefundOrderVO": {
+              "type": "object",
+              "properties": {
+                "refundSerialNo": {
+                  "type": "string"
+                },
+                "orderSerialNo": {
+                  "type": "string"
+                },
+                "platFormId": {
+                  "type": "string"
+                },
+                "buyerId": {
+                  "type": "string"
+                },
+                "merchantId": {
+                  "type": "string"
+                },
+                "refundState": {},
+                "ext": {
+                  "type": "string"
+                },
+                "psis": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "passenger": {
+                        "type": "object",
+                        "properties": {
+                          "passengerId": {
+                            "type": "string"
+                          },
+                          "lastName": {
+                            "type": "string"
+                          },
+                          "firstName": {
+                            "type": "string"
+                          }
+                        },
+                        "required": [],
+                        "additionalProperties": true
+                      },
+                      "item": {
+                        "type": "object",
+                        "properties": {
+                          "ticketNo": {
+                            "type": "string"
+                          },
+                          "pnr": {
+                            "type": "string"
+                          }
+                        },
+                        "required": [],
+                        "additionalProperties": true
+                      }
+                    },
+                    "required": [],
+                    "additionalProperties": true
+                  }
+                }
+              },
+              "required": [],
+              "additionalProperties": true
+            }
+          },
+          "required": [],
+          "additionalProperties": true
+        },
+        "json_decode_fields": {
+          "saasRefundOrderVO.ext": {
+            "type": "object",
+            "properties": {
+              "supplementId": {
+                "type": "integer"
+              }
+            },
+            "required": [
+              "supplementId"
+            ],
+            "additionalProperties": true
+          }
+        },
+        "assertions": [
+          {
+            "actual_path": "success",
+            "operator": "eq",
+            "expected": {
+              "kind": "literal",
+              "value": true
+            }
+          },
+          {
+            "actual_path": "saasRefundOrderVO.orderSerialNo",
+            "operator": "eq",
+            "expected": {
+              "kind": "data_output",
+              "call_id": "arc_report",
+              "output_name": "order_serial_no"
+            }
+          },
+          {
+            "actual_path": "saasRefundOrderVO.platFormId",
+            "operator": "eq",
+            "expected": {
+              "kind": "data_output",
+              "call_id": "arc_report",
+              "output_name": "owner_id"
+            }
+          },
+          {
+            "actual_path": "saasRefundOrderVO.buyerId",
+            "operator": "eq",
+            "expected": {
+              "kind": "data_output",
+              "call_id": "arc_report",
+              "output_name": "buyer_id"
+            }
+          },
+          {
+            "actual_path": "saasRefundOrderVO.merchantId",
+            "operator": "eq",
+            "expected": {
+              "kind": "data_output",
+              "call_id": "arc_report",
+              "output_name": "merchant_id"
+            }
+          },
+          {
+            "actual_path": "saasRefundOrderVO.ext.supplementId",
+            "operator": "eq",
+            "expected": {
+              "kind": "data_output",
+              "call_id": "arc_report",
+              "output_name": "report_id"
+            }
+          },
+          {
+            "actual_path": "saasRefundOrderVO.psis.0.item.ticketNo",
+            "operator": "eq",
+            "expected": {
+              "kind": "data_output",
+              "call_id": "arc_report",
+              "output_name": "ticket_no"
+            }
+          },
+          {
+            "actual_path": "saasRefundOrderVO.psis.0.passenger.lastName",
+            "operator": "eq",
+            "expected": {
+              "kind": "data_output",
+              "call_id": "arc_report",
+              "output_name": "passenger_last_name"
+            }
+          },
+          {
+            "actual_path": "saasRefundOrderVO.psis.0.passenger.firstName",
+            "operator": "eq",
+            "expected": {
+              "kind": "data_output",
+              "call_id": "arc_report",
+              "output_name": "passenger_first_name"
+            }
+          }
+        ],
+        "evidence": [
+          {
+            "source_system_id": "ifightchainsaas.java.refund.core",
+            "path": "app/facade/src/main/java/com/ly/flight/chainsaas/refund/facade/RefundFacade.java",
+            "symbol": "com.ly.flight.chainsaas.refund.facade.RefundFacade#queryDetailByRefundNo",
+            "line": 48
+          },
+          {
+            "source_system_id": "ifightchainsaas.java.refund.core",
+            "path": "app/biz/src/main/java/com/ly/flight/chainsaas/refund/biz/converter/BillRefundConverter.java",
+            "symbol": "BillRefundConverter#buildSupplementExt",
+            "line": 258
+          }
+        ]
+      }
+    ],
+    "evidence": [
+      {
+        "source_system_id": "ifightchainsaas.java.refund.core",
+        "path": "app/facade/src/main/java/com/ly/flight/chainsaas/refund/facade/RefundFacade.java",
+        "symbol": "com.ly.flight.chainsaas.refund.facade.RefundFacade#billSupplement",
+        "line": 262
+      },
+      {
+        "source_system_id": "ifightchainsaas.java.refund.core",
+        "path": "app/biz/src/main/java/com/ly/flight/chainsaas/refund/biz/service/bill/ArcReportDataProcess.java",
+        "symbol": "ArcReportDataProcess#process",
+        "line": 81
+      }
+    ]
+  },
+  "creation_draft_not_linked": {
+    "status": "BLOCKED_MISSING_VERIFIED_RAW_SOURCE_AND_MAPPING",
+    "reason": "data_capability_draft的create_steps有意为空。不能仅为让模型校验通过而捏造原始账单读取接口、完整报表种子或真实ID。以下saveReport步骤引用的两个unresolved步骤尚未实现，不可直接拼入可发布定义。",
+    "known_raw_source": {
+      "table": "bill_supplement_data",
+      "column": "bill_original_data",
+      "restricted_candidate_sql": "SELECT id, ticket_no, pnr, entry_date, business_type, process_node, source, bill_original_data FROM bill_supplement_data WHERE ticket_no = ? AND business_type = 2 AND process_node = 3 AND source = 1",
+      "operation_id": null,
+      "meaning": "只允许已授权测试库的单条参数化SELECT。business_type=2为ARC，process_node=3为退票，source=1为REPORT；还须核对实际env、用户日期、主体、PNR、票号和返回数量。该SQL只是候选，不含已确认DB资源或执行环境。",
+      "shape_boundary": "AbstractRefundSupplementScenario#buildArcData证明source=1的bill_original_data解析为ArcRefundBill；source=0则是ArcAccountDataDetailVO，必须经BillDataStrategy转换，不能混用。"
+    },
+    "required_unresolved_outputs": [
+      {
+        "step_id": "unresolved_verified_arc_refund",
+        "meaning": "从授权真实来源获取并验证的ArcRefundBill对象，保留实际金额、乘客和航段，绝不手造票号。"
+      },
+      {
+        "step_id": "unresolved_verified_report_seed",
+        "meaning": "从已验证账单与原单生成的SaasDistributionReportPnrVO，含真实主体/采购/供应商/PNR/票号/姓名/日期和源码常量transactionType=3、source=ARC；owner类型转换和日期规则还未闭合。"
+      }
+    ],
+    "save_step": {
+      "step_id": "save_verified_report",
+      "operation": "runtime_call",
+      "function_id": "facade:com.ly.flight.chainsaas.account.supplement.core.facade.ReportFacade#saveReport",
+      "arguments": {
+        "traceId": {
+          "kind": "runtime_context",
+          "name": "trace_id"
+        },
+        "report": {
+          "kind": "step_output",
+          "step_id": "unresolved_verified_report_seed"
+        },
+        "arcRefundAccount": {
+          "kind": "step_output",
+          "step_id": "unresolved_verified_arc_refund"
+        }
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "success": {
+            "type": "boolean"
+          },
+          "report": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "integer"
+              },
+              "ownerId": {
+                "type": "string"
+              },
+              "buyerId": {
+                "type": "string"
+              },
+              "merchantId": {
+                "type": "string"
+              },
+              "pnr": {
+                "type": "string"
+              },
+              "transactionType": {
+                "type": "integer"
+              },
+              "isSaveDb": {
+                "type": "integer"
+              },
+              "queryData": {
+                "type": "string"
+              },
+              "ticketNo": {
+                "type": "string"
+              },
+              "source": {
+                "type": "string"
+              },
+              "passengerName": {
+                "type": "string"
+              },
+              "ext": {
+                "type": "string"
+              }
+            },
+            "required": [],
+            "additionalProperties": true
+          }
+        },
+        "required": [],
+        "additionalProperties": true
+      }
+    },
+    "postcondition": "先断言save响应业务成功，再按最初queryReportByUniqueKey条件发起全新查询，复用相同身份/关联/状态验证；新定义不能把save返回ID直接当已验证事实。"
+  },
+  "open_gaps": [
+    {
+      "gap": "PRODUCTION_BASELINE_NOT_SELECTED",
+      "blocks": "发布生产回归基线",
+      "detail": "当前本地代码及历史latest扫描不能自动代表生产版本A；必须选择A，核对预期及金额计算，再冻结该版本数据方法与Case。"
+    },
+    {
+      "gap": "SUPPLEMENT_NOT_REGISTERED_OR_SCANNED",
+      "blocks": "发现和执行补单Operation",
+      "detail": "本地只有booking/refund注册；不得把知道Java签名等同于已有可执行Operation。"
+    },
+    {
+      "gap": "CROSS_SYSTEM_EXECUTION_NOT_AUTHORIZED",
+      "blocks": "跨系统运行",
+      "detail": "refund→booking只有旧SETUP发现关系，无精确allowed_operations和环境对应；refund→supplement尚无绑定。必须由用户维护明确授权范围和test对应。"
+    },
+    {
+      "gap": "ACTUAL_ENVIRONMENT_MISMATCH",
+      "blocks": "当前默认qa执行",
+      "detail": "booking/refund现有qa.yaml，但扫描DSF routing=qa、target=test；执行环境必须匹配真实target=test。不能仅改展示标签，具体环境选择配置须补齐。"
+    },
+    {
+      "gap": "TARGET_MUTABILITY_UNKNOWN_IN_LOCAL_SCAN",
+      "blocks": "billSupplement派发",
+      "detail": "refund latest中billSupplement读写属性为UNKNOWN；需在固定A扫描/受控目录中确认WRITE，不手填成可执行。"
+    },
+    {
+      "gap": "RAW_CREATION_SOURCE_NOT_READY",
+      "blocks": "无report时造数",
+      "detail": "测试库权限、精确DB Operation、原始账单存在性及report种子映射未确认；不能改走未经接入的内部HTTP proxy或虚构账单。"
+    },
+    {
+      "gap": "SOURCE_RUNTIME_RELATION_VALIDATION_NOT_CLOSED",
+      "blocks": "将该样例发布为可复用能力",
+      "detail": "当前示例验证report和booking的String owner相等、票号/PNR/采购商/供应商相等。ARC ownerId为Long、姓名是LAST/FIRST，需要与String owner及拆分姓名建立经过验证的规范化比较；本例不把仅票号相等当作这些比较已完成。"
+    },
+    {
+      "gap": "BOOKING_TIME_AND_REFUND_TYPE_CONSTRAINTS",
+      "blocks": "真实新建成功场景的可执行验收",
+      "detail": "ArcReportDataProcess还要求gmtIssue距今小于500天，且calRefundType能判断出退款类型；当前有限DSL未在本样例闭合时间计算/退款类型证明。已有退票单分支通过保守要求queryList结果为空排除，不替代源码372天规则。"
+    },
+    {
+      "gap": "RUNTIME_SERIALIZATION_AND_MONEY_BASELINE",
+      "blocks": "完整生产A契约与预期",
+      "detail": "完整ArcRefundBill继承字段、金额字符串/BigDecimal语义、日期和枚举真实序列化及基类字段须从A扫描确认。样例没有为金额/最终异步结算状态虚构固定预期；相关断言仍待基线分析。"
+    }
+  ],
+  "local_readonly_status": {
+    "checked_at": "2026-09-15",
+    "registered_systems": [
+      "ifightchainsaas.java.booking.core",
+      "ifightchainsaas.java.refund.core"
+    ],
+    "supplement_registered": false,
+    "booking": {
+      "latest_scan_id": "scan-20260902072728-207e53b9cd-9fba66a7",
+      "source_commit": "004c50d90d152f1ef4892679f8b1b322cc7a7405",
+      "routing_environment": "qa",
+      "target_environment": "test",
+      "configured_environment_files": [
+        "qa.yaml"
+      ]
+    },
+    "refund": {
+      "latest_scan_id": "scan-20260902095328-66619d80f6-47b8cbc3",
+      "source_commit": "99b494d7824eab12ffc237ae7e945aac79d61411",
+      "source_branch": "feature_670989_oj_20260901",
+      "routing_environment": "qa",
+      "target_environment": "test",
+      "bill_supplement_mutability": "UNKNOWN",
+      "configured_environment_files": [
+        "qa.yaml"
+      ]
+    },
+    "existing_binding": {
+      "consumer": "ifightchainsaas.java.refund.core",
+      "provider": "ifightchainsaas.java.booking.core",
+      "purposes": [
+        "SETUP"
+      ],
+      "explicit_allowed_operations": [],
+      "environment_mappings": {}
+    },
+    "qa_requests_sent": 0,
+    "business_system_registration_changed": false,
+    "local_knowledge_assets_changed": false
+  },
+  "structural_validation": {
+    "data_capability_model": "passed",
+    "case_template_model": "passed",
+    "creation_step_model": "passed",
+    "semantic_compilation": "NOT_RUN_NO_FROZEN_SOURCE_RUNTIME_REGISTRY",
+    "published": false,
+    "qa_execution": "NOT_RUN"
+  },
+  "acceptance_after_gaps_are_closed": [
+    "从生产源码A确认上述接口契约、有效ARC账单与原单关联规则，发布数据方法D1，将完整D1及A预期内嵌为G1；生成阶段不访问QA。",
+    "将B部署所选非生产环境后显式执行G1，查询真实report并验证全部关联；没有report时只在原始数据和当前写授权齐备后saveReport，再按同一条件回查。",
+    "以本次report.id和ext.arcRefundAccount组装billSupplement，执行后queryDetailByRefundNo观察实际订单/主体/票号/乘客及解析ext.supplementId。",
+    "另一个Case与独立自然语言任务选择D1复用。发布D2后G1仍使用内嵌D1与A的原预期及源码范围；执行时检查项目仍接入并解析各项目自身qa/uat配置。",
+    "不需要内部知识长文或cleanup定义；不执行清理，保留并展示实际数据。数据/环境依赖/观察失败各自分类，只有已完成观察后与A预期不同才报告行为差异。"
+  ]
+}

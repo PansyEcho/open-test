@@ -4,49 +4,43 @@
 TBD - created by archiving change restore-usable-knowledge-case-workflows. Update Purpose after archive.
 ## Requirements
 ### Requirement: Generation follows the initiating interaction surface
-The system SHALL accept `interaction_mode` as `native` or `web`, default to native preparation, and run web generation with the existing local Codex runner and task-scoped tools. Both surfaces SHALL share authoritative handoffs and published assets.
+The system SHALL accept native preparation and web automatic analysis using the existing runner. A stopped web task MAY transfer to its original Codex session through the task-scoped native-handoff API; both surfaces SHALL share authoritative handoffs and published assets.
 
 #### Scenario: Web generation starts useful work
-- **WHEN** the console requests knowledge or Case generation with web interaction
-- **THEN** the task starts a real local Agent run and displays progress or an actionable failure
-- **AND** completing the workflow does not require copying an instruction or taking over a desktop thread
+- **WHEN** the console requests knowledge or Case generation
+- **THEN** a real local Agent starts once and the page displays authoritative progress
+- **AND** any later native continuation happens only after the web worker stops
 
 #### Scenario: Native preparation
-- **WHEN** a system Skill prepares generation without web interaction
-- **THEN** the current Agent receives the handoff and continues in the current conversation
-- **AND** OpenTest does not start another Agent
+- **WHEN** a system Skill prepares generation in native mode
+- **THEN** the current Agent receives the handoff and OpenTest does not start another Agent
 
 #### Scenario: Agent reads a large handoff
-- **WHEN** the knowledge handoff contains a large frozen business context
-- **THEN** the Agent receives the submission schema and saved typed candidate without truncation
-- **AND** repeated context reads do not duplicate frozen analysis instructions
+- **WHEN** a handoff contains a large frozen context
+- **THEN** submission schema and typed candidates remain complete without duplicating frozen instructions
 
 #### Scenario: Agent corrects source evidence
-- **WHEN** a candidate contains an invalid source symbol or disconnected trace steps
-- **THEN** validation identifies the exact reference or adjacent symbols and gives a focused correction hint
-- **AND** Java parameter-list commas are not interpreted as multiple methods; declaration and read-range checks still apply
+- **WHEN** source symbols or trace evidence are invalid
+- **THEN** validation reports the exact missing evidence and allows same-task correction
 
 ### Requirement: Task questions and runs are resumable
-The system SHALL expose task context, answers and `POST /api/v2/tasks/{task_id}/runs`, preserve request identity and revision checks, and resume web-owned work after answers.
+The system SHALL preserve task context, answers, request identities and revisions. Native transfer SHALL serialize with web startup and answers; native answers SHALL NOT restart a web Agent.
 
 #### Scenario: Answer and continue
-- **WHEN** a user answers a web task question
-- **THEN** the answer is persisted in the same handoff and the web Agent continues from that revision
-- **AND** an unknown answer remains open without an automatic repeated-question loop
-- **AND** answer projection and run settlement serialize task updates so an old projection cannot restore a finished run
+- **WHEN** a user answers after native transfer
+- **THEN** the original handoff records the answer and the native Agent continues from its current revision
+- **AND** unknown answers remain open
 
 #### Scenario: Refresh or repeat a request
-- **WHEN** a page refreshes, a run request repeats, or the service restarts
-- **THEN** the same task, draft and run evidence are recovered without duplicating a live Agent or QA mutation
-- **AND** an unavailable run is shown as a recoverable interruption
+- **WHEN** a run or transfer request repeats or the service restarts
+- **THEN** task and run evidence are recovered without creating a duplicate executor or QA mutation
 
 ### Requirement: Case generation prepares missing target knowledge
-The system SHALL reuse current input knowledge and automatically prepare missing knowledge for the requested target before continuing Case generation.
+The system SHALL use the independent operation contract and SHALL supplement missing fields on demand during the same Case workflow without requiring internal knowledge narratives.
 
 #### Scenario: Knowledge is absent
-- **WHEN** Case generation cannot resolve the target's published input knowledge
-- **THEN** a linked prerequisite task generates that target's knowledge
-- **AND** publication allows the original Case workflow to continue without a second user command
+- **WHEN** an entry has no legacy knowledge document
+- **THEN** the Case workflow starts from its scan-derived contract and asks only for essential unresolved business information
 
 ### Requirement: DSL persistence preserves source semantics
 The system SHALL serialize valid dynamic sources without implicit literal fields, retain explicit literal null and preserve existing affected drafts through bounded storage compatibility.
@@ -83,26 +77,22 @@ The system SHALL default an unspecified test environment to configured available
 - **AND** an unknown write result is observed by execution identity instead of being blindly replayed
 
 ### Requirement: Web run diagnostics explain revision and identify the actual conversation
-The console SHALL distinguish validation during an active Agent run from a stopped workflow and SHALL provide read-only diagnostics for the actual task-bound web run for both knowledge and Case generation. A Codex conversation link SHALL be shown only after the run records a valid session identity. Questions and continuation SHALL remain on the initiating interaction surface.
+The console SHALL distinguish active background analysis from stopped workflows. It SHALL open a Codex continuation link only after a successful transfer response proves that the original worker has stopped; completed-task history links remain read-only navigation.
 
 #### Scenario: Agent is correcting a draft
-- **WHEN** an active web run has draft validation issues
-- **THEN** the dialog explains that the Agent is revising the draft and places technical issue details in a collapsed disclosure
-- **AND** a later refresh reflects cleared issues and the published Generation
+- **WHEN** the web worker is active with validation gaps
+- **THEN** the page shows actual background progress and does not offer premature desktop takeover
 
 #### Scenario: Agent stopped without publication
-- **WHEN** a web run stops with unresolved validation issues
-- **THEN** the dialog retains those issues and the existing failure or continuation actions without claiming that automatic revision is still active
+- **WHEN** a web run stops without publication
+- **THEN** its saved draft, validation issues and safe continuation remain available
 
 #### Scenario: View the real Codex conversation
-- **WHEN** the user expands run diagnostics for a web Case or knowledge task
-- **THEN** the server reads the task's web run evidence instead of a legacy handoff run
-- **AND** the console offers the recorded Codex session link only after a successful diagnostics response
-- **AND** opening the link does not create a task, resume an Agent or move questions out of the web page
+- **WHEN** a user requests native continuation of a stopped task
+- **THEN** the server verifies worker termination and saves native ownership before returning the original session link
+- **AND** following answers do not launch the web runner
 
 #### Scenario: Session is not yet available
-- **WHEN** the run has no recorded session identity or diagnostics cannot be read
-- **THEN** the console explains the unavailable state without constructing a link from a run ID or breaking the task context
-- **AND** explicit progress refresh rereads a completed or failed diagnostics request for the same run while keeping its disclosure open, so a newly recorded session becomes visible
-- **AND** an in-flight diagnostics request is reused instead of duplicated
+- **WHEN** the actual session identity is unavailable
+- **THEN** the page explains that continuation is unavailable and never constructs a link from a run ID
 

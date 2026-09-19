@@ -10,11 +10,13 @@ import pytest
 
 from opentest.adapters.source_analysis import GitSourceRepository, SourceScanArtifactStore
 from opentest.application.foundation import OpenTestApplication
+from opentest.adapters.agent_runner import AgentRunner
 from opentest.domain.errors import ExecutionFailure
 from opentest.domain.models import (
     EntryPoint,
     KnowledgeConfirmation,
     KnowledgeGenerationBatchRequest,
+    KnowledgeGenerationWorkflowBatch,
     KnowledgeInterview,
     KnowledgeNode,
     KnowledgeNodeKind,
@@ -55,8 +57,36 @@ class _UnavailableAgent:
         raise ExecutionFailure("simulated codex failure")
 
 
+def _seed_historical_drafts(
+    application: OpenTestApplication,
+    request: KnowledgeGenerationBatchRequest,
+    runner: AgentRunner,
+) -> KnowledgeGenerationWorkflowBatch:
+    """建立隔离历史草稿，继续验证人工问答、正文保护及旧资产读取。
+
+    Args:
+        application: 仅使用测试目录的应用。
+        request: 历史批次的系统、入口和扫描约束。
+        runner: 测试替身，不调用真实Agent。
+    Returns:
+        保存到临时目录的历史草稿批次。
+    Side Effects:
+        使用保留的旧实现建立夹具，不恢复产品已退役的长文生成入口。
+    """
+
+    # 历史资产的兼容断言继续经过真实存储与校验，公开生成入口保持退役。
+    return application.knowledge._generate_legacy_drafts(request, runner)
+
+
 def test_interview_propagates_to_multiple_drafts_without_publishing(tmp_path: Path) -> None:
-    """集中访谈应更新草稿，且仅代码事实继续作为非人工知识可浏览。"""
+    """集中访谈应更新草稿，且仅代码事实继续作为非人工知识可浏览。
+
+    Args:
+        tmp_path: 隔离历史源码、知识文件和运行证据的临时目录。
+
+    Returns:
+        None；历史资产保护及当前公开边界断言通过时正常结束。
+    """
 
     source = tmp_path / "source"
     source.mkdir()
@@ -75,7 +105,9 @@ def test_interview_propagates_to_multiple_drafts_without_publishing(tmp_path: Pa
     artifacts.publish_latest("demo-system", manifest.scan_id)
     application.store.update_source_baseline("demo-system", manifest.baseline)
     application.skip_background_interview("demo-system")
-    batch = application.knowledge.generate_drafts(
+    # 历史夹具保留已有资产保护覆盖，不重新开放已退役的长文生成入口。
+    batch = _seed_historical_drafts(
+        application,
         KnowledgeGenerationBatchRequest(
             system_id="demo-system",
             target_ids=[manifest.entries[0].entry_id],
@@ -99,7 +131,14 @@ def test_interview_propagates_to_multiple_drafts_without_publishing(tmp_path: Pa
 
 
 def test_resaving_interview_preserves_answered_draft_content(tmp_path: Path) -> None:
-    """回答草稿问题后再次保存访谈时不得截断人工确认口径。"""
+    """回答草稿问题后再次保存访谈时不得截断人工确认口径。
+
+    Args:
+        tmp_path: 隔离历史源码、知识文件和运行证据的临时目录。
+
+    Returns:
+        None；历史资产保护及当前公开边界断言通过时正常结束。
+    """
 
     source = tmp_path / "source"
     source.mkdir()
@@ -118,7 +157,9 @@ def test_resaving_interview_preserves_answered_draft_content(tmp_path: Path) -> 
     artifacts.publish_latest("demo-system", manifest.scan_id)
     application.store.update_source_baseline("demo-system", manifest.baseline)
     application.skip_background_interview("demo-system")
-    batch = application.knowledge.generate_drafts(
+    # 历史夹具保留已有资产保护覆盖，不重新开放已退役的长文生成入口。
+    batch = _seed_historical_drafts(
+        application,
         KnowledgeGenerationBatchRequest(
             system_id="demo-system",
             target_ids=[manifest.entries[0].entry_id],

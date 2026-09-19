@@ -34,7 +34,7 @@ def _application(tmp_path):
     service, handoffs, _ = _service(tmp_path / "handoffs", _compiled())
     # 正式产物也走真实磁盘回读，避免Mock把无法读取的发布错误伪装成成功。
     service.generations = CaseTemplateGenerationStoreV4(application.store)
-    handoff = _handoff(tmp_path).model_copy(update={"task_id": TASK_ID, "root_task_id": TASK_ID})
+    handoff = _handoff(tmp_path).model_copy(update={"task_id": TASK_ID, "root_task_id": TASK_ID, "execution_mode": "generate_only"})
     handoffs.write(handoff)
     application.case_template_v4 = service
     application.store.get_system = Mock(return_value=SimpleNamespace(source_path=str(tmp_path)))
@@ -63,6 +63,41 @@ def _wait_settled(application):
             return task
         sleep(0.01)
     raise AssertionError("web run did not settle")
+
+
+@pytest.mark.parametrize('mode,expected_runs', [('generate_and_verify', 1), ('generate_only', 0)])
+def test_publication_execution_mode_and_request_replay(tmp_path, mode, expected_runs):
+    """正式发布默认触发一次试跑；重复发布复用执行，明确只生成时不访问业务。"""
+
+    application, handoff = _application(tmp_path)
+    handoff = handoff.model_copy(update={'execution_mode': mode})
+    application.case_template_v4.handoffs.write(handoff)
+    application.submit_case_template_v4(handoff.handoff_id, CaseTemplateDraftRevisionRequest(
+        request_id='publication-mode-draft', expected_revision=0, submission=_submission()))
+    executions = []
+
+    def list_executions(system_id, generation_id):
+        """返回已保存的本代执行，模拟发布重入时权威执行存储的读取。"""
+        return executions
+
+    def execute(system_id, generation_id, request, background=False):
+        """记录真实默认环境和后台请求，留下后续发布可复用的唯一运行。"""
+        assert request.environment_id == 'qa'
+        assert background is True
+        execution = SimpleNamespace(execution_id='case-generation-execution-test', status='RUNNING')
+        executions.append(execution)
+        return execution
+
+    application.case_template_v4.list_executions = list_executions
+    application.case_template_v4.execute_generation = execute
+    request = CaseTemplatePublicationRequest(request_id='publication-mode-publish', expected_revision=1, mode='complete')
+    first = application.publish_case_template_v4(handoff.handoff_id, request)
+    replay = application.publish_case_template_v4(handoff.handoff_id, request)
+    assert len(executions) == expected_runs
+    assert first['generation'].generation_id == replay['generation'].generation_id
+    assert ('execution' in first) == bool(expected_runs)
+    if expected_runs:
+        assert replay['execution'] is first['execution']
 
 
 class ControlledAgent:
@@ -333,7 +368,7 @@ def test_answer_during_settle_retains_pending_wakeup(tmp_path):
     application.get_task_context = paused_context
     application.web_generation._observing.add(TASK_ID)
     task = application.tasks.get(TASK_ID)
-    application.tasks.save_business_record(task.model_copy(update={"web_run_active": True}))
+    application.tasks.save_business_record(task.model_copy(update={"web_run_active": True, "interaction_mode": "web"}))
     try:
         with ThreadPoolExecutor(max_workers=2) as pool:
             settling = pool.submit(application.web_generation._settle, TASK_ID, "")

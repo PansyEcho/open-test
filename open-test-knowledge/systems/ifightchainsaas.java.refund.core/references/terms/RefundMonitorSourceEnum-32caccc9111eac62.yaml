@@ -43,19 +43,13 @@ enum_values:
     line: 18
     commit: ''
     content_digest: ''
-suggested_meaning: 枚举名称和值默认采用源码注释；缺少注释时回退代码标识，可再人工修订。
+suggested_meaning: 枚举名称和值只读展示源码注释；缺少注释时展示代码标识，无需人工补充。
 code_meaning: 运营后台（BUSINESS_MANAGE）；模型（MODEL）；白屏分销（WHITE_DISTRIBUTION）
 unresolved_codes: []
 business_meaning: ''
 status: CODE_VERIFIED
 merged_into_candidate_id: ''
 source_refs:
-- repository: ''
-  path: app/model/src/main/java/com/ly/flight/chainsaas/refund/enums/monitor/RefundMonitorSourceEnum.java
-  symbol: com.ly.flight.chainsaas.refund.enums.monitor.RefundMonitorSourceEnum
-  line: 13
-  commit: 99b494d7824eab12ffc237ae7e945aac79d61411
-  content_digest: a5a950d29ea66d3fb7419e7cabb81a39f8e2be3cd780ef6bef2833d67a8a58bd
 - repository: ''
   path: app/model/src/main/java/com/ly/flight/chainsaas/refund/enums/monitor/RefundMonitorSourceEnum.java
   symbol: com.ly.flight.chainsaas.refund.enums.monitor.RefundMonitorSourceEnum#BUSINESS_MANAGE
@@ -100,6 +94,6 @@ affected_target_ids:
 - facade:com.ly.flight.chainsaas.refund.facade.RefundFacade#unLockOrder
 - facade:com.ly.flight.chainsaas.refund.facade.RefundFacade#voucherRefundSubmit
 - facade:com.ly.flight.chainsaas.refund.facade.RefundFacade#walletRefundRetry
-evidence_digest: efa2781bb57181de3ddf7e09ca73d39bf46992820f53c3e1e817b508e006f668
+evidence_digest: c5dba3439c6e4d1c468e44401298052c847beabd07f8ea553b64392784a6ef8e
 discovered_at: '2026-08-13T11:09:41.120151Z'
-updated_at: '2026-09-02T07:26:12.781222Z'
+updated_at: '2026-09-19T04:25:34.176360Z'

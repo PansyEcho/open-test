@@ -91,19 +91,13 @@ enum_values:
     line: 28
     commit: ''
     content_digest: ''
-suggested_meaning: 枚举名称和值默认采用源码注释；缺少注释时回退代码标识，可再人工修订。
+suggested_meaning: 枚举名称和值只读展示源码注释；缺少注释时展示代码标识，无需人工补充。
 code_meaning: AI创建（AI）；ARC补单（ARC）；BSP补单（BSP）；运营后台（BUSINESS_MANAGE）；C端同步（C_END_SYNC）；TCPL（TCPL）；白屏分销（WHITE_DISTRIBUTION）
 unresolved_codes: []
 business_meaning: TCPL入口目前下线了，AI的主要是com.ly.flight.chainsaas.refund.facade.ModelFacade#createRefundOrder创建的退票单
 status: CONFIRMED
 merged_into_candidate_id: ''
 source_refs:
-- repository: ''
-  path: app/model/src/main/java/com/ly/flight/chainsaas/refund/enums/RefundChannelEnum.java
-  symbol: com.ly.flight.chainsaas.refund.enums.RefundChannelEnum
-  line: 13
-  commit: 99b494d7824eab12ffc237ae7e945aac79d61411
-  content_digest: 72ffca5d0af78c05599730edfc1b8dc463e021d33d38785ed84188e0672d5170
 - repository: ''
   path: app/model/src/main/java/com/ly/flight/chainsaas/refund/enums/RefundChannelEnum.java
   symbol: com.ly.flight.chainsaas.refund.enums.RefundChannelEnum#AI
@@ -172,6 +166,6 @@ affected_target_ids:
 - facade:com.ly.flight.chainsaas.refund.facade.RefundFacade#unLockOrder
 - facade:com.ly.flight.chainsaas.refund.facade.RefundFacade#voucherRefundSubmit
 - facade:com.ly.flight.chainsaas.refund.facade.RefundFacade#walletRefundRetry
-evidence_digest: f68b075131f7ff769d45765e19697e92dacb458b5c5d05e78f552bae5e3b2643
+evidence_digest: 01e3995a042df2e8261881e76d58407f93a84eac5ba9d1d9e4189d10cdbb9d67
 discovered_at: '2026-08-13T10:23:54.669432Z'
-updated_at: '2026-09-02T07:26:12.781127Z'
+updated_at: '2026-09-19T04:25:34.176198Z'

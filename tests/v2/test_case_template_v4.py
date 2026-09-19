@@ -420,14 +420,14 @@ def test_v4_source_tool_reads_frozen_commit_snapshot_after_working_tree_changes(
     assert [item["path"] for item in response["matches"]] == ["RefundFacade.java"]
 
 
-def test_runtime_registry_adds_source_required_fields_and_initializer_defaults() -> None:
-    """确认Runtime输入Schema区分可省略默认分页值和无默认必填平台ID。
+def test_runtime_registry_does_not_promote_comments_or_initializers() -> None:
+    """Runtime目录不得把注释和初始化值提升为调用约束或自动补参。
 
     Returns:
-        None；page/pageSize保留required与default，platFormId仅required时通过。
+        None；目录不从字段声明新增required或default时通过。
     """
 
-    # 三个字段都带@required，但只有分页字段拥有可安全省略的Java初始化值。
+    # 三个字段带文档标记且分页有Java初值，但均未证明当前入口校验或省略语义。
     capability = OperationCapability(
         operation_id=QUERY_LIST_ID,
         system_id=SYSTEM_ID,
@@ -480,9 +480,9 @@ def test_runtime_registry_adds_source_required_fields_and_initializer_defaults()
     )
     schema = registry.functions[0].input_schema
 
-    assert schema["required"] == ["page", "pageSize", "platFormId"]
-    assert schema["properties"]["page"]["default"] == 1
-    assert schema["properties"]["pageSize"]["default"] == 20
+    assert "required" not in schema
+    assert "default" not in schema["properties"]["page"]
+    assert "default" not in schema["properties"]["pageSize"]
     assert "default" not in schema["properties"]["platFormId"]
 
 
@@ -564,7 +564,7 @@ def test_outer_dsf_info_resolves_authorized_provider_facade_contract() -> None:
 
     assert info["provider_operation_id"] == TRADE_QUERY_LIST_ID
     assert info["provider_system_id"] == BOOKING_SYSTEM_ID
-    assert info["request_schema"]["properties"]["page"]["default"] == 1
+    assert "default" not in info["request_schema"]["properties"]["page"]
     assert info["response_fields"][0]["field_path"] == "ownerId"
     assert info["runtime_function"]["provider_ref"] == TRADE_QUERY_LIST_ID
     assert info["provider_source_refs"][0]["path"] == "TradeFacade.java"
@@ -1173,11 +1173,19 @@ def test_runtime_registry_is_derived_from_operations_without_refund_fixture() ->
         [facade, database, mq_sender],
     )
 
-    assert {item.function_id for item in registry.functions} == {facade.operation_id, DATABASE_ID, f"{DATABASE_ID}:data"}
+    assert {item.function_id for item in registry.functions} == {
+        facade.operation_id, DATABASE_ID, f"{DATABASE_ID}:data", f"{DATABASE_ID}:query",
+    }
     assert {item.kind for item in registry.functions} == {"dsf", "mysql"}
     database_data = next(item for item in registry.functions if item.function_id.endswith(":data"))
     assert database_data.allowed_phases == ["DATA"]
     assert not database_data.read_only
+    database_query = next(item for item in registry.functions if item.function_id.endswith(":query"))
+    assert database_query.allowed_phases == ["DATA"]
+    assert database_query.read_only
+    assert database_query.provider_ref == DATABASE_ID
+    assert database_query.input_schema == database.input_schema
+    assert database_query.output_schema == {}
     assert all("refund_order.get" not in item.function_id for item in registry.functions)
 
 
@@ -1241,11 +1249,11 @@ def test_v4_blocks_resource_oracles_without_authorized_observer(
     assert "UNKNOWN_ORACLE_FUNCTION" in {item.code for item in issues}
 
 
-def test_v4_catalog_runtime_scope_keeps_same_facade_and_controlled_database() -> None:
-    """确认首轮目录不会把其他Facade和第三方完整契约一次性发送给AI。
+def test_v4_catalog_runtime_scope_exposes_authorized_non_target_operations() -> None:
+    """确认已经按当前授权过滤的固定Operation可直接用于发现数据方法。
 
     Returns:
-        None；仅同Facade旁路接口和本系统数据库进入首轮Runtime目录时通过。
+        None；目标接口被排除，其他Facade、数据库和外部操作均保留时通过。
     """
 
     handoff = CaseTemplateHandoffV4(
@@ -1288,22 +1296,25 @@ def test_v4_catalog_runtime_scope_keeps_same_facade_and_controlled_database() ->
         kind=OperationKind.EXTERNAL_DSF,
     )
 
+    # 这里测试目录投影；固定扫描与实时精确操作授权在它的上游服务负责校验。
     selected = CaseTemplateV4Service(Mock(), Mock(), Mock(), Mock())._catalog_runtime_capabilities(
         handoff,
         [target, same_facade, other_facade, database, outer],
     )
 
-    assert [item.operation_id for item in selected] == [QUERY_LIST_ID, DATABASE_ID]
+    assert [item.operation_id for item in selected] == [
+        QUERY_LIST_ID, other_facade.operation_id, DATABASE_ID, outer.operation_id,
+    ]
 
 
-def test_submit_runtime_scope_requires_outer_api_access_audit(tmp_path: Path) -> None:
-    """确认submit只能使用首轮目录和按需展开过的第三方provider。
+def test_submit_runtime_scope_does_not_use_source_read_audit_as_permission(tmp_path: Path) -> None:
+    """确认已明确授权的跨系统操作不依赖旧外部知识展开记录。
 
     Args:
         tmp_path: pytest提供的隔离私有状态目录。
 
     Returns:
-        None；未展开时provider不可见，记录工具审计后才进入Runtime范围。
+        None；读取审计前后目录相同，源码读取行为不会授予或收回执行权限。
     """
 
     handoff = CaseTemplateHandoffV4(
@@ -1341,6 +1352,7 @@ def test_submit_runtime_scope_requires_outer_api_access_audit(tmp_path: Path) ->
     handoff_store = CaseTemplateHandoffStoreV4(tmp_path)
     service = CaseTemplateV4Service(Mock(), Mock(), Mock(), handoff_store)
 
+    # 两次输入均模拟上游已核对固定scan和操作白名单的目录。
     before = service._submission_runtime_capabilities(
         handoff,
         [target, same_facade, provider],
@@ -1355,8 +1367,8 @@ def test_submit_runtime_scope_requires_outer_api_access_audit(tmp_path: Path) ->
         [target, same_facade, provider],
     )
 
-    assert [item.operation_id for item in before] == [QUERY_LIST_ID]
-    assert [item.operation_id for item in after] == [TRADE_QUERY_LIST_ID, QUERY_LIST_ID]
+    assert [item.operation_id for item in before] == [QUERY_LIST_ID, TRADE_QUERY_LIST_ID]
+    assert [item.operation_id for item in after] == [QUERY_LIST_ID, TRADE_QUERY_LIST_ID]
 
 
 def test_mysql_observer_rejects_writes_and_parameter_mismatch() -> None:
@@ -2085,7 +2097,7 @@ def test_operation_request_identity_is_stable_and_binds_actual_arguments() -> No
         "target",
         CANCEL_ID,
         base_arguments,
-        "test",
+        "uat",
     )
 
     request_ids = [request.request_id for _, request in operations.calls]
@@ -2342,11 +2354,11 @@ def _create_order_generation(
     )
 
 
-def test_create_order_cleanup_gate_validates_contract_and_real_response_identity() -> None:
-    """createOrder在生成期必须校验cancel参数、证据和真实响应身份。
+def test_historical_cleanup_definitions_do_not_gate_create_order_generation() -> None:
+    """历史清理的参数、证据或身份不完整不能继续阻断造数Case生成。
 
     Returns:
-        None；合法Cleanup可运行，缺参、固定身份和错误Operation均阻塞时通过。
+        None；历史清理字段原样保留，各种旧清理缺口不产生新生成错误。
     """
 
     generation = _create_order_generation()
@@ -2498,7 +2510,7 @@ def test_create_order_cleanup_gate_validates_contract_and_real_response_identity
         [target_capability, cancel_capability, replacement_capability],
     )
 
-    # 子串相似的方法名和同名方法的其他Facade都不能充当cancel源码证据。
+    # 历史清理即使引用失效证据也只供阅读，停止校验后不再阻断实际目标流程。
     mismatched_evidence_results = []
     for symbol in ("RefundFacade#cancelOther", "OtherFacade#cancel"):
         mismatched_evidence = generation.submission.case_templates[0].cleanup.evidence[0].model_copy(
@@ -2525,27 +2537,18 @@ def test_create_order_cleanup_gate_validates_contract_and_real_response_identity
             )
         )
 
-    assert valid_issues == []
-    assert valid_variants[0].blocked_reason == ""
-    assert fixed_variants[0].blocked_reason
-    assert "CREATE_ORDER_CLEANUP_IDENTITY_INVALID" in {item.code for item in fixed_issues}
-    assert wrong_path_variants[0].blocked_reason
-    assert "CREATE_ORDER_CLEANUP_IDENTITY_INVALID" in {
-        item.code for item in wrong_path_issues
-    }
-    assert unproven_variants[0].blocked_reason
-    assert "CREATE_ORDER_CLEANUP_IDENTITY_INVALID" in {
-        item.code for item in unproven_issues
-    }
-    assert missing_variants[0].blocked_reason
-    assert "CLEANUP_ARGUMENT_MISMATCH" in {item.code for item in missing_issues}
-    assert wrong_variants[0].blocked_reason
-    assert "CREATE_ORDER_CLEANUP_OPERATION_INVALID" in {item.code for item in wrong_issues}
-    assert all(variants[0].blocked_reason for variants, _issues in mismatched_evidence_results)
-    assert all(
-        "CLEANUP_EVIDENCE_MISMATCH" in {item.code for item in issues}
-        for _variants, issues in mismatched_evidence_results
-    )
+    historical_results = [
+        (valid_variants, valid_issues), (fixed_variants, fixed_issues),
+        (wrong_path_variants, wrong_path_issues), (unproven_variants, unproven_issues),
+        (missing_variants, missing_issues), (wrong_variants, wrong_issues),
+        *mismatched_evidence_results,
+    ]
+    assert all(not issues for _variants, issues in historical_results)
+    assert all(not variants[0].blocked_reason for variants, _issues in historical_results)
+    assert valid_variants == generation.variants
+    assert fixed_variants == fixed_identity_generation.variants
+    assert wrong_path_variants == wrong_path_generation.variants
+    assert generation.variants[0].cleanup is not None
 
 
 class _CreateOrderCleanupOperationService:
@@ -2612,11 +2615,11 @@ class _CreateOrderCleanupOperationService:
         )
 
 
-def test_create_order_cleanup_uses_identity_from_real_target_response() -> None:
-    """createOrder成功后必须把真实响应订单身份传给cancel回收。
+def test_create_order_retains_result_without_executing_historical_cleanup() -> None:
+    """createOrder成功后保留真实订单及历史清理定义，不调用cancel回收。
 
     Returns:
-        None；阶段顺序为TARGET、CLEANUP且cancel没有使用固定订单号时通过。
+        None；只执行TARGET且真实造数结果保留在目标阶段输出时通过。
     """
 
     operations = _CreateOrderCleanupOperationService()
@@ -2627,12 +2630,13 @@ def test_create_order_cleanup_uses_identity_from_real_target_response() -> None:
     )
 
     assert results[0].status == "COMPLETED"
-    assert [item.phase for item in results[0].operations] == ["TARGET", "CLEANUP"]
-    assert operations.calls[1][1].arguments == {"refundSerialNo": "REAL-ORDER-9527"}
+    assert [item.phase for item in results[0].operations] == ["TARGET"]
+    assert [request.operation_id for _system_id, request in operations.calls] == [CREATE_ORDER_ID]
+    assert "REAL-ORDER-9527" in json.dumps(results[0].model_dump(mode="json"))
 
 
 def test_executor_propagates_canonical_environment_to_every_operation_phase() -> None:
-    """显式解析后的规范环境必须贯穿DATA、TARGET、ORACLE和CLEANUP请求。
+    """显式解析后的规范环境必须贯穿实际执行的DATA、TARGET和ORACLE请求。
 
     Returns:
         None；两类Generation产生的全部Operation均携带同一uat环境时通过。
@@ -2680,7 +2684,7 @@ def test_executor_propagates_canonical_environment_to_every_operation_phase() ->
 
     assert {request.environment for request in all_requests} == {"uat"}
     assert cancel_phases >= {"DATA", "TARGET", "ORACLE"}
-    assert [operation.phase for operation in create_results[0].operations] == ["TARGET", "CLEANUP"]
+    assert [operation.phase for operation in create_results[0].operations] == ["TARGET"]
 
 
 def test_execution_report_preserves_provider_business_error_message() -> None:
@@ -2716,15 +2720,15 @@ def test_execution_report_preserves_provider_business_error_message() -> None:
     [
         (_CreateOrderCleanupOperationService(fail_target=True), "request_field", "FAILED"),
         (_CreateOrderCleanupOperationService(oracle_success=False), "target_response", "PARTIAL"),
-        (_CreateOrderCleanupOperationService(fail_cleanup=True), "target_response", "FAILED"),
+        (_CreateOrderCleanupOperationService(fail_cleanup=True), "target_response", "COMPLETED"),
     ],
 )
-def test_cleanup_runs_after_target_or_oracle_failure_and_cannot_false_pass(
+def test_historical_cleanup_cannot_change_target_or_oracle_outcome(
     operations: _CreateOrderCleanupOperationService,
     cleanup_source_kind: str,
     expected_status: str,
 ) -> None:
-    """TARGET或ORACLE失败后仍尝试Cleanup，且Cleanup失败不得假绿。
+    """停用清理后仍按真实TARGET或ORACLE结果判定，历史清理失败开关不生效。
 
     Args:
         operations: 当前失败模式的QA Operation替身。
@@ -2732,7 +2736,7 @@ def test_cleanup_runs_after_target_or_oracle_failure_and_cannot_false_pass(
         expected_status: 整个Variant应形成的终态。
 
     Returns:
-        None；最后阶段始终为CLEANUP且终态符合失败来源时通过。
+        None；不调用清理接口，目标和观察失败各自保留原终态。
     """
 
     results = CaseTemplateExecutorV4(operations).execute(
@@ -2742,15 +2746,15 @@ def test_cleanup_runs_after_target_or_oracle_failure_and_cannot_false_pass(
     )
 
     assert results[0].status == expected_status
-    assert results[0].operations[-1].phase == "CLEANUP"
-    assert len(operations.calls) == 2
+    assert results[0].operations[-1].phase == "TARGET"
+    assert len(operations.calls) == 1
 
 
-def test_cleanup_argument_resolution_failure_preserves_blocked_phase_summary() -> None:
-    """TARGET响应缺少回收身份时必须保存独立CLEANUP阻塞证据。
+def test_missing_historical_cleanup_identity_does_not_block_successful_target() -> None:
+    """TARGET响应缺少仅供清理使用的身份时，不再解析或执行历史清理。
 
     Returns:
-        None；不调用cancel、Variant失败且最后阶段为BLOCKED Cleanup时通过。
+        None；目标业务Oracle通过，Variant完成且只调用一次目标接口。
     """
 
     operations = _CreateOrderCleanupOperationService(omit_target_identity=True)
@@ -2760,20 +2764,16 @@ def test_cleanup_argument_resolution_failure_preserves_blocked_phase_summary() -
         RuntimeFunctionRegistry(functions=[]),
     )
 
-    cleanup_stage = results[0].operations[-1]
-    assert results[0].status == "FAILED"
+    assert results[0].status == "COMPLETED"
     assert len(operations.calls) == 1
-    assert cleanup_stage.phase == "CLEANUP"
-    assert cleanup_stage.status == "BLOCKED"
-    assert cleanup_stage.input_summary["fields"] == ["refundSerialNo"]
-    assert cleanup_stage.output_summary == {"type": "not-produced"}
+    assert [(stage.phase, stage.status) for stage in results[0].operations] == [("TARGET", "COMPLETED")]
 
 
 def test_oracle_argument_resolution_failure_preserves_blocked_phase_summary() -> None:
     """Oracle参数在调用前缺失时必须保存独立ORACLE阻塞证据。
 
     Returns:
-        None；Observer未访问QA，Cleanup仍执行且报告保留两阶段时通过。
+        None；Observer未访问QA，报告保留独立观察失败且不执行历史清理。
     """
 
     generation = _create_order_generation("request_field")
@@ -2832,22 +2832,21 @@ def test_oracle_argument_resolution_failure_preserves_blocked_phase_summary() ->
 
     phases = [(item.phase, item.status) for item in results[0].operations]
     assert results[0].status == "BLOCKED"
-    assert phases == [("TARGET", "COMPLETED"), ("ORACLE", "BLOCKED"), ("CLEANUP", "COMPLETED")]
+    assert phases == [("TARGET", "COMPLETED"), ("ORACLE", "BLOCKED")]
     assert [request.operation_id for _system_id, request in operations.calls] == [
         CREATE_ORDER_ID,
-        CANCEL_ID,
     ]
 
 
 def test_blocked_write_variant_never_calls_data_or_target() -> None:
-    """缺少合格Cleanup的写Variant保留在报告但不得访问QA。
+    """存在与清理无关的准备缺口时，写Variant保留在报告但不得访问QA。
 
     Returns:
         None；Variant为BLOCKED且Operation调用计数为零时通过。
     """
 
     operations = _CreateOrderCleanupOperationService()
-    generation = _create_order_generation(blocked_reason="写接口Case必须声明结构化Cleanup")
+    generation = _create_order_generation(blocked_reason="目标订单身份关联缺少可验证查询")
 
     results = CaseTemplateExecutorV4(operations).execute(
         "case-generation-execution-" + "3" * 20,
@@ -3008,7 +3007,7 @@ def test_case_handoff_catalog_allows_preallocated_generation_before_artifact() -
     assert catalog["handoff"]["generation_id"] == generation_id
     assert catalog["handoff"]["turn_status"] == "failed"
     assert catalog["generation"] is None
-    assert catalog["allowed_tools"] == [
+    assert catalog["allowed_tools"][:8] == [
         "get_case_handoff",
         "list_case_source",
         "search_case_source",
@@ -3125,7 +3124,7 @@ def test_partial_generation_executes_runnable_variants_and_can_run_again(
         update={
             "variant_id": f"case-variant-v4-{'e' * 20}",
             "ordinal": 2,
-            "blocked_reason": "缺少结构化 Cleanup",
+            "blocked_reason": "目标订单身份关联缺少可验证查询",
         }
     )
     generation = ready_generation.model_copy(
@@ -3156,7 +3155,7 @@ def test_partial_generation_executes_runnable_variants_and_can_run_again(
     execution_store = CaseGenerationExecutionStoreV4(tmp_path)
     runtime = CaseTemplateV4RuntimeServices(
         operation_catalog=Mock(),
-        operation_service=Mock(),
+        operation_service=_CreateOrderCleanupOperationService(),
         environment_provider=default_case_template_environment_values,
         execution_store=execution_store,
     )
@@ -3170,18 +3169,8 @@ def test_partial_generation_executes_runnable_variants_and_can_run_again(
     service._runtime_registry_for_execution = Mock(
         return_value=RuntimeFunctionRegistry(functions=[])
     )
-    service.executor = Mock()
-    service.executor.execute.return_value = [
-        CaseVariantExecutionV4(
-            variant_id=ready_generation.variants[0].variant_id,
-            status="COMPLETED",
-        ),
-        CaseVariantExecutionV4(
-            variant_id=blocked_variant.variant_id,
-            status="BLOCKED",
-            error=blocked_variant.blocked_reason,
-        ),
-    ]
+    # 执行器按运行新建；用真实有限执行器验证阻塞项不会调用QA而非mock其最终报告。
+    service._runtime_capabilities = Mock(return_value=[])
 
     first = service.execute_generation(
         SYSTEM_ID,
@@ -3200,6 +3189,8 @@ def test_partial_generation_executes_runnable_variants_and_can_run_again(
         blocked_variant.variant_id,
     ]
     assert second.execution_id != first.execution_id
+    assert [item.status for item in first.variant_results] == ["COMPLETED", "BLOCKED"]
+    assert len(runtime.operation_service.calls) == 2
 
 
 def test_blocked_generation_rejects_execution_before_qa() -> None:
@@ -3444,14 +3435,15 @@ def test_case_start_rejects_latest_scan_from_previous_source_pin(tmp_path: Path)
 
 
 @pytest.mark.parametrize("stored_state", ["stale", "blocked"])
-def test_v4_service_rebuilds_stale_input_contract_from_current_scan_operation(stored_state: str) -> None:
+def test_v4_service_rebuilds_stale_input_contract_from_current_scan_operation(stored_state: str, tmp_path: Path) -> None:
     """确认旧代际或当前BLOCKED契约可重新推导，无需重发自然语言知识。
 
     Args:
         stored_state: 旧scan或当前scan上的程序阻塞。
+        tmp_path: 独立契约存储的隔离目录。
 
     Returns:
-        None；返回契约绑定新scan且保留源码声明必填字段时通过。
+        None；返回契约绑定新scan且不把源码注释提升为必填时通过。
     """
 
     stale_contract = _cancel_contract().model_copy(
@@ -3500,13 +3492,15 @@ def test_v4_service_rebuilds_stale_input_contract_from_current_scan_operation(st
         source_scan_id=SCAN_ID,
         executable=True,
     )
-    store = Mock()
+    store = Mock(root=tmp_path)
     store.list_nodes.return_value = [(node, Path("node.md"), "")]
     catalog = Mock()
     catalog.derive.return_value = [operation]
+    artifacts = Mock()
+    artifacts.read.return_value = Mock(scan_id=SCAN_ID, baseline=SourceBaseline(source_path=str(tmp_path)))
     service = CaseTemplateV4Service(
         store,
-        Mock(),
+        artifacts,
         Mock(),
         Mock(),
         CaseTemplateV4RuntimeServices(
@@ -3520,7 +3514,8 @@ def test_v4_service_rebuilds_stale_input_contract_from_current_scan_operation(st
 
     assert contract.source_scan_id == SCAN_ID
     assert contract.status == "READY"
-    assert contract.request_schema["required"] == ["refundSerialNo"]
+    assert "required" not in contract.request_schema
+    assert contract.fields[0].requirement_status == "unknown"
     assert node.input_contract == stale_contract
     catalog.derive.assert_called_once_with(SYSTEM_ID, SCAN_ID)
 
@@ -3529,7 +3524,7 @@ def test_input_contract_merges_duplicate_inherited_field_paths() -> None:
     """确认父子类型重复字段证据只生成一个绑定并保留具体请求类型。
 
     Returns:
-        None；重复page字段被合并且子类必填证据生效时通过。
+        None；重复page字段被合并，但未经执行路径确认的声明必填保持未知。
     """
 
     base_ref = SourceReference(
@@ -3582,7 +3577,8 @@ def test_input_contract_merges_duplicate_inherited_field_paths() -> None:
 
     assert contract.request_type == "example.RefundOrderQueryRequest"
     assert [field.path for field in contract.fields] == ["page"]
-    assert contract.fields[0].required is True
+    assert contract.fields[0].required is False
+    assert contract.fields[0].requirement_status == "unknown"
 
 
 def test_case_dsl_publication_persists_generation_without_dispatching_qa() -> None:
@@ -3778,7 +3774,7 @@ def test_handoff_catalog_never_exposes_registered_source_root() -> None:
 
     assert "/private/refund-core" not in json.dumps(catalog, ensure_ascii=False)
     assert catalog["handoff"]["source_scopes"] == [
-        {"source_system_id": SYSTEM_ID, "source_scan_id": SCAN_ID}
+        {"source_system_id": SYSTEM_ID, "source_scan_id": SCAN_ID, "resolved_operations": []}
     ]
 
 
@@ -3818,16 +3814,20 @@ def test_enum_leaf_and_collection_schema_share_normalized_contract() -> None:
     assert contract.status == "READY"
     by_path = {field.path: field for field in contract.fields}
     assert by_path["channelEnum"].schema == {"type": "string"}
-    assert by_path["channelEnum"].required
+    assert not by_path["channelEnum"].required
     assert by_path["details"].schema == contract.request_schema["properties"]["details"]
     assert "required" not in by_path["details"].schema["items"]
     assert not by_path["detail.name"].required
-    # 规范化不能反向改写Operation的原始运行时约束。
-    assert schema["properties"]["details"]["items"]["required"] == ["name"]
+    # Operation自身也不再把未证明触发的字段注解提升为必填。
+    assert schema["properties"]["details"]["items"].get("required", []) == []
 
 
-def test_rebuilt_input_contract_keeps_real_conflicts_blocked() -> None:
-    """当前BLOCKED契约重新推导后仍有标量子路径冲突时保持阻塞，不修改正式知识。"""
+def test_rebuilt_input_contract_keeps_real_conflicts_blocked(tmp_path: Path) -> None:
+    """真正的标量子路径冲突仍阻塞独立契约，不修改历史知识。
+
+    Args:
+        tmp_path: 独立契约存储的隔离目录。
+    """
 
     stored = _cancel_contract().model_copy(update={"status": "BLOCKED", "blocked_reason": "旧阻塞", "fields": []})
     node = KnowledgeNode(node_id="entry-conflict", system_id=SYSTEM_ID, kind=KnowledgeNodeKind.FACADE,
@@ -3838,11 +3838,13 @@ def test_rebuilt_input_contract_keeps_real_conflicts_blocked() -> None:
         input_schema={"type": "object", "properties": {"text": {"type": "string"}}},
         input_fields=[OperationFieldEvidence(field_path="text.child", field_name="child", declared_type="String")], source_scan_id=SCAN_ID,
     )
-    store = Mock()
+    store = Mock(root=tmp_path)
     store.list_nodes.return_value = [(node, Path("node.md"), "")]
     catalog = Mock()
     catalog.derive.return_value = [operation]
-    service = CaseTemplateV4Service(store, Mock(), Mock(), Mock(), CaseTemplateV4RuntimeServices(
+    artifacts = Mock()
+    artifacts.read.return_value = Mock(scan_id=SCAN_ID, baseline=SourceBaseline(source_path=str(tmp_path)))
+    service = CaseTemplateV4Service(store, artifacts, Mock(), Mock(), CaseTemplateV4RuntimeServices(
         operation_catalog=catalog, operation_service=Mock(), environment_provider=default_case_template_environment_values,
     ))
     # 只重建派生契约，不跳过校验，也不能把任意BLOCKED状态当作成功。
@@ -3850,3 +3852,32 @@ def test_rebuilt_input_contract_keeps_real_conflicts_blocked() -> None:
     assert contract.status == "BLOCKED"
     assert "text.child" in contract.blocked_reason
     assert node.input_contract == stored
+
+
+@pytest.mark.parametrize("declared_type, compatible", [
+    (["string", "null"], True), (["null", "string"], True),
+    (["number", "null"], False), (["string", "number"], False),
+    ([], False), (["string", {}], False), ({"invalid": "string"}, False),
+])
+def test_nullable_predicate_returns_located_type_validation(declared_type, compatible: bool) -> None:
+    """可空字符串可与空串比较，非法或不兼容Schema必须返回定位问题而非TypeError。
+
+    Args:
+        declared_type: 模拟DATA响应operator字段的JSON Schema类型声明。
+        compatible: 是否允许该字段与字符串执行有限比较。
+    """
+
+    from opentest.domain.case_template_v4 import DslPredicate
+
+    # 复现真实cancel草稿的filter operator != ''，经过谓词校验边界验证错误归属。
+    predicate = DslPredicate(left=DslValueSource(kind="current_item", path="operator"),
+                             operator="ne", right=DslValueSource(kind="literal", value=""))
+    issues = CaseTemplateValidatorV4()._validate_predicate(
+        "data_function:refund", "steps.eligible", predicate, {}, {},
+        {"type": "object", "properties": {"operator": {"type": declared_type}}},
+    )
+    assert not issues if compatible else len(issues) == 1
+    if not compatible:
+        assert (issues[0].code, issues[0].owner, issues[0].field) == (
+            "FILTER_PREDICATE_TYPE_MISMATCH", "data_function:refund", "steps.eligible",
+        )

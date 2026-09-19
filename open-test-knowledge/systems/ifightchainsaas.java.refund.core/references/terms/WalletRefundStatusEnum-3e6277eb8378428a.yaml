@@ -43,19 +43,13 @@ enum_values:
     line: 16
     commit: ''
     content_digest: ''
-suggested_meaning: 枚举名称和值默认采用源码注释；缺少注释时回退代码标识，可再人工修订。
+suggested_meaning: 枚举名称和值只读展示源码注释；缺少注释时展示代码标识，无需人工补充。
 code_meaning: 钱包退票结算明确失败（FAIL）；钱包退票结算处理中，同一个requestNo尚未明确成功或失败（PROCESSING）；钱包退票结算成功（SUCCESS）
 unresolved_codes: []
 business_meaning: 代码注释有
 status: CONFIRMED
 merged_into_candidate_id: ''
 source_refs:
-- repository: ''
-  path: app/model/src/main/java/com/ly/flight/chainsaas/refund/enums/WalletRefundStatusEnum.java
-  symbol: com.ly.flight.chainsaas.refund.enums.WalletRefundStatusEnum
-  line: 6
-  commit: 99b494d7824eab12ffc237ae7e945aac79d61411
-  content_digest: 4ca29d4fd7193a57fb4b2914395096f9a822ca624f5a391478bfd06520e5b98e
 - repository: ''
   path: app/model/src/main/java/com/ly/flight/chainsaas/refund/enums/WalletRefundStatusEnum.java
   symbol: com.ly.flight.chainsaas.refund.enums.WalletRefundStatusEnum#FAIL
@@ -96,6 +90,6 @@ affected_target_ids:
 - facade:com.ly.flight.chainsaas.refund.facade.RefundFacade#unLockOrder
 - facade:com.ly.flight.chainsaas.refund.facade.RefundFacade#voucherRefundSubmit
 - facade:com.ly.flight.chainsaas.refund.facade.RefundFacade#walletRefundRetry
-evidence_digest: 3aac481af3da4d16e768cf729099f5413b3e68a8c182d16f8c36380f4a35b865
+evidence_digest: 73bd7e12f14bfce1cffdd5a0e581ff7fee89ad27b2cde6299f9e64624e214a79
 discovered_at: '2026-08-21T06:19:51.512311Z'
-updated_at: '2026-09-02T07:26:12.784469Z'
+updated_at: '2026-09-19T04:25:34.177857Z'

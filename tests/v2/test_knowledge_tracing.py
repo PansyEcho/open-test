@@ -22,6 +22,7 @@ from opentest.adapters.setup_contract_store import SetupContractRuleStore
 from opentest.adapters.source_analysis import GitSourceRepository, SourceScanArtifactStore
 from opentest.adapters.sqlite_index import SqliteKnowledgeIndex
 from opentest.application.knowledge import KnowledgeGenerationService
+from opentest.application.log_context import bind_workflow_log_context
 from opentest.application.foundation import OpenTestApplication
 from opentest.application.tasks import LocalTaskManager, report_task_progress
 from opentest.domain.errors import (
@@ -45,6 +46,7 @@ from opentest.domain.models import (
     KnowledgeConfirmation,
     KnowledgeDraft,
     KnowledgeGenerationRequest,
+    KnowledgeGenerationBatch,
     KnowledgeGenerationBatchRequest,
     KnowledgeGenerationWorkflowBatch,
     KnowledgeConclusionSource,
@@ -81,6 +83,28 @@ from opentest.domain.models import (
     TaskRecord,
     TaskStatus,
 )
+
+
+def _seed_historical_knowledge(
+    service: KnowledgeGenerationService,
+    request: KnowledgeGenerationRequest,
+) -> KnowledgeGenerationBatch:
+    """建立历史知识样本，验证既有发布、确认和索引兼容行为。
+
+    Args:
+        service: 仅连接测试临时目录的知识服务。
+        request: 需要重现的历史系统、入口及扫描身份。
+    Returns:
+        由保留的旧发布实现写入的历史批次。
+    Raises:
+        KnowledgeValidationError: 历史源码身份或资产约束不满足时仍拒绝写入。
+    Side Effects:
+        只建立隔离测试资产，不调用已经退役的产品长文生成入口。
+    """
+
+    # 历史保护仍需真实文件和索引，但不能为了造夹具恢复新的用户生成入口。
+    with bind_workflow_log_context(request.system_id, "historical-knowledge-fixture"):
+        return service._generate_in_context(request)
 
 
 def _assert_codex_strict_schema(schema: dict[str, object]) -> None:
@@ -347,7 +371,9 @@ def _entry_fact_confirmation_fixture(
     """
 
     service, store, manifest = _knowledge_service(tmp_path)
-    generated = service.generate(
+    # 历史夹具保留已有资产保护覆盖，不重新开放已退役的长文生成入口。
+    generated = _seed_historical_knowledge(
+        service,
         KnowledgeGenerationRequest(
             system_id=manifest.system_id,
             entry_id=manifest.entries[0].entry_id,
@@ -1851,14 +1877,22 @@ def test_entry_without_detectable_behavior_generates_minimal_code_fact(tmp_path:
 
 
 def test_generation_preserves_manual_content_and_answered_questions(tmp_path: Path) -> None:
-    """重复发布应刷新自动证据，同时保留人工正文、答案和确认状态。"""
+    """重复发布应刷新自动证据，同时保留人工正文、答案和确认状态。
+
+    Args:
+        tmp_path: 隔离历史源码、知识文件和运行证据的临时目录。
+
+    Returns:
+        None；历史资产保护及当前公开边界断言通过时正常结束。
+    """
 
     service, store, manifest = _knowledge_service(tmp_path)
     request = KnowledgeGenerationRequest(
         system_id=manifest.system_id,
         entry_id=manifest.entries[0].entry_id,
     )
-    first_batch = service.generate(request)
+    # 历史夹具保留已有资产保护覆盖，不重新开放已退役的长文生成入口。
+    first_batch = _seed_historical_knowledge(service, request)
     hk_node = next(node for node in first_batch.nodes if node.node_id == "rule:create-order:hk-payment-verify")
     node_path = store.node_path(hk_node)
     node_path.write_text(node_path.read_text(encoding="utf-8") + "\n人工口径：异常需要记录风险。\n", encoding="utf-8")
@@ -1869,7 +1903,7 @@ def test_generation_preserves_manual_content_and_answered_questions(tmp_path: Pa
     )
     service.confirm(manifest.system_id, confirmation)
 
-    second_batch = service.generate(request)
+    second_batch = _seed_historical_knowledge(service, request)
     regenerated = next(node for node in second_batch.nodes if node.node_id == hk_node.node_id)
     questions = {item.question_id: item for item in store.list_questions(manifest.system_id)}
     document = node_path.read_text(encoding="utf-8")
@@ -1899,7 +1933,8 @@ def test_direct_generation_preserves_formal_entry_facts_only_for_exact_source_ge
         system_id=manifest.system_id,
         entry_id=manifest.entries[0].entry_id,
     )
-    first_batch = service.generate(request)
+    # 历史夹具保留已有资产保护覆盖，不重新开放已退役的长文生成入口。
+    first_batch = _seed_historical_knowledge(service, request)
     entry_node = next(
         node for node in first_batch.nodes if node.kind == KnowledgeNodeKind.FACADE
     )
@@ -1930,7 +1965,7 @@ def test_direct_generation_preserves_formal_entry_facts_only_for_exact_source_ge
     )
     store.write_node(confirmed, "已确认的结构化入口事实。")
 
-    same_generation = service.generate(request)
+    same_generation = _seed_historical_knowledge(service, request)
     same_entry = next(node for node in same_generation.nodes if node.node_id == entry_node.node_id)
     assert same_entry.entry_fact_knowledge == formal
 
@@ -1944,7 +1979,8 @@ def test_direct_generation_preserves_formal_entry_facts_only_for_exact_source_ge
     service.artifacts.write_manifest(new_manifest)
     service.artifacts.publish_latest(new_manifest.system_id, new_manifest.scan_id)
     service.git_repository = FixedBaselineRepository(new_baseline)
-    new_generation = service.generate(
+    new_generation = _seed_historical_knowledge(
+        service,
         request.model_copy(update={"scan_id": new_manifest.scan_id})
     )
     new_entry = next(node for node in new_generation.nodes if node.node_id == entry_node.node_id)
@@ -2543,7 +2579,9 @@ def test_auto_publish_repairs_only_exact_legacy_double_wrapping(tmp_path: Path) 
     """
 
     service, store, manifest = _knowledge_service(tmp_path)
-    batch = service.generate(
+    # 历史夹具保留已有资产保护覆盖，不重新开放已退役的长文生成入口。
+    batch = _seed_historical_knowledge(
+        service,
         KnowledgeGenerationRequest(
             system_id=manifest.system_id,
             entry_id=manifest.entries[0].entry_id,
@@ -2603,7 +2641,9 @@ def test_metadata_update_preserves_legacy_markerless_knowledge_body(tmp_path: Pa
     """
 
     service, store, manifest = _knowledge_service(tmp_path)
-    batch = service.generate(
+    # 历史夹具保留已有资产保护覆盖，不重新开放已退役的长文生成入口。
+    batch = _seed_historical_knowledge(
+        service,
         KnowledgeGenerationRequest(
             system_id=manifest.system_id,
             entry_id=manifest.entries[0].entry_id,
@@ -2841,10 +2881,19 @@ def test_candidate_operation_evidence_uses_provider_latest_registered_root(
 
 
 def test_generation_rebuilds_search_and_relation_index(tmp_path: Path) -> None:
-    """发布后中文术语和入口一跳关系应立即从SQLite查询。"""
+    """发布后中文术语和入口一跳关系应立即从SQLite查询。
+
+    Args:
+        tmp_path: 隔离历史源码、知识文件和运行证据的临时目录。
+
+    Returns:
+        None；历史资产保护及当前公开边界断言通过时正常结束。
+    """
 
     service, _, manifest = _knowledge_service(tmp_path)
-    service.generate(
+    # 历史夹具保留已有资产保护覆盖，不重新开放已退役的长文生成入口。
+    _seed_historical_knowledge(
+        service,
         KnowledgeGenerationRequest(system_id=manifest.system_id, entry_id=manifest.entries[0].entry_id)
     )
     matches = service.index.search("港币支付", manifest.system_id)
@@ -2861,10 +2910,19 @@ def test_generation_rebuilds_search_and_relation_index(tmp_path: Path) -> None:
 
 
 def test_confirmation_rejects_nodes_outside_question_scope(tmp_path: Path) -> None:
-    """用户回答不得借问题确认其影响范围之外的知识结论。"""
+    """用户回答不得借问题确认其影响范围之外的知识结论。
+
+    Args:
+        tmp_path: 隔离历史源码、知识文件和运行证据的临时目录。
+
+    Returns:
+        None；历史资产保护及当前公开边界断言通过时正常结束。
+    """
 
     service, _, manifest = _knowledge_service(tmp_path)
-    service.generate(
+    # 历史夹具保留已有资产保护覆盖，不重新开放已退役的长文生成入口。
+    _seed_historical_knowledge(
+        service,
         KnowledgeGenerationRequest(system_id=manifest.system_id, entry_id=manifest.entries[0].entry_id)
     )
     with pytest.raises(ScopeViolationError, match="outside question scope"):
@@ -2879,14 +2937,23 @@ def test_confirmation_rejects_nodes_outside_question_scope(tmp_path: Path) -> No
 
 
 def test_generation_rejects_stale_source_baseline(tmp_path: Path) -> None:
-    """扫描后源码状态变化时不得把旧证据发布成当前知识。"""
+    """扫描后源码状态变化时不得把旧证据发布成当前知识。
+
+    Args:
+        tmp_path: 隔离历史源码、知识文件和运行证据的临时目录。
+
+    Returns:
+        None；历史资产保护及当前公开边界断言通过时正常结束。
+    """
 
     service, _, manifest = _knowledge_service(tmp_path)
     service.git_repository = FixedBaselineRepository(
         manifest.baseline.model_copy(update={"dirty": True, "dirty_digest": "changed"})
     )
     with pytest.raises(KnowledgeValidationError, match="source changed after scan"):
-        service.generate(
+        # 历史夹具保留已有资产保护覆盖，不重新开放已退役的长文生成入口。
+        _seed_historical_knowledge(
+            service,
             KnowledgeGenerationRequest(system_id=manifest.system_id, entry_id=manifest.entries[0].entry_id)
         )
 

@@ -42,14 +42,14 @@ SYSTEM_ID = "sample-system"
 ENTRY_ID = "facade:sample.SubmitFacade#submit"
 
 
-def test_scan_bundle_publish_requires_matching_program_catalog(tmp_path: Path) -> None:
-    """latest发布必须同时具备同scan、baseline和Entry全集的Program Catalog。
+def test_scan_publication_is_independent_of_legacy_program_catalog(tmp_path: Path) -> None:
+    """完整Manifest可独立发布，历史Program Catalog仍可读取但不再是前置。
 
     Args:
         tmp_path: Pytest隔离的本地扫描缓存根。
 
     Returns:
-        None；孤立Manifest被拒绝且完整BLOCKED bundle可以发布时通过。
+        None；Manifest无覆盖目录时可发布，后续历史目录读写保持兼容。
 
     Side Effects:
         仅在隔离目录写入通用Manifest、Catalog和latest指针。
@@ -61,8 +61,10 @@ def test_scan_bundle_publish_requires_matching_program_catalog(tmp_path: Path) -
     manifest_path.parent.mkdir(parents=True)
     manifest_path.write_text(manifest.model_dump_json(indent=2), encoding="utf-8")
 
+    # 扫描只产生结构证据；覆盖义务不再阻断接口和数据能力发现。
+    store.publish_latest(SYSTEM_ID, manifest.scan_id)
     with pytest.raises(KnowledgeNotFoundError, match="program case analysis"):
-        store.publish_latest(SYSTEM_ID, manifest.scan_id)
+        store.read_case_analysis(SYSTEM_ID, manifest.scan_id)
 
     catalog = _blocked_catalog(manifest)
     store.write_scan_bundle(manifest, catalog)

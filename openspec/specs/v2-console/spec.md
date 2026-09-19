@@ -21,7 +21,7 @@ TBD - created by archiving change v2-api-and-console-cutover. Update Purpose aft
 
 #### Scenario: 用户查看Case生成进度
 - **WHEN** Case生成尚未进入READY终态
-- **THEN** 页面按实际状态展示“程序正在编译”“等待Codex补全”“Codex正在设计Recipe”“正在校验草稿”“正在重新生成”“已生成”或“待补充”，且明确生成阶段不访问QA
+- **THEN** 页面按实际状态展示“程序正在编译”“等待Codex补全”“Codex正在设计Recipe”“正在校验草稿”“正在重新生成”“已生成”或“待补充”，且区分真实数据准备、Case校验、目标试跑与回查；generate_only明确显示不执行业务
 
 #### Scenario: 用户选择Case Codex兜底档位
 - **WHEN** 用户打开Case工作台
@@ -49,7 +49,7 @@ TBD - created by archiving change v2-api-and-console-cutover. Update Purpose aft
 
 #### Scenario: Case Agent使用独立typed工具
 - **WHEN** Case Agent开始或继续一个`case-handoff-*`任务
-- **THEN** 每个模型turn在同一持久线程上通过忽略用户配置的隔离调用启动，其完整可调用工具集合严格等于Case读取与typed draft提交两个工具；知识handoff、源码、QA、Operation、Case执行和REPL工具在机器目录及调用路由中均不可用
+- **THEN** 每个模型turn使用任务绑定的typed工具读取固定源码、检索与解析接口、修订草稿和发布；generate_and_verify可调用任务范围内非生产数据准备和业务验证工具，generate_only在服务端拒绝这些执行工具；工具不能选择其他任务身份或任意源码根
 - **AND** Agent先读取冻结范围、current正式资产和服务器Draft Schema，再通过Case专用typed draft工具提交
 
 ### Requirement: Case页面必须使用Entry与Scenario业务视图

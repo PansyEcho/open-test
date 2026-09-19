@@ -52,7 +52,7 @@ test("error, blocking, assertion failure and cleanup are distinct", () => {
   assert.equal(run("caseResultState({status:'BLOCKED',error:'无匹配数据'}).kind"), "blocked");
   assert.equal(run("caseResultState({status:'PARTIAL',assertions:[{passed:false,actual_path:'rows.0.state'}]}).kind"), "assertion");
   assert.equal(run("caseResultState({status:'FAILED',assertions:[{passed:true}],operations:[{phase:'CLEANUP',status:'FAILED'}]}).kind"), "cleanup");
-  assert.equal(run("caseResultState({status:'FAILED',assertions:[{passed:false}],operations:[{phase:'CLEANUP',status:'FAILED'}]}).label"), "校验失败 · 清理异常");
+  assert.equal(run("caseResultState({status:'FAILED',assertions:[{passed:false}],operations:[{phase:'CLEANUP',status:'FAILED'}]}).label"), "行为差异 · 清理异常");
 });
 
 test("known whole-generation batch retains unrecorded subcases; uncertain history uses only records", () => {
@@ -132,4 +132,13 @@ test("direct and transitive concat dependencies propagate variation", () => {
   const definition = {parameters:[{name:"amount",function_id:"enum.values"},{name:"caption",function_id:"transform.concat",arguments:{parts:["USD ",{parameter:"amount"}]}},{name:"message",function_id:"transform.concat",arguments:{parts:[{parameter:"caption"},"!"]}}]};
   for (const name of ["caption","message"]) assert.equal(run(`caseSourceVaries({kind:'parameter',name:'${name}'},${JSON.stringify(definition)},new Set(['amount']))`),true);
   assert.deepEqual(run("caseReadPath({ok:false},'$')"),{present:true,value:{ok:false}});
+});
+
+/** 执行器分类优先于低层失败状态，非行为失败不得混入回归差异统计。 */
+test("data, environment and observation failures remain distinct from behavior changes", () => {
+  // 相同底层FAILED操作在不同业务阶段由后端给出不同类别。
+  for (const [failureKind, expected] of [["DATA_PREPARATION_FAILED","data"],["ENVIRONMENT_DEPENDENCY","environment"],["OBSERVATION_FAILED","observation"],["BEHAVIOR_DIFF","assertion"]]) {
+    assert.equal(run(`caseResultState({status:'FAILED',failure_kind:'${failureKind}',operations:[{phase:'DATA',status:'FAILED'}]}).kind`), expected);
+  }
+  assert.deepEqual(run("caseStageStates({status:'COMPLETED',cleanup_skipped:true},variants[0]).map(item=>item.phase)"), ["DATA","TARGET","ORACLE"]);
 });

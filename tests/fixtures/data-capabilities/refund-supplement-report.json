@@ -1,0 +1,177 @@
+{
+  "capability_id": "refund_supplement_report",
+  "name": "取得满足退票补单条件的分销报表",
+  "purpose": "按用户的主体及票号查分销报表，核对关联和未入账状态后返回真实报表ID；未匹配时仅显式授权创建。",
+  "inputs": [
+    {
+      "name": "owner_id",
+      "schema": {
+        "type": "string"
+      }
+    },
+    {
+      "name": "ticket_no",
+      "schema": {
+        "type": "string"
+      }
+    }
+  ],
+  "query_steps": [
+    {
+      "step_id": "report_query",
+      "operation": "runtime_call",
+      "function_id": "facade:com.ly.flight.chainsaas.account.supplement.core.facade.ReportFacade#queryReportByUniqueKey",
+      "arguments": {
+        "ownerId": {
+          "kind": "function_input",
+          "name": "owner_id"
+        },
+        "ticketNo": {
+          "kind": "function_input",
+          "name": "ticket_no"
+        }
+      }
+    }
+  ],
+  "match_source": {
+    "kind": "step_output",
+    "step_id": "report_query",
+    "path": "report"
+  },
+  "create_steps": [
+    {
+      "step_id": "create_report",
+      "operation": "runtime_call",
+      "function_id": "facade:com.ly.flight.chainsaas.account.supplement.core.facade.ReportFacade#saveReport",
+      "arguments": {
+        "ownerId": {
+          "kind": "function_input",
+          "name": "owner_id"
+        },
+        "ticketNo": {
+          "kind": "function_input",
+          "name": "ticket_no"
+        }
+      }
+    }
+  ],
+  "verify_steps": [
+    {
+      "step_id": "check_identity",
+      "operation": "assert",
+      "check_kind": "identity",
+      "failure_message": "实际报表所属主体或票号与用户条件不符",
+      "predicates": [
+        {
+          "left": {
+            "kind": "step_output",
+            "step_id": "report_query",
+            "path": "report.ownerId"
+          },
+          "operator": "eq",
+          "right": {
+            "kind": "function_input",
+            "name": "owner_id"
+          }
+        },
+        {
+          "left": {
+            "kind": "step_output",
+            "step_id": "report_query",
+            "path": "report.ticketNo"
+          },
+          "operator": "eq",
+          "right": {
+            "kind": "function_input",
+            "name": "ticket_no"
+          }
+        }
+      ]
+    },
+    {
+      "step_id": "decode_ext",
+      "operation": "json_decode",
+      "input_source": {
+        "kind": "step_output",
+        "step_id": "report_query",
+        "path": "report.ext"
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "transactionType": {
+            "type": "integer"
+          }
+        },
+        "required": [
+          "transactionType"
+        ],
+        "additionalProperties": false
+      }
+    },
+    {
+      "step_id": "check_refund",
+      "operation": "assert",
+      "check_kind": "result",
+      "predicates": [
+        {
+          "left": {
+            "kind": "step_output",
+            "step_id": "decode_ext",
+            "path": "transactionType"
+          },
+          "operator": "eq",
+          "right": {
+            "kind": "literal",
+            "value": 3
+          }
+        }
+      ]
+    },
+    {
+      "step_id": "check_state",
+      "operation": "assert",
+      "check_kind": "state",
+      "failure_message": "报表已入账，不能用于本次补单",
+      "predicates": [
+        {
+          "left": {
+            "kind": "step_output",
+            "step_id": "report_query",
+            "path": "report.isSaveDb"
+          },
+          "operator": "eq",
+          "right": {
+            "kind": "literal",
+            "value": false
+          }
+        }
+      ]
+    }
+  ],
+  "outputs": [
+    {
+      "output_name": "report_id",
+      "step_id": "report_query",
+      "path": "report.id"
+    },
+    {
+      "output_name": "owner_id",
+      "step_id": "report_query",
+      "path": "report.ownerId"
+    },
+    {
+      "output_name": "ticket_no",
+      "step_id": "report_query",
+      "path": "report.ticketNo"
+    }
+  ],
+  "evidence": [
+    {
+      "source_system_id": "ifightchainsaas.java.account.supplement.core",
+      "path": "ReportFacade.java",
+      "symbol": "ReportFacade#queryReportByUniqueKey",
+      "line": 2
+    }
+  ]
+}

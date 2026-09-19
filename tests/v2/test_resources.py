@@ -331,11 +331,14 @@ def test_state_store_rejects_unsafe_ids_and_corrupt_files(tmp_path: Path) -> Non
         store.list("train-booking-core")
 
 
-def test_environment_loader_resolves_only_explicit_unique_alias(tmp_path: Path) -> None:
-    """环境选择只能命中规范ID或当前系统唯一声明的显式别名。
+def test_environment_loader_retains_historical_aliases_without_executing_them(tmp_path: Path) -> None:
+    """历史别名继续保留，但新执行必须明确选择项目qa或uat。
 
     Args:
         tmp_path: Pytest提供的隔离本地环境目录。
+
+    Returns:
+        None；历史内容保留而逻辑环境必须明确选择时通过。
 
     Side Effects:
         写入两份不含真实凭据的本地环境YAML。
@@ -359,7 +362,8 @@ def test_environment_loader_resolves_only_explicit_unique_alias(tmp_path: Path) 
     loader = LocalEnvironmentLoader(environment_root)
 
     catalog = loader.list_catalog("train-booking-core")
-    resolved = loader.resolve("train-booking-core", "QA1")
+    # 同一历史别名可能对应不同部署，执行入口不再将其隐式升级为逻辑环境。
+    resolved = loader.resolve("train-booking-core", "qa")
 
     assert [(item.environment, item.aliases) for item in catalog] == [
         ("qa", ["QA1"]),
@@ -367,15 +371,20 @@ def test_environment_loader_resolves_only_explicit_unique_alias(tmp_path: Path) 
     ]
     assert resolved.environment == "qa"
     assert resolved.aliases == ["QA1"]
-    with pytest.raises(KnowledgeValidationError, match="not configured"):
+    with pytest.raises(KnowledgeValidationError, match="select a logical environment explicitly"):
+        loader.resolve("train-booking-core", "QA1")
+    with pytest.raises(KnowledgeValidationError, match="select a logical environment explicitly"):
         loader.resolve("train-booking-core", "qa1")
 
 
-def test_environment_loader_rejects_ambiguous_alias_without_guessing(tmp_path: Path) -> None:
-    """同一系统多个环境声明相同别名时必须要求用户确认规范环境。
+def test_environment_loader_uses_logical_selection_despite_historical_alias_conflicts(tmp_path: Path) -> None:
+    """历史别名冲突不影响明确的QA/UAT选择，也不会触发自动猜测。
 
     Args:
         tmp_path: Pytest提供的隔离本地环境目录。
+
+    Returns:
+        None；规范选择独立于历史别名内容时通过。
 
     Side Effects:
         写入两份故意使用相同别名的本地环境YAML。
@@ -394,22 +403,25 @@ def test_environment_loader_rejects_ambiguous_alias_without_guessing(tmp_path: P
         path.chmod(0o600)
     loader = LocalEnvironmentLoader(tmp_path / "environments")
 
-    with pytest.raises(KnowledgeValidationError, match="ambiguous"):
+    # 只读取当前明确选择的配置，历史alias重复不会改变其归属。
+    assert loader.resolve("train-booking-core", "qa").environment == "qa"
+    assert loader.resolve("train-booking-core", "uat").environment == "uat"
+    with pytest.raises(KnowledgeValidationError, match="select a logical environment explicitly"):
         loader.resolve("train-booking-core", "QA1")
 
 
-def test_resource_probe_requires_environment_and_resolves_canonical_or_alias(
+def test_resource_probe_requires_explicit_logical_environment(
     tmp_path: Path,
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    """资源探测必须显式选择环境，并在建任务前把唯一alias解析为canonical ID。
+    """资源探测必须显式选择QA/UAT，旧alias在创建任务前被拒绝。
 
     Args:
         tmp_path: Pytest提供的隔离知识、源码和本地环境目录。
         monkeypatch: 将任务提交和资源探测替换为同步离线记录器。
 
     Returns:
-        None；缺环境被模型拒绝，canonical和显式alias均只向资源服务传递``qa``时通过。
+        None；缺环境或旧alias被拒绝，仅明确qa进入资源服务时通过。
 
     Side Effects:
         写入一份无凭据环境YAML和临时任务目录；不会启动Worker或访问QA。
@@ -478,7 +490,7 @@ def test_resource_probe_requires_environment_and_resolves_canonical_or_alias(
             exclusive: 是否要求排他任务门禁。
 
         Returns:
-            用于确认两次提交均返回原任务管理器结果的测试哨兵。
+            用于确认合法逻辑环境提交返回原任务管理器结果的测试哨兵。
 
         Side Effects:
             当前测试线程内执行闭包并保存其安全摘要。
@@ -493,22 +505,22 @@ def test_resource_probe_requires_environment_and_resolves_canonical_or_alias(
     monkeypatch.setattr(application.resources, "probe", probe_without_worker)
     monkeypatch.setattr(application.tasks, "submit", submit_inline)
     try:
-        alias_task = application.submit_resource_probe(
-            ResourceProbeRequest(system_id="train-booking-core", environment="QA1")
-        )
+        # 旧别名不得创建工作任务，用户需先明确此次QA/UAT选择。
+        with pytest.raises(KnowledgeValidationError, match="select a logical environment explicitly"):
+            application.submit_resource_probe(
+                ResourceProbeRequest(system_id="train-booking-core", environment="QA1")
+            )
         canonical_task = application.submit_resource_probe(
             ResourceProbeRequest(system_id="train-booking-core", environment="qa")
         )
-        with pytest.raises(KnowledgeValidationError, match="not configured"):
+        with pytest.raises(KnowledgeValidationError, match="select a logical environment explicitly"):
             application.submit_resource_probe(
                 ResourceProbeRequest(system_id="train-booking-core", environment="QA2")
             )
 
-        assert alias_task is submitted_task
         assert canonical_task is submitted_task
-        assert observed_environments == ["qa", "qa"]
+        assert observed_environments == ["qa"]
         assert submitted_jobs == [
-            {"resource_count": 0, "states": []},
             {"resource_count": 0, "states": []},
         ]
     finally:

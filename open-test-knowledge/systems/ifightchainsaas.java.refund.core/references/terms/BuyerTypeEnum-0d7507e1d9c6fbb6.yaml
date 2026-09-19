@@ -31,19 +31,13 @@ enum_values:
     line: 17
     commit: ''
     content_digest: ''
-suggested_meaning: 枚举名称和值默认采用源码注释；缺少注释时回退代码标识，可再人工修订。
+suggested_meaning: 枚举名称和值只读展示源码注释；缺少注释时展示代码标识，无需人工补充。
 code_meaning: 通用采购方（COMMON）；TCPL采购方（TCPL）
 unresolved_codes: []
 business_meaning: ''
 status: CODE_VERIFIED
 merged_into_candidate_id: ''
 source_refs:
-- repository: ''
-  path: app/model/src/main/java/com/ly/flight/chainsaas/refund/enums/BuyerTypeEnum.java
-  symbol: com.ly.flight.chainsaas.refund.enums.BuyerTypeEnum
-  line: 12
-  commit: 99b494d7824eab12ffc237ae7e945aac79d61411
-  content_digest: 47bae7b20dc998e269aacbf1b30f3ecb0c18beb0c6ad99753e547d16ed960548
 - repository: ''
   path: app/model/src/main/java/com/ly/flight/chainsaas/refund/enums/BuyerTypeEnum.java
   symbol: com.ly.flight.chainsaas.refund.enums.BuyerTypeEnum#COMMON
@@ -91,6 +85,6 @@ affected_target_ids:
 - facade:com.ly.flight.chainsaas.refund.facade.RefundFacade#voucherRefundSubmit
 - facade:com.ly.flight.chainsaas.refund.facade.RefundFacade#walletRefundRetry
 - facade:com.ly.flight.chainsaas.refund.facade.ToolFacade#syncOrder
-evidence_digest: 84898c6704f6ff32babe1c040b587e9c85380ca7d426a41efdce8071144f537d
+evidence_digest: a3b9157cc65f0b50959772cf558b78b14b1ae3412022463c4920f4f7e7b79984
 discovered_at: '2026-08-13T10:23:54.669282Z'
-updated_at: '2026-09-02T07:26:12.781941Z'
+updated_at: '2026-09-19T04:25:34.173075Z'

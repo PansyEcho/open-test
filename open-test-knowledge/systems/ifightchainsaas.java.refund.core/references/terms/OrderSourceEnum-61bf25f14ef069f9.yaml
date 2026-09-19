@@ -43,19 +43,13 @@ enum_values:
     line: 17
     commit: ''
     content_digest: ''
-suggested_meaning: 枚举名称和值默认采用源码注释；缺少注释时回退代码标识，可再人工修订。
+suggested_meaning: 枚举名称和值只读展示源码注释；缺少注释时展示代码标识，无需人工补充。
 code_meaning: B2B 交易订单来源。（B2B）；B2C 交易订单来源。（B2C）；未指定订单来源。（COMMON）
 unresolved_codes: []
 business_meaning: ''
 status: CODE_VERIFIED
 merged_into_candidate_id: ''
 source_refs:
-- repository: ''
-  path: app/facade/src/main/java/com/ly/flight/chainsaas/refund/facade/model/enums/OrderSourceEnum.java
-  symbol: com.ly.flight.chainsaas.refund.facade.model.enums.OrderSourceEnum
-  line: 14
-  commit: 99b494d7824eab12ffc237ae7e945aac79d61411
-  content_digest: b810ac94375698f5985fad194f651675dab5a4bb3fa1dfbe6fbfcb9e3a5f1cc5
 - repository: ''
   path: app/facade/src/main/java/com/ly/flight/chainsaas/refund/facade/model/enums/OrderSourceEnum.java
   symbol: com.ly.flight.chainsaas.refund.facade.model.enums.OrderSourceEnum#B2B
@@ -109,6 +103,6 @@ affected_target_ids:
 - facade:com.ly.flight.chainsaas.refund.facade.RefundFacade#voucherRefundSubmit
 - facade:com.ly.flight.chainsaas.refund.facade.RefundFacade#walletRefundRetry
 - facade:com.ly.flight.chainsaas.refund.facade.ToolFacade#syncOrder
-evidence_digest: 0b83800e293a313b799bcd1cb824a8a6b7ccb0386c82b4d3f537daac1e65a390
+evidence_digest: 5767461c6293b19deea0461559c029bf2df4d7fc9feb2ab64bef68d2b3627103
 discovered_at: '2026-08-13T10:23:54.669416Z'
-updated_at: '2026-09-02T07:26:12.781081Z'
+updated_at: '2026-09-19T04:25:34.175975Z'

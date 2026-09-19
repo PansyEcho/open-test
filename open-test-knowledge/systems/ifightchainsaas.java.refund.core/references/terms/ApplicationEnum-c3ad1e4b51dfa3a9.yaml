@@ -19,19 +19,13 @@ enum_values:
     line: 8
     commit: ''
     content_digest: ''
-suggested_meaning: 枚举名称和值默认采用源码注释；缺少注释时回退代码标识，可再人工修订。
+suggested_meaning: 枚举名称和值只读展示源码注释；缺少注释时展示代码标识，无需人工补充。
 code_meaning: 国际机票SAAS退改订单（SAAS_FLIGHT_REFUND_ORDER）
 unresolved_codes: []
 business_meaning: 用于记录订单日志，可以区分是哪个系统的
 status: CONFIRMED
 merged_into_candidate_id: ''
 source_refs:
-- repository: ''
-  path: app/model/src/main/java/com/ly/flight/chainsaas/refund/enums/ApplicationEnum.java
-  symbol: com.ly.flight.chainsaas.refund.enums.ApplicationEnum
-  line: 3
-  commit: 99b494d7824eab12ffc237ae7e945aac79d61411
-  content_digest: a07f8cb41d04545aa1f257cba1e5aafc065972211d373c025a835684e5359aae
 - repository: ''
   path: app/model/src/main/java/com/ly/flight/chainsaas/refund/enums/ApplicationEnum.java
   symbol: com.ly.flight.chainsaas.refund.enums.ApplicationEnum#SAAS_FLIGHT_REFUND_ORDER
@@ -44,6 +38,6 @@ affected_target_ids:
 - facade:com.ly.flight.chainsaas.refund.facade.OuterRefundFacade#queryDetailByRefundNo
 - facade:com.ly.flight.chainsaas.refund.facade.OuterRefundFacade#queryList
 - facade:com.ly.flight.chainsaas.refund.facade.OuterRefundFacade#refundConfirm
-evidence_digest: 7e3c23e7486098e0449b381b68700ed17c2402ecb8a062dfdff721bdad7eac5f
+evidence_digest: 8955faf2112d72eff16f0d4e41036a46e338cdc9c74a0f3efdce3903dd985026
 discovered_at: '2026-08-13T10:23:54.669171Z'
-updated_at: '2026-09-02T07:26:12.781897Z'
+updated_at: '2026-09-19T04:25:34.172757Z'

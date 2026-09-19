@@ -103,25 +103,13 @@ enum_values:
     line: 21
     commit: ''
     content_digest: ''
-suggested_meaning: 源码存在同名枚举类型，页面按全限定常量展示代码注释默认值，可再人工修订。
+suggested_meaning: 源码存在同名枚举类型，按全限定常量只读展示源码注释或代码标识。
 code_meaning: 成人（com.ly.flight.chainsaas.refund.enums.PassengerTypeEnum#ADT）；全部（com.ly.flight.chainsaas.refund.enums.PassengerTypeEnum#ALL）；儿童（com.ly.flight.chainsaas.refund.enums.PassengerTypeEnum#CHD）；婴儿（com.ly.flight.chainsaas.refund.enums.PassengerTypeEnum#INF）；成人。（com.ly.flight.chainsaas.refund.facade.model.enums.PassengerTypeEnum#ADT）；全部乘客。（com.ly.flight.chainsaas.refund.facade.model.enums.PassengerTypeEnum#ALL）；儿童。（com.ly.flight.chainsaas.refund.facade.model.enums.PassengerTypeEnum#CHD）；婴儿。（com.ly.flight.chainsaas.refund.facade.model.enums.PassengerTypeEnum#INF）
 unresolved_codes: []
 business_meaning: 代码注释有
 status: CONFIRMED
 merged_into_candidate_id: ''
 source_refs:
-- repository: ''
-  path: app/facade/src/main/java/com/ly/flight/chainsaas/refund/facade/model/enums/PassengerTypeEnum.java
-  symbol: com.ly.flight.chainsaas.refund.facade.model.enums.PassengerTypeEnum
-  line: 14
-  commit: 99b494d7824eab12ffc237ae7e945aac79d61411
-  content_digest: 48479b06d35de2704f02e62e6dede6433c3c45db6b646552e0c7c57e6569061d
-- repository: ''
-  path: app/model/src/main/java/com/ly/flight/chainsaas/refund/enums/PassengerTypeEnum.java
-  symbol: com.ly.flight.chainsaas.refund.enums.PassengerTypeEnum
-  line: 8
-  commit: 99b494d7824eab12ffc237ae7e945aac79d61411
-  content_digest: 6048fba031389820fb24fffca2b539984da73938c3a3d52ceff3680a26429fef
 - repository: ''
   path: app/model/src/main/java/com/ly/flight/chainsaas/refund/enums/PassengerTypeEnum.java
   symbol: com.ly.flight.chainsaas.refund.enums.PassengerTypeEnum#ADT
@@ -203,6 +191,6 @@ affected_target_ids:
 - facade:com.ly.flight.chainsaas.refund.facade.RefundFacade#voucherRefundSubmit
 - facade:com.ly.flight.chainsaas.refund.facade.RefundFacade#walletRefundRetry
 - facade:com.ly.flight.chainsaas.refund.facade.ToolFacade#syncOrder
-evidence_digest: 61b24175f8f13e77e1e12710e8de3c86521234e7113b215d7b1ba29beefc6ab3
+evidence_digest: c6abcc0d83b1c32116a5a529b5bd3a55e481b218d19b9ae528660505fc321fc2
 discovered_at: '2026-08-13T10:23:54.669152Z'
-updated_at: '2026-09-02T07:26:12.784187Z'
+updated_at: '2026-09-19T04:25:34.176039Z'

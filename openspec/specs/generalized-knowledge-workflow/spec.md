@@ -4,20 +4,19 @@
 TBD - created by archiving change generalized-knowledge-case-and-natural-language-workflow. Update Purpose after archive.
 ## Requirements
 ### Requirement: 所有知识目标使用同一深层业务追踪契约
-
-系统 SHALL 对Facade、Job、状态流转、事件Listener和共享公共逻辑追踪业务分支、计算、外部调用、降级与副作用，并为每项结论保留可验证源码证据。
+系统 SHALL 将接口知识收敛为用途和请求响应字段契约；内部实现仅在Case或契约补充需要时按固定源码追踪，不要求生成公共逻辑或状态机自然语言文档。
 
 #### Scenario: 生成非createOrder Facade知识
-- **WHEN** 用户选择扫描目录中的另一Facade方法
-- **THEN** 草稿包含关联Validator、ServiceInvoker和至少一项实际业务逻辑证据，而不是入口签名占位
+- **WHEN** 用户补充任一Facade接口契约
+- **THEN** 保存有证据的接口用途与字段说明、约束，不强制生成完整内部流程长文
 
 #### Scenario: 追踪事件副作用
-- **WHEN** Actor或业务方法触发事件
-- **THEN** 草稿继续关联事件载荷和业务Listener结果，只有纯框架派发可以省略
+- **WHEN** Case预期需要判断事件处理结果
+- **THEN** Agent可以按需读取固定源码的事件与Listener逻辑，生成有证据的预期
 
 #### Scenario: 抽取共享公共逻辑
-- **WHEN** 一个含业务分支的方法被多个目标引用
-- **THEN** 系统建立独立共享逻辑节点，并从每个入口说明当前场景关注的分支
+- **WHEN** 多个入口使用同一内部业务方法
+- **THEN** Case按需复用源码分析，不为知识主目录强制建立共享逻辑文档
 
 ### Requirement: 本地Agent遵守只读最小输入边界
 

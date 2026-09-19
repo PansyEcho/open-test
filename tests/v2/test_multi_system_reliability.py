@@ -24,6 +24,10 @@ from opentest.domain.models import (
     KnowledgeNode,
     KnowledgeNodeKind,
     KnowledgeToolIntentRequest,
+    OperationCapability,
+    OperationInputKnowledgeContract,
+    OperationKind,
+    OperationMutability,
     RuntimeToolSettings,
     SourceBaseline,
     SourceScanRequest,
@@ -423,14 +427,32 @@ def test_invocation_contract_is_not_searchable_in_normal_knowledge_fts(tmp_path:
     assert index.search("JulyVoluntaryRefund", first.system_id) == []
     application = OpenTestApplication(store.root)
 
-    # 只有显式工具意图路由读取独立能力索引；它只返回契约与合并澄清项，不执行真实接口。
+    # 历史调用契约仍可读取，但不能独自制造一个当前扫描不存在的可调用Operation。
+    assert index.search_invocation_contracts("JulyVoluntaryRefund", first.system_id)
+    historical_route = application.resolve_knowledge_tool_intent(
+        first.system_id, KnowledgeToolIntentRequest(query="查询7月自愿退退票单", intent="query"),
+    )
+    assert historical_route["matches"] == []
+    operation = OperationCapability(
+        operation_id="facade:FirstFacade#query", system_id=first.system_id,
+        business_name="查询退票单", kind=OperationKind.FACADE, mutability=OperationMutability.READ_ONLY,
+        input_schema={"type": "object", "properties": {}}, source_scan_id="scan-current-query",
+    )
+    contract = OperationInputKnowledgeContract(
+        contract_version="operation-contract/v2", target_id=operation.operation_id,
+        source_scan_id=operation.source_scan_id, status="READY", request_schema=operation.input_schema,
+    )
+    application.search_operations = MagicMock(return_value=[operation])
+    application.operation_contracts.get_contract = MagicMock(return_value=contract)
+    # 新路由以当前Operation和独立契约为准；返回计划与澄清项，不执行真实接口。
     routed = application.resolve_knowledge_tool_intent(
         first.system_id,
         KnowledgeToolIntentRequest(query="查询7月自愿退退票单", intent="query"),
     )
 
-    assert routed["matches"][0]["tool_id"] == "refund-query-list"
-    assert routed["matches"][0]["node_id"] == node.node_id
+    assert routed["matches"][0]["tool_id"] == operation.operation_id
+    assert routed["matches"][0]["node_id"] == ""
+    assert routed["matches"][0]["invocation_contract"]["read_only"]
     assert routed["clarifications"] == ["请确认日期指创建、申请、出发还是更新时间"]
     assert routed["executed"] is False
 
@@ -468,8 +490,8 @@ def test_runtime_prompt_and_codex_speed_settings_persist_with_0600(tmp_path: Pat
         )
 
 
-def test_booking_core_scan_policy_derives_qa_job_url_without_token(tmp_path: Path) -> None:
-    """Booking.Core自动扫描应补齐36个Job所需规则且只派生QA地址。
+def test_booking_core_scan_policy_retires_http_job_rules(tmp_path: Path) -> None:
+    """旧Booking兼容Profile也只能提交不含Labrador配置的Facade扫描。
 
     Args:
         tmp_path: Pytest提供的隔离源码、知识和本地设置目录。
@@ -495,15 +517,10 @@ def test_booking_core_scan_policy_derives_qa_job_url_without_token(tmp_path: Pat
         SourceScanRequest(system_id="travelsystem.java.dsf.supplychain.booking.core")
     )
 
-    assert effective.job_rules == [
-        {
-            "enabled": True,
-            "http_url_prefix": "http://servicegw.qa.ly.com/gateway/train.supplychain.booking.core/job",
-            "package_name": "com.ly.travel.train.supplychain.bookingcore.biz.job",
-            "trigger_mode": "http",
-        }
-    ]
-    assert effective.facade_http_prefix == "http://servicegw.qa.ly.com/gateway/train.supplychain.booking.core/v2"
+    # 历史Profile残留不能重新启用HTTP Job生成或凭据要求。
+    assert effective.job_rules == []
+    assert effective.entry_types == "facade"
+    assert effective.facade_http_prefix == ""
     assert "must-not-enter-scan-request" not in effective.model_dump_json()
 
 
@@ -651,8 +668,8 @@ def test_prepared_scan_freezes_environment_before_background_execution(
     application.close()
 
 
-def test_http_job_scan_blocks_before_scriptgen_when_gateway_is_missing(tmp_path: Path) -> None:
-    """保留的HTTP Job扫描缺少专用网关时应在scriptgen启动前失败。
+def test_retired_http_job_gateway_is_not_required_for_scan(tmp_path: Path) -> None:
+    """旧Profile缺少HTTP网关不能阻断当前Facade扫描。
 
     Args:
         tmp_path: Pytest隔离的源码和知识目录。
@@ -666,8 +683,10 @@ def test_http_job_scan_blocks_before_scriptgen_when_gateway_is_missing(tmp_path:
         SystemDefinition(system_id=system_id, name="缺少Job网关", source_path=str(source)),
     )
 
-    with pytest.raises(KnowledgeValidationError, match="HTTP Job"):
-        application._source_scan_request(SourceScanRequest(system_id=system_id))
+    # 旧Job配置已不属于扫描契约。
+    effective = application._source_scan_request(SourceScanRequest(system_id=system_id))
+    assert effective.entry_types == "facade"
+    assert effective.job_rules == []
 
     application.close()
 
@@ -683,11 +702,11 @@ def test_http_job_scan_blocks_before_scriptgen_when_gateway_is_missing(tmp_path:
         "http://gateway.qa.example/refund/v2#fragment",
     ],
 )
-def test_http_job_scan_rejects_gateway_that_cannot_be_used_as_base_url(
+def test_retired_http_job_gateway_is_ignored_even_when_malformed(
     tmp_path: Path,
     gateway_prefix: str,
 ) -> None:
-    """HTTP Job的畸形网关必须稳定转换为可操作配置错误。
+    """畸形旧网关既不被解析，也不进入仍受支持的扫描请求。
 
     Args:
         tmp_path: Pytest隔离的源码和知识目录。
@@ -702,14 +721,10 @@ def test_http_job_scan_rejects_gateway_that_cannot_be_used_as_base_url(
         SystemDefinition(system_id=system_id, name="非法Job网关", source_path=str(source)),
     )
 
-    # 所有畸形输入都应在scriptgen启动前收敛为同一领域错误，避免泄漏urllib实现异常。
-    with pytest.raises(KnowledgeValidationError, match="HTTP Job"):
-        application._source_scan_request(
-            SourceScanRequest(
-                system_id=system_id,
-                facade_http_prefix=gateway_prefix,
-            ),
-        )
+    # 旧客户端可能继续传网关；服务应忽略退役字段，而不是制造新的扫描阻塞。
+    effective = application._source_scan_request(SourceScanRequest(system_id=system_id, facade_http_prefix=gateway_prefix))
+    assert effective.facade_http_prefix == ""
+    assert effective.job_rules == []
 
     application.close()
 

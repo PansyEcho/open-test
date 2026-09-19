@@ -475,7 +475,7 @@ enum_values:
     line: 61
     commit: ''
     content_digest: ''
-suggested_meaning: 枚举名称和值默认采用源码注释；缺少注释时回退代码标识，可再人工修订。
+suggested_meaning: 枚举名称和值只读展示源码注释；缺少注释时展示代码标识，无需人工补充。
 code_meaning: 费用回填同步（APPLY_CALLBACK）；费用回填同步（APPLY_CALLBACK_FAIL）；退票确认回调（APPLY_CONFIRM_CALLBACK）；退票确认回调（APPLY_CONFIRM_CALLBACK_FAIL）；已向航司申请（APPLY_TO_AIRLINE）；审核通过后取消（AUDITED_CANCEL）；[自动]退票申请（AUTO_REFUND_CREATE）；费用回调（CALLBACK_DIFF_PASSENGER_TYPE）；退票费用回调（CBDS_REFUND_APPLY）；退票费用回调（CBDS_REFUND_APPLY_FAIL）；退票取消同步（CBDS_REFUND_CANCEL）；退票取消同步（CBDS_REFUND_CANCEL_FAIL）；退票确认同步（CBDS_REFUND_CONFIRM）；退票确认同步（CBDS_REFUND_CONFIRM_FAIL）；人工添加（CREATE_LOG）；GDS
   占座成功回填（GDS_OCCUPIED_RESET）；废票确认（INVALID_CONFIRM）；废票核验（INVALID_SEARCH）；锁单（LOCK_ORDER）；订单退款完成（ORDER_REFUND_DONE）；支付信息（PAYMENT_LOG）；驳回订单（REBUT_ORDER）；退票自动操作（REFUND_AUTO_CONFIRM_ERROR）；退票自动操作（REFUND_AUTO_CONFIRM_SUCCESS）；退票自动核价（REFUND_AUTO_PRICE_ERROR）；退票自动核价（REFUND_AUTO_PRICE_SUCCESS）；已取消（REFUND_CANCEL）；退票确定完成（REFUND_CONFIRM）；退票申请（REFUND_CREATE）；退票完成（REFUND_DONE）；退票失败（REFUND_FAIL）；退票审核确定（REFUND_RESHOP_SUBMIT）；退票确定中（REFUND_SUBMIT）；编辑订单表头（TICKET_EDIT_HEAD）；编辑订单价格（TICKET_EDIT_PRICE）；超时取消（TIMEOUT_CANCEL）；UN_LOCK_ORDER（UN_LOCK_ORDER）；解锁单（UN_LOCK_ORDER_ADMIN）；待退票（WAIT_REFUND）
 unresolved_codes: []
@@ -483,12 +483,6 @@ business_meaning: 代码注释有
 status: CONFIRMED
 merged_into_candidate_id: ''
 source_refs:
-- repository: ''
-  path: app/model/src/main/java/com/ly/flight/chainsaas/refund/enums/LogTypeEnum.java
-  symbol: com.ly.flight.chainsaas.refund.enums.LogTypeEnum
-  line: 3
-  commit: 99b494d7824eab12ffc237ae7e945aac79d61411
-  content_digest: 7b1473ea14b5b88adc8954fdb023f6fa2ecc4ce4fde0261037628dc9744a4e23
 - repository: ''
   path: app/model/src/main/java/com/ly/flight/chainsaas/refund/enums/LogTypeEnum.java
   symbol: com.ly.flight.chainsaas.refund.enums.LogTypeEnum#APPLY_CALLBACK
@@ -555,6 +549,12 @@ source_refs:
   line: 42
   commit: ''
   content_digest: ''
+- repository: ''
+  path: app/model/src/main/java/com/ly/flight/chainsaas/refund/enums/LogTypeEnum.java
+  symbol: com.ly.flight.chainsaas.refund.enums.LogTypeEnum#CBDS_REFUND_CANCEL_FAIL
+  line: 44
+  commit: ''
+  content_digest: ''
 affected_target_ids:
 - facade:com.ly.flight.chainsaas.refund.facade.CallbackFacade#refundApplyCallback
 - facade:com.ly.flight.chainsaas.refund.facade.CallbackFacade#refundConfirmCallback
@@ -581,6 +581,6 @@ affected_target_ids:
 - facade:com.ly.flight.chainsaas.refund.facade.RefundFacade#unLockOrder
 - facade:com.ly.flight.chainsaas.refund.facade.RefundFacade#voucherRefundSubmit
 - facade:com.ly.flight.chainsaas.refund.facade.RefundFacade#walletRefundRetry
-evidence_digest: 19913f2ad7675208208e9e8f64bffdb8bd70f9dab588636c38a22634941059e1
+evidence_digest: 76e371c2b438b7198eac6e661b967eba535e1896cad3e31c5ad4788fc98396c7
 discovered_at: '2026-08-13T10:23:54.669384Z'
-updated_at: '2026-09-02T07:26:12.784018Z'
+updated_at: '2026-09-19T04:25:34.175680Z'

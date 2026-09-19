@@ -43,19 +43,13 @@ enum_values:
     line: 14
     commit: ''
     content_digest: ''
-suggested_meaning: 枚举名称和值默认采用源码注释；缺少注释时回退代码标识，可再人工修订。
+suggested_meaning: 枚举名称和值只读展示源码注释；缺少注释时展示代码标识，无需人工补充。
 code_meaning: 缺口程（OJ）；单程（OW）；往返（RT）
 unresolved_codes: []
 business_meaning: ''
 status: CODE_VERIFIED
 merged_into_candidate_id: ''
 source_refs:
-- repository: ''
-  path: app/model/src/main/java/com/ly/flight/chainsaas/refund/enums/TravelTypeEnum.java
-  symbol: com.ly.flight.chainsaas.refund.enums.TravelTypeEnum
-  line: 6
-  commit: 99b494d7824eab12ffc237ae7e945aac79d61411
-  content_digest: 9997d3eeecbd5e53cfa35772431fb2543ff04dbaff486bdaa19e6c16bf1df187
 - repository: ''
   path: app/model/src/main/java/com/ly/flight/chainsaas/refund/enums/TravelTypeEnum.java
   symbol: com.ly.flight.chainsaas.refund.enums.TravelTypeEnum#OJ
@@ -98,6 +92,6 @@ affected_target_ids:
 - facade:com.ly.flight.chainsaas.refund.facade.RefundFacade#unLockOrder
 - facade:com.ly.flight.chainsaas.refund.facade.RefundFacade#voucherRefundSubmit
 - facade:com.ly.flight.chainsaas.refund.facade.RefundFacade#walletRefundRetry
-evidence_digest: 5dc3e427a98cd3104d0628effce9dc0fbbce5b5fa81ee2dd0fae6cf8a55a5939
+evidence_digest: 4e08e38f817ea310839fc206289248aa12640a59b6873d3425f7353bda42f51a
 discovered_at: '2026-08-21T06:19:51.512270Z'
-updated_at: '2026-09-02T07:26:12.784420Z'
+updated_at: '2026-09-19T04:25:34.177757Z'

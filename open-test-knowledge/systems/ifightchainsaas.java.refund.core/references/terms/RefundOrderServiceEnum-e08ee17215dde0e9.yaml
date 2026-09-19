@@ -415,19 +415,13 @@ enum_values:
     line: 116
     commit: ''
     content_digest: ''
-suggested_meaning: 枚举名称和值默认采用源码注释；缺少注释时回退代码标识，可再人工修订。
+suggested_meaning: 枚举名称和值只读展示源码注释；缺少注释时展示代码标识，无需人工补充。
 code_meaning: 自动退票（AUTO_REFUND）；全自动退-退改罚金查询（AUTO_REFUND_RESHOP）；账单补单（BILL_SUPPLEMENT）；退票轨迹日志查询（BUSINESS_LOG）；交易系统取消（CANCEL）；费用回填（CBDS_REFUND_APPLY）；退票确认回调（CBDS_REFUND_CONFIRM）；创建退票（CREATE_ORDER）；手动编辑日志（DETAIL_CREATE_LOG）；锁单服务（LOCK_ORDER）；模型确认退票（MODEL_CONFIRM_REFUND）；模型创建退票单（MODEL_CREATE_REFUND_ORDER）；定时JOB（ORDER_JOB）；取消（OUTER_CANCEL）；详情（OUTER_QUERYDETAIL）；列表（OUTER_QUERYLIST）；退票确认（OUTER_REFUNDCONFIRM）；支付信息录入（PAYMENT）；平台费（PLATFEE）；B端订单详情查询（QUERY_DISTRIBUTION_ORDER_DETAIL）；分销商订单详情查询（QUERY_DISTRIBUTION_ORDER_LIST）；根据订单查询退改订单号列表（QUERY_REFUND_LIST_ORDER_SERIAL_NO）；根据订单查询退改订单号（QUERY_REFUND_ORDER_SERIAL_NO）；订单详情查询（QUEYR_ORDER_DETAIL）；订单查询列表（QUEYR_ORDER_LIST）；已向航司确认（REFUND_APPLY_TO_AIRLINE）；退改罚金查询（REFUND_RESHOP）；退改罚金确认（REFUND_RESHOP_CONFIRM）；退改罚金审核（REFUND_RESHOP_SUBMIT）；订单同步（SYNC_ORDER）；退票中（TICKET_REFUNDING）；锁单服务（UN_LOCK_ORDER）；代金券退票填报/修改（VOUCHER_REFUND_SUBMIT）；钱包退款重试（WALLET_REFUND_RETRY）
 unresolved_codes: []
 business_meaning: ''
 status: CODE_VERIFIED
 merged_into_candidate_id: ''
 source_refs:
-- repository: ''
-  path: app/biz/src/main/java/com/ly/flight/chainsaas/refund/biz/core/RefundOrderServiceEnum.java
-  symbol: com.ly.flight.chainsaas.refund.biz.core.RefundOrderServiceEnum
-  line: 13
-  commit: 99b494d7824eab12ffc237ae7e945aac79d61411
-  content_digest: 4819d30979c7b551f448898b97d72d7c9a621c528aabb1be3744443495dae783
 - repository: ''
   path: app/biz/src/main/java/com/ly/flight/chainsaas/refund/biz/core/RefundOrderServiceEnum.java
   symbol: com.ly.flight.chainsaas.refund.biz.core.RefundOrderServiceEnum#AUTO_REFUND
@@ -494,6 +488,12 @@ source_refs:
   line: 21
   commit: ''
   content_digest: ''
+- repository: ''
+  path: app/biz/src/main/java/com/ly/flight/chainsaas/refund/biz/core/RefundOrderServiceEnum.java
+  symbol: com.ly.flight.chainsaas.refund.biz.core.RefundOrderServiceEnum#MODEL_CREATE_REFUND_ORDER
+  line: 19
+  commit: ''
+  content_digest: ''
 affected_target_ids:
 - facade:com.ly.flight.chainsaas.refund.facade.CallbackFacade#refundApplyCallback
 - facade:com.ly.flight.chainsaas.refund.facade.CallbackFacade#refundConfirmCallback
@@ -529,6 +529,6 @@ affected_target_ids:
 - facade:com.ly.flight.chainsaas.refund.facade.RefundFacade#voucherRefundSubmit
 - facade:com.ly.flight.chainsaas.refund.facade.RefundFacade#walletRefundRetry
 - facade:com.ly.flight.chainsaas.refund.facade.ToolFacade#syncOrder
-evidence_digest: cbb13a0e1e2c61a05627e62d3d6ba207eff3b3717d2e41e5c4fde207944ece47
+evidence_digest: 7fe4b0ba6cd5dd865f043456d662a8f0c339079344e10ddccd9a06682f6d88db
 discovered_at: '2026-08-13T11:09:41.120203Z'
-updated_at: '2026-09-02T07:26:12.781661Z'
+updated_at: '2026-09-19T04:25:34.176884Z'

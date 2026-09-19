@@ -139,7 +139,8 @@ def test_dsf_source_discovery_builds_profile_and_fixed_operations(tmp_path: Path
     assert profile.config_environment == "qa"
     assert profile.routing_environment == "qa"
     assert profile.target_environment == "test"
-    assert warnings == []
+    # fixture没有安装DSF框架JAR；固定发布可用，但装配类型缺口必须显式保留。
+    assert warnings == ["INFO: 已导入配置类型待解析：com.ly.spat.dsf.server.DsfServiceGroup"]
     by_action = {operation.action: operation for operation in operations}
     assert by_action["orderDetail"].mutability == DsfOperationMutability.READ_ONLY
     assert by_action["createOrder"].mutability == DsfOperationMutability.WRITE
@@ -183,7 +184,8 @@ def test_dsf_source_discovery_uses_only_the_explicit_resource_environment(tmp_pa
     assert profile.client_name == "demo-uat-client"
     assert profile.routing_environment == "uat"
     assert profile.target_environment == "uat"
-    assert warnings == []
+    # 环境切换不会把缺失框架元数据伪装为已解析，也不会改变固定发布路由。
+    assert warnings == ["INFO: 已导入配置类型待解析：com.ly.spat.dsf.server.DsfServiceGroup"]
 
 
 def test_dsf_source_discovery_rejects_missing_or_unknown_resource_environment(tmp_path: Path) -> None:
@@ -206,7 +208,7 @@ def test_dsf_source_discovery_rejects_missing_or_unknown_resource_environment(tm
     # 显式选择不能回退到已有qa文件，否则页面选择与实际资源环境会发生漂移。
     with pytest.raises(KnowledgeValidationError, match=r"filter is unavailable: \*\.test"):
         discoverer.discover(SYSTEM_ID, source_root, "test")
-    with pytest.raises(KnowledgeValidationError, match="must be auto, qa, test or uat"):
+    with pytest.raises(KnowledgeValidationError, match="must be auto, qa, test, dev or uat"):
         discoverer.discover(SYSTEM_ID, source_root, "prod")
 
 
@@ -295,7 +297,7 @@ def test_dsf_source_discovery_resolves_main_properties_and_rejects_non_qa_enviro
     assert profile.client_name == "demo-client"
     assert profile.target_environment == "prod"
     assert profile.status == "BLOCKED"
-    assert any("允许的qa/test/uat集合" in warning for warning in profile.warnings)
+    assert any("允许的qa/test/dev/uat集合" in warning for warning in profile.warnings)
 
 
 def test_dsf_source_discovery_treats_mixed_read_write_verbs_as_write(tmp_path: Path) -> None:
@@ -545,7 +547,7 @@ def test_worker_launcher_rejects_production_profile_before_process_start(tmp_pat
     operation = _operation()
     request = DsfExecutionRequest(operation_id=operation.operation_id, payload={})
 
-    with pytest.raises(ScopeViolationError, match="qa, test or uat"):
+    with pytest.raises(ScopeViolationError, match="qa, test, dev or uat"):
         SuccessfulProtocolLauncher(worker_jar).execute(SYSTEM_ID, profile, operation, request)
 
 

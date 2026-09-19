@@ -31,19 +31,13 @@ enum_values:
     line: 12
     commit: ''
     content_digest: ''
-suggested_meaning: 枚举名称和值默认采用源码注释；缺少注释时回退代码标识，可再人工修订。
+suggested_meaning: 枚举名称和值只读展示源码注释；缺少注释时展示代码标识，无需人工补充。
 code_meaning: 已申请（DONE）；未申请（UNDONE）
 unresolved_codes: []
 business_meaning: ''
 status: CODE_VERIFIED
 merged_into_candidate_id: ''
 source_refs:
-- repository: ''
-  path: app/model/src/main/java/com/ly/flight/chainsaas/refund/enums/ApplyToAirlineEnum.java
-  symbol: com.ly.flight.chainsaas.refund.enums.ApplyToAirlineEnum
-  line: 7
-  commit: 99b494d7824eab12ffc237ae7e945aac79d61411
-  content_digest: f11de2f09c551392b7c2428cd2221b5bf163ce0448eefaafbf164877c1ffeb9a
 - repository: ''
   path: app/model/src/main/java/com/ly/flight/chainsaas/refund/enums/ApplyToAirlineEnum.java
   symbol: com.ly.flight.chainsaas.refund.enums.ApplyToAirlineEnum#DONE
@@ -78,6 +72,6 @@ affected_target_ids:
 - facade:com.ly.flight.chainsaas.refund.facade.RefundFacade#unLockOrder
 - facade:com.ly.flight.chainsaas.refund.facade.RefundFacade#voucherRefundSubmit
 - facade:com.ly.flight.chainsaas.refund.facade.RefundFacade#walletRefundRetry
-evidence_digest: 4e4aa7c6799689fb1290f34db138310d5d65112b14e223337104d60bffe1c680
+evidence_digest: d9dcfe99fbf1d9542bbe29dd366c65f55bc79a2393e0608fdc75ff3fa1397001
 discovered_at: '2026-08-13T10:23:54.669182Z'
-updated_at: '2026-09-02T07:26:12.781918Z'
+updated_at: '2026-09-19T04:25:34.172803Z'

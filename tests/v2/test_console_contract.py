@@ -7,7 +7,7 @@ from pathlib import Path
 
 
 def test_console_static_client_uses_single_case_workflow_and_safe_rendering() -> None:
-    """静态控制台应只展示四个主入口，并分离Case生成与显式执行。
+    """静态控制台应展示业务主入口、共享数据与统一任务，并分离Case生成与显式执行。
 
     Returns:
         None；页面、API版本、按钮门禁和安全渲染契约正确时通过。
@@ -18,9 +18,9 @@ def test_console_static_client_uses_single_case_workflow_and_safe_rendering() ->
     script = (web_root / "app.js").read_text(encoding="utf-8")
 
     assert "<title>OpenTest Console</title>" in html
-    assert '<meta name="opentest-page-version" content="20260909-01">' in html
-    assert '/assets/app.js?v=20260909-01' in html
-    assert '/assets/styles.css?v=20260909-01' in html
+    assert '<meta name="opentest-page-version" content="20260917-02">' in html
+    assert '/assets/app.js?v=20260917-02' in html
+    assert '/assets/styles.css?v=20260917-02' in html
     assert 'const API_ROOT = "/api/v2"' in script
     assert "API_V3_ROOT" not in script
     assert "API_V4_ROOT" not in script
@@ -33,9 +33,9 @@ def test_console_static_client_uses_single_case_workflow_and_safe_rendering() ->
     assert "async function pollTask" in script
     assert "async function showTaskProgress" in script
 
-    # 导航只保留SOP主线，不再暴露历史Case、自然语言、Suite或独立报告页面。
-    assert html.count('class="nav-item') == 4
-    for workspace in ("workbench", "system-config", "knowledge", "regression-cases"):
+    # 共享方法与任务复用现有业务主线，不再暴露历史Case、Suite或独立报告页面。
+    assert html.count('class="nav-item') == 6
+    for workspace in ("workbench", "system-config", "knowledge", "regression-cases", "tasks", "data-capabilities"):
         assert f'data-workspace="{workspace}"' in html
     for retired_workspace in (
         "case-workspace",
@@ -112,7 +112,7 @@ def test_business_enums_have_independent_directory_and_source_aware_return_navig
     assert "业务枚举 · ${businessEnums.length}" in tree_renderer
     assert "businessEnum.business_name" in tree_renderer
     assert "businessEnum.name" in tree_renderer
-    assert 'CODE_DEFAULT: "代码默认（可修订）"' in script
+    assert 'CODE_DEFAULT: "源码标识或注释"' in script
     assert "currentKnowledgeDetail && currentSystem" in directory_navigation
     assert "showKnowledgeCandidate(candidate, hasKnowledgeSource)" in directory_navigation
     assert 'candidate.knowledge_form !== "BUSINESS_ENUM"' in summary_renderer
@@ -168,12 +168,12 @@ def test_console_ignores_late_failures_from_previous_system_scope() -> None:
 
     # 跨系统异步入口必须捕获请求代次，并在任何页面回写前检查当前系统作用域。
     retry_scan = script[script.index("async function retryScan()") : script.index("async function loadScanHistory")]
-    load_catalog = script[script.index("async function loadScanCatalog") : script.index("function renderScanTree")]
+    load_catalog = script[script.index("async function loadScanCatalog") : script.index("async function loadDsfOperationCatalog")]
     load_tasks = script[script.index("async function loadTaskCatalog") : script.index("function renderSelectedKnowledgeGenerationAttempt")]
     assert "const requestScope = captureSystemScope();" in retry_scan
     assert retry_scan.count("if (!isCurrentSystemScope(requestScope))") >= 3
     assert "requestScope.systemId" in retry_scan
-    assert "catch (error) {\n    if (!isCurrentSystemScope(requestScope))" in load_catalog
+    assert "if (!catalogRequestIsCurrent())" in load_catalog[load_catalog.index("catch (error)"):]
     assert "if (!isCurrentSystemScope(requestScope))" in load_tasks
     assert "/tasks?system_id=" in load_tasks
     assert "updateCurlPreview" not in script
@@ -419,24 +419,21 @@ def test_native_agent_task_uses_copyable_instruction_without_starting_background
     assert "waiting_for_client" in script
 
 
-def test_knowledge_attention_pane_only_shows_each_targets_latest_actionable_task() -> None:
-    """知识右栏必须先按目标选最新任务，再隐藏已完成和已取消目标。
+def test_task_center_replaces_global_knowledge_attention_pane() -> None:
+    """统一任务中心保留各类持久任务，知识区只展示当前对象入口。
 
     Returns:
-        None；任务聚合、过滤顺序、文案和过期知识动作均符合关注事项语义时通过。
+        None；统一目录、筛选与知识右栏退役契约正确时通过。
     """
 
     web_root = Path(__file__).parents[2] / "opentest" / "web"
     html = (web_root / "index.html").read_text(encoding="utf-8")
     script = (web_root / "app.js").read_text(encoding="utf-8")
-    latest_selector = script[
-        script.index("function latestKnowledgeTasksByTarget") : script.index("function isKnowledgeTaskAttentionRequired")
-    ]
-    attention_filter = script[
-        script.index("function isKnowledgeTaskAttentionRequired") : script.index("function isCurrentTaskRequestScope")
-    ]
-    renderer = script[
+    retired_pane = script[
         script.index("function renderCodexTaskPane") : script.index("function renderWorkbenchTasks")
+    ]
+    task_center = script[
+        script.index("function renderTaskCenter") : script.index("async function loadDependencies")
     ]
     action_renderer = script[
         script.index("function refreshKnowledgeGenerationActions") : script.index("async function searchKnowledge")
@@ -445,27 +442,28 @@ def test_knowledge_attention_pane_only_shows_each_targets_latest_actionable_task
         script.index("function renderKnowledgeQuestions") : script.index("function selectKnowledgeQuestionTab")
     ]
 
-    # 用户无需再从“全部/已完成”筛选器中分辨任务；右栏本身就是待关注队列。
-    assert 'id="codex-task-filter"' not in html
-    assert "待关注知识任务" in html
-    assert "latestByTarget = new Map()" in latest_selector
-    assert "knowledgeTaskCreatedAtMs(task) > knowledgeTaskCreatedAtMs(currentLatest)" in latest_selector
-    assert '"pending"' in attention_filter
-    assert '"waiting_for_input"' in attention_filter
-    assert '"failed"' in attention_filter
-    assert '"completed"' not in attention_filter
-    assert '"cancelled"' not in attention_filter
-    latest_index = renderer.index("latestKnowledgeTasksByTarget(workflow)")
-    attention_index = renderer.index(".filter(isKnowledgeTaskAttentionRequired)")
-    assert latest_index < attention_index
-    assert "当前没有需要关注的知识任务" in renderer
+    # 统一目录可查看完成记录；知识页不得再聚合一份全局处理中或失败列表。
+    assert 'data-workspace="tasks"' in html
+    assert 'id="task-center-list"' in html
+    assert 'id="task-status-filter"' in html
+    assert '<option value="completed">已完成</option>' in html
+    assert 'aria-label="历史任务兼容区域" hidden' in html
+    assert 'element("codex-task-list").replaceChildren()' in retired_pane
+    assert 'element("knowledge-question-pane").hidden = true' in retired_pane
+    assert "renderSelectedKnowledgeGenerationAttempt()" in retired_pane
+    assert "latestKnowledgeTasksByTarget(workflow)" not in retired_pane
+    assert "currentTasks.filter" in task_center
+    assert "codexTaskGroup(task) === status" in task_center
+    assert "businessTaskCard(task, true)" in task_center
     assert 'element("question-badge")' not in retired_question_renderer
     assert 'element("question-count-inline")' not in retired_question_renderer
     assert 'element("show-all-knowledge-questions")' not in retired_question_renderer
 
-    # STALE是用户能理解的业务状态，主动作必须明确表示会重新生成知识。
-    assert 'selectedKnowledgeStatus === "STALE"' in action_renderer
-    assert 'generateButtonLabel = "重新生成知识"' in action_renderer
+    # 当前入口继续契约任务，不因历史长文STALE要求重新生成接口内部知识。
+    assert 'active ? "查看当前任务"' in action_renderer
+    assert '"更新契约" : "生成契约"' in action_renderer
+    assert '["facade", "mq", "mq_consumer", "external_call"]' in action_renderer
+    assert 'generateButtonLabel = "重新生成知识"' not in action_renderer
 
 
 def test_console_exposes_pinned_source_version_and_explicit_baseline_update() -> None:
@@ -607,8 +605,8 @@ def test_console_scan_failure_stops_manifest_loading_and_success_feedback() -> N
     assert "扫描任务执行成功" not in task_progress
 
 
-def test_single_target_knowledge_failure_remains_visible_after_loading_closes() -> None:
-    """单目标知识失败必须同时留下常驻摘要和显眼错误提示。
+def test_single_target_contract_failure_remains_visible_after_loading_closes() -> None:
+    """契约任务准备失败必须留下常驻摘要和显眼错误提示。
 
     Returns:
         None；当前对象入口的失败分支更新进度卡并显示错误Toast即通过。
@@ -619,36 +617,39 @@ def test_single_target_knowledge_failure_remains_visible_after_loading_closes() 
     generate_current = script[
         script.index("async function generateCurrentKnowledge") : script.index("function backgroundKnowledgeReady")
     ]
-    assert 'element("knowledge-task-progress").textContent = `生成失败：${message}`' in generate_current
-    assert 'showToast(`知识生成失败：${message}`, "error")' in generate_current
+    # 准备失败不能仅成为未处理的Promise，也不能把其他系统的迟到失败显示到当前页。
+    assert 'element("knowledge-task-progress").textContent = `契约补充失败：${message}`' in generate_current
+    assert 'showToast(`契约补充失败：${message}`, "error")' in generate_current
+    assert "isCurrentSystemScope(scope)" in generate_current
     assert "finishKnowledgeGeneration" not in script
     assert "stopKnowledgeAgentEventStream" not in script
 
 
-def test_knowledge_generation_uses_complete_latest_instead_of_browsed_partial_scan() -> None:
-    """浏览partial扫描时，知识生成仍必须请求后端当前完整latest基线。
+def test_contract_preparation_uses_server_baseline_and_persisted_task() -> None:
+    """接口契约准备只提交目标，扫描基线由后端选择且问题留在同一任务。
 
     Returns:
-        None；生成请求与幂等范围均不再绑定当前浏览目录时通过。
+        None；准备路由、幂等身份、任务复用与无QA执行契约正确时通过。
     """
 
     script_path = Path(__file__).parents[2] / "opentest" / "web" / "app.js"
     script = script_path.read_text(encoding="utf-8")
-    baseline_key = script[
-        script.index("function knowledgeGenerationBaselineKey")
-        : script.index("function getOrCreateCodexKnowledgeAttemptId")
-    ]
     generate_current = script[
         script.index("async function generateCurrentKnowledge")
         : script.index("function backgroundKnowledgeReady")
     ]
 
-    # latest完整基线驱动幂等身份；用户选择的partial只控制当前目录展示。
-    assert "scan.latest" in baseline_key
-    assert 'scan.completeness === "complete"' in baseline_key
-    assert 'scan.publication_outcome === "complete_baseline"' in baseline_key
-    assert 'scan_id: "latest"' in generate_current
-    assert "scan_id: scanCatalog?.scan_id" not in generate_current
+    # 浏览目录的partial或历史scan不进入准备请求，方法也不启动数据或Case执行。
+    assert "/data-capabilities/prepare" in generate_current
+    assert 'kind:"contract"' in generate_current
+    assert 'operation_id:operationId' in generate_current
+    assert 'interaction_mode:"web"' in generate_current
+    assert 'getOrCreateCaseRequestId("contract-prepare", operationId)' in generate_current
+    assert "scan_id" not in generate_current
+    assert "showBusinessTask(selectedAttempt)" in generate_current
+    assert "showBusinessTask(payload.task)" in generate_current
+    assert "/executions" not in generate_current
+    assert "/knowledge/generations" not in generate_current
 
 
 def test_legacy_knowledge_progress_rejects_scan_id_as_target_fallback() -> None:
@@ -675,3 +676,30 @@ def test_legacy_knowledge_progress_rejects_scan_id_as_target_fallback() -> None:
     assert "#[A-Za-z_$]" in classifier
     assert "isLegacyKnowledgeTargetId(progressTarget)" in extractor
     assert "return task.progress.current_item" not in extractor
+
+
+def test_relations_are_read_only_and_environment_profiles_are_project_owned() -> None:
+    """关系页由扫描证据驱动，环境表单独立维护QA/UAT实际配置。
+
+    Returns:
+        None；页面没有关系写入口且新执行只允许逻辑环境时通过。
+    """
+
+    web_root = Path(__file__).parents[2] / "opentest" / "web"
+    html = (web_root / "index.html").read_text(encoding="utf-8")
+    script = (web_root / "app.js").read_text(encoding="utf-8")
+    # 关系只读，不残留手工白名单、用途或跨系统环境映射编辑器。
+    assert "/relations`" in script
+    assert "当前项目直接引用的下游系统" in html
+    for retired in ("dependency-provider", "dependency-role", "dependency-purposes", "dependency-environments", "dependency-operations", "save-dependency"):
+        assert retired not in html
+    assert "/dependency-bindings" not in script
+    for environment in ("qa", "uat"):
+        assert f'id="{environment}-config-environment"' in html
+        assert f'id="{environment}-labrador-token"' not in html
+        assert f'id="{environment}-gateway-prefix"' not in html
+    assert 'value="dev"' in html
+    assert 'id="save-environment-profiles"' in html
+    assert 'local-settings?environment=${environment}' in script
+    assert '["qa", "uat"].includes(environment.environment)' in script
+    assert 'executionEnvironmentLabel' in script

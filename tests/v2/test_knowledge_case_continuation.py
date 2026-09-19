@@ -83,47 +83,66 @@ def test_knowledge_unknown_answer_replay_revision_and_disk_reload(tmp_path):
 
 
 @pytest.mark.parametrize("preparation_fails", [False, True])
-def test_case_missing_knowledge_keeps_identity_and_continues(tmp_path, preparation_fails):
-    """知识前置成功后继续同一Case；前置准备异常保存明确失败。
+def test_case_without_knowledge_keeps_identity_and_never_starts_long_text(tmp_path, preparation_fails):
+    """无知识Case直接准备；契约准备失败也不启动旧长文流程。
 
     Args:
         tmp_path: 隔离应用状态。
-        preparation_fails: 模拟准备源码失败或正常知识发布。
+        preparation_fails: 模拟首次契约准备失败后同请求重试。
     Returns:
-        None；关联与失败状态可恢复、不另建Case任务时通过。
+        None；任务身份稳定且不创建知识前置时通过。
+    """
+    application = OpenTestApplication(tmp_path / "knowledge")
+    try:
+        application.store.register_system(SystemDefinition(system_id=SYSTEM_ID, name="退款", source_path=str(tmp_path)))
+        request = CaseTemplateGenerationStartRequest(operation_id=OPERATION_ID,
+                    request_id="case-without-knowledge-001", interaction_mode="web")
+        application.prepare_skill_knowledge_target = Mock()
+        task_id = application._stable_case_task_id(SYSTEM_ID, request.request_id)
+        handoff = _handoff(tmp_path).model_copy(update={"task_id": task_id, "root_task_id": task_id})
+        application.case_template_v4.handoffs.write(handoff)
+        application.codex_system_skill_name = Mock(return_value="open-test-test-system")
+        if preparation_fails:
+            # 契约失败由同一业务任务记录，不能用重新生成全量内部知识掩盖根因。
+            application.case_template_v4.start = Mock(side_effect=KnowledgeValidationError("契约结构不完整"))
+            with pytest.raises(KnowledgeValidationError, match="契约"):
+                application.start_case_template_generation_v4(SYSTEM_ID, request)
+            assert application.tasks.get(task_id).status == TaskStatus.FAILED
+        application.case_template_v4.start = Mock(return_value=handoff)
+        prepared = application.start_case_template_generation_v4(SYSTEM_ID, request)
+        assert prepared["task"].task_id == task_id
+        assert application.web_generation.bound_task(task_id).active_handoff_id == handoff.handoff_id
+        application.prepare_skill_knowledge_target.assert_not_called()
+        assert len(application.tasks.query_records(operations={"case-generation"})) == 1
+    finally:
+        application.close()
+
+
+def test_legacy_case_prerequisite_can_resume_before_long_text_is_complete(tmp_path):
+    """旧Case前置任务保留历史，但恢复不再等待长文完成。
+
+    Args:
+        tmp_path: 隔离应用状态。
     """
     application = OpenTestApplication(tmp_path / "knowledge")
     try:
         application.store.register_system(SystemDefinition(system_id=SYSTEM_ID, name="退款", source_path=str(tmp_path)))
         prerequisite = _knowledge_task(application)
         request = CaseTemplateGenerationStartRequest(operation_id=OPERATION_ID,
-                    request_id="case-with-knowledge-001", interaction_mode="web")
-        application.case_template_v4.start = Mock(side_effect=MissingCaseKnowledgeError("missing knowledge"))
-        application.knowledge.artifacts.read = Mock(return_value=SimpleNamespace(entries=[], scan_id="scan-continuation"))
-        application.case_template_v4._resolve_entry = Mock(return_value=SimpleNamespace(entry_id=OPERATION_ID))
-        application.prepare_skill_knowledge_target = Mock(return_value={"task": prerequisite})
-        task_id = application._stable_case_task_id(SYSTEM_ID, request.request_id)
-        if preparation_fails:
-            application.prepare_skill_knowledge_target.side_effect = KnowledgeValidationError("源码准备失败")
-            with pytest.raises(KnowledgeValidationError):
-                application.start_case_template_generation_v4(SYSTEM_ID, request)
-            assert application.tasks.get(task_id).status == TaskStatus.FAILED
-            return
-        prepared = application.start_case_template_generation_v4(SYSTEM_ID, request)
-        assert prepared["task"].task_id == task_id
-        assert application.get_task_context(task_id)["answer_task_id"] == prerequisite.task_id
-        assert application.web_generation.bound_task(task_id).task_id == prerequisite.task_id
-        with pytest.raises(KnowledgeValidationError):
-            application.resume_case_after_knowledge(task_id)
-        # 模拟知识发布边界完成，其余任务关联、后继准备和磁盘状态都走真实应用服务。
-        application.tasks.save_business_record(prerequisite.model_copy(update={"status": TaskStatus.COMPLETED}))
-        handoff = _handoff(tmp_path).model_copy(update={"task_id": task_id, "root_task_id": task_id})
+                    request_id="legacy-case-knowledge-001", interaction_mode="web")
+        task, effective_request = application._prepare_case_start_task(SYSTEM_ID, request)
+        task = application.tasks.save_business_record(task.model_copy(update={"result": {
+            **task.result, "prerequisite_task_id": prerequisite.task_id,
+            "case_request": effective_request.model_dump(mode="json"),
+        }}))
+        handoff = _handoff(tmp_path).model_copy(update={"task_id": task.task_id, "root_task_id": task.task_id})
         application.case_template_v4.handoffs.write(handoff)
         application.case_template_v4.start = Mock(return_value=handoff)
         application.codex_system_skill_name = Mock(return_value="open-test-test-system")
-        resumed = application.resume_case_after_knowledge(task_id)
-        assert resumed["task"].task_id == task_id
-        assert application.web_generation.bound_task(task_id).active_handoff_id == handoff.handoff_id
-        assert len(application.tasks.query_records(operations={"case-generation"})) == 1
+        # 等待中的旧任务不被删除或伪造成功，恢复仅改变原Case自己的handoff关联。
+        resumed = application.resume_case_after_knowledge(task.task_id)
+        assert resumed["task"].task_id == task.task_id
+        assert application.tasks.get(prerequisite.task_id).status != TaskStatus.COMPLETED
+        assert application.web_generation.bound_task(task.task_id).active_handoff_id == handoff.handoff_id
     finally:
         application.close()

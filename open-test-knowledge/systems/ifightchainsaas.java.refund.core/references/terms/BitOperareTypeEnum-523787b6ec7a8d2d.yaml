@@ -1,38 +1,56 @@
 candidate_id: candidate:business_term:523787b6ec7a8d2d
 system_id: ifightchainsaas.java.refund.core
 kind: BUSINESS_TERM
-knowledge_form: BUSINESS_TERM
+knowledge_form: BUSINESS_ENUM
 name: BitOperareTypeEnum
-business_name: ''
-business_name_source: UNRESOLVED
+business_name: 位运算操作
+business_name_source: CODE_DEFAULT
 business_name_known_unknown: false
-enum_values: []
-suggested_meaning: 源码出现该枚举、缩写或领域类型；请确认业务口径以及是否需要合并到已有术语。
-code_meaning: ''
+enum_values:
+- code: AND
+  business_meaning: '&'
+  source: CODE_VERIFIED
+  known_unknown: false
+  confidence: 1.0
+  source_refs:
+  - repository: ''
+    path: app/model/src/main/java/com/ly/flight/chainsaas/refund/enums/BitOperareTypeEnum.java
+    symbol: com.ly.flight.chainsaas.refund.enums.BitOperareTypeEnum#AND
+    line: 15
+    commit: ''
+    content_digest: ''
+- code: OR
+  business_meaning: '|'
+  source: CODE_VERIFIED
+  known_unknown: false
+  confidence: 1.0
+  source_refs:
+  - repository: ''
+    path: app/model/src/main/java/com/ly/flight/chainsaas/refund/enums/BitOperareTypeEnum.java
+    symbol: com.ly.flight.chainsaas.refund.enums.BitOperareTypeEnum#OR
+    line: 15
+    commit: ''
+    content_digest: ''
+suggested_meaning: 枚举名称和值只读展示源码注释；缺少注释时展示代码标识，无需人工补充。
+code_meaning: '&（AND）；|（OR）'
 unresolved_codes: []
 business_meaning: ''
-status: STALE
+status: CODE_VERIFIED
 merged_into_candidate_id: ''
 source_refs:
 - repository: ''
   path: app/model/src/main/java/com/ly/flight/chainsaas/refund/enums/BitOperareTypeEnum.java
-  symbol: com.ly.flight.chainsaas.refund.enums.BitOperareTypeEnum
-  line: null
-  commit: 2b175212e26b21abd0a08edeb3a4c7c1e1e2665a
+  symbol: com.ly.flight.chainsaas.refund.enums.BitOperareTypeEnum#AND
+  line: 15
+  commit: ''
   content_digest: ''
-affected_target_ids:
-- facade:com.ly.flight.chainsaas.refund.facade.CallbackFacade#refundApplyCallback
-- facade:com.ly.flight.chainsaas.refund.facade.CallbackFacade#refundConfirmCallback
-- facade:com.ly.flight.chainsaas.refund.facade.CommonFacade#executeJob
-- facade:com.ly.flight.chainsaas.refund.facade.ModelFacade#confirmRefund
-- facade:com.ly.flight.chainsaas.refund.facade.ModelFacade#createRefundOrder
-- facade:com.ly.flight.chainsaas.refund.facade.OuterRefundFacade#cancel
-- facade:com.ly.flight.chainsaas.refund.facade.OuterRefundFacade#pageBusinessLog
-- facade:com.ly.flight.chainsaas.refund.facade.OuterRefundFacade#queryDetailByRefundNo
-- facade:com.ly.flight.chainsaas.refund.facade.OuterRefundFacade#queryList
-- facade:com.ly.flight.chainsaas.refund.facade.OuterRefundFacade#refundConfirm
-- facade:com.ly.flight.chainsaas.refund.facade.RefundDistributionFacade#queryDetail
-- facade:com.ly.flight.chainsaas.refund.facade.RefundDistributionFacade#queryList
-evidence_digest: 8ba9d1f694b030a0ef1e6502d814a2e9cb7044e52afa1bfde40983454fde4d24
+- repository: ''
+  path: app/model/src/main/java/com/ly/flight/chainsaas/refund/enums/BitOperareTypeEnum.java
+  symbol: com.ly.flight.chainsaas.refund.enums.BitOperareTypeEnum#OR
+  line: 15
+  commit: ''
+  content_digest: ''
+affected_target_ids: []
+evidence_digest: 874e6848d70c2a2b91fc534809bf6b206ee6a108394310d0522240ac93029c6a
 discovered_at: '2026-08-13T10:23:54.669276Z'
-updated_at: '2026-09-02T07:26:12.784626Z'
+updated_at: '2026-09-19T04:25:34.173049Z'

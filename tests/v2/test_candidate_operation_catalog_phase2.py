@@ -18,6 +18,7 @@ from opentest.application.foundation import OpenTestApplication
 from opentest.application.program_case_analysis import ProgramCaseAnalysisBuilder
 from opentest.domain.errors import KnowledgeNotFoundError, KnowledgeValidationError, ScopeViolationError
 from opentest.domain.models import (
+    DsfOperationDefinition,
     EntryPoint,
     KnowledgeNodeKind,
     MqEntryFrameworkRule,
@@ -156,6 +157,12 @@ def _publish_generic_scan(
         baseline=baseline,
         entries=[entry],
         semantic_analysis=analysis,
+        dsf_operations=[DsfOperationDefinition(
+            operation_id=f"dsf:{system_id}:api:execute",
+            provider_system_id=system_id, gs_name=f"dsf.route-{system_id}",
+            service_name="api", version="1", action="execute",
+            source_refs=[source_ref.model_copy(update={"symbol": f"{interface_name}#execute"})],
+        )],
     )
     artifacts = SourceScanArtifactStore(application.knowledge_root)
     program_catalog = ProgramCaseAnalysisBuilder().build(manifest)
@@ -163,6 +170,28 @@ def _publish_generic_scan(
     artifacts.write_scan_bundle(manifest, program_catalog)
     application.store.update_source_baseline(system_id, baseline)
     artifacts.publish_latest(system_id, manifest.scan_id)
+
+
+def _connect_scanned_dsf(application: OpenTestApplication, caller: str, provider: str) -> None:
+    """用真实DSF引用/发布坐标连通两个测试扫描，不写历史人工绑定。
+
+    Args:
+        application: 隔离应用。
+        caller: 调用方扫描系统ID。
+        provider: 发布方扫描系统ID。
+    Side Effects:
+        仅在测试目录补充调用方扫描引用，发布方保持原有版本。
+    """
+
+    artifacts = SourceScanArtifactStore(application.knowledge_root)
+    caller_manifest = artifacts.read(caller, "latest")
+    provider_manifest = artifacts.read(provider, "latest")
+    publication = provider_manifest.dsf_operations[0]
+    # 外部路由派生ID与注册别名不同，只有精确坐标和方法符号能证明提供方。
+    reference = publication.model_copy(deep=True, update={"provider_system_id": f"route-{provider}"})
+    reference.source_refs = [publication.source_refs[0].model_copy(update={"path": "references.xml"})]
+    caller_manifest.dsf_operations.append(reference)
+    artifacts.write_manifest(caller_manifest)
 
 
 def _system_mq_rule_path(tmp_path: Path) -> tuple[Path, Path]:
@@ -184,8 +213,8 @@ def _system_mq_rule_path(tmp_path: Path) -> tuple[Path, Path]:
     return system_root, rules_path
 
 
-def test_direct_binding_controls_cross_system_search_detail_and_drift(tmp_path: Path) -> None:
-    """未绑定、直接绑定、漂移和删除必须即时改变provider Candidate可见性。
+def test_scanned_relation_controls_cross_system_search_detail_and_drift(tmp_path: Path) -> None:
+    """扫描关系、基线漂移和引用消失必须即时改变provider Candidate可见性。
 
     Args:
         tmp_path: Pytest隔离知识与源码根目录。
@@ -198,14 +227,7 @@ def test_direct_binding_controls_cross_system_search_detail_and_drift(tmp_path: 
     unbound = application.search_candidate_operations("consumer-app", "ProvisionRequest")
     assert unbound.complete is True
     assert unbound.total == 0
-    binding = application.put_system_dependency_binding(
-        "consumer-app",
-        SystemDependencyBindingSubmission(
-            provider_system_id="provider-app",
-            role=SystemDependencyRole.UPSTREAM,
-            purposes=[SystemDependencyPurpose.SETUP],
-        ),
-    )
+    _connect_scanned_dsf(application, "consumer-app", "provider-app")
     bound = application.search_candidate_operations("consumer-app", "ProvisionRequest")
     provider_candidate = next(
         candidate
@@ -215,7 +237,7 @@ def test_direct_binding_controls_cross_system_search_detail_and_drift(tmp_path: 
 
     assert bound.complete is True
     assert {source.system_id for source in bound.sources} == {"consumer-app", "provider-app"}
-    assert next(source for source in bound.sources if source.system_id == "provider-app").binding_id == binding.binding_id
+    assert next(source for source in bound.sources if source.system_id == "provider-app").binding_id == ""
     assert provider_candidate.system_id == "provider-app"
     assert provider_candidate.executable is False
     assert provider_candidate.contract_symbol_ids == [
@@ -228,13 +250,16 @@ def test_direct_binding_controls_cross_system_search_detail_and_drift(tmp_path: 
     application.store.update_source_baseline("provider-app", drifted)
     drift_result = application.search_candidate_operations("consumer-app", "ProvisionRequest")
     assert drift_result.complete is False
-    assert drift_result.blockers == ["BLOCKED_CANDIDATE_SOURCE_DRIFT:provider-app"]
+    assert "SOURCE_SCAN_DRIFT:provider-app" in drift_result.blockers
     with pytest.raises(KnowledgeNotFoundError):
         application.get_candidate_operation("consumer-app", provider_candidate.candidate_id)
 
-    # 恢复真实scan基线只为验证删除绑定立即撤销授权，不创建新Candidate或Manifest。
+    # 恢复provider基线但移除caller引用，新发现不得继续使用先前的关系范围。
     application.store.update_source_baseline("provider-app", provider_candidate.source_baseline)
-    application.delete_system_dependency_binding("consumer-app", "provider-app")
+    artifacts = SourceScanArtifactStore(application.knowledge_root)
+    caller_manifest = artifacts.read("consumer-app", "latest")
+    caller_manifest.dsf_operations = [operation for operation in caller_manifest.dsf_operations if operation.provider_system_id == "consumer-app"]
+    artifacts.write_manifest(caller_manifest)
     with pytest.raises(KnowledgeNotFoundError):
         application.get_candidate_operation("consumer-app", provider_candidate.candidate_id)
 
@@ -334,8 +359,8 @@ def test_duplicate_candidate_identity_blocks_whole_source_snapshot(tmp_path: Pat
         application.candidate_operation_catalog("consumer-app")
 
 
-def test_dependency_api_is_direct_only_and_legacy_publication_route_is_removed(tmp_path: Path) -> None:
-    """HTTP绑定不得传递，历史候选发布路由也不再对外提供。
+def test_dependency_mutation_is_retired_and_discovery_uses_scanned_relations(tmp_path: Path) -> None:
+    """HTTP人工绑定退役，扫描关系可见且历史绑定不能增加无证据第三方。
 
     Args:
         tmp_path: Pytest隔离知识与源码根目录。
@@ -345,7 +370,7 @@ def test_dependency_api_is_direct_only_and_legacy_publication_route_is_removed(t
     _publish_generic_scan(application, "consumer-app", "Consume", "consumer-v1")
     _publish_generic_scan(application, "provider-app", "Provision", "provider-v1")
     _publish_generic_scan(application, "third-app", "Third", "third-v1")
-    application.put_system_dependency_binding(
+    application.store.put_system_dependency_binding(
         "provider-app",
         SystemDependencyBindingSubmission(
             provider_system_id="third-app",
@@ -353,6 +378,7 @@ def test_dependency_api_is_direct_only_and_legacy_publication_route_is_removed(t
             purposes=[SystemDependencyPurpose.ORACLE],
         ),
     )
+    _connect_scanned_dsf(application, "consumer-app", "provider-app")
     binding_payload = {
         "provider_system_id": "provider-app",
         "role": "UPSTREAM",
@@ -381,7 +407,7 @@ def test_dependency_api_is_direct_only_and_legacy_publication_route_is_removed(t
             json={},
         )
 
-    assert put_response.status_code == 200
+    assert put_response.status_code == 410
     assert detail_response.status_code == 200
     visible_systems = {
         item["system_id"] for item in search_response.json()["result"]["candidates"]
@@ -767,8 +793,8 @@ def test_default_semantic_sidecar_path_does_not_follow_knowledge_root(tmp_path: 
     os.environ.get("OPENTEST_REAL_PHASE2_ACCEPTANCE") != "1",
     reason="仅在显式真实源码验收时运行",
 )
-def test_real_two_system_scan_and_direct_candidate_binding(tmp_path: Path) -> None:
-    """正式扫描退款与Booking源码并验证直接绑定前后的真实候选范围。
+def test_real_two_system_scan_and_automatic_candidate_relations(tmp_path: Path) -> None:
+    """正式扫描退款与Booking源码并验证自动关系连通真实候选范围。
 
     Args:
         tmp_path: 隔离知识、工具和扫描产物根目录。
@@ -842,21 +868,6 @@ def test_real_two_system_scan_and_direct_candidate_binding(tmp_path: Path) -> No
     assert application.store.get_system("refund-real").baseline == refund_manifest.baseline
     assert application.store.get_system("booking-real").baseline == booking_manifest.baseline
 
-    unbound = application.search_candidate_operations(
-        "refund-real",
-        "com.ly.flight.chainsaas.booking.facade.TradeFacade",
-        limit=200,
-    )
-    assert unbound.complete is True
-    assert unbound.total == 0
-    application.put_system_dependency_binding(
-        "refund-real",
-        SystemDependencyBindingSubmission(
-            provider_system_id="booking-real",
-            role=SystemDependencyRole.UPSTREAM,
-            purposes=[SystemDependencyPurpose.SETUP],
-        ),
-    )
     bound = application.search_candidate_operations(
         "refund-real",
         "com.ly.flight.chainsaas.booking.facade.TradeFacade",
@@ -879,14 +890,14 @@ def test_real_two_system_scan_and_direct_candidate_binding(tmp_path: Path) -> No
     ]
     booking_candidate = implementation_candidates[0]
 
-    assert bound.complete is True
+    # 未接入的其他业务系统可以产生关系缺口，已证明的Booking候选仍必须可读。
+    assert {source.system_id for source in bound.sources} >= {"refund-real", "booking-real"}
     assert booking_candidate.source_scan_id == booking_manifest.scan_id
     assert booking_candidate.source_baseline == booking_manifest.baseline
     assert booking_candidate.executable is False
     assert application.get_candidate_operation("refund-real", booking_candidate.candidate_id)
-    application.delete_system_dependency_binding("refund-real", "booking-real")
-    with pytest.raises(KnowledgeNotFoundError):
-        application.get_candidate_operation("refund-real", booking_candidate.candidate_id)
+    with pytest.raises(KnowledgeValidationError, match="retired"):
+        application.delete_system_dependency_binding("refund-real", "booking-real")
     assert not (
         application.store.system_root("refund-real") / "capabilities" / "published.yaml"
     ).exists()

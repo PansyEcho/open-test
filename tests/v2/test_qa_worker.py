@@ -109,7 +109,13 @@ def test_worker_client_uses_file_protocol_and_returns_projected_value(tmp_path: 
 
 
 def test_worker_client_rejects_non_qa_environment_before_process(tmp_path: Path) -> None:
-    """非QA环境必须在启动Java前被拒绝。"""
+    """旧Oracle Worker仍仅支持逻辑QA，UAT必须在启动Java前明确拒绝。
+
+    Args:
+        tmp_path: pytest隔离的旧Worker目录。
+    Returns:
+        None；合法逻辑UAT在旧适配器边界被拒绝且无进程启动时通过。
+    """
 
     def unexpected_runner(command: list[str], **options: Any) -> subprocess.CompletedProcess[str]:
         """若安全校验错误地启动进程则立即暴露测试失败。"""
@@ -117,8 +123,9 @@ def test_worker_client_rejects_non_qa_environment_before_process(tmp_path: Path)
         raise AssertionError(f"worker must not start: {command} {options}")
 
     client = _client_fixture(tmp_path, unexpected_runner)
+    # test不再是合法逻辑环境；使用UAT覆盖旧Worker尚不支持的真实调用边界。
     with pytest.raises(KnowledgeValidationError, match="qa environment"):
-        client.execute(_request(), _environment("test"), 10)
+        client.execute(_request(), _environment("uat"), 10)
 
 
 def test_worker_client_requires_profile_application_identity_before_process(tmp_path: Path) -> None:

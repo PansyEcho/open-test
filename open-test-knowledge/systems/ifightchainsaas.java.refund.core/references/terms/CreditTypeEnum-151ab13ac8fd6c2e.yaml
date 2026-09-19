@@ -1,38 +1,164 @@
 candidate_id: candidate:business_term:151ab13ac8fd6c2e
 system_id: ifightchainsaas.java.refund.core
 kind: BUSINESS_TERM
-knowledge_form: BUSINESS_TERM
+knowledge_form: BUSINESS_ENUM
 name: CreditTypeEnum
-business_name: ''
-business_name_source: UNRESOLVED
+business_name: CreditTypeEnum
+business_name_source: CODE_DEFAULT
 business_name_known_unknown: false
-enum_values: []
-suggested_meaning: 源码出现该枚举、缩写或领域类型；请确认业务口径以及是否需要合并到已有术语。
-code_meaning: ''
+enum_values:
+- code: GA
+  business_meaning: 港澳通行证
+  source: CODE_DEFAULT
+  known_unknown: false
+  confidence: 0.95
+  source_refs:
+  - repository: ''
+    path: app/model/src/main/java/com/ly/flight/chainsaas/refund/enums/CreditTypeEnum.java
+    symbol: com.ly.flight.chainsaas.refund.enums.CreditTypeEnum#GA
+    line: 17
+    commit: ''
+    content_digest: ''
+- code: HX
+  business_meaning: 回乡证
+  source: CODE_DEFAULT
+  known_unknown: false
+  confidence: 0.95
+  source_refs:
+  - repository: ''
+    path: app/model/src/main/java/com/ly/flight/chainsaas/refund/enums/CreditTypeEnum.java
+    symbol: com.ly.flight.chainsaas.refund.enums.CreditTypeEnum#HX
+    line: 23
+    commit: ''
+    content_digest: ''
+- code: HY
+  business_meaning: 国际海员证
+  source: CODE_DEFAULT
+  known_unknown: false
+  confidence: 0.95
+  source_refs:
+  - repository: ''
+    path: app/model/src/main/java/com/ly/flight/chainsaas/refund/enums/CreditTypeEnum.java
+    symbol: com.ly.flight.chainsaas.refund.enums.CreditTypeEnum#HY
+    line: 25
+    commit: ''
+    content_digest: ''
+- code: NONE
+  business_meaning: 未知
+  source: CODE_DEFAULT
+  known_unknown: false
+  confidence: 0.95
+  source_refs:
+  - repository: ''
+    path: app/model/src/main/java/com/ly/flight/chainsaas/refund/enums/CreditTypeEnum.java
+    symbol: com.ly.flight.chainsaas.refund.enums.CreditTypeEnum#NONE
+    line: 13
+    commit: ''
+    content_digest: ''
+- code: PP
+  business_meaning: 护照
+  source: CODE_DEFAULT
+  known_unknown: false
+  confidence: 0.95
+  source_refs:
+  - repository: ''
+    path: app/model/src/main/java/com/ly/flight/chainsaas/refund/enums/CreditTypeEnum.java
+    symbol: com.ly.flight.chainsaas.refund.enums.CreditTypeEnum#PP
+    line: 15
+    commit: ''
+    content_digest: ''
+- code: QT
+  business_meaning: 其他
+  source: CODE_DEFAULT
+  known_unknown: false
+  confidence: 0.95
+  source_refs:
+  - repository: ''
+    path: app/model/src/main/java/com/ly/flight/chainsaas/refund/enums/CreditTypeEnum.java
+    symbol: com.ly.flight.chainsaas.refund.enums.CreditTypeEnum#QT
+    line: 27
+    commit: ''
+    content_digest: ''
+- code: TB
+  business_meaning: 台胞证
+  source: CODE_DEFAULT
+  known_unknown: false
+  confidence: 0.95
+  source_refs:
+  - repository: ''
+    path: app/model/src/main/java/com/ly/flight/chainsaas/refund/enums/CreditTypeEnum.java
+    symbol: com.ly.flight.chainsaas.refund.enums.CreditTypeEnum#TB
+    line: 21
+    commit: ''
+    content_digest: ''
+- code: TW
+  business_meaning: 台湾通行证
+  source: CODE_DEFAULT
+  known_unknown: false
+  confidence: 0.95
+  source_refs:
+  - repository: ''
+    path: app/model/src/main/java/com/ly/flight/chainsaas/refund/enums/CreditTypeEnum.java
+    symbol: com.ly.flight.chainsaas.refund.enums.CreditTypeEnum#TW
+    line: 19
+    commit: ''
+    content_digest: ''
+suggested_meaning: 枚举名称和值只读展示源码注释；缺少注释时展示代码标识，无需人工补充。
+code_meaning: 港澳通行证（GA）；回乡证（HX）；国际海员证（HY）；未知（NONE）；护照（PP）；其他（QT）；台胞证（TB）；台湾通行证（TW）
 unresolved_codes: []
 business_meaning: ''
-status: STALE
+status: CODE_VERIFIED
 merged_into_candidate_id: ''
 source_refs:
 - repository: ''
   path: app/model/src/main/java/com/ly/flight/chainsaas/refund/enums/CreditTypeEnum.java
-  symbol: com.ly.flight.chainsaas.refund.enums.CreditTypeEnum
-  line: null
-  commit: 2b175212e26b21abd0a08edeb3a4c7c1e1e2665a
+  symbol: com.ly.flight.chainsaas.refund.enums.CreditTypeEnum#GA
+  line: 17
+  commit: ''
   content_digest: ''
-affected_target_ids:
-- facade:com.ly.flight.chainsaas.refund.facade.CallbackFacade#refundApplyCallback
-- facade:com.ly.flight.chainsaas.refund.facade.CallbackFacade#refundConfirmCallback
-- facade:com.ly.flight.chainsaas.refund.facade.CommonFacade#executeJob
-- facade:com.ly.flight.chainsaas.refund.facade.ModelFacade#confirmRefund
-- facade:com.ly.flight.chainsaas.refund.facade.ModelFacade#createRefundOrder
-- facade:com.ly.flight.chainsaas.refund.facade.OuterRefundFacade#cancel
-- facade:com.ly.flight.chainsaas.refund.facade.OuterRefundFacade#pageBusinessLog
-- facade:com.ly.flight.chainsaas.refund.facade.OuterRefundFacade#queryDetailByRefundNo
-- facade:com.ly.flight.chainsaas.refund.facade.OuterRefundFacade#queryList
-- facade:com.ly.flight.chainsaas.refund.facade.OuterRefundFacade#refundConfirm
-- facade:com.ly.flight.chainsaas.refund.facade.RefundDistributionFacade#queryDetail
-- facade:com.ly.flight.chainsaas.refund.facade.RefundDistributionFacade#queryList
-evidence_digest: 1d3628d24389b922bea0e4354d4af1b870968ecc6083f539ca145fc148cb3c7a
+- repository: ''
+  path: app/model/src/main/java/com/ly/flight/chainsaas/refund/enums/CreditTypeEnum.java
+  symbol: com.ly.flight.chainsaas.refund.enums.CreditTypeEnum#HX
+  line: 23
+  commit: ''
+  content_digest: ''
+- repository: ''
+  path: app/model/src/main/java/com/ly/flight/chainsaas/refund/enums/CreditTypeEnum.java
+  symbol: com.ly.flight.chainsaas.refund.enums.CreditTypeEnum#HY
+  line: 25
+  commit: ''
+  content_digest: ''
+- repository: ''
+  path: app/model/src/main/java/com/ly/flight/chainsaas/refund/enums/CreditTypeEnum.java
+  symbol: com.ly.flight.chainsaas.refund.enums.CreditTypeEnum#NONE
+  line: 13
+  commit: ''
+  content_digest: ''
+- repository: ''
+  path: app/model/src/main/java/com/ly/flight/chainsaas/refund/enums/CreditTypeEnum.java
+  symbol: com.ly.flight.chainsaas.refund.enums.CreditTypeEnum#PP
+  line: 15
+  commit: ''
+  content_digest: ''
+- repository: ''
+  path: app/model/src/main/java/com/ly/flight/chainsaas/refund/enums/CreditTypeEnum.java
+  symbol: com.ly.flight.chainsaas.refund.enums.CreditTypeEnum#QT
+  line: 27
+  commit: ''
+  content_digest: ''
+- repository: ''
+  path: app/model/src/main/java/com/ly/flight/chainsaas/refund/enums/CreditTypeEnum.java
+  symbol: com.ly.flight.chainsaas.refund.enums.CreditTypeEnum#TB
+  line: 21
+  commit: ''
+  content_digest: ''
+- repository: ''
+  path: app/model/src/main/java/com/ly/flight/chainsaas/refund/enums/CreditTypeEnum.java
+  symbol: com.ly.flight.chainsaas.refund.enums.CreditTypeEnum#TW
+  line: 19
+  commit: ''
+  content_digest: ''
+affected_target_ids: []
+evidence_digest: dee38503ac542e88ebe5e9c94c26353b1b33d7cccbcaa764f214091c439a93ed
 discovered_at: '2026-08-13T10:23:54.669310Z'
-updated_at: '2026-09-02T07:26:12.784629Z'
+updated_at: '2026-09-19T04:25:34.173328Z'

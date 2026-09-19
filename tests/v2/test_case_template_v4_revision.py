@@ -272,7 +272,7 @@ def test_handoff_store_reads_and_preserves_known_legacy_execution_fields(
     loaded = store.get(handoff.handoff_id)
 
     assert loaded == handoff
-    assert "execution_mode" not in loaded.model_dump(mode="json")
+    assert loaded.execution_mode == "generate_and_verify"
     assert "execution_results" not in loaded.model_dump(mode="json")
     # 兼容不得下沉到领域Schema，否则旧QA内容可能重新进入API或新业务逻辑。
     with pytest.raises(ValidationError):
@@ -1138,7 +1138,7 @@ def test_formal_generation_continue_creates_new_frozen_successor(tmp_path: Path)
     persisted_successor = json.loads(successor_path.read_text(encoding="utf-8"))
     assert persisted_parent["execution_mode"] == legacy_fields["execution_mode"]
     assert persisted_parent["execution_results"] == legacy_fields["execution_results"]
-    assert "execution_mode" not in persisted_successor
+    assert persisted_successor["execution_mode"] == "generate_and_verify"
     assert "execution_results" not in persisted_successor
 
 
@@ -1378,3 +1378,51 @@ def test_regenerate_latest_rejects_scan_from_previous_source_pin(tmp_path: Path)
         system.source_path,
         system.source_version,
     )
+
+
+@pytest.mark.parametrize("legacy_unrecoverable", [False, True])
+def test_internal_failure_resumes_saved_draft_with_revision_protection(
+    tmp_path: Path, legacy_unrecoverable: bool,
+) -> None:
+    """编译内部异常与历史不可恢复标记均可继续，且不能覆盖并发修订。
+
+    Args:
+        tmp_path: 隔离的handoff目录。
+        legacy_unrecoverable: 是否模拟旧版本写入的recoverable=false。
+    """
+
+    service, handoffs, generations = _service(tmp_path, _compiled())
+    handoff = _handoff(tmp_path)
+    handoffs.write(handoff)
+    request = CaseTemplateDraftRevisionRequest(
+        request_id="nullable-failure", expected_revision=0, submission=_submission(),
+    )
+    # 真实状态机必须先保留失败DSL和错误回执，不因实现异常丢失用户工作。
+    service._compile_draft.side_effect = TypeError("unhashable type: 'list'")
+    with pytest.raises(TypeError):
+        service.revise_draft(handoff.handoff_id, request)
+    failed = handoffs.get(handoff.handoff_id)
+    assert failed.recoverable is True
+    assert failed.draft_submission == request.submission
+    if legacy_unrecoverable:
+        handoffs.write(failed.model_copy(update={"recoverable": False}))
+    with pytest.raises(CaseTemplateWriteConflictError):
+        service.resume_draft(handoff.handoff_id, "resume-stale", 0)
+    resumed = service.resume_draft(handoff.handoff_id, "resume-nullable", 1)
+    assert resumed.status == "WAITING_FOR_AGENT"
+    assert resumed.revision == 2
+    assert resumed.source_scopes == failed.source_scopes
+    assert resumed.draft_submission == failed.draft_submission
+    assert service.resume_draft(handoff.handoff_id, "resume-nullable", 1).revision == 2
+    with pytest.raises(KnowledgeValidationError, match="TypeError"):
+        service.revise_draft(handoff.handoff_id, request)
+
+    # 新请求仍走完整编译校验；恢复本身不产生Generation或QA调用。
+    generations.write.assert_not_called()
+    service._compile_draft.side_effect = None
+    service._compile_draft.return_value = _compiled()
+    repaired = service.revise_draft(handoff.handoff_id, CaseTemplateDraftRevisionRequest(
+        request_id="nullable-repaired", expected_revision=2, submission=_submission(),
+    ))
+    assert repaired.status == "READY_TO_PUBLISH"
+    assert repaired.revision == 3

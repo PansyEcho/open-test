@@ -751,19 +751,13 @@ enum_values:
     line: 155
     commit: ''
     content_digest: ''
-suggested_meaning: 枚举名称和值默认采用源码注释；缺少注释时回退代码标识，可再人工修订。
+suggested_meaning: 枚举名称和值只读展示源码注释；缺少注释时展示代码标识，无需人工补充。
 code_meaning: 数据发送（ARC_BSP_DATA_SENDER）；ARC_BSP账单消息（ARC_BSP_MESSAGE）；自动退（AUTO_REFUND）；自动退-退改查询（AUTO_REFUND_RESHOP）；账单补单（BILL_SUPPLEMENT）；退票订单日志（BUSINESS_LOG）；取消退票（CANCEL）；费用回填回调（CBDS_REFUND_APPLY）；退票确认回调（CBDS_REFUND_CONFIRM）；CREATE_ORDER（CREATE_ORDER）；C端同步（C_ORDER_SYNC）；清洗数据（DATA_MIGRATE_JOB）；创建日志（DETAIL_CREATE_LOG）；清洗item表pnr（ITEM_PNR_JOB）；JOB（JOB）；JOURNEY（JOURNEY）；锁单服务（LOCK_ORDER）；模型确认退票（MODEL_CONFIRM_REFUND）；模型创建退票单（MODEL_CREATE_REFUND_ORDER）；订单详情服务日志（ORDER_DETAIL）；订单列表服务日志（ORDER_LIST）；ORDER_PAYMENT_JOB_LISTENER（ORDER_PAYMENT_JOB_LISTENER）；取消（OUTER_CANCEL）；详情（OUTER_QUERYDETAIL）；列表（OUTER_QUERYLIST）；退票确认（OUTER_REFUNDCONFIRM）；ARC报表解析（PARSING_ARC_REPORT）；BSP报表解析（PARSING_BSP_REPORT）；订单详情服务日志（PAYMENT）；PAY_REFUND_NOTIFY（PAY_REFUND_CUSTOMER_NOTIFY）；退票退款（PAY_REFUND_DONE_LISTENER）；PAY_REFUND_NOTIFY（PAY_REFUND_SUPPILER_NOTIFY）；平台费（PLATFEE）；B端订单详情（QUERY_DISTRIBUTION_ORDER_DETAIL）；B端订单列表（QUERY_DISTRIBUTION_ORDER_LIST）；已向航司确认（REFUND_APPLY_TO_AIRLINE）；JOB（REFUND_CREATE_JOB）；REFUND_DONE（REFUND_DONE）；JOB（REFUND_FINAL_JOB）；退票通知MQ（REFUND_NOTIFY）；REFUND_OPERATE_LOG（REFUND_OPERATE_LOG）；查询（REFUND_ORDER_SERIAL_NO）；JOB（REFUND_PAID_JOB）；退改查询（REFUND_RESHOP）；退改确认（REFUND_RESHOP_CONFIRM）；退改提交（REFUND_RESHOP_SUBMIT）；JOB（REFUND_TIMEOUT_JOB）；JOB（RESHOP_AUDIT_SUBMIT_JOB）；JOB（RESHOP_CONFIRM_JOB）；发送邮件（SEND_EMAIL）；JOB（SUPPLY_CHANNEL_CLEAN_JOB）；订单同步（SYNC_ORDER）；同步前置交易退票单（SYNC_TO_PRE_REFUND_JOB）；TICKET_REFUNDING（TICKET_REFUNDING）；JOB（TIMEOUT_CANCEL_JOB）；订单同步（TRADE_ORDER_SYNC）；同步（TRADE_ORDER_SYNC_LISTENER）；锁单服务（UN_LOCK_ORDER）；废票确认（VOIDING_REFUND）；代金券退票填报/修改（VOUCHER_REFUND_SUBMIT）；钱包退款重试（WALLET_REFUND_RETRY）；WE_CHAT_NOTIFY（WE_CHAT_NOTIFY）
 unresolved_codes: []
 business_meaning: 日志的枚举，不用关心，代码也都很明确
 status: CONFIRMED
 merged_into_candidate_id: ''
 source_refs:
-- repository: ''
-  path: app/biz/src/main/java/com/ly/flight/chainsaas/refund/biz/constants/LogEnum.java
-  symbol: com.ly.flight.chainsaas.refund.biz.constants.LogEnum
-  line: 11
-  commit: 99b494d7824eab12ffc237ae7e945aac79d61411
-  content_digest: c54c1b933abdfc55220ff2408dd6d2cf9208a3a5dbd017fdd1e28f3d4762bca2
 - repository: ''
   path: app/biz/src/main/java/com/ly/flight/chainsaas/refund/biz/constants/LogEnum.java
   symbol: com.ly.flight.chainsaas.refund.biz.constants.LogEnum#ARC_BSP_DATA_SENDER
@@ -830,9 +824,15 @@ source_refs:
   line: 186
   commit: ''
   content_digest: ''
+- repository: ''
+  path: app/biz/src/main/java/com/ly/flight/chainsaas/refund/biz/constants/LogEnum.java
+  symbol: com.ly.flight.chainsaas.refund.biz.constants.LogEnum#DATA_MIGRATE_JOB
+  line: 159
+  commit: ''
+  content_digest: ''
 affected_target_ids:
 - facade:com.ly.flight.chainsaas.refund.facade.CallbackFacade#refundApplyCallback
 - facade:com.ly.flight.chainsaas.refund.facade.CallbackFacade#refundConfirmCallback
-evidence_digest: 550ff6455439c22d60c7de23ce467f1cc47bf168a2e7bf99a90b78d7d25bc855
+evidence_digest: 557480017650c06046039a5a96e8eb44e245781869104960623777c519eb8aec
 discovered_at: '2026-08-13T10:23:54.669373Z'
-updated_at: '2026-09-02T07:26:12.783425Z'
+updated_at: '2026-09-19T04:25:34.175031Z'

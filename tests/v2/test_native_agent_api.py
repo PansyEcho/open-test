@@ -422,18 +422,18 @@ def test_task_scoped_knowledge_answer_updates_the_same_task(
     assert result["task"].task_id == task.task_id
 
 
-def test_case_handoff_and_task_context_freeze_analysis_instructions(
+def test_case_recovery_preserves_audit_and_projects_current_execution_protocol(
     tmp_path: Path,
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    """Case目录和任务恢复使用handoff冻结规则，不受后续Runtime模板修改影响。
+    """恢复时保留旧handoff审计，同时返回当前Case协议与任务执行模式。
 
     Args:
         tmp_path: Pytest提供的隔离运行设置目录。
         monkeypatch: 固定Case handoff、输入契约和Runtime能力目录。
 
     Returns:
-        None；handoff与task context在设置变化前后都返回同一冻结规则时通过。
+        None；旧提示不能覆盖当前显式执行模式，设置模板也不能修改Case协议。
 
     Side Effects:
         只更新临时运行设置；不提交草稿、发布Generation或访问QA。
@@ -480,6 +480,8 @@ def test_case_handoff_and_task_context_freeze_analysis_instructions(
     monkeypatch.setattr(application.case_template_v4.handoffs, "get", lambda _handoff_id: handoff)
     monkeypatch.setattr(application.case_template_v4, "_input_contract", lambda *_args: blocked_contract)
     monkeypatch.setattr(application.case_template_v4, "_runtime_capabilities", lambda _handoff: [])
+    # 历史任务保留原提示审计；当前工具说明升级，执行权限仍由独立execution_mode限制。
+    monkeypatch.setattr(application.data_capabilities, "list_capabilities", lambda _system_id: [])
 
     with TestClient(create_app(application), client=("127.0.0.1", 50000)) as client:
         initial_handoff = client.get(f"/api/v2/case-handoffs/{handoff.handoff_id}")
@@ -500,10 +502,12 @@ def test_case_handoff_and_task_context_freeze_analysis_instructions(
     ):
         assert response.status_code == 200
     assert initial_handoff.json()["handoff"]["analysis_instructions"] == frozen_instructions
-    assert initial_handoff.json()["analysis_instructions"] == frozen_instructions
-    assert repeated_handoff.json()["analysis_instructions"] == frozen_instructions
-    assert initial_context.json()["context"]["analysis_instructions"] == frozen_instructions
-    assert repeated_context.json()["context"]["analysis_instructions"] == frozen_instructions
+    assert "generate_and_verify" in initial_handoff.json()["analysis_instructions"]
+    assert repeated_handoff.json()["analysis_instructions"] == initial_handoff.json()["analysis_instructions"]
+    assert initial_context.json()["context"]["handoff"]["analysis_instructions"] == frozen_instructions
+    assert initial_context.json()["context"]["analysis_instructions"] == initial_handoff.json()["analysis_instructions"]
+    assert repeated_context.json()["context"]["analysis_instructions"] == initial_handoff.json()["analysis_instructions"]
+    assert repeated_context.json()["context"]["execution_mode"] == "generate_and_verify"
 
 
 def test_case_write_conflict_returns_stable_code_and_current_revision(

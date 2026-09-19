@@ -31,19 +31,13 @@ enum_values:
     line: 14
     commit: ''
     content_digest: ''
-suggested_meaning: 枚举名称和值默认采用源码注释；缺少注释时回退代码标识，可再人工修订。
+suggested_meaning: 枚举名称和值只读展示源码注释；缺少注释时展示代码标识，无需人工补充。
 code_meaning: 售后处理（AFTERSALES）；其他原因（OTHER）
 unresolved_codes: []
 business_meaning: ''
 status: CODE_VERIFIED
 merged_into_candidate_id: ''
 source_refs:
-- repository: ''
-  path: app/model/src/main/java/com/ly/flight/chainsaas/refund/enums/ForceUnlockEnum.java
-  symbol: com.ly.flight.chainsaas.refund.enums.ForceUnlockEnum
-  line: 8
-  commit: 99b494d7824eab12ffc237ae7e945aac79d61411
-  content_digest: 9ddbcdcf2017a8ee8d3ff567dd3d6d3fb010cefcb203b25689ba820f79641f69
 - repository: ''
   path: app/model/src/main/java/com/ly/flight/chainsaas/refund/enums/ForceUnlockEnum.java
   symbol: com.ly.flight.chainsaas.refund.enums.ForceUnlockEnum#AFTERSALES
@@ -78,6 +72,6 @@ affected_target_ids:
 - facade:com.ly.flight.chainsaas.refund.facade.RefundFacade#unLockOrder
 - facade:com.ly.flight.chainsaas.refund.facade.RefundFacade#voucherRefundSubmit
 - facade:com.ly.flight.chainsaas.refund.facade.RefundFacade#walletRefundRetry
-evidence_digest: 2f2897d6b8754c8201e65eacb0ed734c0cf7382b59371c1dc43e9348f081ecee
+evidence_digest: a73ba93333fc0fecd1879ec4cfb7f9735380ae175fa5d27b990e6303c9443493
 discovered_at: '2026-08-13T10:23:54.669348Z'
-updated_at: '2026-09-02T07:26:12.782389Z'
+updated_at: '2026-09-19T04:25:34.173882Z'

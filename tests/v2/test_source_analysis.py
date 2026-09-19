@@ -618,8 +618,12 @@ def test_git_detection_forces_stable_c_locale(tmp_path: Path, monkeypatch: pytes
     assert observed_environment["LANG"] == "C"
 
 
-def test_scriptgen_manifest_keeps_only_job_execution_tools(tmp_path: Path) -> None:
-    """manifest应校验全部映射，但只发布仍受支持的HTTP Job执行工具。"""
+def test_scriptgen_manifest_keeps_facades_without_retired_http_tools(tmp_path: Path) -> None:
+    """扫描保留DSF Facade结构，旧HTTP Job及脚本不进入活动目录。
+
+    Args:
+        tmp_path: 隔离扫描产物和源码目录。
+    """
 
     output_dir = tmp_path / "tools"
     source_root = tmp_path / "source"
@@ -628,8 +632,9 @@ def test_scriptgen_manifest_keeps_only_job_execution_tools(tmp_path: Path) -> No
     entries, tools, warnings = scanner.parse_output("train-booking-core", source_root, output_dir)
 
     assert warnings == []
-    assert [tool.tool_id for tool in tools] == ["job.cancel_order"]
-    assert {entry.kind for entry in entries} == {KnowledgeNodeKind.FACADE, KnowledgeNodeKind.JOB}
+    # 下游DSF绑定仍需要Facade入口，而退役Job不再形成可执行资产。
+    assert tools == []
+    assert {entry.kind for entry in entries} == {KnowledgeNodeKind.FACADE}
     facade = next(entry for entry in entries if entry.kind == KnowledgeNodeKind.FACADE)
     assert facade.source_id == "com.example.TradeFacade#createOrder"
     assert facade.request_type == "CreateOrderRequest"
@@ -664,15 +669,16 @@ def test_scriptgen_manifest_accepts_unready_retired_facade_descriptors(tmp_path:
     entries, tools, warnings = scanner.parse_output("train-booking-core", source_root, output_dir)
 
     assert warnings == []
-    assert [tool.tool_id for tool in tools] == ["job.cancel_order"]
+    # 旧脚本是否就绪不影响仍受支持的DSF入口扫描。
+    assert tools == []
     facade = next(entry for entry in entries if entry.kind == KnowledgeNodeKind.FACADE)
     assert facade.source_id == "com.example.TradeFacade#createOrder"
     assert facade.tool_id == ""
     assert facade.script_path == ""
 
 
-def test_scriptgen_manifest_still_rejects_unready_job_tool(tmp_path: Path) -> None:
-    """仍受支持的HTTP Job没有ready脚本时必须阻断扫描发布。
+def test_scriptgen_manifest_ignores_unready_retired_job_tool(tmp_path: Path) -> None:
+    """退役HTTP Job没有ready脚本也不能阻断Facade扫描。
 
     Args:
         tmp_path: pytest提供的隔离扫描目录。
@@ -690,8 +696,10 @@ def test_scriptgen_manifest_still_rejects_unready_job_tool(tmp_path: Path) -> No
     tool_path.write_text(json.dumps(payload), encoding="utf-8")
 
     scanner = ScriptgenSourceScanner(ScriptgenConfig.from_value(None))
-    with pytest.raises(KnowledgeValidationError, match="generated tool is not ready"):
-        scanner.parse_output("train-booking-core", source_root, output_dir)
+    # 畸形旧Job不作为执行候选，也不影响新的Facade目录。
+    entries, tools, _ = scanner.parse_output("train-booking-core", source_root, output_dir)
+    assert tools == []
+    assert all(entry.kind == KnowledgeNodeKind.FACADE for entry in entries)
 
 
 def test_scriptgen_manifest_rejects_structurally_invalid_facade_descriptor(tmp_path: Path) -> None:
@@ -766,7 +774,11 @@ def test_scriptgen_manifest_rejects_failure_and_unknown_version(
 
 
 def test_scriptgen_manifest_rejects_duplicate_and_incomplete_mapping(tmp_path: Path) -> None:
-    """工具身份重复或scan/tool source集合不一致时不得静默覆盖或发布。"""
+    """活动Facade工具身份重复或映射缺失时不得静默发布。
+
+    Args:
+        tmp_path: 隔离扫描产物目录。
+    """
 
     output_dir = tmp_path / "tools"
     source_root = tmp_path / "source"
@@ -779,7 +791,8 @@ def test_scriptgen_manifest_rejects_duplicate_and_incomplete_mapping(tmp_path: P
     with pytest.raises(KnowledgeValidationError, match="duplicate"):
         scanner.parse_output("train-booking-core", source_root, output_dir)
 
-    payload["generated_tools"] = payload["generated_tools"][:1]
+    # 只移除活动Facade映射；退役Job本身不再是完整性的前提。
+    payload["generated_tools"] = payload["generated_tools"][1:2]
     tool_path.write_text(json.dumps(payload), encoding="utf-8")
     with pytest.raises(KnowledgeValidationError, match="one-to-one"):
         scanner.parse_output("train-booking-core", source_root, output_dir)
@@ -804,7 +817,11 @@ def test_scriptgen_manifest_rejects_source_evidence_outside_registered_root(tmp_
 
 
 def test_scriptgen_manifest_rejects_swapped_tool_type_and_empty_logical_id(tmp_path: Path) -> None:
-    """入口必须绑定语义匹配的工具类型，原始ID也必须能规范为非空逻辑ID。"""
+    """Facade被错误标成退役Job时映射不完整，原始ID也必须非空。
+
+    Args:
+        tmp_path: 隔离扫描产物目录。
+    """
 
     output_dir = tmp_path / "tools"
     source_root = tmp_path / "source"
@@ -814,7 +831,8 @@ def test_scriptgen_manifest_rejects_swapped_tool_type_and_empty_logical_id(tmp_p
     payload["generated_tools"][0]["tool_type"] = "job_http_trigger"
     tool_path.write_text(json.dumps(payload), encoding="utf-8")
     scanner = ScriptgenSourceScanner(ScriptgenConfig.from_value(None))
-    with pytest.raises(KnowledgeValidationError, match="non-facade"):
+    # 不允许用被忽略的旧Job工具冒充仍受支持的Facade扫描结果。
+    with pytest.raises(KnowledgeValidationError, match="one-to-one"):
         scanner.parse_output("train-booking-core", source_root, output_dir)
 
     payload["generated_tools"][0]["tool_type"] = "facade_raw"

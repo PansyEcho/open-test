@@ -283,25 +283,13 @@ enum_values:
     line: 9
     commit: ''
     content_digest: ''
-suggested_meaning: 源码存在同名枚举类型，页面按全限定常量展示代码注释默认值，可再人工修订。
+suggested_meaning: 源码存在同名枚举类型，按全限定常量只读展示源码注释或代码标识。
 code_meaning: CBDS需提交全航段（com.ly.flight.chainsaas.refund.biz.error.ErrorMessageEnum#CBDS_NEED_ALL_REFUND）；CBDS暂不支持（com.ly.flight.chainsaas.refund.biz.error.ErrorMessageEnum#CBDS_UNSUPPORTED）；并发操作（com.ly.flight.chainsaas.refund.biz.error.ErrorMessageEnum#CONCURRENCY_OPERATE）；白屏GDS不支持自动化（com.ly.flight.chainsaas.refund.biz.error.ErrorMessageEnum#DISTRIBUTION_GDS_NO_AUTO）；已存在退票单（com.ly.flight.chainsaas.refund.biz.error.ErrorMessageEnum#EXIST_REFUND_ORDER）；存在改签订单（com.ly.flight.chainsaas.refund.biz.error.ErrorMessageEnum#HAS_CHANGE_ORDER）；存在改签订单（com.ly.flight.chainsaas.refund.biz.error.ErrorMessageEnum#HAS_REFUND_ORDER）；非自愿非航变退不支持自动化（com.ly.flight.chainsaas.refund.biz.error.ErrorMessageEnum#INVOLUNTARY_NOT_FLIGHT_CHANGE）；供应商不支持自动化（com.ly.flight.chainsaas.refund.biz.error.ErrorMessageEnum#MERCHANT_NO_AUTO）；无权限操作订单（com.ly.flight.chainsaas.refund.biz.error.ErrorMessageEnum#NO_AUTH）；订单不存在（com.ly.flight.chainsaas.refund.biz.error.ErrorMessageEnum#ORDER_NOT_EXIST）；订单状态流转不正确（com.ly.flight.chainsaas.refund.biz.error.ErrorMessageEnum#ORDER_STATE_WRONG）；订单不支持自动化退票（com.ly.flight.chainsaas.refund.biz.error.ErrorMessageEnum#ORDER_UNSUPPORTED_AUTO_REFUND）；参数为不存在（com.ly.flight.chainsaas.refund.biz.error.ErrorMessageEnum#PARAMS_NOT_EXIST）；核价失败（com.ly.flight.chainsaas.refund.biz.error.ErrorMessageEnum#REFUND_SEARCH_FAIL）；系统异常（com.ly.flight.chainsaas.refund.biz.error.ErrorMessageEnum#SYSTEM_ERROR）；票号不能为空（com.ly.flight.chainsaas.refund.biz.error.ErrorMessageEnum#TICKET_NUM_NOT_EXIST）；交易单非出票成功状态（com.ly.flight.chainsaas.refund.biz.error.ErrorMessageEnum#TRADE_ORDER_NOT_TICKETED）；INVALID_URL（com.ly.flight.chainsaas.refund.integration.proxy.callback.message.ErrorMessageEnum#INVALID_URL）；PARAMS_NOT_EXIST（com.ly.flight.chainsaas.refund.integration.proxy.callback.message.ErrorMessageEnum#PARAMS_NOT_EXIST）；SYSTEM_ERROR（com.ly.flight.chainsaas.refund.integration.proxy.callback.message.ErrorMessageEnum#SYSTEM_ERROR）；SYSTEM_ERROR_PROCESSING（com.ly.flight.chainsaas.refund.integration.proxy.callback.message.ErrorMessageEnum#SYSTEM_ERROR_PROCESSING）；TOKEN_ERROR（com.ly.flight.chainsaas.refund.integration.proxy.callback.message.ErrorMessageEnum#TOKEN_ERROR）
 unresolved_codes: []
 business_meaning: 代码有
 status: CONFIRMED
 merged_into_candidate_id: ''
 source_refs:
-- repository: ''
-  path: app/biz/src/main/java/com/ly/flight/chainsaas/refund/biz/error/ErrorMessageEnum.java
-  symbol: com.ly.flight.chainsaas.refund.biz.error.ErrorMessageEnum
-  line: 11
-  commit: 99b494d7824eab12ffc237ae7e945aac79d61411
-  content_digest: 691b3a61d1095e1f822918d8c71880bad6cf35402e16703526bda06d00ac66b1
-- repository: ''
-  path: app/integration/src/main/java/com/ly/flight/chainsaas/refund/integration/proxy/callback/message/ErrorMessageEnum.java
-  symbol: com.ly.flight.chainsaas.refund.integration.proxy.callback.message.ErrorMessageEnum
-  line: 8
-  commit: 99b494d7824eab12ffc237ae7e945aac79d61411
-  content_digest: b592297fe01c7abfb121a09f44de94ccee2c7deadd161ac42c5f841cbd3d3a73
 - repository: ''
   path: app/biz/src/main/java/com/ly/flight/chainsaas/refund/biz/error/ErrorMessageEnum.java
   symbol: com.ly.flight.chainsaas.refund.biz.error.ErrorMessageEnum#CBDS_NEED_ALL_REFUND
@@ -362,6 +350,18 @@ source_refs:
   line: 39
   commit: ''
   content_digest: ''
+- repository: ''
+  path: app/biz/src/main/java/com/ly/flight/chainsaas/refund/biz/error/ErrorMessageEnum.java
+  symbol: com.ly.flight.chainsaas.refund.biz.error.ErrorMessageEnum#ORDER_NOT_EXIST
+  line: 27
+  commit: ''
+  content_digest: ''
+- repository: ''
+  path: app/biz/src/main/java/com/ly/flight/chainsaas/refund/biz/error/ErrorMessageEnum.java
+  symbol: com.ly.flight.chainsaas.refund.biz.error.ErrorMessageEnum#ORDER_STATE_WRONG
+  line: 31
+  commit: ''
+  content_digest: ''
 affected_target_ids:
 - facade:com.ly.flight.chainsaas.refund.facade.CallbackFacade#refundApplyCallback
 - facade:com.ly.flight.chainsaas.refund.facade.CallbackFacade#refundConfirmCallback
@@ -395,6 +395,6 @@ affected_target_ids:
 - facade:com.ly.flight.chainsaas.refund.facade.RefundFacade#voucherRefundSubmit
 - facade:com.ly.flight.chainsaas.refund.facade.RefundFacade#walletRefundRetry
 - facade:com.ly.flight.chainsaas.refund.facade.ToolFacade#syncOrder
-evidence_digest: 6d4c1ec1acd03317405fa19ac6aea4177002c2afb9cbbbc3bdeb901169fa1a91
+evidence_digest: a1a8e99a59a8612a880649bf3f1d25fac4054883ccf9f056da6d7a2e4bd8ff3d
 discovered_at: '2026-08-13T10:23:54.669019Z'
-updated_at: '2026-09-02T07:26:12.782235Z'
+updated_at: '2026-09-19T04:25:34.173616Z'

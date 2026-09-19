@@ -9,12 +9,13 @@ import time
 from datetime import timedelta
 from pathlib import Path
 from types import SimpleNamespace
+from unittest.mock import patch
 
 import pytest
 from fastapi.testclient import TestClient
 
 from opentest.adapters.source_analysis import SourceScanArtifactStore
-from opentest.api import create_app
+from opentest.api import NativeKnowledgePreparationRequest, create_app
 from opentest.application.foundation import OpenTestApplication
 from opentest.domain.errors import (
     AgentObserverDetachedError,
@@ -40,6 +41,7 @@ from opentest.domain.models import (
     KnowledgeDraftConfirmation,
     KnowledgeAgentContinuationRequest,
     KnowledgeEnumValue,
+    KnowledgeFieldSource,
     KnowledgeGenerationBatchRequest,
     KnowledgeGenerationWorkflowBatch,
     KnowledgeClientCandidateConfirmation,
@@ -117,6 +119,71 @@ def _application(tmp_path: Path) -> OpenTestApplication:
     return application
 
 
+def _historical_native_fixture(
+    application: OpenTestApplication,
+    request: NativeKnowledgePreparationRequest,
+) -> dict[str, object]:
+    """显式重建退役前的本地handoff样本，供历史恢复、问答与发布兼容测试。
+
+    Args:
+        application: 仅当前测试使用的隔离应用。
+        request: 历史任务已有的系统、目标、扫描和请求身份。
+    Returns:
+        按旧持久格式建立的任务与handoff。
+    Side Effects:
+        仅夹具建立期间替换该实例的方法；返回前恢复正式入口的退役行为。
+    """
+
+    # 复用既有锁保护测试实例的短时替换，并发样本创建不能相互恢复对方的方法。
+    with application._client_handoff_lock, patch.object(
+        application.knowledge, "prepare_client_handoff", application.knowledge._prepare_legacy_client_handoff,
+    ):
+        return application.prepare_native_knowledge_generation(
+            request.system_id, request.target_id, request.scan_id, request.intent, request.request_id,
+        )
+
+
+def _historical_draft_fixture(
+    application: OpenTestApplication,
+    request: KnowledgeGenerationBatchRequest,
+    runner: object | None = None,
+) -> KnowledgeGenerationWorkflowBatch:
+    """建立历史草稿及受控Agent结果，保留后续访谈和来源兼容测试的真实存储。
+
+    Args:
+        application: 当前测试的隔离应用。
+        request: 旧批次的固定目标和扫描。
+        runner: 只产生本地测试证据的可选替身。
+    Returns:
+        真实持久化的旧格式草稿；不经过已经退役的新建入口。
+    """
+
+    # 只调用明确保留的私有兼容实现，正式generate_drafts仍必须拒绝新请求。
+    return application.knowledge._generate_legacy_drafts(request, runner)
+
+
+def _historical_task_fixture(
+    application: OpenTestApplication,
+    request: KnowledgeGenerationBatchRequest,
+    intent: str = "initial",
+) -> TaskRecord:
+    """构建历史异步任务样本，供中断、故障及任务恢复兼容测试。
+
+    Args:
+        application: 仅当前用例持有的隔离应用实例。
+        request: 旧任务的固定请求及本地替身配置。
+        intent: 历史记录的初次生成或重生成意图。
+    Returns:
+        由本地测试Runner推进的历史任务记录。
+    Side Effects:
+        在该测试实例绑定旧草稿构建器，让异步线程能完成样本；不修改类或正式应用。
+    """
+
+    # 异步Runner可能在调用返回后执行，因此替换只保留在本用例拥有的应用实例。
+    application.knowledge.generate_drafts = application.knowledge._generate_legacy_drafts
+    return application.submit_knowledge_generation_batch(request, intent)
+
+
 def _wait_for_task(application: OpenTestApplication, task_id: str) -> None:
     """等待测试中的本地任务进入终态。
 
@@ -125,10 +192,11 @@ def _wait_for_task(application: OpenTestApplication, task_id: str) -> None:
         task_id: 集中问答完成后返回的任务ID。
 
     Raises:
-        AssertionError: 任务未在两秒内完成或以失败状态结束。
+        AssertionError: 任务未在十秒内完成或以失败状态结束。
     """
 
-    for _ in range(200):
+    # 历史样本仍写真实Git与索引；并行测试下允许IO完成，终态和成功断言保持不变。
+    for _ in range(1000):
         task = application.tasks.get(task_id)
         if task.status.value in {"completed", "failed", "interrupted"}:
             assert task.status.value == "completed", task.error
@@ -713,8 +781,10 @@ def test_background_fields_stay_out_of_confirmation_cycle(tmp_path: Path) -> Non
     assert application.list_unified_knowledge_questions(SYSTEM_ID) == []
     assert application.get_knowledge_question_cycle(SYSTEM_ID).questions == []
     workflow = application.get_knowledge_workflow(SYSTEM_ID)
-    assert workflow.current_step == "background"
-    assert workflow.steps[0].status == "current"
+    # 未完善背景仍可等待源码扫描；它不应变成接口契约或独立数据任务的全局门禁。
+    assert workflow.current_step == "generation"
+    assert workflow.steps[0].status == "pending"
+    assert workflow.generation_blocked_reason == ""
 
 
 def test_four_core_background_fields_require_explicit_completion(tmp_path: Path) -> None:
@@ -1232,12 +1302,19 @@ def test_question_cycle_http_get_is_compatible_and_writes_are_retired(tmp_path: 
     assert application.store.read_active_question_cycle(SYSTEM_ID).staged_answers == {}
 
 
-def test_object_draft_generation_requires_background_interview_gate(tmp_path: Path) -> None:
-    """背景与术语未显式完成时不得提前运行指定Agent生成对象知识。"""
+def test_retired_object_generation_rejects_before_background_or_agent_work(tmp_path: Path) -> None:
+    """内部知识入口在背景、源码或Agent分析前无副作用拒绝新建。
+
+    Args:
+        tmp_path: 隔离系统、任务与知识目录。
+    Returns:
+        None；明确说明替代入口且没有产生草稿、正式节点或任务。
+    """
 
     application = _application(tmp_path)
 
-    with pytest.raises(KnowledgeValidationError, match="background and business terms"):
+    # 不使用历史样本helper，验证用户实际调用的入口保持退役。
+    with pytest.raises(KnowledgeValidationError, match="已停用"):
         application.knowledge.generate_drafts(
             KnowledgeGenerationBatchRequest(
                 system_id=SYSTEM_ID,
@@ -1247,10 +1324,13 @@ def test_object_draft_generation_requires_background_interview_gate(tmp_path: Pa
                 confirmed=True,
             )
         )
+    assert application.store.list_draft_batches(SYSTEM_ID) == []
+    assert application.store.list_nodes(SYSTEM_ID) == []
+    assert application.tasks.list_records(SYSTEM_ID) == []
 
 
 def test_term_edit_marks_only_affected_target_stale_then_background_marks_all(tmp_path: Path) -> None:
-    """术语优先精确标记目标，系统级背景变化才默认影响全部知识。
+    """术语和背景继续标记历史知识，但不把同一扫描的接口契约误判为过期。
 
     Args:
         tmp_path: Pytest提供的隔离源码、Manifest和知识真相目录。
@@ -1262,7 +1342,7 @@ def test_term_edit_marks_only_affected_target_stale_then_background_marks_all(tm
     application = _application(tmp_path)
     source_root = Path(application.store.get_system(SYSTEM_ID).source_path)
     entries = []
-    for class_name in ("TimeoutJob", "CallbackJob"):
+    for class_name in ("TimeoutFacade", "CallbackFacade"):
         source_path = source_root / f"{class_name}.java"
         source_path.write_text(
             f"package demo; class {class_name} {{ void execute() {{ process(); }} void process() {{}} }}",
@@ -1270,11 +1350,11 @@ def test_term_edit_marks_only_affected_target_stale_then_background_marks_all(tm
         )
         entries.append(
             EntryPoint(
-                entry_id=f"job:demo.{class_name}",
+                entry_id=f"facade:demo.{class_name}#execute",
                 system_id=SYSTEM_ID,
-                kind="job",
+                kind="facade",
                 display_name=class_name,
-                source_id=f"demo.{class_name}",
+                source_id=f"demo.{class_name}#execute",
                 source_path=str(source_path),
             )
         )
@@ -1292,8 +1372,9 @@ def test_term_edit_marks_only_affected_target_stale_then_background_marks_all(tm
     application.skip_background_interview(SYSTEM_ID)
     _enable_codex(application)
     for entry in entries:
-        # 产品入口一次只处理一个目标；测试依次生成两项以建立术语过期范围基线。
-        application.knowledge.generate_drafts(
+        # 显式建立两份历史知识样本，以验证术语编辑仍只影响其原目标。
+        _historical_draft_fixture(
+            application,
             KnowledgeGenerationBatchRequest(
                 system_id=SYSTEM_ID,
                 target_ids=[entry.entry_id],
@@ -1315,8 +1396,8 @@ def test_term_edit_marks_only_affected_target_stale_then_background_marks_all(tm
     )
     term_catalog = application.get_scan_catalog(SYSTEM_ID, "latest")
     term_statuses = {target.target_id: target.knowledge_status for target in term_catalog.targets}
-    assert term_statuses[entries[0].entry_id].value == "STALE"
-    assert term_statuses[entries[1].entry_id].value == "GENERATED"
+    assert application.get_knowledge_context(SYSTEM_ID).stale_target_ids == [entries[0].entry_id]
+    assert all(term_statuses[entry.entry_id].value == "CODE_ONLY" for entry in entries)
 
     application.save_knowledge_background(
         SYSTEM_ID,
@@ -1324,7 +1405,13 @@ def test_term_edit_marks_only_affected_target_stale_then_background_marks_all(tm
     )
     background_catalog = application.get_scan_catalog(SYSTEM_ID, "latest")
     background_statuses = {target.target_id: target.knowledge_status for target in background_catalog.targets}
-    assert all(background_statuses[entry.entry_id].value == "STALE" for entry in entries)
+    assert set(application.get_knowledge_context(SYSTEM_ID).stale_target_ids) == {entry.entry_id for entry in entries}
+    assert all(background_statuses[entry.entry_id].value == "CODE_ONLY" for entry in entries)
+    # 页面契约来源仍是当前扫描，历史长文的上下文变化不要求重新生成结构事实。
+    detail = application.get_knowledge_target_detail(SYSTEM_ID, entries[0].entry_id)
+    assert detail.operation_contract.source_scan_id == manifest.scan_id
+    assert detail.operation_contract.source_commit == baseline.commit
+    assert detail.operation_contract.status == "READY"
 
 
 def test_generation_request_rejects_multiple_targets(tmp_path: Path) -> None:
@@ -1443,19 +1530,19 @@ def _prepare_codex_client_handoff_system(
     return application, manifest, target_id, source_file, app_server
 
 
-def test_native_knowledge_prepare_uses_complete_latest_when_newer_history_is_partial(
+def test_retired_native_knowledge_prepare_rejects_even_complete_latest(
     tmp_path: Path,
 ) -> None:
-    """页面浏览较新的partial投影时仍可用完整latest准备知识任务。
+    """完整latest和较新partial都不能重新开启已退役的内部知识准备流程。
 
     Args:
         tmp_path: pytest隔离的源码、扫描历史、草稿和任务目录。
 
     Returns:
-        None；latest请求冻结完整基线且显式partial请求仍被后端拒绝时通过。
+        None；partial保持原基线错误，完整latest明确退役且没有生成业务任务或草稿。
 
     Side Effects:
-        只在测试知识根写入一个不发布为latest的partial Manifest和一个等待任务。
+        只在测试知识根写入一个不发布为latest的partial Manifest。
     """
 
     application, complete_manifest, target_id, _source_file, app_server = (
@@ -1479,7 +1566,7 @@ def test_native_knowledge_prepare_uses_complete_latest_when_newer_history_is_par
     assert next(item for item in history if item.latest).scan_id == complete_manifest.scan_id
 
     with TestClient(create_app(application), client=("127.0.0.1", 50000)) as client:
-        # 先证明显式partial仍被服务端拒绝，再证明页面使用latest可正常创建任务。
+        # 不调用历史夹具构建器，直接验证用户能访问到的两个实际请求均无业务写入。
         rejected = client.post(
             f"/api/v2/systems/{SYSTEM_ID}/knowledge/generations",
             json={
@@ -1501,11 +1588,12 @@ def test_native_knowledge_prepare_uses_complete_latest_when_newer_history_is_par
             },
         )
 
-    assert prepared.status_code == 202
-    assert prepared.json()["handoff"]["scan_id"] == complete_manifest.scan_id
-    assert prepared.json()["handoff"]["requested_scan_id"] == "latest"
+    assert prepared.status_code == 400
+    assert "已停用" in prepared.json()["error"]["message"]
     assert rejected.status_code == 400
     assert "complete published scan baseline" in rejected.json()["error"]["message"]
+    assert application.store.list_draft_batches(SYSTEM_ID) == []
+    assert application.tasks.list_records(SYSTEM_ID) == []
     assert app_server.call_count == 0
 
 
@@ -1616,7 +1704,7 @@ def _prepare_native_knowledge_task(
     request_id: str,
     intent: str = "initial",
 ) -> TaskRecord:
-    """准备一个不创建外部Agent线程的持久知识任务。
+    """建立退役前的持久知识任务样本，保留真实文件用于历史恢复兼容验证。
 
     Args:
         application: 使用隔离知识仓库的OpenTest应用。
@@ -1629,13 +1717,16 @@ def _prepare_native_knowledge_task(
         已持久化且可由当前或新原生Agent会话恢复的等待任务。
     """
 
-    # 所有旧客户端测试统一经过正式prepare入口，避免误测已下线的App Server写路径。
-    prepared = application.prepare_native_knowledge_generation(
-        manifest.system_id,
-        target_id,
-        manifest.scan_id,
-        intent,
-        request_id,
+    # 只在夹具建立时调用私有历史构建器，返回后正式入口继续拒绝新的内部知识任务。
+    prepared = _historical_native_fixture(
+        application,
+        NativeKnowledgePreparationRequest(
+            system_id=manifest.system_id,
+            target_id=target_id,
+            scan_id=manifest.scan_id,
+            intent=intent,
+            request_id=request_id,
+        ),
     )
     assert prepared["status"] == "prepared"
     task = prepared["task"]
@@ -1746,7 +1837,7 @@ def test_native_knowledge_prepare_is_idempotent_and_freezes_analysis_context(
 
 
 def test_native_page_prepare_never_exposes_old_turn_start_api(tmp_path: Path) -> None:
-    """网页prepare应复用持久任务且旧后台turn启动路由必须下线。
+    """网页可恢复已经存在的历史任务，且旧后台turn启动路由必须下线。
 
     Args:
         tmp_path: pytest隔离的源码、OpenTest状态与假App Server。
@@ -1756,6 +1847,8 @@ def test_native_page_prepare_never_exposes_old_turn_start_api(tmp_path: Path) ->
     """
 
     application, manifest, target_id, _source_file, app_server = _prepare_codex_client_handoff_system(tmp_path)
+    # 先建立历史样本；HTTP仅重读相同请求的旧回执，不能创建新的内部知识。
+    _prepare_native_knowledge_task(application, manifest, target_id, "native-page-prepare-request-0001")
     with TestClient(create_app(application), client=("127.0.0.1", 50000)) as client:
         request = {
             "system_id": SYSTEM_ID,
@@ -1971,9 +2064,12 @@ def test_native_candidate_completion_gaps_reuse_one_task_without_round_limit(tmp
     assert app_server.call_count == 0
     assert application.store.list_nodes(SYSTEM_ID) == []
     refreshed_workflow = application.get_knowledge_workflow(SYSTEM_ID)
-    assert refreshed_workflow.active_generation_status == "waiting_for_client"
-    assert refreshed_workflow.generation_blocked_reason == "waiting_for_client"
-    assert refreshed_workflow.next_action == "当前原生Agent可继续补齐确定性缺口并重新提交"
+    refreshed_task = application.get_task(task.task_id)
+    refreshed_context = application.get_task_context(task.task_id)
+    assert refreshed_task.status == TaskStatus.WAITING_FOR_CLIENT
+    assert refreshed_context["validation_issues"]
+    assert refreshed_workflow.generation_blocked_reason == ""
+    assert "直接准备数据或生成Case" in refreshed_workflow.next_action
 
 
 def test_native_knowledge_question_persists_and_new_session_resumes_same_task(tmp_path: Path) -> None:
@@ -2083,7 +2179,8 @@ def test_native_knowledge_question_persists_and_new_session_resumes_same_task(tm
     recovered_context = application.get_task_context(task.task_id)
     assert recovered_context["questions"][0].title == "查询为空时是否应重试"
     workflow_snapshot = application.get_knowledge_workflow(SYSTEM_ID)
-    assert workflow_snapshot.next_action == "在当前原生Agent会话回答已持久化的高影响业务问题"
+    assert workflow_snapshot.generation_blocked_reason == ""
+    assert "直接准备数据或生成Case" in workflow_snapshot.next_action
 
     # 客户端省略问题不能冒充用户回答；“暂不确定”也必须保持原问题开放。
     completed_candidate = KnowledgeClientCandidateEnvelope(
@@ -2844,27 +2941,36 @@ def test_native_prepare_failure_after_batch_uses_existing_recovery(
     monkeypatch.setattr(application.knowledge, "_initialize_client_run", fail_run_initialization)
     request_id = "native-run-init-failure-0001"
     with pytest.raises(OSError, match="simulated client run initialization failure"):
-        application.prepare_native_knowledge_generation(
-            SYSTEM_ID,
-            target_id,
-            manifest.scan_id,
-            "initial",
-            request_id,
+        _historical_native_fixture(
+            application,
+            NativeKnowledgePreparationRequest(
+                system_id=SYSTEM_ID,
+                target_id=target_id,
+                scan_id=manifest.scan_id,
+                intent="initial",
+                request_id=request_id,
+            ),
         )
 
-    recovered = application.prepare_native_knowledge_generation(
-        SYSTEM_ID,
-        target_id,
-        manifest.scan_id,
-        "initial",
-        request_id,
+    recovered = _historical_native_fixture(
+        application,
+        NativeKnowledgePreparationRequest(
+            system_id=SYSTEM_ID,
+            target_id=target_id,
+            scan_id=manifest.scan_id,
+            intent="initial",
+            request_id=request_id,
+        ),
     )
-    repeated = application.prepare_native_knowledge_generation(
-        SYSTEM_ID,
-        target_id,
-        manifest.scan_id,
-        "initial",
-        request_id,
+    repeated = _historical_native_fixture(
+        application,
+        NativeKnowledgePreparationRequest(
+            system_id=SYSTEM_ID,
+            target_id=target_id,
+            scan_id=manifest.scan_id,
+            intent="initial",
+            request_id=request_id,
+        ),
     )
 
     assert recovered["task"].task_id == repeated["task"].task_id
@@ -2915,12 +3021,15 @@ def test_skill_knowledge_prepare_recovers_same_batch_when_task_write_initially_f
     monkeypatch.setattr(application.tasks, "create_waiting_task", fail_first_task_write)
 
     with pytest.raises(OSError, match="simulated skill task write failure"):
-        application.prepare_skill_knowledge_target(
-            SYSTEM_ID,
-            target_id,
-            manifest.scan_id,
-            "initial",
-            "skill-request-task-recovery-0001",
+        _historical_native_fixture(
+            application,
+            NativeKnowledgePreparationRequest(
+                system_id=SYSTEM_ID,
+                target_id=target_id,
+                scan_id=manifest.scan_id,
+                intent="initial",
+                request_id="skill-request-task-recovery-0001",
+            ),
         )
 
     batches_after_failure = application.store.list_draft_batches(SYSTEM_ID)
@@ -2928,19 +3037,25 @@ def test_skill_knowledge_prepare_recovers_same_batch_when_task_write_initially_f
     failed_handoff = batches_after_failure[0].client_handoff
     assert failed_handoff is not None
 
-    recovered = application.prepare_skill_knowledge_target(
-        SYSTEM_ID,
-        target_id,
-        manifest.scan_id,
-        "initial",
-        "skill-request-task-recovery-0001",
+    recovered = _historical_native_fixture(
+        application,
+        NativeKnowledgePreparationRequest(
+            system_id=SYSTEM_ID,
+            target_id=target_id,
+            scan_id=manifest.scan_id,
+            intent="initial",
+            request_id="skill-request-task-recovery-0001",
+        ),
     )
-    repeated = application.prepare_skill_knowledge_target(
-        SYSTEM_ID,
-        target_id,
-        manifest.scan_id,
-        "initial",
-        "skill-request-task-recovery-0001",
+    repeated = _historical_native_fixture(
+        application,
+        NativeKnowledgePreparationRequest(
+            system_id=SYSTEM_ID,
+            target_id=target_id,
+            scan_id=manifest.scan_id,
+            intent="initial",
+            request_id="skill-request-task-recovery-0001",
+        ),
     )
 
     assert recovered["task"].task_id == failed_handoff.task_id
@@ -2988,22 +3103,28 @@ def test_skill_knowledge_prepare_rejects_request_id_reuse_with_different_paramet
         _prepare_codex_client_handoff_system(tmp_path)
     )
     request_id = "skill-request-idempotency-conflict-0001"
-    prepared = application.prepare_skill_knowledge_target(
-        SYSTEM_ID,
-        target_id,
-        manifest.scan_id,
-        "initial",
-        request_id,
+    prepared = _historical_native_fixture(
+        application,
+        NativeKnowledgePreparationRequest(
+            system_id=SYSTEM_ID,
+            target_id=target_id,
+            scan_id=manifest.scan_id,
+            intent="initial",
+            request_id=request_id,
+        ),
     )
     requested_scan = manifest.scan_id if scan_id == "original" else scan_id
 
     with pytest.raises(ScopeViolationError, match="different parameters"):
-        application.prepare_skill_knowledge_target(
-            SYSTEM_ID,
-            f"{target_id}{target_suffix}",
-            requested_scan,
-            intent,
-            request_id,
+        _historical_native_fixture(
+            application,
+            NativeKnowledgePreparationRequest(
+                system_id=SYSTEM_ID,
+                target_id=f"{target_id}{target_suffix}",
+                scan_id=requested_scan,
+                intent=intent,
+                request_id=request_id,
+            ),
         )
 
     assert len(application.store.list_draft_batches(SYSTEM_ID)) == 1
@@ -3527,14 +3648,15 @@ def test_agent_failure_finishes_partial_and_preserves_code_facts(tmp_path: Path)
     application.agent_runner = runner
     application.knowledge.runner = runner
 
-    task = application.submit_knowledge_generation_batch(
+    task = _historical_task_fixture(
+        application,
         KnowledgeGenerationBatchRequest(
             system_id=SYSTEM_ID,
             target_ids=[entry_id],
             scan_id=manifest.scan_id,
             agent="codex",
             confirmed=True,
-        )
+        ),
     )
     current = application.tasks.get(task.task_id)
     for _ in range(200):
@@ -3610,14 +3732,15 @@ def test_deterministic_trace_failure_finishes_failed_without_publishing_facts(
         raise KnowledgeValidationError("simulated deterministic trace failure")
 
     monkeypatch.setattr(application.knowledge.tracer, "trace", fail_trace)
-    task = application.submit_knowledge_generation_batch(
+    task = _historical_task_fixture(
+        application,
         KnowledgeGenerationBatchRequest(
             system_id=SYSTEM_ID,
             target_ids=[entry_id],
             scan_id=manifest.scan_id,
             agent="codex",
             confirmed=True,
-        )
+        ),
     )
     current = application.tasks.get(task.task_id)
     for _ in range(200):
@@ -3686,7 +3809,7 @@ def test_recovered_invalid_agent_envelope_finishes_partial_and_publishes_code_fa
 
     # 首次运行只保存确定性检查点；恢复阶段消费同一run_id的非法终态证据。
     with pytest.raises(AgentObserverDetachedError):
-        application.knowledge.generate_drafts(request)
+        _historical_draft_fixture(application, request)
     workflow = application.store.list_draft_batches(SYSTEM_ID)[0]
     original_run_id = workflow.active_run_id
 
@@ -3826,7 +3949,7 @@ def test_refresh_snapshot_restores_running_task_and_duplicate_submit_is_rejected
     )
     client = TestClient(create_app(application))
 
-    task = application.submit_knowledge_generation_batch(request)
+    task = _historical_task_fixture(application, request)
     assert task.progress is not None
     assert task.progress.current_item == entry_id
     assert task.progress.agent == "codex"
@@ -3835,15 +3958,15 @@ def test_refresh_snapshot_restores_running_task_and_duplicate_submit_is_rejected
         first_snapshot = application.get_knowledge_workflow(SYSTEM_ID)
         refreshed_snapshot = application.get_knowledge_workflow(SYSTEM_ID)
 
-        assert first_snapshot.active_generation_task_id == task.task_id
-        assert refreshed_snapshot.active_generation_task_id == task.task_id
-        assert refreshed_snapshot.active_generation_target_id == entry_id
-        # 旧内部Runner任务可读，但产品快照不再把其供应商伪装成当前原生会话配置。
-        assert refreshed_snapshot.active_generation_agent == ""
-        assert refreshed_snapshot.active_generation_status == "running"
-        assert refreshed_snapshot.generation_blocked_reason == "running"
+        # 历史进度归统一任务记录；知识页面的SOP不再因旧长文任务运行而阻塞。
+        current_task = application.get_task(task.task_id)
+        assert first_snapshot.latest_task.task_id == task.task_id
+        assert refreshed_snapshot.latest_task.task_id == task.task_id
+        assert current_task.progress.current_item == entry_id
+        assert current_task.status == TaskStatus.RUNNING
+        assert refreshed_snapshot.generation_blocked_reason == ""
         with pytest.raises(ScopeViolationError, match="原知识任务仍在运行"):
-            application.submit_knowledge_generation_batch(request)
+            _historical_task_fixture(application, request)
         # 已下线的旧HTTP生成入口必须拒绝写入，且不能进入Runner形成第二次费用调用。
         duplicate = client.post(
             f"/api/v2/systems/{SYSTEM_ID}/knowledge/generation-batches",
@@ -3857,7 +3980,7 @@ def test_refresh_snapshot_restores_running_task_and_duplicate_submit_is_rejected
         client.close()
     _wait_for_task(application, task.task_id)
     with pytest.raises(ScopeViolationError, match="知识已有效"):
-        application.submit_knowledge_generation_batch(request)
+        _historical_task_fixture(application, request)
     assert runner.call_count == 1
 
 
@@ -3910,7 +4033,7 @@ def test_bulk_generation_publishes_code_and_agent_knowledge_without_generic_ques
         confirmed=True,
     )
     assert request.agent == "codex"
-    task = application.submit_knowledge_generation_batch(request)
+    task = _historical_task_fixture(application, request)
     _wait_for_task(application, task.task_id)
     completed = application.tasks.get(task.task_id)
     batch = application.store.read_draft_batch(SYSTEM_ID, completed.result["batch_id"])
@@ -3945,7 +4068,7 @@ def test_bulk_generation_publishes_code_and_agent_knowledge_without_generic_ques
 
     # 同一源码快照再次生成时继承稳定问题ID的人工答案，不得重新形成开放问题。
     # 产品入口会阻止有效目标重复付费；此处直接调用领域服务，仅验证内部重算仍保护人工内容。
-    repeated_batch = application.knowledge.generate_drafts(request, runner=_KnowledgeAgentRunner())
+    repeated_batch = _historical_draft_fixture(application, request, runner=_KnowledgeAgentRunner())
     assert application.get_knowledge_question_cycle(SYSTEM_ID, refresh=True).questions == []
     assert repeated_batch.status == "PUBLISHED"
     assert repeated_batch.questions == []
@@ -4071,7 +4194,8 @@ def test_agent_question_answer_continues_original_session_and_preserves_sources(
     application.skip_background_interview(SYSTEM_ID)
     runner = _WaitingContinuationAgentRunner()
 
-    waiting = application.knowledge.generate_drafts(
+    waiting = _historical_draft_fixture(
+        application,
         KnowledgeGenerationBatchRequest(
             system_id=SYSTEM_ID,
             target_ids=[target_id],
@@ -4088,22 +4212,21 @@ def test_agent_question_answer_continues_original_session_and_preserves_sources(
     assert question.agent_run_id == first_run_id
     assert all(node.status.value == "code_verified" for node, _, _ in application.store.list_nodes(SYSTEM_ID))
     waiting_snapshot = application.get_knowledge_workflow(SYSTEM_ID)
-    assert waiting_snapshot.active_generation_target_id == target_id
-    assert waiting_snapshot.active_generation_agent == ""
-    assert waiting_snapshot.active_generation_status == "waiting_for_input"
-    assert waiting_snapshot.generation_blocked_reason == "waiting_for_input"
+    assert waiting.active_target_id == target_id
+    assert waiting_snapshot.generation_blocked_reason == ""
     application.runtime_settings.write(RuntimeToolSettings(knowledge_agent="codex"))
     application.agent_runner = runner
     application.knowledge.runner = runner
     with pytest.raises(ScopeViolationError, match="正在等待回答"):
-        application.submit_knowledge_generation_batch(
+        _historical_task_fixture(
+            application,
             KnowledgeGenerationBatchRequest(
                 system_id=SYSTEM_ID,
                 target_ids=[target_id],
                 scan_id=manifest.scan_id,
                 agent="codex",
                 confirmed=True,
-            )
+            ),
         )
     assert len(runner.requests) == 1
 
@@ -4186,7 +4309,8 @@ def test_interrupted_continuation_keeps_original_question_scope_for_retry(tmp_pa
     application.store.update_source_baseline(SYSTEM_ID, baseline)
     application.skip_background_interview(SYSTEM_ID)
     runner = _InterruptedContinuationAgentRunner()
-    waiting = application.knowledge.generate_drafts(
+    waiting = _historical_draft_fixture(
+        application,
         KnowledgeGenerationBatchRequest(
             system_id=SYSTEM_ID,
             target_ids=[target_id],
@@ -5283,6 +5407,12 @@ def test_semantic_enum_rescan_preserves_ignored_human_state(tmp_path: Path) -> N
     assert ignored_digest == empty_digest
 
     stale_candidate = refreshed.model_copy(update={"status": KnowledgeContextCandidateStatus.STALE})
+    # 当前扫描仍存在的枚举会被自动恢复；要验证消失状态，先发布确实移除了枚举的完整扫描。
+    removed_manifest = manifest.model_copy(update={
+        "scan_id": "scan-enum-removed", "semantic_analysis": SemanticAnalysisResult(system_id=SYSTEM_ID),
+    })
+    artifact_store.write_manifest(removed_manifest)
+    artifact_store.publish_latest(SYSTEM_ID, removed_manifest.scan_id)
     application.store.write_context(empty_context.model_copy(update={"candidates": [stale_candidate]}))
     assert application.get_knowledge_target_detail(
         SYSTEM_ID,
@@ -5304,10 +5434,10 @@ def test_knowledge_target_detail_uses_explicit_historical_scan(tmp_path: Path) -
 
     application = _application(tmp_path)
     source_root = Path(application.store.get_system(SYSTEM_ID).source_path)
-    source_file = source_root / "HistoricalQueryJob.java"
-    source_file.write_text("package demo; class HistoricalQueryJob { void execute() {} }\n", encoding="utf-8")
+    source_file = source_root / "HistoricalQueryFacade.java"
+    source_file.write_text("package demo; class HistoricalQueryFacade { void query() {} }\n", encoding="utf-8")
     baseline = application.knowledge.git_repository.capture(source_root)
-    target_id = "job:demo.HistoricalQueryJob"
+    target_id = "facade:demo.HistoricalQueryFacade#query"
     old_manifest = ScanManifest(
         scan_id="scan-historical-detail-old",
         system_id=SYSTEM_ID,
@@ -5316,9 +5446,9 @@ def test_knowledge_target_detail_uses_explicit_historical_scan(tmp_path: Path) -
             EntryPoint(
                 entry_id=target_id,
                 system_id=SYSTEM_ID,
-                kind="job",
-                display_name="历史查询任务",
-                source_id="demo.HistoricalQueryJob",
+                kind="facade",
+                display_name="历史查询接口",
+                source_id="demo.HistoricalQueryFacade#query",
                 source_path=str(source_file),
             )
         ],
@@ -5341,6 +5471,10 @@ def test_knowledge_target_detail_uses_explicit_historical_scan(tmp_path: Path) -
     )
 
     assert historical.target.target_id == target_id
+    # 明确历史扫描时契约也必须绑定旧Manifest，不得混入latest目录的来源。
+    assert historical.operation_contract.source_scan_id == old_manifest.scan_id
+    assert historical.operation_contract.source_commit == old_manifest.baseline.commit
+    assert historical.published_nodes == []
     with pytest.raises(KnowledgeNotFoundError, match="target"):
         application.get_knowledge_target_detail(SYSTEM_ID, target_id)
 
@@ -5553,3 +5687,49 @@ def test_state_background_scope_maps_machine_and_transitions_without_duplicate_s
         transition.transition_id,
     }
     assert application.list_unified_knowledge_questions(SYSTEM_ID) == []
+
+
+def test_context_read_normalizes_unused_legacy_enum_without_rescan(tmp_path: Path) -> None:
+    """无入口引用的历史枚举按已有扫描自动归类，并保留人工备注及忽略选择。
+
+    Args:
+        tmp_path: 隔离知识、扫描和候选目录。
+    """
+
+    application = _application(tmp_path)
+    source_root = Path(application.store.get_system(SYSTEM_ID).source_path)
+    reference = SourceReference(path="AutoPricingEnum.java", symbol="demo.AutoPricingEnum", line=1)
+    legacy = application.knowledge_discovery._candidate(
+        SYSTEM_ID, KnowledgeContextCandidateKind.BUSINESS_TERM, "AutoPricingEnum", [], [reference],
+    ).model_copy(update={"status": KnowledgeContextCandidateStatus.STALE, "business_meaning": "旧人工备注"})
+    context = application.get_knowledge_context(SYSTEM_ID)
+    application.store.write_context(context.model_copy(update={"candidates": [legacy]}))
+    manifest = ScanManifest(
+        scan_id="scan-unused-enum", system_id=SYSTEM_ID,
+        baseline=application.knowledge.git_repository.capture(source_root), entries=[],
+        semantic_analysis=SemanticAnalysisResult(system_id=SYSTEM_ID, enum_values=[SemanticEnumValue(
+            enum_type="demo.AutoPricingEnum", code="YES", display_name="是", source_ref=reference,
+        )]),
+    )
+    artifacts = SourceScanArtifactStore(application.knowledge_root)
+    artifacts.write_manifest(manifest)
+    artifacts.publish_latest(SYSTEM_ID, manifest.scan_id)
+    # 禁止发现重扫；普通知识读取必须只消费已有语义事实完成迁移。
+    with patch.object(application.knowledge_discovery, "discover", side_effect=AssertionError("must not rescan")):
+        normalized = application.get_knowledge_context(SYSTEM_ID)
+    enum = next(item for item in normalized.candidates if item.candidate_id == legacy.candidate_id)
+    assert enum.knowledge_form == "BUSINESS_ENUM"
+    assert enum.business_meaning == "旧人工备注"
+    assert enum.enum_values[0].business_meaning == "是"
+    assert enum.affected_target_ids == []
+    application.store.write_context(normalized.model_copy(update={"candidates": [enum.model_copy(update={
+        "status": KnowledgeContextCandidateStatus.IGNORED, "business_name": "人工枚举名称",
+        "business_name_source": KnowledgeFieldSource.USER_CONFIRMED,
+    })]}))
+    ignored = application.get_knowledge_context(SYSTEM_ID)
+    assert ignored.candidates[0].status == KnowledgeContextCandidateStatus.IGNORED
+    assert ignored.candidates[0].business_name == "人工枚举名称"
+    # 重读不因更新时间变化反复持久化，避免打开页面制造额外工作区变更。
+    with patch.object(application.store, "write_context", wraps=application.store.write_context) as write:
+        application.get_knowledge_context(SYSTEM_ID)
+        write.assert_not_called()

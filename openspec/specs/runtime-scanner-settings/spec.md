@@ -24,21 +24,16 @@ TBD - created by archiving change multi-system-console-reliability-and-reset. Up
 - **THEN** 后续扫描立即使用新设置，无需重启 Uvicorn
 
 ### Requirement: 扫描动态读取本地运行与系统网关设置
+系统 SHALL 在扫描提交时动态解析scriptgen路径和资源配置环境；系统 SHALL NOT 读取HTTP Job网关或Labrador Token，不生成旧HTTP Job执行入口。
 
-系统 SHALL 在每次扫描提交时动态解析scriptgen运行路径和当前系统QA Facade网关前缀。显式扫描前缀优先；未显式提供时使用当前系统本地设置。系统不得把Labrador Token传入扫描请求或共享产物。
+#### Scenario: 普通DSF系统无HTTP网关扫描
+- **WHEN** 用户未配置旧HTTP Job Token或网关而提交DSF系统扫描
+- **THEN** Facade及MQ发现正常进行
+- **AND** `CommonFacade#executeJob` 等DSF方法仍作为Facade保留
 
-#### Scenario: 普通DSF系统使用注册时保存的网关扫描
-
-- **WHEN** 用户已为普通DSF系统保存QA Facade网关前缀并提交扫描
-- **THEN** scriptgen命令的`--facade-http-prefix`使用该系统前缀
-- **AND** 生成的Facade工具能够构造默认URL
-- **AND** 扫描参数、任务和Manifest不包含Labrador Token
-
-#### Scenario: 缺少网关时扫描前阻塞
-
-- **WHEN** 扫描请求与本地系统设置都没有QA Facade网关前缀
-- **THEN** 系统在启动scriptgen前返回可操作的配置错误
-- **AND** 不发布失败扫描为latest Manifest
+#### Scenario: 历史HTTP Job产物被调用
+- **WHEN** 客户端尝试执行旧job_http_trigger操作
+- **THEN** 系统拒绝已退役路径，且不调用HTTP脚本
 
 ### Requirement: Resource configuration environment is explicit and scan-bound
 

@@ -115,19 +115,13 @@ enum_values:
     line: 54
     commit: ''
     content_digest: ''
-suggested_meaning: 枚举名称和值默认采用源码注释；缺少注释时回退代码标识，可再人工修订。
+suggested_meaning: 枚举名称和值只读展示源码注释；缺少注释时展示代码标识，无需人工补充。
 code_meaning: 订单状态错误，当时状态为{0}（LY0510303000）；查询退改订单详情失败（LY0510303001）；存在申请退订的乘客不可退（LY0510303002）；报价数据不全，申请失败（LY0510303003）；申请退票请求失败，申请失败（LY0510303004）；退款订单被取消，申请失败（LY0510303006）；申请退票请求失败，退票失败（LY0510303007）；确认退款请求失败，退票失败（LY0510303008）；退款订单被取消，退票失败（LY0510303009）
 unresolved_codes: []
 business_meaning: 代码注释有
 status: CONFIRMED
 merged_into_candidate_id: ''
 source_refs:
-- repository: ''
-  path: app/model/src/main/java/com/ly/flight/chainsaas/refund/enums/CallbackErrorCodeEnum.java
-  symbol: com.ly.flight.chainsaas.refund.enums.CallbackErrorCodeEnum
-  line: 7
-  commit: 99b494d7824eab12ffc237ae7e945aac79d61411
-  content_digest: 5ae837b5eb21d061ebd77b439a52f7b91d49c2e3eca16c6450db447961f5bb7b
 - repository: ''
   path: app/model/src/main/java/com/ly/flight/chainsaas/refund/enums/CallbackErrorCodeEnum.java
   symbol: com.ly.flight.chainsaas.refund.enums.CallbackErrorCodeEnum#LY0510303000
@@ -185,6 +179,6 @@ source_refs:
 affected_target_ids:
 - facade:com.ly.flight.chainsaas.refund.facade.CallbackFacade#refundApplyCallback
 - facade:com.ly.flight.chainsaas.refund.facade.CallbackFacade#refundConfirmCallback
-evidence_digest: 39b3036ce72f92ad34965fac4cf11cc44bc059a57cc4ef21cbfb93eb30cec776
+evidence_digest: 0a7153c55a7311d1da7471d920232b1c3d4ac6a3b7b3f448ceccf3c8aa3c0a6a
 discovered_at: '2026-08-13T10:23:54.669293Z'
-updated_at: '2026-09-02T07:26:12.781993Z'
+updated_at: '2026-09-19T04:25:34.173187Z'

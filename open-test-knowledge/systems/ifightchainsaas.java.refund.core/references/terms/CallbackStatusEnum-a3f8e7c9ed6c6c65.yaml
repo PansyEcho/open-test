@@ -31,19 +31,13 @@ enum_values:
     line: 11
     commit: ''
     content_digest: ''
-suggested_meaning: 枚举名称和值默认采用源码注释；缺少注释时回退代码标识，可再人工修订。
+suggested_meaning: 枚举名称和值只读展示源码注释；缺少注释时展示代码标识，无需人工补充。
 code_meaning: 失败（FALSE）；成功（TRUE）
 unresolved_codes: []
 business_meaning: ''
 status: CODE_VERIFIED
 merged_into_candidate_id: ''
 source_refs:
-- repository: ''
-  path: app/model/src/main/java/com/ly/flight/chainsaas/refund/enums/CallbackStatusEnum.java
-  symbol: com.ly.flight.chainsaas.refund.enums.CallbackStatusEnum
-  line: 6
-  commit: 99b494d7824eab12ffc237ae7e945aac79d61411
-  content_digest: 22e0626b266d1debd4c52c60f34d9bb4ca64d4cda02df71cf48aa0bc24a82c41
 - repository: ''
   path: app/model/src/main/java/com/ly/flight/chainsaas/refund/enums/CallbackStatusEnum.java
   symbol: com.ly.flight.chainsaas.refund.enums.CallbackStatusEnum#FALSE
@@ -59,6 +53,6 @@ source_refs:
 affected_target_ids:
 - facade:com.ly.flight.chainsaas.refund.facade.CallbackFacade#refundApplyCallback
 - facade:com.ly.flight.chainsaas.refund.facade.CallbackFacade#refundConfirmCallback
-evidence_digest: 838e61c12364c565c4351b265cbf9e5897d8b003682e09172129cd2c50141cd7
+evidence_digest: a71b762391119e4eb596b0949c0c206652254e4f05d52487d1254b36aa145c00
 discovered_at: '2026-08-13T10:23:54.669299Z'
-updated_at: '2026-09-02T07:26:12.782037Z'
+updated_at: '2026-09-19T04:25:34.173243Z'

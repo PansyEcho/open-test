@@ -43,11 +43,12 @@ def _execution_service(tmp_path, pool):
     return service, generation
 
 
-def test_background_execution_returns_identity_and_blocks_duplicate_while_running(tmp_path):
+def test_background_execution_returns_identity_and_blocks_duplicate_while_running(tmp_path, monkeypatch):
     """远端调用仍在执行时立即返回可读身份，同Generation并发点击不能重放写请求。
 
     Args:
         tmp_path: Execution存储目录。
+        monkeypatch: 仅替换本测试的远端执行边界，仍验证真实后台线程及持久记录。
     Returns:
         None；真实线程同步、持久状态与并发门禁成立时通过。
     """
@@ -63,6 +64,9 @@ def test_background_execution_returns_identity_and_blocks_duplicate_while_runnin
         return [CaseVariantExecutionV4(variant_id=published.variants[0].variant_id, status="COMPLETED")]
 
     service.executor.execute.side_effect = execute
+    # 每次执行现独立构造固定范围执行器；在构造边界注入暂停替身，避免绕过真实线程池测试。
+    service._runtime_capabilities = Mock(return_value=[])
+    monkeypatch.setattr("opentest.application.case_template_v4.CaseTemplateExecutorV4", Mock(return_value=service.executor))
     try:
         running = service.execute_generation(SYSTEM_ID, generation.generation_id,
                                              CaseGenerationExecutionRequestV4(), background=True)
