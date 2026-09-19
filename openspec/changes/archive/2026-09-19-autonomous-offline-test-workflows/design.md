@@ -1,0 +1,11 @@
+# Design
+
+复用现有Maven/JDK工具解析精确classpath，扫描Spring实际装配的资源与被调用依赖类型。扫描登记与按需解析使用同一操作模型及契约；依赖坐标、调用点、装配位置和远程坐标作为已有扫描与契约资产的一部分保存，不建立独立关系数据库。
+
+已注册提供方采用自身逻辑环境Profile；未注册但由调用方依赖证明的远程操作使用调用方已配置的非生产Profile。调用方身份与远程gs/service/version/action分别保留，不以系统名猜测路由。
+
+任务工具复用统一Operation执行与数据执行器。新Case默认generate_and_verify，明确generate_only禁止生成任务的QA工具；正式Generation不可变，修订使用关联后继。共享函数和Generation保存选中操作的完整固定定义，后续目录变化不修改既有执行计划。
+
+自然语言操作读取独立契约与字段证据；unknown不等于optional。具体请求去重不限制一个业务目标包含多次必要查询、准备和诊断修正。结果未知先查询，最终状态以响应和回查共同确认。
+
+真实createOrder试跑暴露订票日期 `yyyy-MM-dd HH:mm:ss.SSS` 与退票DateConverter不兼容。复用现有DataFunctionStep增加`format_datetime`，输入/输出格式显式固定，仅转换已取出的时间字符串；不改变订单身份、断言或引入脚本执行。草稿试跑使用现有独立数据执行任务记录进程所有权，重启恢复保留原请求和已完成步骤。

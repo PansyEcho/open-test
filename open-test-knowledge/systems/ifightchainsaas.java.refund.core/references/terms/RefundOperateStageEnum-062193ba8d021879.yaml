@@ -1,0 +1,74 @@
+candidate_id: candidate:business_term:062193ba8d021879
+system_id: ifightchainsaas.java.refund.core
+kind: BUSINESS_TERM
+knowledge_form: BUSINESS_ENUM
+name: RefundOperateStageEnum
+business_name: 退票操作阶段
+business_name_source: CODE_DEFAULT
+business_name_known_unknown: false
+enum_values:
+- code: CONFIRM
+  business_meaning: 退票确认
+  source: CODE_DEFAULT
+  known_unknown: false
+  confidence: 0.95
+  source_refs:
+  - repository: ''
+    path: app/model/src/main/java/com/ly/flight/chainsaas/refund/enums/RefundOperateStageEnum.java
+    symbol: com.ly.flight.chainsaas.refund.enums.RefundOperateStageEnum#CONFIRM
+    line: 16
+    commit: ''
+    content_digest: ''
+- code: RESHOP
+  business_meaning: 核价阶段
+  source: CODE_DEFAULT
+  known_unknown: false
+  confidence: 0.95
+  source_refs:
+  - repository: ''
+    path: app/model/src/main/java/com/ly/flight/chainsaas/refund/enums/RefundOperateStageEnum.java
+    symbol: com.ly.flight.chainsaas.refund.enums.RefundOperateStageEnum#RESHOP
+    line: 11
+    commit: ''
+    content_digest: ''
+- code: VOIDING
+  business_meaning: 废票
+  source: CODE_DEFAULT
+  known_unknown: false
+  confidence: 0.95
+  source_refs:
+  - repository: ''
+    path: app/model/src/main/java/com/ly/flight/chainsaas/refund/enums/RefundOperateStageEnum.java
+    symbol: com.ly.flight.chainsaas.refund.enums.RefundOperateStageEnum#VOIDING
+    line: 21
+    commit: ''
+    content_digest: ''
+suggested_meaning: 枚举名称和值只读展示源码注释；缺少注释时展示代码标识，无需人工补充。
+code_meaning: 退票确认（CONFIRM）；核价阶段（RESHOP）；废票（VOIDING）
+unresolved_codes: []
+business_meaning: ''
+status: CODE_VERIFIED
+merged_into_candidate_id: ''
+source_refs:
+- repository: ''
+  path: app/model/src/main/java/com/ly/flight/chainsaas/refund/enums/RefundOperateStageEnum.java
+  symbol: com.ly.flight.chainsaas.refund.enums.RefundOperateStageEnum#CONFIRM
+  line: 16
+  commit: ''
+  content_digest: ''
+- repository: ''
+  path: app/model/src/main/java/com/ly/flight/chainsaas/refund/enums/RefundOperateStageEnum.java
+  symbol: com.ly.flight.chainsaas.refund.enums.RefundOperateStageEnum#RESHOP
+  line: 11
+  commit: ''
+  content_digest: ''
+- repository: ''
+  path: app/model/src/main/java/com/ly/flight/chainsaas/refund/enums/RefundOperateStageEnum.java
+  symbol: com.ly.flight.chainsaas.refund.enums.RefundOperateStageEnum#VOIDING
+  line: 21
+  commit: ''
+  content_digest: ''
+affected_target_ids: []
+evidence_digest: c5cfe3cb4911a6450c8ab72cc7ce8640ae5ee5623540cafcf509266b242ed4cc
+discovered_at: '2026-09-18T02:25:57.603860Z'
+updated_at: '2026-09-19T04:25:34.176474Z'

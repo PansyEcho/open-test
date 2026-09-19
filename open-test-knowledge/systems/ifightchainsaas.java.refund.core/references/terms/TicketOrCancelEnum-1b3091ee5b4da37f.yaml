@@ -1,0 +1,164 @@
+candidate_id: candidate:business_term:1b3091ee5b4da37f
+system_id: ifightchainsaas.java.refund.core
+kind: BUSINESS_TERM
+knowledge_form: BUSINESS_ENUM
+name: TicketOrCancelEnum
+business_name: 采购方-TCPL
+business_name_source: CODE_DEFAULT
+business_name_known_unknown: false
+enum_values:
+- code: CANCEL
+  business_meaning: 取消
+  source: CODE_DEFAULT
+  known_unknown: false
+  confidence: 0.95
+  source_refs:
+  - repository: ''
+    path: app/model/src/main/java/com/ly/flight/chainsaas/refund/enums/TicketOrCancelEnum.java
+    symbol: com.ly.flight.chainsaas.refund.enums.TicketOrCancelEnum#CANCEL
+    line: 17
+    commit: ''
+    content_digest: ''
+- code: CHANGE_CANCEL
+  business_meaning: 用户取消
+  source: CODE_DEFAULT
+  known_unknown: false
+  confidence: 0.95
+  source_refs:
+  - repository: ''
+    path: app/model/src/main/java/com/ly/flight/chainsaas/refund/enums/TicketOrCancelEnum.java
+    symbol: com.ly.flight.chainsaas.refund.enums.TicketOrCancelEnum#CHANGE_CANCEL
+    line: 23
+    commit: ''
+    content_digest: ''
+- code: EXPIRE_CANCEL
+  business_meaning: 超时取消
+  source: CODE_DEFAULT
+  known_unknown: false
+  confidence: 0.95
+  source_refs:
+  - repository: ''
+    path: app/model/src/main/java/com/ly/flight/chainsaas/refund/enums/TicketOrCancelEnum.java
+    symbol: com.ly.flight.chainsaas.refund.enums.TicketOrCancelEnum#EXPIRE_CANCEL
+    line: 25
+    commit: ''
+    content_digest: ''
+- code: OTHER_CANCEL
+  business_meaning: 其他原因取消
+  source: CODE_DEFAULT
+  known_unknown: false
+  confidence: 0.95
+  source_refs:
+  - repository: ''
+    path: app/model/src/main/java/com/ly/flight/chainsaas/refund/enums/TicketOrCancelEnum.java
+    symbol: com.ly.flight.chainsaas.refund.enums.TicketOrCancelEnum#OTHER_CANCEL
+    line: 27
+    commit: ''
+    content_digest: ''
+- code: READY_TO_ISSUE
+  business_meaning: 待出票
+  source: CODE_DEFAULT
+  known_unknown: false
+  confidence: 0.95
+  source_refs:
+  - repository: ''
+    path: app/model/src/main/java/com/ly/flight/chainsaas/refund/enums/TicketOrCancelEnum.java
+    symbol: com.ly.flight.chainsaas.refund.enums.TicketOrCancelEnum#READY_TO_ISSUE
+    line: 29
+    commit: ''
+    content_digest: ''
+- code: REPEAT_CANCEL
+  business_meaning: 重复单取消
+  source: CODE_DEFAULT
+  known_unknown: false
+  confidence: 0.95
+  source_refs:
+  - repository: ''
+    path: app/model/src/main/java/com/ly/flight/chainsaas/refund/enums/TicketOrCancelEnum.java
+    symbol: com.ly.flight.chainsaas.refund.enums.TicketOrCancelEnum#REPEAT_CANCEL
+    line: 21
+    commit: ''
+    content_digest: ''
+- code: USER_CANCEL
+  business_meaning: 用户取消
+  source: CODE_DEFAULT
+  known_unknown: false
+  confidence: 0.95
+  source_refs:
+  - repository: ''
+    path: app/model/src/main/java/com/ly/flight/chainsaas/refund/enums/TicketOrCancelEnum.java
+    symbol: com.ly.flight.chainsaas.refund.enums.TicketOrCancelEnum#USER_CANCEL
+    line: 19
+    commit: ''
+    content_digest: ''
+- code: WITHDRAW_CANCEL
+  business_meaning: 撤回取消
+  source: CODE_DEFAULT
+  known_unknown: false
+  confidence: 0.95
+  source_refs:
+  - repository: ''
+    path: app/model/src/main/java/com/ly/flight/chainsaas/refund/enums/TicketOrCancelEnum.java
+    symbol: com.ly.flight.chainsaas.refund.enums.TicketOrCancelEnum#WITHDRAW_CANCEL
+    line: 15
+    commit: ''
+    content_digest: ''
+suggested_meaning: 枚举名称和值只读展示源码注释；缺少注释时展示代码标识，无需人工补充。
+code_meaning: 取消（CANCEL）；用户取消（CHANGE_CANCEL）；超时取消（EXPIRE_CANCEL）；其他原因取消（OTHER_CANCEL）；待出票（READY_TO_ISSUE）；重复单取消（REPEAT_CANCEL）；用户取消（USER_CANCEL）；撤回取消（WITHDRAW_CANCEL）
+unresolved_codes: []
+business_meaning: ''
+status: CODE_VERIFIED
+merged_into_candidate_id: ''
+source_refs:
+- repository: ''
+  path: app/model/src/main/java/com/ly/flight/chainsaas/refund/enums/TicketOrCancelEnum.java
+  symbol: com.ly.flight.chainsaas.refund.enums.TicketOrCancelEnum#CANCEL
+  line: 17
+  commit: ''
+  content_digest: ''
+- repository: ''
+  path: app/model/src/main/java/com/ly/flight/chainsaas/refund/enums/TicketOrCancelEnum.java
+  symbol: com.ly.flight.chainsaas.refund.enums.TicketOrCancelEnum#CHANGE_CANCEL
+  line: 23
+  commit: ''
+  content_digest: ''
+- repository: ''
+  path: app/model/src/main/java/com/ly/flight/chainsaas/refund/enums/TicketOrCancelEnum.java
+  symbol: com.ly.flight.chainsaas.refund.enums.TicketOrCancelEnum#EXPIRE_CANCEL
+  line: 25
+  commit: ''
+  content_digest: ''
+- repository: ''
+  path: app/model/src/main/java/com/ly/flight/chainsaas/refund/enums/TicketOrCancelEnum.java
+  symbol: com.ly.flight.chainsaas.refund.enums.TicketOrCancelEnum#OTHER_CANCEL
+  line: 27
+  commit: ''
+  content_digest: ''
+- repository: ''
+  path: app/model/src/main/java/com/ly/flight/chainsaas/refund/enums/TicketOrCancelEnum.java
+  symbol: com.ly.flight.chainsaas.refund.enums.TicketOrCancelEnum#READY_TO_ISSUE
+  line: 29
+  commit: ''
+  content_digest: ''
+- repository: ''
+  path: app/model/src/main/java/com/ly/flight/chainsaas/refund/enums/TicketOrCancelEnum.java
+  symbol: com.ly.flight.chainsaas.refund.enums.TicketOrCancelEnum#REPEAT_CANCEL
+  line: 21
+  commit: ''
+  content_digest: ''
+- repository: ''
+  path: app/model/src/main/java/com/ly/flight/chainsaas/refund/enums/TicketOrCancelEnum.java
+  symbol: com.ly.flight.chainsaas.refund.enums.TicketOrCancelEnum#USER_CANCEL
+  line: 19
+  commit: ''
+  content_digest: ''
+- repository: ''
+  path: app/model/src/main/java/com/ly/flight/chainsaas/refund/enums/TicketOrCancelEnum.java
+  symbol: com.ly.flight.chainsaas.refund.enums.TicketOrCancelEnum#WITHDRAW_CANCEL
+  line: 15
+  commit: ''
+  content_digest: ''
+affected_target_ids: []
+evidence_digest: dae51ea559bfa5237eea93601c9d6467dd1de70e8d143027f5e43d0e2594416b
+discovered_at: '2026-09-18T02:25:57.604977Z'
+updated_at: '2026-09-19T04:25:34.177632Z'

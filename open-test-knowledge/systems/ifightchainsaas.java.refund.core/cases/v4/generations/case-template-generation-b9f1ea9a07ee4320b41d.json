@@ -1,0 +1,4138 @@
+{
+  "generation_id": "case-template-generation-b9f1ea9a07ee4320b41d",
+  "predecessor_generation_id": "",
+  "continuation_intent": "",
+  "handoff_id": "case-template-handoff-36787375a2c049d1a0c3",
+  "system_id": "ifightchainsaas.java.refund.core",
+  "operation_id": "facade:com.ly.flight.chainsaas.refund.facade.RefundFacade#cancel",
+  "source_scan_id": "scan-20260902095328-66619d80f6-47b8cbc3",
+  "coverage_id": "coverage:facade:com.ly.flight.chainsaas.refund.facade.RefundFacade#cancel",
+  "runtime_registry_version": "runtime-functions/v1",
+  "value_registry_version": "value-functions/v1",
+  "compiler_seed": 1,
+  "status": "READY",
+  "input_contract": {
+    "contract_version": "operation-contract/v2",
+    "target_id": "facade:com.ly.flight.chainsaas.refund.facade.RefundFacade#cancel",
+    "request_type": "com.ly.flight.chainsaas.refund.facade.model.request.RefundCancelRequest",
+    "source_scan_id": "scan-20260902095328-66619d80f6-47b8cbc3",
+    "status": "READY",
+    "request_schema": {
+      "type": "object",
+      "properties": {
+        "traceId": {
+          "type": "string"
+        },
+        "operator": {
+          "type": "string"
+        },
+        "refundSerialNo": {
+          "type": "string"
+        },
+        "cancelReasonId": {
+          "type": "string"
+        },
+        "cancelReason": {
+          "type": "string"
+        },
+        "cancelRemark": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": false
+    },
+    "fields": [
+      {
+        "path": "traceId",
+        "field_name": "traceId",
+        "schema": {
+          "type": "string"
+        },
+        "description": "全链路跟踪标识。",
+        "required": false,
+        "business_identity": false,
+        "requirement_status": "unknown",
+        "source_ref": {
+          "repository": "",
+          "path": "app/facade/src/main/java/com/ly/flight/chainsaas/refund/facade/model/BaseRequest.java",
+          "symbol": "com.ly.flight.chainsaas.refund.facade.model.BaseRequest#traceId",
+          "line": 21,
+          "commit": "",
+          "content_digest": ""
+        }
+      },
+      {
+        "path": "operator",
+        "field_name": "operator",
+        "schema": {
+          "type": "string"
+        },
+        "description": "发起请求的操作人。",
+        "required": false,
+        "business_identity": false,
+        "requirement_status": "unknown",
+        "source_ref": {
+          "repository": "",
+          "path": "app/facade/src/main/java/com/ly/flight/chainsaas/refund/facade/model/BaseRequest.java",
+          "symbol": "com.ly.flight.chainsaas.refund.facade.model.BaseRequest#operator",
+          "line": 26,
+          "commit": "",
+          "content_digest": ""
+        }
+      },
+      {
+        "path": "refundSerialNo",
+        "field_name": "refundSerialNo",
+        "schema": {
+          "type": "string"
+        },
+        "description": "退票订单号",
+        "required": false,
+        "business_identity": false,
+        "requirement_status": "unknown",
+        "source_ref": {
+          "repository": "",
+          "path": "app/facade/src/main/java/com/ly/flight/chainsaas/refund/facade/model/request/RefundCancelRequest.java",
+          "symbol": "com.ly.flight.chainsaas.refund.facade.model.request.RefundCancelRequest#refundSerialNo",
+          "line": 17,
+          "commit": "",
+          "content_digest": ""
+        }
+      },
+      {
+        "path": "cancelReasonId",
+        "field_name": "cancelReasonId",
+        "schema": {
+          "type": "string"
+        },
+        "description": "取消原因Id",
+        "required": false,
+        "business_identity": false,
+        "requirement_status": "unknown",
+        "source_ref": {
+          "repository": "",
+          "path": "app/facade/src/main/java/com/ly/flight/chainsaas/refund/facade/model/request/RefundCancelRequest.java",
+          "symbol": "com.ly.flight.chainsaas.refund.facade.model.request.RefundCancelRequest#cancelReasonId",
+          "line": 22,
+          "commit": "",
+          "content_digest": ""
+        }
+      },
+      {
+        "path": "cancelReason",
+        "field_name": "cancelReason",
+        "schema": {
+          "type": "string"
+        },
+        "description": "取消原因",
+        "required": false,
+        "business_identity": false,
+        "requirement_status": "unknown",
+        "source_ref": {
+          "repository": "",
+          "path": "app/facade/src/main/java/com/ly/flight/chainsaas/refund/facade/model/request/RefundCancelRequest.java",
+          "symbol": "com.ly.flight.chainsaas.refund.facade.model.request.RefundCancelRequest#cancelReason",
+          "line": 27,
+          "commit": "",
+          "content_digest": ""
+        }
+      },
+      {
+        "path": "cancelRemark",
+        "field_name": "cancelRemark",
+        "schema": {
+          "type": "string"
+        },
+        "description": "取消原因备注",
+        "required": false,
+        "business_identity": false,
+        "requirement_status": "unknown",
+        "source_ref": {
+          "repository": "",
+          "path": "app/facade/src/main/java/com/ly/flight/chainsaas/refund/facade/model/request/RefundCancelRequest.java",
+          "symbol": "com.ly.flight.chainsaas.refund.facade.model.request.RefundCancelRequest#cancelRemark",
+          "line": 33,
+          "commit": "",
+          "content_digest": ""
+        }
+      }
+    ],
+    "response_schema": {
+      "type": "object",
+      "properties": {
+        "success": {
+          "type": "boolean"
+        },
+        "code": {
+          "type": "string"
+        },
+        "message": {
+          "type": "string"
+        },
+        "traceId": {
+          "type": "string"
+        },
+        "orderSerialNo": {
+          "type": "string"
+        },
+        "data": {}
+      },
+      "required": [],
+      "additionalProperties": false
+    },
+    "response_fields": [
+      {
+        "path": "success",
+        "field_name": "success",
+        "schema": {
+          "type": "boolean"
+        },
+        "description": "请求是否成功。",
+        "source_ref": {
+          "repository": "",
+          "path": "app/facade/src/main/java/com/ly/flight/chainsaas/refund/facade/model/BaseResponse.java",
+          "symbol": "com.ly.flight.chainsaas.refund.facade.model.BaseResponse#success",
+          "line": 20,
+          "commit": "",
+          "content_digest": ""
+        }
+      },
+      {
+        "path": "code",
+        "field_name": "code",
+        "schema": {
+          "type": "string"
+        },
+        "description": "业务响应编码。",
+        "source_ref": {
+          "repository": "",
+          "path": "app/facade/src/main/java/com/ly/flight/chainsaas/refund/facade/model/BaseResponse.java",
+          "symbol": "com.ly.flight.chainsaas.refund.facade.model.BaseResponse#code",
+          "line": 25,
+          "commit": "",
+          "content_digest": ""
+        }
+      },
+      {
+        "path": "message",
+        "field_name": "message",
+        "schema": {
+          "type": "string"
+        },
+        "description": "业务响应消息。",
+        "source_ref": {
+          "repository": "",
+          "path": "app/facade/src/main/java/com/ly/flight/chainsaas/refund/facade/model/BaseResponse.java",
+          "symbol": "com.ly.flight.chainsaas.refund.facade.model.BaseResponse#message",
+          "line": 30,
+          "commit": "",
+          "content_digest": ""
+        }
+      },
+      {
+        "path": "data",
+        "field_name": "data",
+        "schema": {},
+        "description": "响应业务数据。",
+        "source_ref": {
+          "repository": "",
+          "path": "app/facade/src/main/java/com/ly/flight/chainsaas/refund/facade/model/BaseResponse.java",
+          "symbol": "com.ly.flight.chainsaas.refund.facade.model.BaseResponse#data",
+          "line": 35,
+          "commit": "",
+          "content_digest": ""
+        }
+      },
+      {
+        "path": "traceId",
+        "field_name": "traceId",
+        "schema": {
+          "type": "string"
+        },
+        "description": "响应对应的链路跟踪标识。",
+        "source_ref": {
+          "repository": "",
+          "path": "app/facade/src/main/java/com/ly/flight/chainsaas/refund/facade/model/BaseResponse.java",
+          "symbol": "com.ly.flight.chainsaas.refund.facade.model.BaseResponse#traceId",
+          "line": 40,
+          "commit": "",
+          "content_digest": ""
+        }
+      },
+      {
+        "path": "orderSerialNo",
+        "field_name": "orderSerialNo",
+        "schema": {
+          "type": "string"
+        },
+        "description": "原订单-订单号",
+        "source_ref": {
+          "repository": "",
+          "path": "app/facade/src/main/java/com/ly/flight/chainsaas/refund/facade/model/response/RefundCancelResponse.java",
+          "symbol": "com.ly.flight.chainsaas.refund.facade.model.response.RefundCancelResponse#orderSerialNo",
+          "line": 5,
+          "commit": "",
+          "content_digest": ""
+        }
+      }
+    ],
+    "operation_summary": "订单取消 ：",
+    "summary_evidence_refs": [
+      {
+        "repository": "",
+        "path": "app/facade/src/main/java/com/ly/flight/chainsaas/refund/facade/RefundFacade.java",
+        "symbol": "com.ly.flight.chainsaas.refund.facade.RefundFacade#cancel(com.ly.flight.chainsaas.refund.facade.model.request.RefundCancelRequest)",
+        "line": 80,
+        "commit": "",
+        "content_digest": ""
+      },
+      {
+        "repository": "",
+        "path": "app/facade-impl/src/main/resources/META-INF/spring/refundcore-facade-impl-trade-rpc.xml",
+        "symbol": "dsf.ifightchainsaas.refund.core",
+        "line": 13,
+        "commit": "",
+        "content_digest": ""
+      },
+      {
+        "repository": "",
+        "path": "app/facade/src/main/java/com/ly/flight/chainsaas/refund/facade/RefundFacade.java",
+        "symbol": "com.ly.flight.chainsaas.refund.facade.RefundFacade#cancel",
+        "line": 84,
+        "commit": "",
+        "content_digest": ""
+      }
+    ],
+    "source_commit": "99b494d7824eab12ffc237ae7e945aac79d61411"
+  },
+  "submission": {
+    "data_functions": [
+      {
+        "name": "select_existing_refund_for_cancel",
+        "description": "固定源码99b494d7824eab12ffc237ae7e945aac79d61411；每个Variant执行时通过RefundFacade.queryList按源码枚举状态获取真实退票单，并从同环境已取消订单复用已存储的取消原因编码。仅定义读取步骤，不访问QA；无候选或查询失败时在DATA阶段失败，禁止伪造订单或原因编码。",
+        "inputs": [
+          {
+            "name": "order_state",
+            "schema": {
+              "type": "integer"
+            }
+          },
+          {
+            "name": "cancelled_state",
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "steps": [
+          {
+            "step_id": "orders",
+            "operation": "runtime_call",
+            "function_id": "facade:com.ly.flight.chainsaas.refund.facade.RefundFacade#queryList",
+            "input_source": null,
+            "arguments": {
+              "orderState": {
+                "kind": "function_input",
+                "name": "order_state",
+                "path": "",
+                "step_id": "",
+                "call_id": "",
+                "output_name": ""
+              },
+              "page": {
+                "kind": "literal",
+                "value": 1,
+                "name": "",
+                "path": "",
+                "step_id": "",
+                "call_id": "",
+                "output_name": ""
+              },
+              "pageSize": {
+                "kind": "literal",
+                "value": 100,
+                "name": "",
+                "path": "",
+                "step_id": "",
+                "call_id": "",
+                "output_name": ""
+              }
+            },
+            "output_schema": {
+              "type": "object",
+              "properties": {
+                "success": {
+                  "type": "boolean"
+                },
+                "list": {
+                  "type": "object",
+                  "properties": {
+                    "pageList": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "refundSerialNo": {
+                            "type": "string"
+                          },
+                          "env": {
+                            "type": "string"
+                          },
+                          "gds": {
+                            "type": [
+                              "string",
+                              "null"
+                            ]
+                          },
+                          "operator": {
+                            "type": [
+                              "string",
+                              "null"
+                            ]
+                          },
+                          "cancelReason": {
+                            "type": [
+                              "string",
+                              "null"
+                            ]
+                          }
+                        },
+                        "additionalProperties": true
+                      }
+                    }
+                  },
+                  "additionalProperties": true
+                }
+              },
+              "additionalProperties": true
+            },
+            "predicates": [],
+            "fields": [],
+            "check_kind": "result",
+            "failure_message": ""
+          },
+          {
+            "step_id": "orders_ok",
+            "operation": "assert",
+            "function_id": "",
+            "input_source": null,
+            "arguments": {},
+            "output_schema": null,
+            "predicates": [
+              {
+                "left": {
+                  "kind": "step_output",
+                  "name": "",
+                  "path": "success",
+                  "step_id": "orders",
+                  "call_id": "",
+                  "output_name": ""
+                },
+                "operator": "eq",
+                "right": {
+                  "kind": "literal",
+                  "value": true,
+                  "name": "",
+                  "path": "",
+                  "step_id": "",
+                  "call_id": "",
+                  "output_name": ""
+                }
+              }
+            ],
+            "fields": [],
+            "check_kind": "result",
+            "failure_message": "按目标状态查询退票单失败；不得调用取消接口"
+          },
+          {
+            "step_id": "eligible_orders",
+            "operation": "filter",
+            "function_id": "",
+            "input_source": {
+              "kind": "step_output",
+              "name": "",
+              "path": "list.pageList",
+              "step_id": "orders",
+              "call_id": "",
+              "output_name": ""
+            },
+            "arguments": {},
+            "output_schema": null,
+            "predicates": [
+              {
+                "left": {
+                  "kind": "current_item",
+                  "name": "",
+                  "path": "refundSerialNo",
+                  "step_id": "",
+                  "call_id": "",
+                  "output_name": ""
+                },
+                "operator": "not_null",
+                "right": null
+              },
+              {
+                "left": {
+                  "kind": "current_item",
+                  "name": "",
+                  "path": "refundSerialNo",
+                  "step_id": "",
+                  "call_id": "",
+                  "output_name": ""
+                },
+                "operator": "ne",
+                "right": {
+                  "kind": "literal",
+                  "value": "",
+                  "name": "",
+                  "path": "",
+                  "step_id": "",
+                  "call_id": "",
+                  "output_name": ""
+                }
+              },
+              {
+                "left": {
+                  "kind": "current_item",
+                  "name": "",
+                  "path": "env",
+                  "step_id": "",
+                  "call_id": "",
+                  "output_name": ""
+                },
+                "operator": "not_null",
+                "right": null
+              },
+              {
+                "left": {
+                  "kind": "current_item",
+                  "name": "",
+                  "path": "env",
+                  "step_id": "",
+                  "call_id": "",
+                  "output_name": ""
+                },
+                "operator": "ne",
+                "right": {
+                  "kind": "literal",
+                  "value": "",
+                  "name": "",
+                  "path": "",
+                  "step_id": "",
+                  "call_id": "",
+                  "output_name": ""
+                }
+              },
+              {
+                "left": {
+                  "kind": "current_item",
+                  "name": "",
+                  "path": "gds",
+                  "step_id": "",
+                  "call_id": "",
+                  "output_name": ""
+                },
+                "operator": "not_null",
+                "right": null
+              },
+              {
+                "left": {
+                  "kind": "current_item",
+                  "name": "",
+                  "path": "operator",
+                  "step_id": "",
+                  "call_id": "",
+                  "output_name": ""
+                },
+                "operator": "not_null",
+                "right": null
+              },
+              {
+                "left": {
+                  "kind": "current_item",
+                  "name": "",
+                  "path": "operator",
+                  "step_id": "",
+                  "call_id": "",
+                  "output_name": ""
+                },
+                "operator": "ne",
+                "right": {
+                  "kind": "literal",
+                  "value": "",
+                  "name": "",
+                  "path": "",
+                  "step_id": "",
+                  "call_id": "",
+                  "output_name": ""
+                }
+              }
+            ],
+            "fields": [],
+            "check_kind": "result",
+            "failure_message": ""
+          },
+          {
+            "step_id": "selected_order",
+            "operation": "first",
+            "function_id": "",
+            "input_source": {
+              "kind": "step_output",
+              "name": "",
+              "path": "",
+              "step_id": "eligible_orders",
+              "call_id": "",
+              "output_name": ""
+            },
+            "arguments": {},
+            "output_schema": null,
+            "predicates": [],
+            "fields": [],
+            "check_kind": "result",
+            "failure_message": ""
+          },
+          {
+            "step_id": "cancelled_orders",
+            "operation": "runtime_call",
+            "function_id": "facade:com.ly.flight.chainsaas.refund.facade.RefundFacade#queryList",
+            "input_source": null,
+            "arguments": {
+              "orderState": {
+                "kind": "function_input",
+                "name": "cancelled_state",
+                "path": "",
+                "step_id": "",
+                "call_id": "",
+                "output_name": ""
+              },
+              "page": {
+                "kind": "literal",
+                "value": 1,
+                "name": "",
+                "path": "",
+                "step_id": "",
+                "call_id": "",
+                "output_name": ""
+              },
+              "pageSize": {
+                "kind": "literal",
+                "value": 100,
+                "name": "",
+                "path": "",
+                "step_id": "",
+                "call_id": "",
+                "output_name": ""
+              }
+            },
+            "output_schema": {
+              "type": "object",
+              "properties": {
+                "success": {
+                  "type": "boolean"
+                },
+                "list": {
+                  "type": "object",
+                  "properties": {
+                    "pageList": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "refundSerialNo": {
+                            "type": "string"
+                          },
+                          "env": {
+                            "type": "string"
+                          },
+                          "gds": {
+                            "type": [
+                              "string",
+                              "null"
+                            ]
+                          },
+                          "operator": {
+                            "type": [
+                              "string",
+                              "null"
+                            ]
+                          },
+                          "cancelReason": {
+                            "type": [
+                              "string",
+                              "null"
+                            ]
+                          }
+                        },
+                        "additionalProperties": true
+                      }
+                    }
+                  },
+                  "additionalProperties": true
+                }
+              },
+              "additionalProperties": true
+            },
+            "predicates": [],
+            "fields": [],
+            "check_kind": "result",
+            "failure_message": ""
+          },
+          {
+            "step_id": "cancelled_orders_ok",
+            "operation": "assert",
+            "function_id": "",
+            "input_source": null,
+            "arguments": {},
+            "output_schema": null,
+            "predicates": [
+              {
+                "left": {
+                  "kind": "step_output",
+                  "name": "",
+                  "path": "success",
+                  "step_id": "cancelled_orders",
+                  "call_id": "",
+                  "output_name": ""
+                },
+                "operator": "eq",
+                "right": {
+                  "kind": "literal",
+                  "value": true,
+                  "name": "",
+                  "path": "",
+                  "step_id": "",
+                  "call_id": "",
+                  "output_name": ""
+                }
+              }
+            ],
+            "fields": [],
+            "check_kind": "result",
+            "failure_message": "读取可复用取消原因编码失败"
+          },
+          {
+            "step_id": "reusable_reasons",
+            "operation": "filter",
+            "function_id": "",
+            "input_source": {
+              "kind": "step_output",
+              "name": "",
+              "path": "list.pageList",
+              "step_id": "cancelled_orders",
+              "call_id": "",
+              "output_name": ""
+            },
+            "arguments": {},
+            "output_schema": null,
+            "predicates": [
+              {
+                "left": {
+                  "kind": "current_item",
+                  "name": "",
+                  "path": "cancelReason",
+                  "step_id": "",
+                  "call_id": "",
+                  "output_name": ""
+                },
+                "operator": "not_null",
+                "right": null
+              },
+              {
+                "left": {
+                  "kind": "current_item",
+                  "name": "",
+                  "path": "cancelReason",
+                  "step_id": "",
+                  "call_id": "",
+                  "output_name": ""
+                },
+                "operator": "ne",
+                "right": {
+                  "kind": "literal",
+                  "value": "",
+                  "name": "",
+                  "path": "",
+                  "step_id": "",
+                  "call_id": "",
+                  "output_name": ""
+                }
+              },
+              {
+                "left": {
+                  "kind": "current_item",
+                  "name": "",
+                  "path": "env",
+                  "step_id": "",
+                  "call_id": "",
+                  "output_name": ""
+                },
+                "operator": "eq",
+                "right": {
+                  "kind": "step_output",
+                  "name": "",
+                  "path": "env",
+                  "step_id": "selected_order",
+                  "call_id": "",
+                  "output_name": ""
+                }
+              }
+            ],
+            "fields": [],
+            "check_kind": "result",
+            "failure_message": ""
+          },
+          {
+            "step_id": "selected_reason",
+            "operation": "first",
+            "function_id": "",
+            "input_source": {
+              "kind": "step_output",
+              "name": "",
+              "path": "",
+              "step_id": "reusable_reasons",
+              "call_id": "",
+              "output_name": ""
+            },
+            "arguments": {},
+            "output_schema": null,
+            "predicates": [],
+            "fields": [],
+            "check_kind": "result",
+            "failure_message": ""
+          }
+        ],
+        "outputs": [
+          {
+            "output_name": "refund_serial_no",
+            "step_id": "selected_order",
+            "path": "refundSerialNo"
+          },
+          {
+            "output_name": "environment",
+            "step_id": "selected_order",
+            "path": "env"
+          },
+          {
+            "output_name": "operator",
+            "step_id": "selected_order",
+            "path": "operator"
+          },
+          {
+            "output_name": "cancel_reason_id",
+            "step_id": "selected_reason",
+            "path": "cancelReason"
+          }
+        ],
+        "evidence": [
+          {
+            "source_system_id": "ifightchainsaas.java.refund.core",
+            "path": "app/facade-impl/src/main/java/com/ly/flight/chainsaas/refund/facade/impl/RefundFacadeImpl.java",
+            "symbol": "queryList",
+            "line": 206
+          },
+          {
+            "source_system_id": "ifightchainsaas.java.refund.core",
+            "path": "app/facade/src/main/java/com/ly/flight/chainsaas/refund/facade/model/request/RefundOrderQueryRequest.java",
+            "symbol": "orderState",
+            "line": 61
+          },
+          {
+            "source_system_id": "ifightchainsaas.java.refund.core",
+            "path": "app/facade/src/main/java/com/ly/flight/chainsaas/refund/facade/model/request/RefundOrderQueryRequest.java",
+            "symbol": "page",
+            "line": 23
+          },
+          {
+            "source_system_id": "ifightchainsaas.java.refund.core",
+            "path": "app/facade/src/main/java/com/ly/flight/chainsaas/refund/facade/model/request/RefundOrderQueryRequest.java",
+            "symbol": "pageSize",
+            "line": 27
+          },
+          {
+            "source_system_id": "ifightchainsaas.java.refund.core",
+            "path": "app/facade/src/main/java/com/ly/flight/chainsaas/refund/facade/model/response/RefundOrderListResponse.java",
+            "symbol": "list",
+            "line": 16
+          },
+          {
+            "source_system_id": "ifightchainsaas.java.refund.core",
+            "path": "app/model/src/main/java/com/ly/flight/chainsaas/refund/model/PageVO.java",
+            "symbol": "pageList",
+            "line": 13
+          },
+          {
+            "source_system_id": "ifightchainsaas.java.refund.core",
+            "path": "app/model/src/main/java/com/ly/flight/chainsaas/refund/model/CoreVO.java",
+            "symbol": "refundSerialNo",
+            "line": 30
+          },
+          {
+            "source_system_id": "ifightchainsaas.java.refund.core",
+            "path": "app/model/src/main/java/com/ly/flight/chainsaas/refund/model/CoreVO.java",
+            "symbol": "env",
+            "line": 50
+          },
+          {
+            "source_system_id": "ifightchainsaas.java.refund.core",
+            "path": "app/model/src/main/java/com/ly/flight/chainsaas/refund/model/CoreVO.java",
+            "symbol": "operator",
+            "line": 38
+          },
+          {
+            "source_system_id": "ifightchainsaas.java.refund.core",
+            "path": "app/model/src/main/java/com/ly/flight/chainsaas/refund/model/SaasRefundOrderVO.java",
+            "symbol": "gds",
+            "line": 147
+          },
+          {
+            "source_system_id": "ifightchainsaas.java.refund.core",
+            "path": "app/model/src/main/java/com/ly/flight/chainsaas/refund/model/SaasRefundOrderVO.java",
+            "symbol": "cancelReason",
+            "line": 157
+          },
+          {
+            "source_system_id": "ifightchainsaas.java.refund.core",
+            "path": "app/facade/src/main/java/com/ly/flight/chainsaas/refund/facade/model/BaseResponse.java",
+            "symbol": "success",
+            "line": 20
+          },
+          {
+            "source_system_id": "ifightchainsaas.java.refund.core",
+            "path": "app/dal/src/main/resources/sqlmap/refundcore/SaasRefundOrderMapperExt.xml",
+            "symbol": "selectListByQuery_where_if",
+            "line": 188
+          },
+          {
+            "source_system_id": "ifightchainsaas.java.refund.core",
+            "path": "app/biz/src/main/java/com/ly/flight/chainsaas/refund/biz/ordertask/processor/UpdateCancelReasonTaskProcessor.java",
+            "symbol": "doProcess",
+            "line": 22
+          },
+          {
+            "source_system_id": "ifightchainsaas.java.refund.core",
+            "path": "app/model/src/main/java/com/ly/flight/chainsaas/refund/enums/RefundOrderStateEnum.java",
+            "symbol": "PENDING_APPLY",
+            "line": 15
+          },
+          {
+            "source_system_id": "ifightchainsaas.java.refund.core",
+            "path": "app/model/src/main/java/com/ly/flight/chainsaas/refund/enums/RefundOrderStateEnum.java",
+            "symbol": "RESHOPING",
+            "line": 17
+          },
+          {
+            "source_system_id": "ifightchainsaas.java.refund.core",
+            "path": "app/model/src/main/java/com/ly/flight/chainsaas/refund/enums/RefundOrderStateEnum.java",
+            "symbol": "AUDITED",
+            "line": 19
+          },
+          {
+            "source_system_id": "ifightchainsaas.java.refund.core",
+            "path": "app/model/src/main/java/com/ly/flight/chainsaas/refund/enums/RefundOrderStateEnum.java",
+            "symbol": "WAIT_REFUND",
+            "line": 21
+          },
+          {
+            "source_system_id": "ifightchainsaas.java.refund.core",
+            "path": "app/model/src/main/java/com/ly/flight/chainsaas/refund/enums/RefundOrderStateEnum.java",
+            "symbol": "REFUNDING",
+            "line": 23
+          },
+          {
+            "source_system_id": "ifightchainsaas.java.refund.core",
+            "path": "app/model/src/main/java/com/ly/flight/chainsaas/refund/enums/RefundOrderStateEnum.java",
+            "symbol": "REFUND_SUCCESS",
+            "line": 25
+          },
+          {
+            "source_system_id": "ifightchainsaas.java.refund.core",
+            "path": "app/model/src/main/java/com/ly/flight/chainsaas/refund/enums/RefundOrderStateEnum.java",
+            "symbol": "REFUND_FAIL",
+            "line": 27
+          },
+          {
+            "source_system_id": "ifightchainsaas.java.refund.core",
+            "path": "app/model/src/main/java/com/ly/flight/chainsaas/refund/enums/RefundOrderStateEnum.java",
+            "symbol": "REFUND_CANCEL",
+            "line": 29
+          },
+          {
+            "source_system_id": "ifightchainsaas.java.refund.core",
+            "path": "app/model/src/main/java/com/ly/flight/chainsaas/refund/enums/RefundOrderStateEnum.java",
+            "symbol": "REFUND_DONE",
+            "line": 31
+          }
+        ],
+        "shared_source": null,
+        "match_source": null,
+        "create_steps": [],
+        "adjust_steps": [],
+        "verify_steps": []
+      }
+    ],
+    "case_templates": [
+      {
+        "template_id": "cancel_allowed_states",
+        "title": "退票申请、核价中、审核通过、待退票及退票失败订单取消成功并持久化为REFUND_CANCEL",
+        "coverage_kind": "business",
+        "data_calls": [
+          {
+            "call_id": "refund_data",
+            "function_name": "select_existing_refund_for_cancel",
+            "arguments": {
+              "order_state": {
+                "kind": "parameter",
+                "name": "initial_state",
+                "path": "code",
+                "step_id": "",
+                "call_id": "",
+                "output_name": ""
+              },
+              "cancelled_state": {
+                "kind": "parameter",
+                "name": "cancelled_state",
+                "path": "code",
+                "step_id": "",
+                "call_id": "",
+                "output_name": ""
+              }
+            }
+          }
+        ],
+        "parameters": [
+          {
+            "name": "initial_state",
+            "target_field": "",
+            "function_id": "enum.values",
+            "arguments": {
+              "values": [
+                {
+                  "code": 0,
+                  "name": "PENDING_APPLY"
+                },
+                {
+                  "code": 8,
+                  "name": "RESHOPING"
+                },
+                {
+                  "code": 1,
+                  "name": "AUDITED"
+                },
+                {
+                  "code": 2,
+                  "name": "WAIT_REFUND"
+                },
+                {
+                  "code": 5,
+                  "name": "REFUND_FAIL"
+                }
+              ]
+            },
+            "base_source": null
+          },
+          {
+            "name": "cancelled_state",
+            "target_field": "",
+            "function_id": "enum.values",
+            "arguments": {
+              "values": [
+                {
+                  "code": 6,
+                  "name": "REFUND_CANCEL"
+                }
+              ]
+            },
+            "base_source": null
+          }
+        ],
+        "constraints": [],
+        "request_bindings": [
+          {
+            "field": "refundSerialNo",
+            "source": {
+              "kind": "data_output",
+              "name": "",
+              "path": "",
+              "step_id": "",
+              "call_id": "refund_data",
+              "output_name": "refund_serial_no"
+            }
+          },
+          {
+            "field": "operator",
+            "source": {
+              "kind": "data_output",
+              "name": "",
+              "path": "",
+              "step_id": "",
+              "call_id": "refund_data",
+              "output_name": "operator"
+            }
+          },
+          {
+            "field": "cancelReasonId",
+            "source": {
+              "kind": "data_output",
+              "name": "",
+              "path": "",
+              "step_id": "",
+              "call_id": "refund_data",
+              "output_name": "cancel_reason_id"
+            }
+          },
+          {
+            "field": "cancelReason",
+            "source": {
+              "kind": "literal",
+              "value": "OpenTest退票取消状态验证",
+              "name": "",
+              "path": "",
+              "step_id": "",
+              "call_id": "",
+              "output_name": ""
+            }
+          },
+          {
+            "field": "cancelRemark",
+            "source": {
+              "kind": "literal",
+              "value": "OpenTest固定源码取消状态与幂等回归",
+              "name": "",
+              "path": "",
+              "step_id": "",
+              "call_id": "",
+              "output_name": ""
+            }
+          }
+        ],
+        "combination": "cartesian",
+        "oracles": [
+          {
+            "oracle_id": "cancel_response",
+            "channel": "response",
+            "function_id": "",
+            "statement": "",
+            "arguments": {},
+            "observer_output_schema": null,
+            "json_decode_fields": {},
+            "assertions": [
+              {
+                "actual_path": "success",
+                "operator": "eq",
+                "expected": {
+                  "kind": "literal",
+                  "value": true,
+                  "name": "",
+                  "path": "",
+                  "step_id": "",
+                  "call_id": "",
+                  "output_name": ""
+                }
+              },
+              {
+                "actual_path": "orderSerialNo",
+                "operator": "eq",
+                "expected": {
+                  "kind": "request_field",
+                  "name": "",
+                  "path": "refundSerialNo",
+                  "step_id": "",
+                  "call_id": "",
+                  "output_name": ""
+                }
+              }
+            ],
+            "evidence": []
+          },
+          {
+            "oracle_id": "persisted_refund_state",
+            "channel": "mysql",
+            "function_id": "database:ifightchainsaas.java.refund.core:itradecoredatasource",
+            "statement": "SELECT refund_serial_no, refund_state FROM saas_refund_order WHERE refund_serial_no = :refund_serial_no AND env = :env LIMIT 1",
+            "arguments": {
+              "refund_serial_no": {
+                "kind": "request_field",
+                "name": "",
+                "path": "refundSerialNo",
+                "step_id": "",
+                "call_id": "",
+                "output_name": ""
+              },
+              "env": {
+                "kind": "data_output",
+                "name": "",
+                "path": "",
+                "step_id": "",
+                "call_id": "refund_data",
+                "output_name": "environment"
+              }
+            },
+            "observer_output_schema": {
+              "type": "object",
+              "properties": {
+                "rows": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "refund_serial_no": {
+                        "type": "string"
+                      },
+                      "refund_state": {
+                        "type": "integer"
+                      }
+                    },
+                    "required": [
+                      "refund_serial_no",
+                      "refund_state"
+                    ],
+                    "additionalProperties": false
+                  }
+                },
+                "row_count": {
+                  "type": "integer"
+                }
+              },
+              "required": [
+                "rows",
+                "row_count"
+              ],
+              "additionalProperties": false
+            },
+            "json_decode_fields": {},
+            "assertions": [
+              {
+                "actual_path": "row_count",
+                "operator": "eq",
+                "expected": {
+                  "kind": "literal",
+                  "value": 1,
+                  "name": "",
+                  "path": "",
+                  "step_id": "",
+                  "call_id": "",
+                  "output_name": ""
+                }
+              },
+              {
+                "actual_path": "rows.0.refund_serial_no",
+                "operator": "eq",
+                "expected": {
+                  "kind": "request_field",
+                  "name": "",
+                  "path": "refundSerialNo",
+                  "step_id": "",
+                  "call_id": "",
+                  "output_name": ""
+                }
+              },
+              {
+                "actual_path": "rows.0.refund_state",
+                "operator": "eq",
+                "expected": {
+                  "kind": "parameter",
+                  "name": "cancelled_state",
+                  "path": "code",
+                  "step_id": "",
+                  "call_id": "",
+                  "output_name": ""
+                }
+              }
+            ],
+            "evidence": [
+              {
+                "source_system_id": "ifightchainsaas.java.refund.core",
+                "path": "app/dal/src/main/resources/META-INF/spring/refundcore-db-beans.xml",
+                "symbol": "itradecoreDatasource",
+                "line": 24
+              },
+              {
+                "source_system_id": "ifightchainsaas.java.refund.core",
+                "path": "app/dal/src/main/resources/sqlmap/refundcore/SaasRefundOrderMapperExt.xml",
+                "symbol": "updateOrderState",
+                "line": 12
+              },
+              {
+                "source_system_id": "ifightchainsaas.java.refund.core",
+                "path": "app/dal/src/main/resources/sqlmap/refundcore/SaasRefundOrderMapper.xml",
+                "symbol": "refund_state",
+                "line": 11
+              }
+            ]
+          }
+        ],
+        "cleanup": null,
+        "evidence": [
+          {
+            "source_system_id": "ifightchainsaas.java.refund.core",
+            "path": "app/facade-impl/src/main/java/com/ly/flight/chainsaas/refund/facade/impl/RefundFacadeImpl.java",
+            "symbol": "cancel",
+            "line": 292
+          },
+          {
+            "source_system_id": "ifightchainsaas.java.refund.core",
+            "path": "app/biz/src/main/java/com/ly/flight/chainsaas/refund/biz/manager/refund/RefundCancelServiceInvoker.java",
+            "symbol": "doInvoke",
+            "line": 114
+          },
+          {
+            "source_system_id": "ifightchainsaas.java.refund.core",
+            "path": "app/biz/src/main/java/com/ly/flight/chainsaas/refund/biz/manager/refund/RefundCancelServiceInvoker.java",
+            "symbol": "checkOrder",
+            "line": 150
+          },
+          {
+            "source_system_id": "ifightchainsaas.java.refund.core",
+            "path": "app/biz/src/main/java/com/ly/flight/chainsaas/refund/biz/manager/refund/RefundCancelServiceInvoker.java",
+            "symbol": "buildSuccessResp",
+            "line": 163
+          },
+          {
+            "source_system_id": "ifightchainsaas.java.refund.core",
+            "path": "app/facade/src/main/java/com/ly/flight/chainsaas/refund/facade/model/request/RefundCancelRequest.java",
+            "symbol": "RefundCancelRequest",
+            "line": 13
+          },
+          {
+            "source_system_id": "ifightchainsaas.java.refund.core",
+            "path": "app/facade-impl/src/main/java/com/ly/flight/chainsaas/refund/facade/validator/trade/RefundCancelValidator.java",
+            "symbol": "validate",
+            "line": 19
+          },
+          {
+            "source_system_id": "ifightchainsaas.java.refund.core",
+            "path": "app/biz/src/main/java/com/ly/flight/chainsaas/refund/biz/error/TradeBizErrorFactory.java",
+            "symbol": "orderStateCannotCancel",
+            "line": 73
+          },
+          {
+            "source_system_id": "ifightchainsaas.java.refund.core",
+            "path": "app/facade-impl/src/main/java/com/ly/flight/chainsaas/refund/facade/impl/AbstractFacade.java",
+            "symbol": "createErrorResponse",
+            "line": 182
+          },
+          {
+            "source_system_id": "ifightchainsaas.java.refund.core",
+            "path": "app/biz/src/main/java/com/ly/flight/chainsaas/refund/biz/actor/post/RefundOrderCancelPostActor.java",
+            "symbol": "RefundOrderCancelPostActor",
+            "line": 29
+          },
+          {
+            "source_system_id": "ifightchainsaas.java.refund.core",
+            "path": "app/biz/src/main/java/com/ly/flight/chainsaas/refund/biz/actor/post/RefundOrderManualCancelPostActor.java",
+            "symbol": "RefundOrderManualCancelPostActor",
+            "line": 24
+          },
+          {
+            "source_system_id": "ifightchainsaas.java.refund.core",
+            "path": "app/biz/src/main/java/com/ly/flight/chainsaas/refund/biz/fsm/core/DefaultState.java",
+            "symbol": "handle",
+            "line": 77
+          },
+          {
+            "source_system_id": "ifightchainsaas.java.refund.core",
+            "path": "app/model/src/main/java/com/ly/flight/chainsaas/refund/enums/RefundOrderStateEnum.java",
+            "symbol": "PENDING_APPLY",
+            "line": 15
+          },
+          {
+            "source_system_id": "ifightchainsaas.java.refund.core",
+            "path": "app/model/src/main/java/com/ly/flight/chainsaas/refund/enums/RefundOrderStateEnum.java",
+            "symbol": "RESHOPING",
+            "line": 17
+          },
+          {
+            "source_system_id": "ifightchainsaas.java.refund.core",
+            "path": "app/model/src/main/java/com/ly/flight/chainsaas/refund/enums/RefundOrderStateEnum.java",
+            "symbol": "AUDITED",
+            "line": 19
+          },
+          {
+            "source_system_id": "ifightchainsaas.java.refund.core",
+            "path": "app/model/src/main/java/com/ly/flight/chainsaas/refund/enums/RefundOrderStateEnum.java",
+            "symbol": "WAIT_REFUND",
+            "line": 21
+          },
+          {
+            "source_system_id": "ifightchainsaas.java.refund.core",
+            "path": "app/model/src/main/java/com/ly/flight/chainsaas/refund/enums/RefundOrderStateEnum.java",
+            "symbol": "REFUNDING",
+            "line": 23
+          },
+          {
+            "source_system_id": "ifightchainsaas.java.refund.core",
+            "path": "app/model/src/main/java/com/ly/flight/chainsaas/refund/enums/RefundOrderStateEnum.java",
+            "symbol": "REFUND_SUCCESS",
+            "line": 25
+          },
+          {
+            "source_system_id": "ifightchainsaas.java.refund.core",
+            "path": "app/model/src/main/java/com/ly/flight/chainsaas/refund/enums/RefundOrderStateEnum.java",
+            "symbol": "REFUND_FAIL",
+            "line": 27
+          },
+          {
+            "source_system_id": "ifightchainsaas.java.refund.core",
+            "path": "app/model/src/main/java/com/ly/flight/chainsaas/refund/enums/RefundOrderStateEnum.java",
+            "symbol": "REFUND_CANCEL",
+            "line": 29
+          },
+          {
+            "source_system_id": "ifightchainsaas.java.refund.core",
+            "path": "app/model/src/main/java/com/ly/flight/chainsaas/refund/enums/RefundOrderStateEnum.java",
+            "symbol": "REFUND_DONE",
+            "line": 31
+          }
+        ]
+      },
+      {
+        "template_id": "cancel_already_cancelled",
+        "title": "已取消订单再次取消幂等成功，保持REFUND_CANCEL状态",
+        "coverage_kind": "business",
+        "data_calls": [
+          {
+            "call_id": "refund_data",
+            "function_name": "select_existing_refund_for_cancel",
+            "arguments": {
+              "order_state": {
+                "kind": "parameter",
+                "name": "initial_state",
+                "path": "code",
+                "step_id": "",
+                "call_id": "",
+                "output_name": ""
+              },
+              "cancelled_state": {
+                "kind": "parameter",
+                "name": "cancelled_state",
+                "path": "code",
+                "step_id": "",
+                "call_id": "",
+                "output_name": ""
+              }
+            }
+          }
+        ],
+        "parameters": [
+          {
+            "name": "initial_state",
+            "target_field": "",
+            "function_id": "enum.values",
+            "arguments": {
+              "values": [
+                {
+                  "code": 6,
+                  "name": "REFUND_CANCEL"
+                }
+              ]
+            },
+            "base_source": null
+          },
+          {
+            "name": "cancelled_state",
+            "target_field": "",
+            "function_id": "enum.values",
+            "arguments": {
+              "values": [
+                {
+                  "code": 6,
+                  "name": "REFUND_CANCEL"
+                }
+              ]
+            },
+            "base_source": null
+          }
+        ],
+        "constraints": [],
+        "request_bindings": [
+          {
+            "field": "refundSerialNo",
+            "source": {
+              "kind": "data_output",
+              "name": "",
+              "path": "",
+              "step_id": "",
+              "call_id": "refund_data",
+              "output_name": "refund_serial_no"
+            }
+          },
+          {
+            "field": "operator",
+            "source": {
+              "kind": "data_output",
+              "name": "",
+              "path": "",
+              "step_id": "",
+              "call_id": "refund_data",
+              "output_name": "operator"
+            }
+          },
+          {
+            "field": "cancelReasonId",
+            "source": {
+              "kind": "data_output",
+              "name": "",
+              "path": "",
+              "step_id": "",
+              "call_id": "refund_data",
+              "output_name": "cancel_reason_id"
+            }
+          },
+          {
+            "field": "cancelReason",
+            "source": {
+              "kind": "literal",
+              "value": "OpenTest退票取消状态验证",
+              "name": "",
+              "path": "",
+              "step_id": "",
+              "call_id": "",
+              "output_name": ""
+            }
+          },
+          {
+            "field": "cancelRemark",
+            "source": {
+              "kind": "literal",
+              "value": "OpenTest固定源码取消状态与幂等回归",
+              "name": "",
+              "path": "",
+              "step_id": "",
+              "call_id": "",
+              "output_name": ""
+            }
+          }
+        ],
+        "combination": "cartesian",
+        "oracles": [
+          {
+            "oracle_id": "cancel_response",
+            "channel": "response",
+            "function_id": "",
+            "statement": "",
+            "arguments": {},
+            "observer_output_schema": null,
+            "json_decode_fields": {},
+            "assertions": [
+              {
+                "actual_path": "success",
+                "operator": "eq",
+                "expected": {
+                  "kind": "literal",
+                  "value": true,
+                  "name": "",
+                  "path": "",
+                  "step_id": "",
+                  "call_id": "",
+                  "output_name": ""
+                }
+              },
+              {
+                "actual_path": "orderSerialNo",
+                "operator": "eq",
+                "expected": {
+                  "kind": "request_field",
+                  "name": "",
+                  "path": "refundSerialNo",
+                  "step_id": "",
+                  "call_id": "",
+                  "output_name": ""
+                }
+              }
+            ],
+            "evidence": []
+          },
+          {
+            "oracle_id": "persisted_refund_state",
+            "channel": "mysql",
+            "function_id": "database:ifightchainsaas.java.refund.core:itradecoredatasource",
+            "statement": "SELECT refund_serial_no, refund_state FROM saas_refund_order WHERE refund_serial_no = :refund_serial_no AND env = :env LIMIT 1",
+            "arguments": {
+              "refund_serial_no": {
+                "kind": "request_field",
+                "name": "",
+                "path": "refundSerialNo",
+                "step_id": "",
+                "call_id": "",
+                "output_name": ""
+              },
+              "env": {
+                "kind": "data_output",
+                "name": "",
+                "path": "",
+                "step_id": "",
+                "call_id": "refund_data",
+                "output_name": "environment"
+              }
+            },
+            "observer_output_schema": {
+              "type": "object",
+              "properties": {
+                "rows": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "refund_serial_no": {
+                        "type": "string"
+                      },
+                      "refund_state": {
+                        "type": "integer"
+                      }
+                    },
+                    "required": [
+                      "refund_serial_no",
+                      "refund_state"
+                    ],
+                    "additionalProperties": false
+                  }
+                },
+                "row_count": {
+                  "type": "integer"
+                }
+              },
+              "required": [
+                "rows",
+                "row_count"
+              ],
+              "additionalProperties": false
+            },
+            "json_decode_fields": {},
+            "assertions": [
+              {
+                "actual_path": "row_count",
+                "operator": "eq",
+                "expected": {
+                  "kind": "literal",
+                  "value": 1,
+                  "name": "",
+                  "path": "",
+                  "step_id": "",
+                  "call_id": "",
+                  "output_name": ""
+                }
+              },
+              {
+                "actual_path": "rows.0.refund_serial_no",
+                "operator": "eq",
+                "expected": {
+                  "kind": "request_field",
+                  "name": "",
+                  "path": "refundSerialNo",
+                  "step_id": "",
+                  "call_id": "",
+                  "output_name": ""
+                }
+              },
+              {
+                "actual_path": "rows.0.refund_state",
+                "operator": "eq",
+                "expected": {
+                  "kind": "parameter",
+                  "name": "cancelled_state",
+                  "path": "code",
+                  "step_id": "",
+                  "call_id": "",
+                  "output_name": ""
+                }
+              }
+            ],
+            "evidence": [
+              {
+                "source_system_id": "ifightchainsaas.java.refund.core",
+                "path": "app/dal/src/main/resources/META-INF/spring/refundcore-db-beans.xml",
+                "symbol": "itradecoreDatasource",
+                "line": 24
+              },
+              {
+                "source_system_id": "ifightchainsaas.java.refund.core",
+                "path": "app/dal/src/main/resources/sqlmap/refundcore/SaasRefundOrderMapperExt.xml",
+                "symbol": "updateOrderState",
+                "line": 12
+              },
+              {
+                "source_system_id": "ifightchainsaas.java.refund.core",
+                "path": "app/dal/src/main/resources/sqlmap/refundcore/SaasRefundOrderMapper.xml",
+                "symbol": "refund_state",
+                "line": 11
+              }
+            ]
+          }
+        ],
+        "cleanup": null,
+        "evidence": [
+          {
+            "source_system_id": "ifightchainsaas.java.refund.core",
+            "path": "app/facade-impl/src/main/java/com/ly/flight/chainsaas/refund/facade/impl/RefundFacadeImpl.java",
+            "symbol": "cancel",
+            "line": 292
+          },
+          {
+            "source_system_id": "ifightchainsaas.java.refund.core",
+            "path": "app/biz/src/main/java/com/ly/flight/chainsaas/refund/biz/manager/refund/RefundCancelServiceInvoker.java",
+            "symbol": "doInvoke",
+            "line": 114
+          },
+          {
+            "source_system_id": "ifightchainsaas.java.refund.core",
+            "path": "app/biz/src/main/java/com/ly/flight/chainsaas/refund/biz/manager/refund/RefundCancelServiceInvoker.java",
+            "symbol": "checkOrder",
+            "line": 150
+          },
+          {
+            "source_system_id": "ifightchainsaas.java.refund.core",
+            "path": "app/biz/src/main/java/com/ly/flight/chainsaas/refund/biz/manager/refund/RefundCancelServiceInvoker.java",
+            "symbol": "buildSuccessResp",
+            "line": 163
+          },
+          {
+            "source_system_id": "ifightchainsaas.java.refund.core",
+            "path": "app/facade/src/main/java/com/ly/flight/chainsaas/refund/facade/model/request/RefundCancelRequest.java",
+            "symbol": "RefundCancelRequest",
+            "line": 13
+          },
+          {
+            "source_system_id": "ifightchainsaas.java.refund.core",
+            "path": "app/facade-impl/src/main/java/com/ly/flight/chainsaas/refund/facade/validator/trade/RefundCancelValidator.java",
+            "symbol": "validate",
+            "line": 19
+          },
+          {
+            "source_system_id": "ifightchainsaas.java.refund.core",
+            "path": "app/biz/src/main/java/com/ly/flight/chainsaas/refund/biz/error/TradeBizErrorFactory.java",
+            "symbol": "orderStateCannotCancel",
+            "line": 73
+          },
+          {
+            "source_system_id": "ifightchainsaas.java.refund.core",
+            "path": "app/facade-impl/src/main/java/com/ly/flight/chainsaas/refund/facade/impl/AbstractFacade.java",
+            "symbol": "createErrorResponse",
+            "line": 182
+          },
+          {
+            "source_system_id": "ifightchainsaas.java.refund.core",
+            "path": "app/biz/src/main/java/com/ly/flight/chainsaas/refund/biz/actor/post/RefundOrderCancelPostActor.java",
+            "symbol": "RefundOrderCancelPostActor",
+            "line": 29
+          },
+          {
+            "source_system_id": "ifightchainsaas.java.refund.core",
+            "path": "app/biz/src/main/java/com/ly/flight/chainsaas/refund/biz/actor/post/RefundOrderManualCancelPostActor.java",
+            "symbol": "RefundOrderManualCancelPostActor",
+            "line": 24
+          },
+          {
+            "source_system_id": "ifightchainsaas.java.refund.core",
+            "path": "app/biz/src/main/java/com/ly/flight/chainsaas/refund/biz/fsm/core/DefaultState.java",
+            "symbol": "handle",
+            "line": 77
+          },
+          {
+            "source_system_id": "ifightchainsaas.java.refund.core",
+            "path": "app/model/src/main/java/com/ly/flight/chainsaas/refund/enums/RefundOrderStateEnum.java",
+            "symbol": "PENDING_APPLY",
+            "line": 15
+          },
+          {
+            "source_system_id": "ifightchainsaas.java.refund.core",
+            "path": "app/model/src/main/java/com/ly/flight/chainsaas/refund/enums/RefundOrderStateEnum.java",
+            "symbol": "RESHOPING",
+            "line": 17
+          },
+          {
+            "source_system_id": "ifightchainsaas.java.refund.core",
+            "path": "app/model/src/main/java/com/ly/flight/chainsaas/refund/enums/RefundOrderStateEnum.java",
+            "symbol": "AUDITED",
+            "line": 19
+          },
+          {
+            "source_system_id": "ifightchainsaas.java.refund.core",
+            "path": "app/model/src/main/java/com/ly/flight/chainsaas/refund/enums/RefundOrderStateEnum.java",
+            "symbol": "WAIT_REFUND",
+            "line": 21
+          },
+          {
+            "source_system_id": "ifightchainsaas.java.refund.core",
+            "path": "app/model/src/main/java/com/ly/flight/chainsaas/refund/enums/RefundOrderStateEnum.java",
+            "symbol": "REFUNDING",
+            "line": 23
+          },
+          {
+            "source_system_id": "ifightchainsaas.java.refund.core",
+            "path": "app/model/src/main/java/com/ly/flight/chainsaas/refund/enums/RefundOrderStateEnum.java",
+            "symbol": "REFUND_SUCCESS",
+            "line": 25
+          },
+          {
+            "source_system_id": "ifightchainsaas.java.refund.core",
+            "path": "app/model/src/main/java/com/ly/flight/chainsaas/refund/enums/RefundOrderStateEnum.java",
+            "symbol": "REFUND_FAIL",
+            "line": 27
+          },
+          {
+            "source_system_id": "ifightchainsaas.java.refund.core",
+            "path": "app/model/src/main/java/com/ly/flight/chainsaas/refund/enums/RefundOrderStateEnum.java",
+            "symbol": "REFUND_CANCEL",
+            "line": 29
+          },
+          {
+            "source_system_id": "ifightchainsaas.java.refund.core",
+            "path": "app/model/src/main/java/com/ly/flight/chainsaas/refund/enums/RefundOrderStateEnum.java",
+            "symbol": "REFUND_DONE",
+            "line": 31
+          }
+        ]
+      },
+      {
+        "template_id": "cancel_disallowed_states",
+        "title": "退票中、退票成功、退款完成订单拒绝取消，返回LY0510300602且状态不变",
+        "coverage_kind": "state_validation",
+        "data_calls": [
+          {
+            "call_id": "refund_data",
+            "function_name": "select_existing_refund_for_cancel",
+            "arguments": {
+              "order_state": {
+                "kind": "parameter",
+                "name": "initial_state",
+                "path": "code",
+                "step_id": "",
+                "call_id": "",
+                "output_name": ""
+              },
+              "cancelled_state": {
+                "kind": "parameter",
+                "name": "cancelled_state",
+                "path": "code",
+                "step_id": "",
+                "call_id": "",
+                "output_name": ""
+              }
+            }
+          }
+        ],
+        "parameters": [
+          {
+            "name": "initial_state",
+            "target_field": "",
+            "function_id": "enum.values",
+            "arguments": {
+              "values": [
+                {
+                  "code": 3,
+                  "name": "REFUNDING"
+                },
+                {
+                  "code": 4,
+                  "name": "REFUND_SUCCESS"
+                },
+                {
+                  "code": 7,
+                  "name": "REFUND_DONE"
+                }
+              ]
+            },
+            "base_source": null
+          },
+          {
+            "name": "cancelled_state",
+            "target_field": "",
+            "function_id": "enum.values",
+            "arguments": {
+              "values": [
+                {
+                  "code": 6,
+                  "name": "REFUND_CANCEL"
+                }
+              ]
+            },
+            "base_source": null
+          }
+        ],
+        "constraints": [],
+        "request_bindings": [
+          {
+            "field": "refundSerialNo",
+            "source": {
+              "kind": "data_output",
+              "name": "",
+              "path": "",
+              "step_id": "",
+              "call_id": "refund_data",
+              "output_name": "refund_serial_no"
+            }
+          },
+          {
+            "field": "operator",
+            "source": {
+              "kind": "data_output",
+              "name": "",
+              "path": "",
+              "step_id": "",
+              "call_id": "refund_data",
+              "output_name": "operator"
+            }
+          },
+          {
+            "field": "cancelReasonId",
+            "source": {
+              "kind": "data_output",
+              "name": "",
+              "path": "",
+              "step_id": "",
+              "call_id": "refund_data",
+              "output_name": "cancel_reason_id"
+            }
+          },
+          {
+            "field": "cancelReason",
+            "source": {
+              "kind": "literal",
+              "value": "OpenTest退票取消状态验证",
+              "name": "",
+              "path": "",
+              "step_id": "",
+              "call_id": "",
+              "output_name": ""
+            }
+          },
+          {
+            "field": "cancelRemark",
+            "source": {
+              "kind": "literal",
+              "value": "OpenTest固定源码取消状态与幂等回归",
+              "name": "",
+              "path": "",
+              "step_id": "",
+              "call_id": "",
+              "output_name": ""
+            }
+          }
+        ],
+        "combination": "cartesian",
+        "oracles": [
+          {
+            "oracle_id": "cancel_response",
+            "channel": "response",
+            "function_id": "",
+            "statement": "",
+            "arguments": {},
+            "observer_output_schema": null,
+            "json_decode_fields": {},
+            "assertions": [
+              {
+                "actual_path": "success",
+                "operator": "eq",
+                "expected": {
+                  "kind": "literal",
+                  "value": false,
+                  "name": "",
+                  "path": "",
+                  "step_id": "",
+                  "call_id": "",
+                  "output_name": ""
+                }
+              },
+              {
+                "actual_path": "code",
+                "operator": "eq",
+                "expected": {
+                  "kind": "literal",
+                  "value": "LY0510300602",
+                  "name": "",
+                  "path": "",
+                  "step_id": "",
+                  "call_id": "",
+                  "output_name": ""
+                }
+              }
+            ],
+            "evidence": []
+          },
+          {
+            "oracle_id": "persisted_refund_state",
+            "channel": "mysql",
+            "function_id": "database:ifightchainsaas.java.refund.core:itradecoredatasource",
+            "statement": "SELECT refund_serial_no, refund_state FROM saas_refund_order WHERE refund_serial_no = :refund_serial_no AND env = :env LIMIT 1",
+            "arguments": {
+              "refund_serial_no": {
+                "kind": "request_field",
+                "name": "",
+                "path": "refundSerialNo",
+                "step_id": "",
+                "call_id": "",
+                "output_name": ""
+              },
+              "env": {
+                "kind": "data_output",
+                "name": "",
+                "path": "",
+                "step_id": "",
+                "call_id": "refund_data",
+                "output_name": "environment"
+              }
+            },
+            "observer_output_schema": {
+              "type": "object",
+              "properties": {
+                "rows": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "refund_serial_no": {
+                        "type": "string"
+                      },
+                      "refund_state": {
+                        "type": "integer"
+                      }
+                    },
+                    "required": [
+                      "refund_serial_no",
+                      "refund_state"
+                    ],
+                    "additionalProperties": false
+                  }
+                },
+                "row_count": {
+                  "type": "integer"
+                }
+              },
+              "required": [
+                "rows",
+                "row_count"
+              ],
+              "additionalProperties": false
+            },
+            "json_decode_fields": {},
+            "assertions": [
+              {
+                "actual_path": "row_count",
+                "operator": "eq",
+                "expected": {
+                  "kind": "literal",
+                  "value": 1,
+                  "name": "",
+                  "path": "",
+                  "step_id": "",
+                  "call_id": "",
+                  "output_name": ""
+                }
+              },
+              {
+                "actual_path": "rows.0.refund_serial_no",
+                "operator": "eq",
+                "expected": {
+                  "kind": "request_field",
+                  "name": "",
+                  "path": "refundSerialNo",
+                  "step_id": "",
+                  "call_id": "",
+                  "output_name": ""
+                }
+              },
+              {
+                "actual_path": "rows.0.refund_state",
+                "operator": "eq",
+                "expected": {
+                  "kind": "parameter",
+                  "name": "initial_state",
+                  "path": "code",
+                  "step_id": "",
+                  "call_id": "",
+                  "output_name": ""
+                }
+              }
+            ],
+            "evidence": [
+              {
+                "source_system_id": "ifightchainsaas.java.refund.core",
+                "path": "app/dal/src/main/resources/META-INF/spring/refundcore-db-beans.xml",
+                "symbol": "itradecoreDatasource",
+                "line": 24
+              },
+              {
+                "source_system_id": "ifightchainsaas.java.refund.core",
+                "path": "app/dal/src/main/resources/sqlmap/refundcore/SaasRefundOrderMapperExt.xml",
+                "symbol": "updateOrderState",
+                "line": 12
+              },
+              {
+                "source_system_id": "ifightchainsaas.java.refund.core",
+                "path": "app/dal/src/main/resources/sqlmap/refundcore/SaasRefundOrderMapper.xml",
+                "symbol": "refund_state",
+                "line": 11
+              }
+            ]
+          }
+        ],
+        "cleanup": null,
+        "evidence": [
+          {
+            "source_system_id": "ifightchainsaas.java.refund.core",
+            "path": "app/facade-impl/src/main/java/com/ly/flight/chainsaas/refund/facade/impl/RefundFacadeImpl.java",
+            "symbol": "cancel",
+            "line": 292
+          },
+          {
+            "source_system_id": "ifightchainsaas.java.refund.core",
+            "path": "app/biz/src/main/java/com/ly/flight/chainsaas/refund/biz/manager/refund/RefundCancelServiceInvoker.java",
+            "symbol": "doInvoke",
+            "line": 114
+          },
+          {
+            "source_system_id": "ifightchainsaas.java.refund.core",
+            "path": "app/biz/src/main/java/com/ly/flight/chainsaas/refund/biz/manager/refund/RefundCancelServiceInvoker.java",
+            "symbol": "checkOrder",
+            "line": 150
+          },
+          {
+            "source_system_id": "ifightchainsaas.java.refund.core",
+            "path": "app/biz/src/main/java/com/ly/flight/chainsaas/refund/biz/manager/refund/RefundCancelServiceInvoker.java",
+            "symbol": "buildSuccessResp",
+            "line": 163
+          },
+          {
+            "source_system_id": "ifightchainsaas.java.refund.core",
+            "path": "app/facade/src/main/java/com/ly/flight/chainsaas/refund/facade/model/request/RefundCancelRequest.java",
+            "symbol": "RefundCancelRequest",
+            "line": 13
+          },
+          {
+            "source_system_id": "ifightchainsaas.java.refund.core",
+            "path": "app/facade-impl/src/main/java/com/ly/flight/chainsaas/refund/facade/validator/trade/RefundCancelValidator.java",
+            "symbol": "validate",
+            "line": 19
+          },
+          {
+            "source_system_id": "ifightchainsaas.java.refund.core",
+            "path": "app/biz/src/main/java/com/ly/flight/chainsaas/refund/biz/error/TradeBizErrorFactory.java",
+            "symbol": "orderStateCannotCancel",
+            "line": 73
+          },
+          {
+            "source_system_id": "ifightchainsaas.java.refund.core",
+            "path": "app/facade-impl/src/main/java/com/ly/flight/chainsaas/refund/facade/impl/AbstractFacade.java",
+            "symbol": "createErrorResponse",
+            "line": 182
+          },
+          {
+            "source_system_id": "ifightchainsaas.java.refund.core",
+            "path": "app/biz/src/main/java/com/ly/flight/chainsaas/refund/biz/actor/post/RefundOrderCancelPostActor.java",
+            "symbol": "RefundOrderCancelPostActor",
+            "line": 29
+          },
+          {
+            "source_system_id": "ifightchainsaas.java.refund.core",
+            "path": "app/biz/src/main/java/com/ly/flight/chainsaas/refund/biz/actor/post/RefundOrderManualCancelPostActor.java",
+            "symbol": "RefundOrderManualCancelPostActor",
+            "line": 24
+          },
+          {
+            "source_system_id": "ifightchainsaas.java.refund.core",
+            "path": "app/biz/src/main/java/com/ly/flight/chainsaas/refund/biz/fsm/core/DefaultState.java",
+            "symbol": "handle",
+            "line": 77
+          },
+          {
+            "source_system_id": "ifightchainsaas.java.refund.core",
+            "path": "app/model/src/main/java/com/ly/flight/chainsaas/refund/enums/RefundOrderStateEnum.java",
+            "symbol": "PENDING_APPLY",
+            "line": 15
+          },
+          {
+            "source_system_id": "ifightchainsaas.java.refund.core",
+            "path": "app/model/src/main/java/com/ly/flight/chainsaas/refund/enums/RefundOrderStateEnum.java",
+            "symbol": "RESHOPING",
+            "line": 17
+          },
+          {
+            "source_system_id": "ifightchainsaas.java.refund.core",
+            "path": "app/model/src/main/java/com/ly/flight/chainsaas/refund/enums/RefundOrderStateEnum.java",
+            "symbol": "AUDITED",
+            "line": 19
+          },
+          {
+            "source_system_id": "ifightchainsaas.java.refund.core",
+            "path": "app/model/src/main/java/com/ly/flight/chainsaas/refund/enums/RefundOrderStateEnum.java",
+            "symbol": "WAIT_REFUND",
+            "line": 21
+          },
+          {
+            "source_system_id": "ifightchainsaas.java.refund.core",
+            "path": "app/model/src/main/java/com/ly/flight/chainsaas/refund/enums/RefundOrderStateEnum.java",
+            "symbol": "REFUNDING",
+            "line": 23
+          },
+          {
+            "source_system_id": "ifightchainsaas.java.refund.core",
+            "path": "app/model/src/main/java/com/ly/flight/chainsaas/refund/enums/RefundOrderStateEnum.java",
+            "symbol": "REFUND_SUCCESS",
+            "line": 25
+          },
+          {
+            "source_system_id": "ifightchainsaas.java.refund.core",
+            "path": "app/model/src/main/java/com/ly/flight/chainsaas/refund/enums/RefundOrderStateEnum.java",
+            "symbol": "REFUND_FAIL",
+            "line": 27
+          },
+          {
+            "source_system_id": "ifightchainsaas.java.refund.core",
+            "path": "app/model/src/main/java/com/ly/flight/chainsaas/refund/enums/RefundOrderStateEnum.java",
+            "symbol": "REFUND_CANCEL",
+            "line": 29
+          },
+          {
+            "source_system_id": "ifightchainsaas.java.refund.core",
+            "path": "app/model/src/main/java/com/ly/flight/chainsaas/refund/enums/RefundOrderStateEnum.java",
+            "symbol": "REFUND_DONE",
+            "line": 31
+          }
+        ]
+      }
+    ],
+    "unresolved": []
+  },
+  "issues": [],
+  "variants": [
+    {
+      "variant_id": "case-variant-v4-0d61346263fe25214b4f",
+      "template_id": "cancel_allowed_states",
+      "ordinal": 1,
+      "parameter_values": {
+        "initial_state": {
+          "code": 8,
+          "name": "RESHOPING"
+        },
+        "cancelled_state": {
+          "code": 6,
+          "name": "REFUND_CANCEL"
+        }
+      },
+      "request_values": {
+        "refundSerialNo": {
+          "kind": "data_output",
+          "call_id": "refund_data",
+          "output_name": "refund_serial_no"
+        },
+        "operator": {
+          "kind": "data_output",
+          "call_id": "refund_data",
+          "output_name": "operator"
+        },
+        "cancelReasonId": {
+          "kind": "data_output",
+          "call_id": "refund_data",
+          "output_name": "cancel_reason_id"
+        },
+        "cancelReason": "OpenTest退票取消状态验证",
+        "cancelRemark": "OpenTest固定源码取消状态与幂等回归"
+      },
+      "data_calls": [
+        {
+          "call_id": "refund_data",
+          "function_name": "select_existing_refund_for_cancel",
+          "arguments": {
+            "order_state": {
+              "kind": "parameter",
+              "name": "initial_state",
+              "path": "code",
+              "step_id": "",
+              "call_id": "",
+              "output_name": ""
+            },
+            "cancelled_state": {
+              "kind": "parameter",
+              "name": "cancelled_state",
+              "path": "code",
+              "step_id": "",
+              "call_id": "",
+              "output_name": ""
+            }
+          }
+        }
+      ],
+      "oracles": [
+        {
+          "oracle_id": "cancel_response",
+          "channel": "response",
+          "function_id": "",
+          "statement": "",
+          "arguments": {},
+          "observer_output_schema": null,
+          "json_decode_fields": {},
+          "assertions": [
+            {
+              "actual_path": "success",
+              "operator": "eq",
+              "expected": {
+                "kind": "literal",
+                "value": true,
+                "name": "",
+                "path": "",
+                "step_id": "",
+                "call_id": "",
+                "output_name": ""
+              }
+            },
+            {
+              "actual_path": "orderSerialNo",
+              "operator": "eq",
+              "expected": {
+                "kind": "request_field",
+                "name": "",
+                "path": "refundSerialNo",
+                "step_id": "",
+                "call_id": "",
+                "output_name": ""
+              }
+            }
+          ],
+          "evidence": []
+        },
+        {
+          "oracle_id": "persisted_refund_state",
+          "channel": "mysql",
+          "function_id": "database:ifightchainsaas.java.refund.core:itradecoredatasource",
+          "statement": "SELECT refund_serial_no, refund_state FROM saas_refund_order WHERE refund_serial_no = :refund_serial_no AND env = :env LIMIT 1",
+          "arguments": {
+            "refund_serial_no": {
+              "kind": "request_field",
+              "name": "",
+              "path": "refundSerialNo",
+              "step_id": "",
+              "call_id": "",
+              "output_name": ""
+            },
+            "env": {
+              "kind": "data_output",
+              "name": "",
+              "path": "",
+              "step_id": "",
+              "call_id": "refund_data",
+              "output_name": "environment"
+            }
+          },
+          "observer_output_schema": {
+            "type": "object",
+            "properties": {
+              "rows": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "refund_serial_no": {
+                      "type": "string"
+                    },
+                    "refund_state": {
+                      "type": "integer"
+                    }
+                  },
+                  "required": [
+                    "refund_serial_no",
+                    "refund_state"
+                  ],
+                  "additionalProperties": false
+                }
+              },
+              "row_count": {
+                "type": "integer"
+              }
+            },
+            "required": [
+              "rows",
+              "row_count"
+            ],
+            "additionalProperties": false
+          },
+          "json_decode_fields": {},
+          "assertions": [
+            {
+              "actual_path": "row_count",
+              "operator": "eq",
+              "expected": {
+                "kind": "literal",
+                "value": 1,
+                "name": "",
+                "path": "",
+                "step_id": "",
+                "call_id": "",
+                "output_name": ""
+              }
+            },
+            {
+              "actual_path": "rows.0.refund_serial_no",
+              "operator": "eq",
+              "expected": {
+                "kind": "request_field",
+                "name": "",
+                "path": "refundSerialNo",
+                "step_id": "",
+                "call_id": "",
+                "output_name": ""
+              }
+            },
+            {
+              "actual_path": "rows.0.refund_state",
+              "operator": "eq",
+              "expected": {
+                "kind": "parameter",
+                "name": "cancelled_state",
+                "path": "code",
+                "step_id": "",
+                "call_id": "",
+                "output_name": ""
+              }
+            }
+          ],
+          "evidence": [
+            {
+              "source_system_id": "ifightchainsaas.java.refund.core",
+              "path": "app/dal/src/main/resources/META-INF/spring/refundcore-db-beans.xml",
+              "symbol": "itradecoreDatasource",
+              "line": 24
+            },
+            {
+              "source_system_id": "ifightchainsaas.java.refund.core",
+              "path": "app/dal/src/main/resources/sqlmap/refundcore/SaasRefundOrderMapperExt.xml",
+              "symbol": "updateOrderState",
+              "line": 12
+            },
+            {
+              "source_system_id": "ifightchainsaas.java.refund.core",
+              "path": "app/dal/src/main/resources/sqlmap/refundcore/SaasRefundOrderMapper.xml",
+              "symbol": "refund_state",
+              "line": 11
+            }
+          ]
+        }
+      ],
+      "cleanup": null,
+      "blocked_reason": ""
+    },
+    {
+      "variant_id": "case-variant-v4-7fee863f505d31c28f63",
+      "template_id": "cancel_allowed_states",
+      "ordinal": 2,
+      "parameter_values": {
+        "initial_state": {
+          "code": 1,
+          "name": "AUDITED"
+        },
+        "cancelled_state": {
+          "code": 6,
+          "name": "REFUND_CANCEL"
+        }
+      },
+      "request_values": {
+        "refundSerialNo": {
+          "kind": "data_output",
+          "call_id": "refund_data",
+          "output_name": "refund_serial_no"
+        },
+        "operator": {
+          "kind": "data_output",
+          "call_id": "refund_data",
+          "output_name": "operator"
+        },
+        "cancelReasonId": {
+          "kind": "data_output",
+          "call_id": "refund_data",
+          "output_name": "cancel_reason_id"
+        },
+        "cancelReason": "OpenTest退票取消状态验证",
+        "cancelRemark": "OpenTest固定源码取消状态与幂等回归"
+      },
+      "data_calls": [
+        {
+          "call_id": "refund_data",
+          "function_name": "select_existing_refund_for_cancel",
+          "arguments": {
+            "order_state": {
+              "kind": "parameter",
+              "name": "initial_state",
+              "path": "code",
+              "step_id": "",
+              "call_id": "",
+              "output_name": ""
+            },
+            "cancelled_state": {
+              "kind": "parameter",
+              "name": "cancelled_state",
+              "path": "code",
+              "step_id": "",
+              "call_id": "",
+              "output_name": ""
+            }
+          }
+        }
+      ],
+      "oracles": [
+        {
+          "oracle_id": "cancel_response",
+          "channel": "response",
+          "function_id": "",
+          "statement": "",
+          "arguments": {},
+          "observer_output_schema": null,
+          "json_decode_fields": {},
+          "assertions": [
+            {
+              "actual_path": "success",
+              "operator": "eq",
+              "expected": {
+                "kind": "literal",
+                "value": true,
+                "name": "",
+                "path": "",
+                "step_id": "",
+                "call_id": "",
+                "output_name": ""
+              }
+            },
+            {
+              "actual_path": "orderSerialNo",
+              "operator": "eq",
+              "expected": {
+                "kind": "request_field",
+                "name": "",
+                "path": "refundSerialNo",
+                "step_id": "",
+                "call_id": "",
+                "output_name": ""
+              }
+            }
+          ],
+          "evidence": []
+        },
+        {
+          "oracle_id": "persisted_refund_state",
+          "channel": "mysql",
+          "function_id": "database:ifightchainsaas.java.refund.core:itradecoredatasource",
+          "statement": "SELECT refund_serial_no, refund_state FROM saas_refund_order WHERE refund_serial_no = :refund_serial_no AND env = :env LIMIT 1",
+          "arguments": {
+            "refund_serial_no": {
+              "kind": "request_field",
+              "name": "",
+              "path": "refundSerialNo",
+              "step_id": "",
+              "call_id": "",
+              "output_name": ""
+            },
+            "env": {
+              "kind": "data_output",
+              "name": "",
+              "path": "",
+              "step_id": "",
+              "call_id": "refund_data",
+              "output_name": "environment"
+            }
+          },
+          "observer_output_schema": {
+            "type": "object",
+            "properties": {
+              "rows": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "refund_serial_no": {
+                      "type": "string"
+                    },
+                    "refund_state": {
+                      "type": "integer"
+                    }
+                  },
+                  "required": [
+                    "refund_serial_no",
+                    "refund_state"
+                  ],
+                  "additionalProperties": false
+                }
+              },
+              "row_count": {
+                "type": "integer"
+              }
+            },
+            "required": [
+              "rows",
+              "row_count"
+            ],
+            "additionalProperties": false
+          },
+          "json_decode_fields": {},
+          "assertions": [
+            {
+              "actual_path": "row_count",
+              "operator": "eq",
+              "expected": {
+                "kind": "literal",
+                "value": 1,
+                "name": "",
+                "path": "",
+                "step_id": "",
+                "call_id": "",
+                "output_name": ""
+              }
+            },
+            {
+              "actual_path": "rows.0.refund_serial_no",
+              "operator": "eq",
+              "expected": {
+                "kind": "request_field",
+                "name": "",
+                "path": "refundSerialNo",
+                "step_id": "",
+                "call_id": "",
+                "output_name": ""
+              }
+            },
+            {
+              "actual_path": "rows.0.refund_state",
+              "operator": "eq",
+              "expected": {
+                "kind": "parameter",
+                "name": "cancelled_state",
+                "path": "code",
+                "step_id": "",
+                "call_id": "",
+                "output_name": ""
+              }
+            }
+          ],
+          "evidence": [
+            {
+              "source_system_id": "ifightchainsaas.java.refund.core",
+              "path": "app/dal/src/main/resources/META-INF/spring/refundcore-db-beans.xml",
+              "symbol": "itradecoreDatasource",
+              "line": 24
+            },
+            {
+              "source_system_id": "ifightchainsaas.java.refund.core",
+              "path": "app/dal/src/main/resources/sqlmap/refundcore/SaasRefundOrderMapperExt.xml",
+              "symbol": "updateOrderState",
+              "line": 12
+            },
+            {
+              "source_system_id": "ifightchainsaas.java.refund.core",
+              "path": "app/dal/src/main/resources/sqlmap/refundcore/SaasRefundOrderMapper.xml",
+              "symbol": "refund_state",
+              "line": 11
+            }
+          ]
+        }
+      ],
+      "cleanup": null,
+      "blocked_reason": ""
+    },
+    {
+      "variant_id": "case-variant-v4-bd9ce96cd60a53dc3201",
+      "template_id": "cancel_allowed_states",
+      "ordinal": 3,
+      "parameter_values": {
+        "initial_state": {
+          "code": 5,
+          "name": "REFUND_FAIL"
+        },
+        "cancelled_state": {
+          "code": 6,
+          "name": "REFUND_CANCEL"
+        }
+      },
+      "request_values": {
+        "refundSerialNo": {
+          "kind": "data_output",
+          "call_id": "refund_data",
+          "output_name": "refund_serial_no"
+        },
+        "operator": {
+          "kind": "data_output",
+          "call_id": "refund_data",
+          "output_name": "operator"
+        },
+        "cancelReasonId": {
+          "kind": "data_output",
+          "call_id": "refund_data",
+          "output_name": "cancel_reason_id"
+        },
+        "cancelReason": "OpenTest退票取消状态验证",
+        "cancelRemark": "OpenTest固定源码取消状态与幂等回归"
+      },
+      "data_calls": [
+        {
+          "call_id": "refund_data",
+          "function_name": "select_existing_refund_for_cancel",
+          "arguments": {
+            "order_state": {
+              "kind": "parameter",
+              "name": "initial_state",
+              "path": "code",
+              "step_id": "",
+              "call_id": "",
+              "output_name": ""
+            },
+            "cancelled_state": {
+              "kind": "parameter",
+              "name": "cancelled_state",
+              "path": "code",
+              "step_id": "",
+              "call_id": "",
+              "output_name": ""
+            }
+          }
+        }
+      ],
+      "oracles": [
+        {
+          "oracle_id": "cancel_response",
+          "channel": "response",
+          "function_id": "",
+          "statement": "",
+          "arguments": {},
+          "observer_output_schema": null,
+          "json_decode_fields": {},
+          "assertions": [
+            {
+              "actual_path": "success",
+              "operator": "eq",
+              "expected": {
+                "kind": "literal",
+                "value": true,
+                "name": "",
+                "path": "",
+                "step_id": "",
+                "call_id": "",
+                "output_name": ""
+              }
+            },
+            {
+              "actual_path": "orderSerialNo",
+              "operator": "eq",
+              "expected": {
+                "kind": "request_field",
+                "name": "",
+                "path": "refundSerialNo",
+                "step_id": "",
+                "call_id": "",
+                "output_name": ""
+              }
+            }
+          ],
+          "evidence": []
+        },
+        {
+          "oracle_id": "persisted_refund_state",
+          "channel": "mysql",
+          "function_id": "database:ifightchainsaas.java.refund.core:itradecoredatasource",
+          "statement": "SELECT refund_serial_no, refund_state FROM saas_refund_order WHERE refund_serial_no = :refund_serial_no AND env = :env LIMIT 1",
+          "arguments": {
+            "refund_serial_no": {
+              "kind": "request_field",
+              "name": "",
+              "path": "refundSerialNo",
+              "step_id": "",
+              "call_id": "",
+              "output_name": ""
+            },
+            "env": {
+              "kind": "data_output",
+              "name": "",
+              "path": "",
+              "step_id": "",
+              "call_id": "refund_data",
+              "output_name": "environment"
+            }
+          },
+          "observer_output_schema": {
+            "type": "object",
+            "properties": {
+              "rows": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "refund_serial_no": {
+                      "type": "string"
+                    },
+                    "refund_state": {
+                      "type": "integer"
+                    }
+                  },
+                  "required": [
+                    "refund_serial_no",
+                    "refund_state"
+                  ],
+                  "additionalProperties": false
+                }
+              },
+              "row_count": {
+                "type": "integer"
+              }
+            },
+            "required": [
+              "rows",
+              "row_count"
+            ],
+            "additionalProperties": false
+          },
+          "json_decode_fields": {},
+          "assertions": [
+            {
+              "actual_path": "row_count",
+              "operator": "eq",
+              "expected": {
+                "kind": "literal",
+                "value": 1,
+                "name": "",
+                "path": "",
+                "step_id": "",
+                "call_id": "",
+                "output_name": ""
+              }
+            },
+            {
+              "actual_path": "rows.0.refund_serial_no",
+              "operator": "eq",
+              "expected": {
+                "kind": "request_field",
+                "name": "",
+                "path": "refundSerialNo",
+                "step_id": "",
+                "call_id": "",
+                "output_name": ""
+              }
+            },
+            {
+              "actual_path": "rows.0.refund_state",
+              "operator": "eq",
+              "expected": {
+                "kind": "parameter",
+                "name": "cancelled_state",
+                "path": "code",
+                "step_id": "",
+                "call_id": "",
+                "output_name": ""
+              }
+            }
+          ],
+          "evidence": [
+            {
+              "source_system_id": "ifightchainsaas.java.refund.core",
+              "path": "app/dal/src/main/resources/META-INF/spring/refundcore-db-beans.xml",
+              "symbol": "itradecoreDatasource",
+              "line": 24
+            },
+            {
+              "source_system_id": "ifightchainsaas.java.refund.core",
+              "path": "app/dal/src/main/resources/sqlmap/refundcore/SaasRefundOrderMapperExt.xml",
+              "symbol": "updateOrderState",
+              "line": 12
+            },
+            {
+              "source_system_id": "ifightchainsaas.java.refund.core",
+              "path": "app/dal/src/main/resources/sqlmap/refundcore/SaasRefundOrderMapper.xml",
+              "symbol": "refund_state",
+              "line": 11
+            }
+          ]
+        }
+      ],
+      "cleanup": null,
+      "blocked_reason": ""
+    },
+    {
+      "variant_id": "case-variant-v4-d964c46c780396927182",
+      "template_id": "cancel_allowed_states",
+      "ordinal": 4,
+      "parameter_values": {
+        "initial_state": {
+          "code": 2,
+          "name": "WAIT_REFUND"
+        },
+        "cancelled_state": {
+          "code": 6,
+          "name": "REFUND_CANCEL"
+        }
+      },
+      "request_values": {
+        "refundSerialNo": {
+          "kind": "data_output",
+          "call_id": "refund_data",
+          "output_name": "refund_serial_no"
+        },
+        "operator": {
+          "kind": "data_output",
+          "call_id": "refund_data",
+          "output_name": "operator"
+        },
+        "cancelReasonId": {
+          "kind": "data_output",
+          "call_id": "refund_data",
+          "output_name": "cancel_reason_id"
+        },
+        "cancelReason": "OpenTest退票取消状态验证",
+        "cancelRemark": "OpenTest固定源码取消状态与幂等回归"
+      },
+      "data_calls": [
+        {
+          "call_id": "refund_data",
+          "function_name": "select_existing_refund_for_cancel",
+          "arguments": {
+            "order_state": {
+              "kind": "parameter",
+              "name": "initial_state",
+              "path": "code",
+              "step_id": "",
+              "call_id": "",
+              "output_name": ""
+            },
+            "cancelled_state": {
+              "kind": "parameter",
+              "name": "cancelled_state",
+              "path": "code",
+              "step_id": "",
+              "call_id": "",
+              "output_name": ""
+            }
+          }
+        }
+      ],
+      "oracles": [
+        {
+          "oracle_id": "cancel_response",
+          "channel": "response",
+          "function_id": "",
+          "statement": "",
+          "arguments": {},
+          "observer_output_schema": null,
+          "json_decode_fields": {},
+          "assertions": [
+            {
+              "actual_path": "success",
+              "operator": "eq",
+              "expected": {
+                "kind": "literal",
+                "value": true,
+                "name": "",
+                "path": "",
+                "step_id": "",
+                "call_id": "",
+                "output_name": ""
+              }
+            },
+            {
+              "actual_path": "orderSerialNo",
+              "operator": "eq",
+              "expected": {
+                "kind": "request_field",
+                "name": "",
+                "path": "refundSerialNo",
+                "step_id": "",
+                "call_id": "",
+                "output_name": ""
+              }
+            }
+          ],
+          "evidence": []
+        },
+        {
+          "oracle_id": "persisted_refund_state",
+          "channel": "mysql",
+          "function_id": "database:ifightchainsaas.java.refund.core:itradecoredatasource",
+          "statement": "SELECT refund_serial_no, refund_state FROM saas_refund_order WHERE refund_serial_no = :refund_serial_no AND env = :env LIMIT 1",
+          "arguments": {
+            "refund_serial_no": {
+              "kind": "request_field",
+              "name": "",
+              "path": "refundSerialNo",
+              "step_id": "",
+              "call_id": "",
+              "output_name": ""
+            },
+            "env": {
+              "kind": "data_output",
+              "name": "",
+              "path": "",
+              "step_id": "",
+              "call_id": "refund_data",
+              "output_name": "environment"
+            }
+          },
+          "observer_output_schema": {
+            "type": "object",
+            "properties": {
+              "rows": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "refund_serial_no": {
+                      "type": "string"
+                    },
+                    "refund_state": {
+                      "type": "integer"
+                    }
+                  },
+                  "required": [
+                    "refund_serial_no",
+                    "refund_state"
+                  ],
+                  "additionalProperties": false
+                }
+              },
+              "row_count": {
+                "type": "integer"
+              }
+            },
+            "required": [
+              "rows",
+              "row_count"
+            ],
+            "additionalProperties": false
+          },
+          "json_decode_fields": {},
+          "assertions": [
+            {
+              "actual_path": "row_count",
+              "operator": "eq",
+              "expected": {
+                "kind": "literal",
+                "value": 1,
+                "name": "",
+                "path": "",
+                "step_id": "",
+                "call_id": "",
+                "output_name": ""
+              }
+            },
+            {
+              "actual_path": "rows.0.refund_serial_no",
+              "operator": "eq",
+              "expected": {
+                "kind": "request_field",
+                "name": "",
+                "path": "refundSerialNo",
+                "step_id": "",
+                "call_id": "",
+                "output_name": ""
+              }
+            },
+            {
+              "actual_path": "rows.0.refund_state",
+              "operator": "eq",
+              "expected": {
+                "kind": "parameter",
+                "name": "cancelled_state",
+                "path": "code",
+                "step_id": "",
+                "call_id": "",
+                "output_name": ""
+              }
+            }
+          ],
+          "evidence": [
+            {
+              "source_system_id": "ifightchainsaas.java.refund.core",
+              "path": "app/dal/src/main/resources/META-INF/spring/refundcore-db-beans.xml",
+              "symbol": "itradecoreDatasource",
+              "line": 24
+            },
+            {
+              "source_system_id": "ifightchainsaas.java.refund.core",
+              "path": "app/dal/src/main/resources/sqlmap/refundcore/SaasRefundOrderMapperExt.xml",
+              "symbol": "updateOrderState",
+              "line": 12
+            },
+            {
+              "source_system_id": "ifightchainsaas.java.refund.core",
+              "path": "app/dal/src/main/resources/sqlmap/refundcore/SaasRefundOrderMapper.xml",
+              "symbol": "refund_state",
+              "line": 11
+            }
+          ]
+        }
+      ],
+      "cleanup": null,
+      "blocked_reason": ""
+    },
+    {
+      "variant_id": "case-variant-v4-dc9e9de0e970ffa7d72c",
+      "template_id": "cancel_allowed_states",
+      "ordinal": 5,
+      "parameter_values": {
+        "initial_state": {
+          "code": 0,
+          "name": "PENDING_APPLY"
+        },
+        "cancelled_state": {
+          "code": 6,
+          "name": "REFUND_CANCEL"
+        }
+      },
+      "request_values": {
+        "refundSerialNo": {
+          "kind": "data_output",
+          "call_id": "refund_data",
+          "output_name": "refund_serial_no"
+        },
+        "operator": {
+          "kind": "data_output",
+          "call_id": "refund_data",
+          "output_name": "operator"
+        },
+        "cancelReasonId": {
+          "kind": "data_output",
+          "call_id": "refund_data",
+          "output_name": "cancel_reason_id"
+        },
+        "cancelReason": "OpenTest退票取消状态验证",
+        "cancelRemark": "OpenTest固定源码取消状态与幂等回归"
+      },
+      "data_calls": [
+        {
+          "call_id": "refund_data",
+          "function_name": "select_existing_refund_for_cancel",
+          "arguments": {
+            "order_state": {
+              "kind": "parameter",
+              "name": "initial_state",
+              "path": "code",
+              "step_id": "",
+              "call_id": "",
+              "output_name": ""
+            },
+            "cancelled_state": {
+              "kind": "parameter",
+              "name": "cancelled_state",
+              "path": "code",
+              "step_id": "",
+              "call_id": "",
+              "output_name": ""
+            }
+          }
+        }
+      ],
+      "oracles": [
+        {
+          "oracle_id": "cancel_response",
+          "channel": "response",
+          "function_id": "",
+          "statement": "",
+          "arguments": {},
+          "observer_output_schema": null,
+          "json_decode_fields": {},
+          "assertions": [
+            {
+              "actual_path": "success",
+              "operator": "eq",
+              "expected": {
+                "kind": "literal",
+                "value": true,
+                "name": "",
+                "path": "",
+                "step_id": "",
+                "call_id": "",
+                "output_name": ""
+              }
+            },
+            {
+              "actual_path": "orderSerialNo",
+              "operator": "eq",
+              "expected": {
+                "kind": "request_field",
+                "name": "",
+                "path": "refundSerialNo",
+                "step_id": "",
+                "call_id": "",
+                "output_name": ""
+              }
+            }
+          ],
+          "evidence": []
+        },
+        {
+          "oracle_id": "persisted_refund_state",
+          "channel": "mysql",
+          "function_id": "database:ifightchainsaas.java.refund.core:itradecoredatasource",
+          "statement": "SELECT refund_serial_no, refund_state FROM saas_refund_order WHERE refund_serial_no = :refund_serial_no AND env = :env LIMIT 1",
+          "arguments": {
+            "refund_serial_no": {
+              "kind": "request_field",
+              "name": "",
+              "path": "refundSerialNo",
+              "step_id": "",
+              "call_id": "",
+              "output_name": ""
+            },
+            "env": {
+              "kind": "data_output",
+              "name": "",
+              "path": "",
+              "step_id": "",
+              "call_id": "refund_data",
+              "output_name": "environment"
+            }
+          },
+          "observer_output_schema": {
+            "type": "object",
+            "properties": {
+              "rows": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "refund_serial_no": {
+                      "type": "string"
+                    },
+                    "refund_state": {
+                      "type": "integer"
+                    }
+                  },
+                  "required": [
+                    "refund_serial_no",
+                    "refund_state"
+                  ],
+                  "additionalProperties": false
+                }
+              },
+              "row_count": {
+                "type": "integer"
+              }
+            },
+            "required": [
+              "rows",
+              "row_count"
+            ],
+            "additionalProperties": false
+          },
+          "json_decode_fields": {},
+          "assertions": [
+            {
+              "actual_path": "row_count",
+              "operator": "eq",
+              "expected": {
+                "kind": "literal",
+                "value": 1,
+                "name": "",
+                "path": "",
+                "step_id": "",
+                "call_id": "",
+                "output_name": ""
+              }
+            },
+            {
+              "actual_path": "rows.0.refund_serial_no",
+              "operator": "eq",
+              "expected": {
+                "kind": "request_field",
+                "name": "",
+                "path": "refundSerialNo",
+                "step_id": "",
+                "call_id": "",
+                "output_name": ""
+              }
+            },
+            {
+              "actual_path": "rows.0.refund_state",
+              "operator": "eq",
+              "expected": {
+                "kind": "parameter",
+                "name": "cancelled_state",
+                "path": "code",
+                "step_id": "",
+                "call_id": "",
+                "output_name": ""
+              }
+            }
+          ],
+          "evidence": [
+            {
+              "source_system_id": "ifightchainsaas.java.refund.core",
+              "path": "app/dal/src/main/resources/META-INF/spring/refundcore-db-beans.xml",
+              "symbol": "itradecoreDatasource",
+              "line": 24
+            },
+            {
+              "source_system_id": "ifightchainsaas.java.refund.core",
+              "path": "app/dal/src/main/resources/sqlmap/refundcore/SaasRefundOrderMapperExt.xml",
+              "symbol": "updateOrderState",
+              "line": 12
+            },
+            {
+              "source_system_id": "ifightchainsaas.java.refund.core",
+              "path": "app/dal/src/main/resources/sqlmap/refundcore/SaasRefundOrderMapper.xml",
+              "symbol": "refund_state",
+              "line": 11
+            }
+          ]
+        }
+      ],
+      "cleanup": null,
+      "blocked_reason": ""
+    },
+    {
+      "variant_id": "case-variant-v4-e1490fe16aa66a7883af",
+      "template_id": "cancel_already_cancelled",
+      "ordinal": 6,
+      "parameter_values": {
+        "initial_state": {
+          "code": 6,
+          "name": "REFUND_CANCEL"
+        },
+        "cancelled_state": {
+          "code": 6,
+          "name": "REFUND_CANCEL"
+        }
+      },
+      "request_values": {
+        "refundSerialNo": {
+          "kind": "data_output",
+          "call_id": "refund_data",
+          "output_name": "refund_serial_no"
+        },
+        "operator": {
+          "kind": "data_output",
+          "call_id": "refund_data",
+          "output_name": "operator"
+        },
+        "cancelReasonId": {
+          "kind": "data_output",
+          "call_id": "refund_data",
+          "output_name": "cancel_reason_id"
+        },
+        "cancelReason": "OpenTest退票取消状态验证",
+        "cancelRemark": "OpenTest固定源码取消状态与幂等回归"
+      },
+      "data_calls": [
+        {
+          "call_id": "refund_data",
+          "function_name": "select_existing_refund_for_cancel",
+          "arguments": {
+            "order_state": {
+              "kind": "parameter",
+              "name": "initial_state",
+              "path": "code",
+              "step_id": "",
+              "call_id": "",
+              "output_name": ""
+            },
+            "cancelled_state": {
+              "kind": "parameter",
+              "name": "cancelled_state",
+              "path": "code",
+              "step_id": "",
+              "call_id": "",
+              "output_name": ""
+            }
+          }
+        }
+      ],
+      "oracles": [
+        {
+          "oracle_id": "cancel_response",
+          "channel": "response",
+          "function_id": "",
+          "statement": "",
+          "arguments": {},
+          "observer_output_schema": null,
+          "json_decode_fields": {},
+          "assertions": [
+            {
+              "actual_path": "success",
+              "operator": "eq",
+              "expected": {
+                "kind": "literal",
+                "value": true,
+                "name": "",
+                "path": "",
+                "step_id": "",
+                "call_id": "",
+                "output_name": ""
+              }
+            },
+            {
+              "actual_path": "orderSerialNo",
+              "operator": "eq",
+              "expected": {
+                "kind": "request_field",
+                "name": "",
+                "path": "refundSerialNo",
+                "step_id": "",
+                "call_id": "",
+                "output_name": ""
+              }
+            }
+          ],
+          "evidence": []
+        },
+        {
+          "oracle_id": "persisted_refund_state",
+          "channel": "mysql",
+          "function_id": "database:ifightchainsaas.java.refund.core:itradecoredatasource",
+          "statement": "SELECT refund_serial_no, refund_state FROM saas_refund_order WHERE refund_serial_no = :refund_serial_no AND env = :env LIMIT 1",
+          "arguments": {
+            "refund_serial_no": {
+              "kind": "request_field",
+              "name": "",
+              "path": "refundSerialNo",
+              "step_id": "",
+              "call_id": "",
+              "output_name": ""
+            },
+            "env": {
+              "kind": "data_output",
+              "name": "",
+              "path": "",
+              "step_id": "",
+              "call_id": "refund_data",
+              "output_name": "environment"
+            }
+          },
+          "observer_output_schema": {
+            "type": "object",
+            "properties": {
+              "rows": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "refund_serial_no": {
+                      "type": "string"
+                    },
+                    "refund_state": {
+                      "type": "integer"
+                    }
+                  },
+                  "required": [
+                    "refund_serial_no",
+                    "refund_state"
+                  ],
+                  "additionalProperties": false
+                }
+              },
+              "row_count": {
+                "type": "integer"
+              }
+            },
+            "required": [
+              "rows",
+              "row_count"
+            ],
+            "additionalProperties": false
+          },
+          "json_decode_fields": {},
+          "assertions": [
+            {
+              "actual_path": "row_count",
+              "operator": "eq",
+              "expected": {
+                "kind": "literal",
+                "value": 1,
+                "name": "",
+                "path": "",
+                "step_id": "",
+                "call_id": "",
+                "output_name": ""
+              }
+            },
+            {
+              "actual_path": "rows.0.refund_serial_no",
+              "operator": "eq",
+              "expected": {
+                "kind": "request_field",
+                "name": "",
+                "path": "refundSerialNo",
+                "step_id": "",
+                "call_id": "",
+                "output_name": ""
+              }
+            },
+            {
+              "actual_path": "rows.0.refund_state",
+              "operator": "eq",
+              "expected": {
+                "kind": "parameter",
+                "name": "cancelled_state",
+                "path": "code",
+                "step_id": "",
+                "call_id": "",
+                "output_name": ""
+              }
+            }
+          ],
+          "evidence": [
+            {
+              "source_system_id": "ifightchainsaas.java.refund.core",
+              "path": "app/dal/src/main/resources/META-INF/spring/refundcore-db-beans.xml",
+              "symbol": "itradecoreDatasource",
+              "line": 24
+            },
+            {
+              "source_system_id": "ifightchainsaas.java.refund.core",
+              "path": "app/dal/src/main/resources/sqlmap/refundcore/SaasRefundOrderMapperExt.xml",
+              "symbol": "updateOrderState",
+              "line": 12
+            },
+            {
+              "source_system_id": "ifightchainsaas.java.refund.core",
+              "path": "app/dal/src/main/resources/sqlmap/refundcore/SaasRefundOrderMapper.xml",
+              "symbol": "refund_state",
+              "line": 11
+            }
+          ]
+        }
+      ],
+      "cleanup": null,
+      "blocked_reason": ""
+    },
+    {
+      "variant_id": "case-variant-v4-2593fe8abff424f9b471",
+      "template_id": "cancel_disallowed_states",
+      "ordinal": 7,
+      "parameter_values": {
+        "initial_state": {
+          "code": 7,
+          "name": "REFUND_DONE"
+        },
+        "cancelled_state": {
+          "code": 6,
+          "name": "REFUND_CANCEL"
+        }
+      },
+      "request_values": {
+        "refundSerialNo": {
+          "kind": "data_output",
+          "call_id": "refund_data",
+          "output_name": "refund_serial_no"
+        },
+        "operator": {
+          "kind": "data_output",
+          "call_id": "refund_data",
+          "output_name": "operator"
+        },
+        "cancelReasonId": {
+          "kind": "data_output",
+          "call_id": "refund_data",
+          "output_name": "cancel_reason_id"
+        },
+        "cancelReason": "OpenTest退票取消状态验证",
+        "cancelRemark": "OpenTest固定源码取消状态与幂等回归"
+      },
+      "data_calls": [
+        {
+          "call_id": "refund_data",
+          "function_name": "select_existing_refund_for_cancel",
+          "arguments": {
+            "order_state": {
+              "kind": "parameter",
+              "name": "initial_state",
+              "path": "code",
+              "step_id": "",
+              "call_id": "",
+              "output_name": ""
+            },
+            "cancelled_state": {
+              "kind": "parameter",
+              "name": "cancelled_state",
+              "path": "code",
+              "step_id": "",
+              "call_id": "",
+              "output_name": ""
+            }
+          }
+        }
+      ],
+      "oracles": [
+        {
+          "oracle_id": "cancel_response",
+          "channel": "response",
+          "function_id": "",
+          "statement": "",
+          "arguments": {},
+          "observer_output_schema": null,
+          "json_decode_fields": {},
+          "assertions": [
+            {
+              "actual_path": "success",
+              "operator": "eq",
+              "expected": {
+                "kind": "literal",
+                "value": false,
+                "name": "",
+                "path": "",
+                "step_id": "",
+                "call_id": "",
+                "output_name": ""
+              }
+            },
+            {
+              "actual_path": "code",
+              "operator": "eq",
+              "expected": {
+                "kind": "literal",
+                "value": "LY0510300602",
+                "name": "",
+                "path": "",
+                "step_id": "",
+                "call_id": "",
+                "output_name": ""
+              }
+            }
+          ],
+          "evidence": []
+        },
+        {
+          "oracle_id": "persisted_refund_state",
+          "channel": "mysql",
+          "function_id": "database:ifightchainsaas.java.refund.core:itradecoredatasource",
+          "statement": "SELECT refund_serial_no, refund_state FROM saas_refund_order WHERE refund_serial_no = :refund_serial_no AND env = :env LIMIT 1",
+          "arguments": {
+            "refund_serial_no": {
+              "kind": "request_field",
+              "name": "",
+              "path": "refundSerialNo",
+              "step_id": "",
+              "call_id": "",
+              "output_name": ""
+            },
+            "env": {
+              "kind": "data_output",
+              "name": "",
+              "path": "",
+              "step_id": "",
+              "call_id": "refund_data",
+              "output_name": "environment"
+            }
+          },
+          "observer_output_schema": {
+            "type": "object",
+            "properties": {
+              "rows": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "refund_serial_no": {
+                      "type": "string"
+                    },
+                    "refund_state": {
+                      "type": "integer"
+                    }
+                  },
+                  "required": [
+                    "refund_serial_no",
+                    "refund_state"
+                  ],
+                  "additionalProperties": false
+                }
+              },
+              "row_count": {
+                "type": "integer"
+              }
+            },
+            "required": [
+              "rows",
+              "row_count"
+            ],
+            "additionalProperties": false
+          },
+          "json_decode_fields": {},
+          "assertions": [
+            {
+              "actual_path": "row_count",
+              "operator": "eq",
+              "expected": {
+                "kind": "literal",
+                "value": 1,
+                "name": "",
+                "path": "",
+                "step_id": "",
+                "call_id": "",
+                "output_name": ""
+              }
+            },
+            {
+              "actual_path": "rows.0.refund_serial_no",
+              "operator": "eq",
+              "expected": {
+                "kind": "request_field",
+                "name": "",
+                "path": "refundSerialNo",
+                "step_id": "",
+                "call_id": "",
+                "output_name": ""
+              }
+            },
+            {
+              "actual_path": "rows.0.refund_state",
+              "operator": "eq",
+              "expected": {
+                "kind": "parameter",
+                "name": "initial_state",
+                "path": "code",
+                "step_id": "",
+                "call_id": "",
+                "output_name": ""
+              }
+            }
+          ],
+          "evidence": [
+            {
+              "source_system_id": "ifightchainsaas.java.refund.core",
+              "path": "app/dal/src/main/resources/META-INF/spring/refundcore-db-beans.xml",
+              "symbol": "itradecoreDatasource",
+              "line": 24
+            },
+            {
+              "source_system_id": "ifightchainsaas.java.refund.core",
+              "path": "app/dal/src/main/resources/sqlmap/refundcore/SaasRefundOrderMapperExt.xml",
+              "symbol": "updateOrderState",
+              "line": 12
+            },
+            {
+              "source_system_id": "ifightchainsaas.java.refund.core",
+              "path": "app/dal/src/main/resources/sqlmap/refundcore/SaasRefundOrderMapper.xml",
+              "symbol": "refund_state",
+              "line": 11
+            }
+          ]
+        }
+      ],
+      "cleanup": null,
+      "blocked_reason": ""
+    },
+    {
+      "variant_id": "case-variant-v4-455b519363886030608d",
+      "template_id": "cancel_disallowed_states",
+      "ordinal": 8,
+      "parameter_values": {
+        "initial_state": {
+          "code": 3,
+          "name": "REFUNDING"
+        },
+        "cancelled_state": {
+          "code": 6,
+          "name": "REFUND_CANCEL"
+        }
+      },
+      "request_values": {
+        "refundSerialNo": {
+          "kind": "data_output",
+          "call_id": "refund_data",
+          "output_name": "refund_serial_no"
+        },
+        "operator": {
+          "kind": "data_output",
+          "call_id": "refund_data",
+          "output_name": "operator"
+        },
+        "cancelReasonId": {
+          "kind": "data_output",
+          "call_id": "refund_data",
+          "output_name": "cancel_reason_id"
+        },
+        "cancelReason": "OpenTest退票取消状态验证",
+        "cancelRemark": "OpenTest固定源码取消状态与幂等回归"
+      },
+      "data_calls": [
+        {
+          "call_id": "refund_data",
+          "function_name": "select_existing_refund_for_cancel",
+          "arguments": {
+            "order_state": {
+              "kind": "parameter",
+              "name": "initial_state",
+              "path": "code",
+              "step_id": "",
+              "call_id": "",
+              "output_name": ""
+            },
+            "cancelled_state": {
+              "kind": "parameter",
+              "name": "cancelled_state",
+              "path": "code",
+              "step_id": "",
+              "call_id": "",
+              "output_name": ""
+            }
+          }
+        }
+      ],
+      "oracles": [
+        {
+          "oracle_id": "cancel_response",
+          "channel": "response",
+          "function_id": "",
+          "statement": "",
+          "arguments": {},
+          "observer_output_schema": null,
+          "json_decode_fields": {},
+          "assertions": [
+            {
+              "actual_path": "success",
+              "operator": "eq",
+              "expected": {
+                "kind": "literal",
+                "value": false,
+                "name": "",
+                "path": "",
+                "step_id": "",
+                "call_id": "",
+                "output_name": ""
+              }
+            },
+            {
+              "actual_path": "code",
+              "operator": "eq",
+              "expected": {
+                "kind": "literal",
+                "value": "LY0510300602",
+                "name": "",
+                "path": "",
+                "step_id": "",
+                "call_id": "",
+                "output_name": ""
+              }
+            }
+          ],
+          "evidence": []
+        },
+        {
+          "oracle_id": "persisted_refund_state",
+          "channel": "mysql",
+          "function_id": "database:ifightchainsaas.java.refund.core:itradecoredatasource",
+          "statement": "SELECT refund_serial_no, refund_state FROM saas_refund_order WHERE refund_serial_no = :refund_serial_no AND env = :env LIMIT 1",
+          "arguments": {
+            "refund_serial_no": {
+              "kind": "request_field",
+              "name": "",
+              "path": "refundSerialNo",
+              "step_id": "",
+              "call_id": "",
+              "output_name": ""
+            },
+            "env": {
+              "kind": "data_output",
+              "name": "",
+              "path": "",
+              "step_id": "",
+              "call_id": "refund_data",
+              "output_name": "environment"
+            }
+          },
+          "observer_output_schema": {
+            "type": "object",
+            "properties": {
+              "rows": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "refund_serial_no": {
+                      "type": "string"
+                    },
+                    "refund_state": {
+                      "type": "integer"
+                    }
+                  },
+                  "required": [
+                    "refund_serial_no",
+                    "refund_state"
+                  ],
+                  "additionalProperties": false
+                }
+              },
+              "row_count": {
+                "type": "integer"
+              }
+            },
+            "required": [
+              "rows",
+              "row_count"
+            ],
+            "additionalProperties": false
+          },
+          "json_decode_fields": {},
+          "assertions": [
+            {
+              "actual_path": "row_count",
+              "operator": "eq",
+              "expected": {
+                "kind": "literal",
+                "value": 1,
+                "name": "",
+                "path": "",
+                "step_id": "",
+                "call_id": "",
+                "output_name": ""
+              }
+            },
+            {
+              "actual_path": "rows.0.refund_serial_no",
+              "operator": "eq",
+              "expected": {
+                "kind": "request_field",
+                "name": "",
+                "path": "refundSerialNo",
+                "step_id": "",
+                "call_id": "",
+                "output_name": ""
+              }
+            },
+            {
+              "actual_path": "rows.0.refund_state",
+              "operator": "eq",
+              "expected": {
+                "kind": "parameter",
+                "name": "initial_state",
+                "path": "code",
+                "step_id": "",
+                "call_id": "",
+                "output_name": ""
+              }
+            }
+          ],
+          "evidence": [
+            {
+              "source_system_id": "ifightchainsaas.java.refund.core",
+              "path": "app/dal/src/main/resources/META-INF/spring/refundcore-db-beans.xml",
+              "symbol": "itradecoreDatasource",
+              "line": 24
+            },
+            {
+              "source_system_id": "ifightchainsaas.java.refund.core",
+              "path": "app/dal/src/main/resources/sqlmap/refundcore/SaasRefundOrderMapperExt.xml",
+              "symbol": "updateOrderState",
+              "line": 12
+            },
+            {
+              "source_system_id": "ifightchainsaas.java.refund.core",
+              "path": "app/dal/src/main/resources/sqlmap/refundcore/SaasRefundOrderMapper.xml",
+              "symbol": "refund_state",
+              "line": 11
+            }
+          ]
+        }
+      ],
+      "cleanup": null,
+      "blocked_reason": ""
+    },
+    {
+      "variant_id": "case-variant-v4-a9bb3ef770da78f537b2",
+      "template_id": "cancel_disallowed_states",
+      "ordinal": 9,
+      "parameter_values": {
+        "initial_state": {
+          "code": 4,
+          "name": "REFUND_SUCCESS"
+        },
+        "cancelled_state": {
+          "code": 6,
+          "name": "REFUND_CANCEL"
+        }
+      },
+      "request_values": {
+        "refundSerialNo": {
+          "kind": "data_output",
+          "call_id": "refund_data",
+          "output_name": "refund_serial_no"
+        },
+        "operator": {
+          "kind": "data_output",
+          "call_id": "refund_data",
+          "output_name": "operator"
+        },
+        "cancelReasonId": {
+          "kind": "data_output",
+          "call_id": "refund_data",
+          "output_name": "cancel_reason_id"
+        },
+        "cancelReason": "OpenTest退票取消状态验证",
+        "cancelRemark": "OpenTest固定源码取消状态与幂等回归"
+      },
+      "data_calls": [
+        {
+          "call_id": "refund_data",
+          "function_name": "select_existing_refund_for_cancel",
+          "arguments": {
+            "order_state": {
+              "kind": "parameter",
+              "name": "initial_state",
+              "path": "code",
+              "step_id": "",
+              "call_id": "",
+              "output_name": ""
+            },
+            "cancelled_state": {
+              "kind": "parameter",
+              "name": "cancelled_state",
+              "path": "code",
+              "step_id": "",
+              "call_id": "",
+              "output_name": ""
+            }
+          }
+        }
+      ],
+      "oracles": [
+        {
+          "oracle_id": "cancel_response",
+          "channel": "response",
+          "function_id": "",
+          "statement": "",
+          "arguments": {},
+          "observer_output_schema": null,
+          "json_decode_fields": {},
+          "assertions": [
+            {
+              "actual_path": "success",
+              "operator": "eq",
+              "expected": {
+                "kind": "literal",
+                "value": false,
+                "name": "",
+                "path": "",
+                "step_id": "",
+                "call_id": "",
+                "output_name": ""
+              }
+            },
+            {
+              "actual_path": "code",
+              "operator": "eq",
+              "expected": {
+                "kind": "literal",
+                "value": "LY0510300602",
+                "name": "",
+                "path": "",
+                "step_id": "",
+                "call_id": "",
+                "output_name": ""
+              }
+            }
+          ],
+          "evidence": []
+        },
+        {
+          "oracle_id": "persisted_refund_state",
+          "channel": "mysql",
+          "function_id": "database:ifightchainsaas.java.refund.core:itradecoredatasource",
+          "statement": "SELECT refund_serial_no, refund_state FROM saas_refund_order WHERE refund_serial_no = :refund_serial_no AND env = :env LIMIT 1",
+          "arguments": {
+            "refund_serial_no": {
+              "kind": "request_field",
+              "name": "",
+              "path": "refundSerialNo",
+              "step_id": "",
+              "call_id": "",
+              "output_name": ""
+            },
+            "env": {
+              "kind": "data_output",
+              "name": "",
+              "path": "",
+              "step_id": "",
+              "call_id": "refund_data",
+              "output_name": "environment"
+            }
+          },
+          "observer_output_schema": {
+            "type": "object",
+            "properties": {
+              "rows": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "refund_serial_no": {
+                      "type": "string"
+                    },
+                    "refund_state": {
+                      "type": "integer"
+                    }
+                  },
+                  "required": [
+                    "refund_serial_no",
+                    "refund_state"
+                  ],
+                  "additionalProperties": false
+                }
+              },
+              "row_count": {
+                "type": "integer"
+              }
+            },
+            "required": [
+              "rows",
+              "row_count"
+            ],
+            "additionalProperties": false
+          },
+          "json_decode_fields": {},
+          "assertions": [
+            {
+              "actual_path": "row_count",
+              "operator": "eq",
+              "expected": {
+                "kind": "literal",
+                "value": 1,
+                "name": "",
+                "path": "",
+                "step_id": "",
+                "call_id": "",
+                "output_name": ""
+              }
+            },
+            {
+              "actual_path": "rows.0.refund_serial_no",
+              "operator": "eq",
+              "expected": {
+                "kind": "request_field",
+                "name": "",
+                "path": "refundSerialNo",
+                "step_id": "",
+                "call_id": "",
+                "output_name": ""
+              }
+            },
+            {
+              "actual_path": "rows.0.refund_state",
+              "operator": "eq",
+              "expected": {
+                "kind": "parameter",
+                "name": "initial_state",
+                "path": "code",
+                "step_id": "",
+                "call_id": "",
+                "output_name": ""
+              }
+            }
+          ],
+          "evidence": [
+            {
+              "source_system_id": "ifightchainsaas.java.refund.core",
+              "path": "app/dal/src/main/resources/META-INF/spring/refundcore-db-beans.xml",
+              "symbol": "itradecoreDatasource",
+              "line": 24
+            },
+            {
+              "source_system_id": "ifightchainsaas.java.refund.core",
+              "path": "app/dal/src/main/resources/sqlmap/refundcore/SaasRefundOrderMapperExt.xml",
+              "symbol": "updateOrderState",
+              "line": 12
+            },
+            {
+              "source_system_id": "ifightchainsaas.java.refund.core",
+              "path": "app/dal/src/main/resources/sqlmap/refundcore/SaasRefundOrderMapper.xml",
+              "symbol": "refund_state",
+              "line": 11
+            }
+          ]
+        }
+      ],
+      "cleanup": null,
+      "blocked_reason": ""
+    }
+  ],
+  "created_at": "2026-09-17T09:45:59.148504+00:00"
+}

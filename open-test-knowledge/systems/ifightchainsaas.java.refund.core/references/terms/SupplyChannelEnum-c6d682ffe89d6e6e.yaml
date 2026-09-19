@@ -1,0 +1,56 @@
+candidate_id: candidate:business_term:c6d682ffe89d6e6e
+system_id: ifightchainsaas.java.refund.core
+kind: BUSINESS_TERM
+knowledge_form: BUSINESS_ENUM
+name: SupplyChannelEnum
+business_name: 供应渠道
+business_name_source: CODE_DEFAULT
+business_name_known_unknown: false
+enum_values:
+- code: CBDS
+  business_meaning: CBDS
+  source: CODE_DEFAULT
+  known_unknown: false
+  confidence: 0.5
+  source_refs:
+  - repository: ''
+    path: app/model/src/main/java/com/ly/flight/chainsaas/refund/enums/SupplyChannelEnum.java
+    symbol: com.ly.flight.chainsaas.refund.enums.SupplyChannelEnum#CBDS
+    line: 7
+    commit: ''
+    content_digest: ''
+- code: OTHER
+  business_meaning: 其他
+  source: CODE_VERIFIED
+  known_unknown: false
+  confidence: 1.0
+  source_refs:
+  - repository: ''
+    path: app/model/src/main/java/com/ly/flight/chainsaas/refund/enums/SupplyChannelEnum.java
+    symbol: com.ly.flight.chainsaas.refund.enums.SupplyChannelEnum#OTHER
+    line: 7
+    commit: ''
+    content_digest: ''
+suggested_meaning: 枚举名称和值只读展示源码注释；缺少注释时展示代码标识，无需人工补充。
+code_meaning: CBDS（CBDS）；其他（OTHER）
+unresolved_codes: []
+business_meaning: ''
+status: CODE_VERIFIED
+merged_into_candidate_id: ''
+source_refs:
+- repository: ''
+  path: app/model/src/main/java/com/ly/flight/chainsaas/refund/enums/SupplyChannelEnum.java
+  symbol: com.ly.flight.chainsaas.refund.enums.SupplyChannelEnum#CBDS
+  line: 7
+  commit: ''
+  content_digest: ''
+- repository: ''
+  path: app/model/src/main/java/com/ly/flight/chainsaas/refund/enums/SupplyChannelEnum.java
+  symbol: com.ly.flight.chainsaas.refund.enums.SupplyChannelEnum#OTHER
+  line: 7
+  commit: ''
+  content_digest: ''
+affected_target_ids: []
+evidence_digest: 0300c506ecf0f8c6d06e950df288082f7bc81ecbe79be0336d695dfd4a95c316
+discovered_at: '2026-09-18T02:25:57.604908Z'
+updated_at: '2026-09-19T04:25:34.177574Z'
