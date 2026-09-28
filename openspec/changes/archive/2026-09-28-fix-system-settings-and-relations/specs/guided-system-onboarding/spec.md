@@ -1,8 +1,5 @@
-# guided-system-onboarding Specification
+## MODIFIED Requirements
 
-## Purpose
-TBD - created by archiving change v2-guided-console-and-system-onboarding. Update Purpose after archive.
-## Requirements
 ### Requirement: DSF系统注册自动建立扫描任务
 系统 SHALL 根据源码目录生成默认系统ID，保存资源配置环境并在注册成功后扫描Facade及MQ。已有系统的普通配置保存 SHALL 只修改名称和环境，不提交扫描或更换代码基线；系统身份及源码路径 SHALL 保持固定。系统 SHALL NOT 要求或消费Labrador Token及HTTP Job网关。
 
@@ -18,19 +15,3 @@ TBD - created by archiving change v2-guided-console-and-system-onboarding. Updat
 #### Scenario: 拒绝通过普通编辑切换源码
 - **WHEN** 客户端通过系统更新接口提交不同源码路径
 - **THEN** 后端拒绝修改且保持原配置；更新代码基准需使用独立的显式操作
-
-### Requirement: 本地设置仅允许回环访问
-系统 SHALL 只向回环地址提供本地资源环境设置读取和更新，不再公开旧HTTP Job Token及网关。
-
-#### Scenario: 非回环客户端访问本地设置
-- **WHEN** 请求来源不是127.0.0.0/8或::1
-- **THEN** 在读取文件前拒绝请求
-
-### Requirement: 扫描结果形成可浏览目录
-系统 SHALL 在知识库统一展示接口与字段契约目录；系统配置页仅保留扫描操作及版本状态，不重复展示完整结果树。
-
-#### Scenario: 查看系统最新扫描
-- **WHEN** 用户打开系统配置页
-- **THEN** 可以刷新扫描状态或重新扫描，并进入知识库浏览Facade及MQ契约
-- **AND** 不展示公共逻辑、状态机或逐方法依赖缺口列表
-

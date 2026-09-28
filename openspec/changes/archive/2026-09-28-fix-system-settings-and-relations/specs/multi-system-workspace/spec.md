@@ -1,8 +1,5 @@
-# multi-system-workspace Specification
+## MODIFIED Requirements
 
-## Purpose
-TBD - created by archiving change multi-system-console-reliability-and-reset. Update Purpose after archive.
-## Requirements
 ### Requirement: 同一知识仓库支持多个彼此隔离的系统
 
 系统 SHALL 允许注册、更新和读取多个系统，并按稳定系统 ID 隔离知识、扫描、Candidate、Published、Case、资源与报告；系统 SHALL 仅允许通过显式`SystemDependencyBinding`建立consumer到provider的直接只读Candidate发现关系，且不得由此反向、传递、执行或通过consumer路由写入provider注册表。
@@ -32,16 +29,3 @@ TBD - created by archiving change multi-system-console-reliability-and-reset. Up
 
 - **WHEN** consumer通过直接绑定搜索到provider Candidate
 - **THEN** consumer路由不得发布该Candidate，调用方必须使用provider系统路由并只写provider的Published注册表
-
-### Requirement: 混合系统数据可验证归档并恢复
-
-系统 SHALL 在活动系统移除前生成包含文件大小和 SHA-256 的归档清单并验证全部资产；归档失败 SHALL 回滚，成功归档 SHALL 可恢复且重建派生索引。
-
-#### Scenario: 归档当前混合数据
-- **WHEN** 管理员以“源码路径错误且资产归属混合”为原因归档 `train-booking-core`
-- **THEN** 可提交资产与本地资产分别进入对应归档根目录，活动注册表为空且任何文件都未被永久删除
-
-#### Scenario: 恢复归档系统
-- **WHEN** 归档摘要有效且活动区不存在目标冲突
-- **THEN** 系统恢复原资产、注册定义和本地权限，并重建 SQLite 索引
-

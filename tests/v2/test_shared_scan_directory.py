@@ -149,6 +149,9 @@ def _scan(system, scan, declarations, tmp_path):
 def _publish(service, manifest, operations=()):
     """沿生产准备和发布顺序写入接口索引，关系算法保持原实现。"""
 
+    # 发布关系的扫描身份也必须存在于共享历史，页面会校验当前指针是否有效。
+    if service.artifacts.metadata.fetch_one("SELECT scan_id FROM ot_scan WHERE scan_id=%s", (manifest.scan_id,)) is None:
+        service.artifacts.metadata.execute("INSERT INTO ot_scan(scan_id,system_id) VALUES(%s,%s)", (manifest.scan_id, manifest.system_id))
     catalog = ProgramCaseAnalysisBuilder().build(manifest)
     service.prepare_interfaces(manifest, list(operations), catalog)
     with service.artifacts.metadata.transaction():
@@ -364,3 +367,31 @@ def test_mq_sender_requires_exact_callsite_to_associate_entry(tmp_path):
     unavailable = service._interface_definitions(manifest, [operation])
     assert unavailable["mq:mq:order"]["relation_gap"] == "MQ_SOURCE_UNAVAILABLE"
     service._mq_endpoint.assert_not_called()
+
+
+def test_cross_version_discovery_is_bidirectional_but_not_execution_scope(tmp_path):
+    """版本不同仍展示双向依赖，严格执行范围不借此接入提供方；更新与歧义可重算。"""
+
+    database = _SqlMetadata()
+    for system in ("aaa", "bbb", "ccc"):
+        database.execute("INSERT INTO ot_system(system_id) VALUES(%s)", (system,))
+    service = SystemRelationService(_Store(tmp_path, database), SourceScanArtifactStore(tmp_path, database))
+    # 先接入引用旧版本的调用方，再接入唯一新版本提供方，覆盖本次真实漏匹配情形。
+    _publish(service, _scan("aaa", "scan-aaa-old", [_remote()], tmp_path))
+    newer = _remote().model_copy(update={"version": "2"})
+    _publish(service, _scan("bbb", "scan-bbb-new", [newer], tmp_path))
+    forward = service.discovery_catalog("aaa")
+    assert forward.downstream[0].system_id == "bbb"
+    edge = forward.interface_relations[0]
+    assert (edge.resolution_status, edge.source_version, edge.target_version) == ("version_mismatch", "1", "2")
+    assert service.discovery_catalog("bbb").upstream[0].system_id == "aaa"
+    assert service.system_ids("aaa") == ["aaa"]
+    # 第二提供方有同一接口时不能凭系统名称猜测；删除后自动恢复唯一跨版本关系。
+    duplicate = newer.model_copy(update={"provider_system_id": "ccc"})
+    _publish(service, _scan("ccc", "scan-ccc-1", [duplicate], tmp_path))
+    assert service.catalog("aaa").interface_relations[0].resolution_status == "ambiguous"
+    assert not service.discovery_catalog("aaa").downstream
+    _publish(service, _scan("ccc", "scan-ccc-2", [], tmp_path))
+    assert service.discovery_catalog("bbb").upstream[0].system_id == "aaa"
+    _publish(service, _scan("bbb", "scan-bbb-removed", [], tmp_path))
+    assert not service.discovery_catalog("aaa").downstream

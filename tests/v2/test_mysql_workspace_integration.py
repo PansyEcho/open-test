@@ -231,3 +231,55 @@ def test_concurrent_scan_publication_completes_both_directions(workspace, tmp_pa
         consumer_relations, provider_relations = [item.result() for item in pending]
     assert consumer_relations.catalog(identity).interface_relations[0].target_system_id == provider_id
     assert provider_relations.catalog(provider_id).upstream[0].system_id == identity
+
+
+def test_console_cache_observes_contract_and_draft_writes_from_other_workspace(workspace):
+    """通过真实MySQL写契约、后补接口和草稿，另一进程的同一缓存目录必须立即更新。"""
+
+    from opentest.adapters.operation_contract_store import OperationContractStore
+    from opentest.application.console_read_cache import ConsoleReadCache
+    from opentest.application.operation_input_knowledge import OperationInputKnowledgeBuilder
+    from opentest.domain.models import KnowledgeGenerationWorkflowBatch
+
+    identity, local, remote = workspace
+    scan_id = "scan-" + uuid.uuid4().hex
+    operation = OperationCapability(system_id=identity, operation_id="facade:sample.Api#query", business_name="缓存探针",
+        kind=OperationKind.FACADE, mutability=OperationMutability.READ_ONLY, source_scan_id=scan_id)
+    local.metadata.execute("INSERT INTO ot_interface(system_id,scan_id,operation_id,definition_json) VALUES(%s,%s,%s,%s)",
+                           (identity, scan_id, operation.operation_id, "{}"))
+    contracts = OperationContractStore(local.root / "contracts", local.metadata)
+    remote_contracts = OperationContractStore(remote.root / "contracts", remote.metadata)
+    cache = ConsoleReadCache(remote.metadata, remote.root)
+    loads = []
+
+    @cache.cached
+    def directory():
+        """读取与控制台相同的契约/草稿源，返回摘要并记录实际加载次数。"""
+
+        loads.append(True)
+        contract = remote_contracts.get_latest(identity, scan_id, operation.operation_id)
+        return {"summary": contract.operation_summary if contract else "", "drafts": len(remote.list_draft_batches(identity)),
+                "operations": len(remote_contracts.read_operations(identity, scan_id))}
+
+    assert directory() == {"summary": "", "drafts": 0, "operations": 0}
+    directory()
+    assert len(loads) == 1
+    # 经真实存储写路径发布补充后，版本推进必须与正文同提交。
+    base = OperationInputKnowledgeBuilder().build(operation, None, scan_id)
+    contracts.save(identity, base.model_copy(update={"operation_summary": "新增说明"}))
+    assert directory()["summary"] == "新增说明"
+    local.write_draft_batch(KnowledgeGenerationWorkflowBatch(batch_id="batch-" + uuid.uuid4().hex,
+        system_id=identity, scan_id=scan_id, target_ids=[operation.operation_id], status="GENERATING"))
+    assert directory()["drafts"] == 1
+    contracts.register_operation(identity, scan_id, DsfOperationDefinition(operation_id="dsf:probe:api:query",
+        provider_system_id="probe-provider", gs_name="group.probe", service_name="api", action="query", version="1",
+        source_refs=[SourceReference(path="Api.java", symbol="sample.Api#query")]))
+    assert directory()["operations"] == 1
+    assert len(loads) == 4
+    # 被回滚的补充不能改变可见版本，之前的正确缓存仍然命中。
+    with pytest.raises(RuntimeError, match="rollback"):
+        with local.metadata.transaction():
+            contracts.save(identity, base.model_copy(update={"contract_revision": 1, "operation_summary": "不应可见"}))
+            raise RuntimeError("rollback")
+    assert directory()["summary"] == "新增说明"
+    assert len(loads) == 4
