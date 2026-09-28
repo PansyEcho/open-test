@@ -1,0 +1,470 @@
+workers/java-semantic-analyzer/src/test/java/com/opentest/semantic/FrameworkEffectAnalyzerTest.java
+  s_e3a072a222ce24::t_dea7924fef7858 39,118
+  s_e3a072a222ce24::t_fe7ed5d758a3b4 1-38,40-42,62-75,77-117,119-139
+  s_e3a072a222ce24::t_1dbfb43770ec9f 43-61
+  s_e3a072a222ce24::t_440fc9d8c91c5d 76
+opentest/application/candidate_operations.py
+  s_e3a072a222ce24::t_b39462756ab0ff 249,258-261,290
+opentest/application/mysql_tasks.py
+  s_e3a072a222ce24::t_b5dab8fa627eff 1-95,97,106-107,117-150
+  s_e3a072a222ce24::t_93cb83b49b364d 96,98-105,108-116
+openspec/specs/case-template-generation-v4/spec.md
+  s_e3a072a222ce24::t_cbbdc077e5d511 77,80-82,87-88,90-93,95,97-107,134-149
+  s_e3a072a222ce24::t_d881b4c11c7c42 150
+opentest/application/case_template_executor_v4.py
+  s_e3a072a222ce24::t_f1b857cd25a02c 576
+  s_e3a072a222ce24::t_f4e4f1cc04172d 57,453-462,477-492,496-497,552-575,577-586,1399-1402
+  s_e3a072a222ce24::t_b68b894d27c76d 938
+  s_e3a072a222ce24::t_020e2468fab226 619-621,627
+  s_e3a072a222ce24::t_152dbd5cb4684f 587
+openspec/specs/shared-mysql-workspace/spec.md
+  s_e3a072a222ce24::t_cbbdc077e5d511 1-95
+opentest/application/operation_contracts.py
+  s_e3a072a222ce24::t_b4ded7e2399248 6,183,188-192
+  s_e3a072a222ce24::t_f7f83db3660be4 184-187
+  s_e3a072a222ce24::t_59bda9096dcb9a 127
+  s_e3a072a222ce24::t_c9491806ce1541 147,208-216
+  s_e3a072a222ce24::t_b977314bbe0250 146,148-149,157-159,173-182,193
+  s_e3a072a222ce24::t_a8229beed0b5c8 150-156,230-231
+  s_e3a072a222ce24::t_03aa4e78a18be4 194
+opentest/application/web_generation.py
+  s_e3a072a222ce24::t_5160ac137d71f4 12,457,574-578
+openspec/specs/sqlite-knowledge-index/spec.md
+  s_e3a072a222ce24::t_cbbdc077e5d511 7,10,13-16,18,21-27,30,33,36-38
+  s_e3a072a222ce24::t_b70cc3dd65a9b5 39
+scripts/benchmark_refund_models.py
+  s_51b8c5e9221363::t_3da6479912a0c8 26-30
+  s_51b8c5e9221363::t_571f2173080488 43-44
+  s_51b8c5e9221363::t_d834e4827feb5a 66-72,199-207,266-268,338-340,342-344
+  s_51b8c5e9221363::t_4749a7a6d8df36 302-337,345-374,379,391-394
+  s_51b8c5e9221363::t_9f086c871167b3 341
+  s_51b8c5e9221363::t_36e09a5aaa1484 142-145
+  s_51b8c5e9221363::t_19f6c0ef267ca6 12,130-131,171-193
+  s_51b8c5e9221363::t_c78b7ed8139c2e 1-11,13-25,31-42,45-65,73-129,132-141,146-170,194-198,208-265,269-301,375-378,380-390,395-398
+opentest/application/data_capabilities.py
+  s_e3a072a222ce24::t_72f9e016957bdb 340
+  s_e3a072a222ce24::t_cca3f089df333b 17,129,199-200,259,303-305,316-339,341-366,369-371,375-390,392-396
+  s_e3a072a222ce24::t_b9848a5c8fbc3a 531
+  s_e3a072a222ce24::t_e8bca522ab3f5e 551-611
+  s_e3a072a222ce24::t_88f086d98d32e9 367-368,372-374,391,951-953
+  s_e3a072a222ce24::t_bdc99bc9d8a72c 776-778
+  s_e3a072a222ce24::t_2bad0951b9fb3d 1001-1006,1033-1035
+  s_e3a072a222ce24::t_d7ad61f64a77b9 832-834
+  s_e3a072a222ce24::t_b8cec86804b2b1 397
+opentest/application/catalogs.py
+  s_e3a072a222ce24::t_4021ffbad435ad 6,142-147,210-211,255-276
+  s_e3a072a222ce24::t_f6d620c4b0f2d6 129,135,193
+  s_e3a072a222ce24::t_6c42ffc0aab90d 277
+scripts/benchmark_refund_qa.py
+  s_51b8c5e9221363::t_e006a16f2b6d56 41,89,244
+  s_51b8c5e9221363::t_b47a8de8717dc5 55-56
+  s_51b8c5e9221363::t_56207cc4c1fce8 108,114,151,157,159
+  s_51b8c5e9221363::t_aeb1a822189e10 1-40,42-54,57-88,90-107,109-113,115-150,152-156,158,160-243,245-257
+scripts/prepare_refund_entry_data.py
+  s_51b8c5e9221363::t_ef097e220e1300 18,70-71
+  s_51b8c5e9221363::t_5dcc8142f8d897 16-17,19-23,35-37,41,121-127
+  s_51b8c5e9221363::t_b4f53eabe8c7b2 12-13,15,25,28,31,60-61
+  s_51b8c5e9221363::t_3af14c36ec5f82 48-49,65,67-69,72-108,114,145
+  s_51b8c5e9221363::t_5e1ad2d08d6b28 128-130,135
+  s_51b8c5e9221363::t_a8be18fd836f87 1-11,14,24,26-27,29-30,32-34,38-40,42-47,50-59,62-64,66,109-113,115-120,131-134,136-144,146
+opentest/application/metadata_migration.py
+  s_e3a072a222ce24::t_4f4022badddcab 16,116,139-143
+  s_e3a072a222ce24::t_1fce31a6347089 144-148
+  s_e3a072a222ce24::t_b21901e50f5485 155,157-169,172
+  s_e3a072a222ce24::t_223744d13c832a 1-15,17-25,27-115,117-138,149-154,156,170-171,173-189,196-256
+  s_e3a072a222ce24::t_f65fc81ab2f042 26,190-195
+openspec/specs/refund-model-benchmark/spec.md
+  s_51b8c5e9221363::t_3f8591b6a2f0e9 1-40
+opentest/domain/system_relations.py
+  s_e3a072a222ce24::t_c32f739596f666 90-105,115
+opentest/domain/case_template_v4.py
+  s_e3a072a222ce24::t_0e701313a77c55 814
+  s_e3a072a222ce24::t_3da188fc6f3ffc 544
+  s_e3a072a222ce24::t_9d4f2c39672971 801-802
+  s_e3a072a222ce24::t_bac2679fecb6a4 813
+  s_e3a072a222ce24::t_45951bfc25e761 15,47,126,419,441-442,479-494,501,687,702,767,812,824
+  s_e3a072a222ce24::t_930b015aa4b2e4 16,529
+openspec/specs/candidate-operation-catalog/spec.md
+  s_e3a072a222ce24::t_cbbdc077e5d511 30,33-34,37-38,41-42,45-46,48-60,83-110
+  s_e3a072a222ce24::t_0451535ace20ba 111
+opentest/application/downstream_interfaces.py
+  s_e3a072a222ce24::t_7897106db23c36 208,215,274,278-295,299-305,388-389
+  s_e3a072a222ce24::t_59bda9096dcb9a 88,193
+  s_e3a072a222ce24::t_faea8cf0ec675f 296-298
+opentest/application/case_template_registries.py
+  s_e3a072a222ce24::t_3da188fc6f3ffc 171
+pyproject.toml
+  s_e3a072a222ce24::t_59c7c3df78c936 15,29
+opentest/adapters/case_template_v4_store.py
+  s_e3a072a222ce24::t_acda34455c75e3 16-18,73,114-120,145-147,453,557,600,778-783
+  s_e3a072a222ce24::t_dcdd526974dc62 30,49,71-72,74-81,112-113,141-144,207,212,215,219-221,230,237,242-244,248-252,287,290-293,315-319,346-354,380-382,441,446,455,472,475-483,485,511,514-520,550-556,558-563,595-599,639-650,691-699,705-715,776-777,807-811,875-876
+  s_e3a072a222ce24::t_f1256afe1636f7 245-247,700-704
+  s_e3a072a222ce24::t_bc505ea86b8797 484
+  s_e3a072a222ce24::t_c010800197ab94 50-51,205
+tests/fixtures/jev-refund-cases.json
+  s_51b8c5e9221363::t_c78b7ed8139c2e 1-36
+opentest/adapters/operation_execution_store.py
+  s_e3a072a222ce24::t_eae79cc871855b 17,30,35,41,65,68-70,235-239,262-266,273-307
+  s_e3a072a222ce24::t_78ce8170747ca0 308
+opentest/adapters/data_capability_store.py
+  s_e3a072a222ce24::t_c6ae1b2e04f88a 23,31,44-46,73-76,97-98,100-101,103-105,119,122-123,125,137-140,157-159,172-176,194-197
+  s_e3a072a222ce24::t_acda34455c75e3 12-14,47-53,77-79,124,141-142
+  s_e3a072a222ce24::t_3e071bdf96bb4c 99,102
+  s_e3a072a222ce24::t_bc51971b6ad2b8 1,20,32-33,93,149,154
+opentest/application/system_relations.py
+  s_e3a072a222ce24::t_9d722691d026cc 441,444
+  s_e3a072a222ce24::t_5f49e60abcca54 447,450-452,454-456
+  s_e3a072a222ce24::t_0c8f340168e417 6,22,27,59,71-72
+  s_e3a072a222ce24::t_59bda9096dcb9a 118
+  s_e3a072a222ce24::t_5ed1f79dab3718 107-109,137-138,378-381,384-385,387-395
+  s_e3a072a222ce24::t_3780cf47794ba0 463-466
+  s_e3a072a222ce24::t_f9a8518a5ea0ae 198-214
+  s_e3a072a222ce24::t_de78cfd0af8f37 228
+  s_e3a072a222ce24::t_d7ba7ade2acca0 197
+  s_e3a072a222ce24::t_5c9f8b4011b12e 397-427,434,443,445-446,453,458-459,467-477,479-521
+  s_e3a072a222ce24::t_ce0169edd7d74c 265-274,276,280-282,284
+  s_e3a072a222ce24::t_0d88c63274b40e 294-300,457,460,522-539
+  s_e3a072a222ce24::t_2608d31a5ed5ee 183-196,215-227,229-264,275,277-279,283,285-293,301-377,396,428-433,435-440,442,448-449,461-462,478,540
+  s_e3a072a222ce24::t_31bd2fa60fb3c5 382-383,386
+opentest/adapters/system_archive.py
+  s_e3a072a222ce24::t_f437c0ee737ef8 17,24,32,58-59,64,71,77,83-84,174-178,221,235,238-239,290-291,330-361,363-368,372-392,394-399,403-415
+  s_e3a072a222ce24::t_1ef6e138e536af 369-371,400-402
+  s_e3a072a222ce24::t_d14c47a231f1e0 164,168,362,393
+  s_e3a072a222ce24::t_474c4b91878625 416-419
+tests/v2/test_case_template_v4.py
+  s_e3a072a222ce24::t_08ed19909cdeba 3161
+  s_e3a072a222ce24::t_4f6e33af0432d5 3515-3517,3868-3870
+  s_e3a072a222ce24::t_7c75e9a4abcec7 10,489,492-493,560-570,572-575,583-588
+  s_e3a072a222ce24::t_3da188fc6f3ffc 2785-2786,2847-2849
+  s_e3a072a222ce24::t_66ac171a455ee8 3770-3774,3799-3800,3914,3916
+  s_e3a072a222ce24::t_d12601c268869f 3909-3913,3915,3917-3932
+opentest-plugin-marketplace/plugins/open-test-knowledge/scripts/opentest_handoff_mcp.py
+  s_e3a072a222ce24::t_5160ac137d71f4 256-258,841,845
+opentest/adapters/mysql_index.py
+  s_e3a072a222ce24::t_5f9a0ebfe77801 1-135
+opentest/adapters/source_analysis.py
+  s_e3a072a222ce24::t_02ccc5c5f4e99b 2006-2008
+  s_e3a072a222ce24::t_66a7b4fb9c57ea 2848-2851
+  s_e3a072a222ce24::t_cae7e11ba09c13 6-7,51,2002-2003,2011,2018,2067-2071,2139-2140,2174-2175,2216-2217,2246-2247,2536-2546,2590-2591,2615-2617,2640-2642
+  s_e3a072a222ce24::t_cda3949393ff4b 2674-2676
+  s_e3a072a222ce24::t_4610fc76667ad7 2593-2596,2661-2673,2677-2742,2748-2750,2754-2765,2767-2830,2832,2840-2841
+  s_e3a072a222ce24::t_d494ea370f8208 2012-2017,2221-2222,2743-2747,2751-2753
+  s_e3a072a222ce24::t_d2eb896367f8fd 2193
+  s_e3a072a222ce24::t_d1cf4469c1ef21 2137-2138,2170-2173
+  s_e3a072a222ce24::t_056891d6110786 2252-2253,2766
+  s_e3a072a222ce24::t_97df67d0c173ac 2831,2833-2839,2842-2847,2852-2857
+  s_e3a072a222ce24::t_7f5b212bc28db0 2218
+  s_e3a072a222ce24::t_d2fb9f3213e74e 2858
+workers/java-semantic-analyzer/src/main/java/com/opentest/semantic/FrameworkEffectAnalyzer.java
+  s_e3a072a222ce24::t_751f5d1e0f4869 1-33,35-42,44-71,73-124,126-148,150,152-174,176-180,187-189,204-216,218-231,241-254,256-277,282,284-296,298-326,328-336
+  s_e3a072a222ce24::t_dea7924fef7858 72,186,190-203,237-240,278-281,283
+  s_e3a072a222ce24::t_c7bd50a6820225 182,232-236
+  s_e3a072a222ce24::t_440fc9d8c91c5d 183-185
+  s_e3a072a222ce24::t_941e202050a643 34,43,125,149,151,175,181,217,255,297,327
+opentest-plugin-marketplace/plugins/open-test-knowledge/scripts/opentest_operations_mcp.py
+  s_e3a072a222ce24::t_5160ac137d71f4 967,971
+  s_e3a072a222ce24::t_3c93b2026a2c17 597-599
+tests/v2/test_case_template_v4_revision.py
+  s_e3a072a222ce24::t_104a9307b73d12 44,56-71,412,436,1110,1151,1296,1310
+workers/java-semantic-analyzer/src/main/java/com/opentest/semantic/JavaSemanticAnalyzerService.java
+  s_e3a072a222ce24::t_e341c651dc6605 846-852,2068,2116-2122,2133,2137-2150,2158-2166
+  s_e3a072a222ce24::t_fca7e12edde8bd 55,90,139-140,855,860-905,1648-1651,1659-1660,1670-1683,1689-1695,1697-1714,1716-1733,1957,2053-2067
+  s_e3a072a222ce24::t_66ac171a455ee8 138,1696,1715,2049-2050,2151-2157
+  s_e3a072a222ce24::t_dea7924fef7858 38
+opentest/adapters/published_capability_store.py
+  s_e3a072a222ce24::t_89efe74339db33 35,53-60,63-65,260-262,264-265,269-272,274-276
+  s_e3a072a222ce24::t_27dae67f5202fe 13-15,61-62,128-131,263,266-268,273
+  s_e3a072a222ce24::t_ee2df1aaa47731 36-37,257
+opentest/adapters/case_compilation_rule_store.py
+  s_e3a072a222ce24::t_2a5446c2727b7b 29-31,67-73,109-116,135,145-149
+  s_e3a072a222ce24::t_d832029bab6e4f 13
+opentest/application/knowledge.py
+  s_e3a072a222ce24::t_eff50a8c94df24 125-126,141
+  s_e3a072a222ce24::t_f60e0aac781da9 23,142-143,1523,1532-1533,1536-1541
+opentest/adapters/mysql_knowledge.py
+  s_e3a072a222ce24::t_4f4022badddcab 13,490-491,503,509
+  s_e3a072a222ce24::t_787f6d7bac034c 1-5,7-12,14-20,23-489,492-502,504-508,510
+  s_e3a072a222ce24::t_e75cfc0c4d34c9 6,21-22,511-557
+opentest/adapters/mysql_migration.py
+  s_e3a072a222ce24::t_5b596615a2e6ae 16,62,296-297,299-300,302,304-307,309,322-334
+  s_e3a072a222ce24::t_7e3b16c2fccab0 5,23-25,223,228-229,231,236-238,240-243
+  s_e3a072a222ce24::t_1573314743fd7c 14,224,232-235,244-295
+  s_e3a072a222ce24::t_acda34455c75e3 80,97,173-176,182-184,190
+  s_e3a072a222ce24::t_d14c47a231f1e0 368-373
+  s_e3a072a222ce24::t_8c1bb0a375b22a 200-201,203-210,217-218,220-222
+  s_e3a072a222ce24::t_9028ab2d7d16ae 1-4,6-13,15,19,21-22,26-61,63-79,81,89-96,98,105-107,110-114,118,129-172,181,185-189,191,197-199,202,211-216,219,225-227,230,239,412-424
+  s_e3a072a222ce24::t_1ef6e138e536af 20,298,301,303,308,310-312,316-321,335-367,374-411
+  s_e3a072a222ce24::t_58b5ae6eb882cf 108,115-117
+  s_e3a072a222ce24::t_27dae67f5202fe 109,119-128
+  s_e3a072a222ce24::t_3e071bdf96bb4c 17-18,82-88,99-104,177-180,192-196
+  s_e3a072a222ce24::t_f198afc20803f9 313-315
+opentest/application/case_coverage_v4.py
+  s_e3a072a222ce24::t_f1b857cd25a02c 80,141-142,149,159-160,164-165,171-179,235,248-249,251-252
+  s_e3a072a222ce24::t_b8414f6e43c62e 1-15,18-49,53-79,81-104,116-117,121-130,133-140,143-148,158,161-163,166-170,180-215,217-234,236-238,250,253
+  s_e3a072a222ce24::t_6a2b639b0954a0 150-157,241-245
+  s_e3a072a222ce24::t_5ec76d3e5cc649 50-52,216
+  s_e3a072a222ce24::t_930b015aa4b2e4 16-17,105-115,131-132
+  s_e3a072a222ce24::t_3da188fc6f3ffc 118-120
+  s_e3a072a222ce24::t_516a62ead9a814 239-240,246-247
+tests/v2/test_cross_system_execution.py
+  s_e3a072a222ce24::t_201b5f2f4670fa 200,202-203
+tests/v2/test_case_coverage_v4.py
+  s_e3a072a222ce24::t_1883a35eb8f618 47,74,181
+  s_e3a072a222ce24::t_48e19986526819 55
+  s_e3a072a222ce24::t_c15a376237f87c 1-35,37,39-46,48-54,56-73,75-180,182-303
+  s_e3a072a222ce24::t_4ecd22ccd58791 36,38
+  s_e3a072a222ce24::t_07aae492c590e2 304-305,317-319,321,323-330,335-337,339-341,343-349,352,355-356
+  s_e3a072a222ce24::t_485583bfd46628 306-316,320,322,331-334,338,342,350-351,353-354
+opentest/application/case_template_compiler_v4.py
+  s_e3a072a222ce24::t_5ec76d3e5cc649 5-6,1211,1726-1728
+  s_e3a072a222ce24::t_e387d5cf5d927a 93,96-139
+  s_e3a072a222ce24::t_9a10d7cc7d0320 140
+tests/v2/test_program_case_analysis.py
+  s_e3a072a222ce24::t_3da188fc6f3ffc 508,514,576-578,580,582
+opentest/application/operations.py
+  s_e3a072a222ce24::t_6c383c41edf702 133-141,380-393,407,423-424
+  s_e3a072a222ce24::t_d9b5697e618958 129-132,161,163-166,168-173
+  s_e3a072a222ce24::t_477ea79534570d 1761
+  s_e3a072a222ce24::t_9c1299ad7726ea 160,162,167,183
+  s_e3a072a222ce24::t_c8079ef8906faa 1762-1763
+  s_e3a072a222ce24::t_59bda9096dcb9a 150
+opentest/cli.py
+  s_e3a072a222ce24::t_2bad0951b9fb3d 63-67,131-132
+tests/v2/test_jev_refund_entry.py
+  s_51b8c5e9221363::t_8deb7c2a2d7546 1-4,8-11,13-21,31-110,163-230
+  s_51b8c5e9221363::t_807c66df68130f 126-136,138
+  s_51b8c5e9221363::t_3da6479912a0c8 22-30
+  s_51b8c5e9221363::t_dc4b0ccc43692b 6-7,111-125,137,139-152,154-156,160-162
+  s_51b8c5e9221363::t_5e1ad2d08d6b28 312-353
+  s_51b8c5e9221363::t_99aa83b3acec55 12,231-311
+  s_51b8c5e9221363::t_68b556a6b8fdba 5,153,157-159
+  s_51b8c5e9221363::t_f6fe5652d09288 354-375
+tests/v2/test_shared_scan_directory.py
+  s_e3a072a222ce24::t_08b860172e10f4 100-101
+  s_e3a072a222ce24::t_4f6e33af0432d5 274
+  s_e3a072a222ce24::t_0b1b92396a5a3f 88,99
+  s_e3a072a222ce24::t_27436a830da3ed 6,23,333-351,353-360
+  s_e3a072a222ce24::t_0caf6d7ef650ab 15,123-124,126-127,130,195-218
+  s_e3a072a222ce24::t_7d854dd15c59f8 1-5,7-14,16-22,24,26-81,107-122,125,134-148,150-152,154-194,264-273,275-287,296-332
+  s_e3a072a222ce24::t_673ccaeb845d72 288-295
+  s_e3a072a222ce24::t_9374d56cfbcc31 82-87,89-98,102-106
+  s_e3a072a222ce24::t_c1fa9533005f47 25,128-129,131-133,149,153,219-263
+  s_e3a072a222ce24::t_ca01bbed939dda 352,361-366
+opentest/adapters/knowledge_store.py
+  s_e3a072a222ce24::t_47fd8270503dfe 61
+tests/v2/test_mysql_metadata.py
+  s_e3a072a222ce24::t_faaa19c536f71e 14,18,26,240-241,259-262,505-544
+  s_e3a072a222ce24::t_945dceb5427c06 21,25,27-28,256-258,479-504
+  s_e3a072a222ce24::t_02ef7eab822ad7 246-250,336-371
+  s_e3a072a222ce24::t_c7a010308cf7b8 93-113
+  s_e3a072a222ce24::t_bb7711b51c8a3e 374-398
+  s_e3a072a222ce24::t_25c7f11ab3417d 6,13,17,20,24,159-239,242-245,263-335
+  s_e3a072a222ce24::t_b4ab9e5980c230 7,9,15-16,19,22-23,251-255,372-373,399-478
+  s_e3a072a222ce24::t_f8cec7e2913981 1-5,8,10-12,29-92,114-158
+opentest/application/source_analysis.py
+  s_e3a072a222ce24::t_65e6a047b46707 115-116
+  s_e3a072a222ce24::t_c84ab3200e6c94 247,249-255,257-268
+openspec/changes/archive/2026-09-23-evaluate-jev-refund-cancellation/tasks.md
+  s_51b8c5e9221363::t_3f8591b6a2f0e9 1-10
+opentest/application/foundation.py
+  s_e3a072a222ce24::t_2bad0951b9fb3d 439-440,445-472,558-559,594-595
+  s_e3a072a222ce24::t_bdc99bc9d8a72c 4790-4791,4798-4799,4805-4806
+  s_e3a072a222ce24::t_59c7c3df78c936 23-26,200,211-216,228-229,274,283,290,5264
+opentest/adapters/knowledge_interview.py
+  s_e3a072a222ce24::t_f60e0aac781da9 12,19,21-22,26,33,45-54,67,76,79-86,100-103,125-133,146,152,155-158,172,175,178-181,205-213,237-240
+opentest/adapters/mysql_metadata.py
+  s_e3a072a222ce24::t_f2dda8def05053 350-352
+  s_e3a072a222ce24::t_2a4264e8dbf750 356-363,366
+  s_e3a072a222ce24::t_59b5171ad93647 15,18,21,25-73,76-110
+  s_e3a072a222ce24::t_be1df6e08cd934 234,394-435
+  s_e3a072a222ce24::t_0ed11435e794cf 1-14,16-17,19-20,22-24,111-233,235-269,276-279,285-334,338,340-342,353-355,364-365,368-373,375,377-383,387-393,436-448,450-453,463-464,472-473,475-488
+  s_e3a072a222ce24::t_e8bb7e4c2e5e8d 335-337,339,343-344,367,449,454-462
+  s_e3a072a222ce24::t_afb3333446849a 345-349,465-471,474
+  s_e3a072a222ce24::t_66db92deadae80 374,376,384-386
+  s_e3a072a222ce24::t_c7a010308cf7b8 270-275,280-284
+  s_e3a072a222ce24::t_a9780170aa4204 74-75
+scripts/benchmark_refund_entry.py
+  s_51b8c5e9221363::t_ef097e220e1300 209,505
+  s_51b8c5e9221363::t_a5f0281c5e8dd3 357-363
+  s_51b8c5e9221363::t_1e80bc7b60f4ac 1-11,13-28,31,33-54,56-61,63-76,78-139,154,156-157,159-208,210-215,221-280,282,300,302-323,327-328,331-356,364-367,369-377,380,384-390,392-393,419-427,430-443,446-484,486-504,506-522
+  s_51b8c5e9221363::t_3da6479912a0c8 29-30,32
+  s_51b8c5e9221363::t_a12b1821de556e 219-220,378-379,381-383,391,444-445,485
+  s_51b8c5e9221363::t_7888d3be07c606 55,62,216-218,324-326
+  s_51b8c5e9221363::t_807c66df68130f 155,158
+  s_51b8c5e9221363::t_dc4b0ccc43692b 12,77,140-153,281,283-299,301,329-330,368
+  s_51b8c5e9221363::t_f6fe5652d09288 394-418,428-429
+opentest/application/program_case_analysis.py
+  s_e3a072a222ce24::t_30003345c259eb 259,263,273-351
+  s_e3a072a222ce24::t_f1b857cd25a02c 264-266,699-700
+  s_e3a072a222ce24::t_3607a173daf2a3 491-502,691-698,701-722
+  s_e3a072a222ce24::t_1f6683c7dd80db 352
+openspec/specs/program-case-analysis/spec.md
+  s_e3a072a222ce24::t_cbbdc077e5d511 36,40,44-48,51-52,78-100
+  s_e3a072a222ce24::t_6a825257d1bf77 101
+openspec/changes/archive/2026-09-28-remote-mysql-interface-regression/tasks.md
+  s_e3a072a222ce24::t_cbbdc077e5d511 1-22
+opentest/domain/models.py
+  s_e3a072a222ce24::t_8bbfdc6d0153aa 4441
+  s_e3a072a222ce24::t_98325bcee420a5 888,890-895,4047,4051-4054,4102,4915
+  s_e3a072a222ce24::t_47fd8270503dfe 2041-2042,2052,2054-2055
+  s_e3a072a222ce24::t_1ef6e138e536af 2078-2079
+  s_e3a072a222ce24::t_e341c651dc6605 728
+tests/v2/test_mysql_workspace_integration.py
+  s_e3a072a222ce24::t_76c699c4aa4fd8 20-21,26,52-56,199-233
+  s_e3a072a222ce24::t_9dc2b15790f633 27,117-118
+  s_e3a072a222ce24::t_5d8faa15201ccb 15,19,179-198
+  s_e3a072a222ce24::t_6882625fa016e0 1-5,7-14,16-18,22-25,28-51,57-97,132-137,139-178
+  s_e3a072a222ce24::t_02e3e51b96c582 105
+  s_e3a072a222ce24::t_af976d7238e43d 138
+  s_e3a072a222ce24::t_14a65bf01dc182 6,98-104,106-116,119-131
+opentest/application/case_template_v4.py
+  s_e3a072a222ce24::t_b034dbd26bf678 555-556,561-566,581-584,595-599,610,615,617-618,623-646,649-656,659,2577,2664-2665,2675-2676
+  s_e3a072a222ce24::t_a34c84dea79c91 657-658
+  s_e3a072a222ce24::t_ee95269447933f 26,64,88,90,263,276,411,1027,1875,2180,2211-2212,2243
+  s_e3a072a222ce24::t_161aa6df4c1f0d 552
+  s_e3a072a222ce24::t_a81711334fa423 2524-2526
+  s_e3a072a222ce24::t_3aa3482e177883 2830-2832
+  s_e3a072a222ce24::t_7c75e9a4abcec7 89,420-423,647-648
+  s_e3a072a222ce24::t_01022e97786cf8 881-883
+  s_e3a072a222ce24::t_6b52f94ae58435 2428,2493,2512-2523,2527-2548
+  s_e3a072a222ce24::t_440fc9d8c91c5d 2833-2834
+  s_e3a072a222ce24::t_12636f6ddad469 540-543,546-548,550,557-558,560,567-580,585-594,600-609,611-614,616,619-622,2810,2829,2835,2982-2983,2986,2988-2990,2993-3001,3003-3019
+  s_e3a072a222ce24::t_7732c068b4bad7 559,2549
+openspec/specs/git-knowledge-store/spec.md
+  s_e3a072a222ce24::t_cbbdc077e5d511 7,11-17,20,27,30-46
+tests/v2/test_jev_refund_benchmark.py
+  s_51b8c5e9221363::t_e006a16f2b6d56 136
+  s_51b8c5e9221363::t_129918ac3ae0fa 152-179
+  s_51b8c5e9221363::t_b47a8de8717dc5 1-13,15-21,30-36,38-44,46-72,74-87,89-99,101-122,124-135,137-151
+  s_51b8c5e9221363::t_d834e4827feb5a 14,22-29,37,45,73,88,100,123
+opentest/adapters/setup_contract_store.py
+  s_e3a072a222ce24::t_e8bb7e4c2e5e8d 51-52
+  s_e3a072a222ce24::t_11e12da1d6397f 29-31,47-50,53-55,93-100,124,131-137
+  s_e3a072a222ce24::t_005cb3394f92d5 1,13
+tests/v2/test_shared_data_capabilities.py
+  s_e3a072a222ce24::t_3b0b9a532c305d 179-213
+  s_e3a072a222ce24::t_101a3d81777118 374-375,429-435,662-665
+  s_e3a072a222ce24::t_b2738bd7c4c880 698-704,722-729,732-735,747
+  s_e3a072a222ce24::t_be6b750a80c5d4 494-500,513
+  s_e3a072a222ce24::t_811cca72890121 451-493,501-512,514-515
+  s_e3a072a222ce24::t_62df29007c676d 16,325-348
+  s_e3a072a222ce24::t_d9dec3fb09348e 349-350
+opentest/application/knowledge_discovery.py
+  s_e3a072a222ce24::t_bdc99bc9d8a72c 97,147,1044-1047,2100-2101,2103
+opentest/api.py
+  s_e3a072a222ce24::t_bdc99bc9d8a72c 1841,1849,1853-1854
+opentest/assets/metadata-mysql.sql
+  s_e3a072a222ce24::t_0861b678ede42a 152
+  s_e3a072a222ce24::t_c0c93a8b5ccf4d 27
+  s_e3a072a222ce24::t_606e3133c0ea59 59
+  s_e3a072a222ce24::t_5959e16fdf3e56 1-26,28-39,41-58,60-66,68-151,153-172
+  s_e3a072a222ce24::t_f60e0aac781da9 40,67
+opentest/adapters/operation_contract_store.py
+  s_e3a072a222ce24::t_b37defa99488a3 236
+  s_e3a072a222ce24::t_523ef8717bd73b 34-36
+  s_e3a072a222ce24::t_d92627ceb26132 103-105,108-115,149-151,185
+  s_e3a072a222ce24::t_0c6fcbb550292e 9,19,24,28,33,37,61-75,127-129,167-172,187,202-204,207-210,226-235,237-261
+  s_e3a072a222ce24::t_40a3fef97db6c9 262
+openspec/changes/archive/2026-09-23-evaluate-jev-refund-fast-path/proposal.md
+  s_ef5cd945513ace::t_0aff5c1caa95f4 1-13
+openspec/changes/archive/2026-09-23-evaluate-jev-refund-fast-path/specs/refund-fast-path-benchmark/spec.md
+  s_51b8c5e9221363::t_ca846312b50b5a 1-38
+openspec/changes/archive/2026-09-28-remote-mysql-interface-regression/.openspec.yaml
+  s_e3a072a222ce24::t_fdfcdb35eb97fa 1-2
+openspec/changes/archive/2026-09-28-remote-mysql-interface-regression/specs/candidate-operation-catalog/spec.md
+  s_e3a072a222ce24::t_84d4f1525f3f81 1-65
+openspec/changes/archive/2026-09-28-remote-mysql-interface-regression/specs/git-knowledge-store/spec.md
+  s_e3a072a222ce24::t_30d3e7e8eb6b38 1-43
+openspec/changes/archive/2026-09-28-remote-mysql-interface-regression/specs/sqlite-knowledge-index/spec.md
+  s_e3a072a222ce24::t_de8684b0a48039 1-35
+openspec/specs/refund-fast-path-benchmark/spec.md
+  s_51b8c5e9221363::t_a7cf355ae86063 1-42
+tests/v2/test_candidate_operation_catalog_phase2.py
+  s_e3a072a222ce24::t_4c4bb9a1edd099 216-217,227-235,237,239-241,245,247-248,349,382,385,389,401
+open-test-knowledge/systems/ifightchainsaas.java.refund.core/cases/v4/generations/case-template-generation-0d46060dc72845399f10.json
+  s_5ec5acf666d5bf::t_8bc4cd33164bac 1-8513
+openspec/changes/archive/2026-09-23-evaluate-jev-refund-cancellation/design.md
+  s_51b8c5e9221363::t_7738fbec828557 1-34
+openspec/changes/archive/2026-09-23-evaluate-jev-refund-cancellation/proposal.md
+  s_51b8c5e9221363::t_18d770cb523353 1-14
+openspec/changes/archive/2026-09-23-evaluate-jev-refund-cancellation/specs/refund-model-benchmark/spec.md
+  s_51b8c5e9221363::t_900b890bd935a9 1-36
+openspec/changes/archive/2026-09-23-evaluate-jev-refund-fast-path/design.md
+  s_331552e1e0c2cf::t_c5fbb76327a589 1-21
+openspec/changes/archive/2026-09-23-evaluate-jev-refund-fast-path/tasks.md
+  s_331552e1e0c2cf::t_f5520c3d914f2d 1-9
+openspec/changes/archive/2026-09-28-remote-mysql-interface-regression/design.md
+  s_465820850521df::t_78cd72e8f21463 1-17
+openspec/changes/archive/2026-09-28-remote-mysql-interface-regression/proposal.md
+  s_f18c610c7044f2::t_2c5e61b457c3ca 1-15
+openspec/changes/archive/2026-09-28-remote-mysql-interface-regression/specs/case-template-generation-v4/spec.md
+  s_f18c610c7044f2::t_2a2fccaa54bc4f 1-54
+openspec/changes/archive/2026-09-28-remote-mysql-interface-regression/specs/program-case-analysis/spec.md
+  s_f18c610c7044f2::t_c756d66e95531f 1-47
+openspec/changes/archive/2026-09-28-remote-mysql-interface-regression/specs/shared-mysql-workspace/spec.md
+  s_f18c610c7044f2::t_ed1dab52143639 1-91
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.2",
+  "base_commit_sha": "de0c3f21bfe7534de14cb1d460b9b543a93241d3",
+  "prompts": {},
+  "sessions": {
+    "s_331552e1e0c2cf": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a0cdb3-d821-70d3-a567-481c37ba501e",
+        "model": "unknown"
+      },
+      "human_author": "shizhen <yuuu.shizhen@gmail.com>"
+    },
+    "s_465820850521df": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a0e6a4-5a0f-7ce1-96e1-585ea2916443",
+        "model": "unknown"
+      },
+      "human_author": "shizhen <yuuu.shizhen@gmail.com>"
+    },
+    "s_51b8c5e9221363": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a0cd1d-0f8e-7791-bc2f-003be9bab5da",
+        "model": "gpt-6-astra"
+      },
+      "human_author": "shizhen <yuuu.shizhen@gmail.com>"
+    },
+    "s_5ec5acf666d5bf": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a0bd39-aa9f-7343-9922-b9f1b1f10396",
+        "model": "unknown"
+      },
+      "human_author": "shizhen <yuuu.shizhen@gmail.com>"
+    },
+    "s_e3a072a222ce24": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a0e5fc-f853-7631-af2a-8bda6ef8555c",
+        "model": "gpt-6-astra"
+      },
+      "human_author": "shizhen <yuuu.shizhen@gmail.com>"
+    },
+    "s_ef5cd945513ace": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a0cdb7-ea8c-7d51-b142-388941110d09",
+        "model": "gpt-5.6-luna"
+      },
+      "human_author": "shizhen <yuuu.shizhen@gmail.com>"
+    },
+    "s_f18c610c7044f2": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a0e668-e29b-7583-b933-d66900028076",
+        "model": "unknown"
+      },
+      "human_author": "shizhen <yuuu.shizhen@gmail.com>"
+    }
+  }
+}
