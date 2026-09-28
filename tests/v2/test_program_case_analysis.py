@@ -505,13 +505,13 @@ def test_unresolved_calculation_multi_fields_support_exact_resolutions(
 
 
 def test_reachable_method_parameter_never_becomes_entry_request_field(tmp_path: Path) -> None:
-    """查询结果与入口子对象传入helper但无传播证明时只保留内部诊断。
+    """helper参数无传播证明时保留分支语义缺口，不冒充入口请求字段。
 
     Args:
         tmp_path: 用于构造通用源码基线的隔离路径。
 
     Returns:
-        None；内部字段不进入Entry字段目录、覆盖分母或强制AI任务时通过。
+        None；内部字段不进入Entry字段目录，但真实分支保留必须补充的语义事项。
 
     Side Effects:
         无；仅验证Java证据到程序分析的可信提升边界。
@@ -573,12 +573,13 @@ def test_reachable_method_parameter_never_becomes_entry_request_field(tmp_path: 
     artifact = catalog.artifacts[0]
     assert artifact.status == "ANALYZED"
     assert artifact.fields == []
-    assert artifact.core_obligations == []
-    assert artifact.semantic_gaps == []
+    assert len(artifact.core_obligations) == 1
+    assert artifact.core_obligations[0].kind == "requirement"
+    assert len(artifact.semantic_gaps) == 1
     assert {condition.condition_type.value for condition in artifact.conditions} == {
-        "INTERNAL_DIAGNOSTIC"
+        "INTERNAL_DIAGNOSTIC", "INPUT_COVERAGE"
     }
-    assert all(not condition.blocks_generation for condition in artifact.conditions)
+    assert any(condition.blocks_generation for condition in artifact.conditions)
     assert {item.binding_kind for item in artifact.evidence} == {"method_parameter"}
 
 

@@ -13,6 +13,7 @@ import pytest
 from opentest.adapters.case_template_v4_store import (
     CaseGenerationExecutionStoreV4, CaseTemplateGenerationStoreV4, CaseTemplateHandoffStoreV4,
 )
+from opentest.adapters.data_capability_store import DataCapabilityStore
 from opentest.adapters.environment_config import LocalEnvironmentLoader, LocalSystemSettingsStore
 from opentest.adapters.knowledge_store import GitKnowledgeStore
 from opentest.adapters.operation_execution_store import OperationExecutionStore
@@ -175,6 +176,41 @@ def test_publish_reuse_and_execution_replay(shared_scope: SimpleNamespace) -> No
     assert shared_scope.store.list_nodes(PROVIDER) == []
 
 
+def test_legacy_shared_version_executes_only_its_frozen_calls_without_rewriting_asset(shared_scope: SimpleNamespace, monkeypatch) -> None:
+    """旧独立数据版本无选择字段时恢复固定调用，执行成功且不读取新契约或改写资产。
+
+    Args:
+        shared_scope: 真实数据发布、执行服务及状态化QA替身。
+        monkeypatch: 记录实际交给执行器的范围并禁止额外契约分析。
+    """
+
+    version = _publish(shared_scope)
+    path = shared_scope.store.system_root(PROVIDER) / 'data-capabilities' / version.capability_id / '1.json'
+    legacy = json.loads(path.read_text())
+    for scope in legacy['source_scopes']:
+        for key in ('selected_operation_ids', 'selection_reasons', 'contract_revisions'):
+            scope.pop(key, None)
+    # 模拟升级前已发布资产的真实JSON形状，不通过新版本构造流程掩盖兼容边界。
+    path.write_text(json.dumps(legacy, ensure_ascii=False))
+    frozen_bytes = path.read_bytes()
+    shared_scope.capabilities.append(shared_scope.capabilities[0].model_copy(update={'operation_id': FACADE + 'unrelated'}))
+    selected_scopes = Mock(wraps=shared_scope.cases._runtime_capabilities)
+    monkeypatch.setattr(shared_scope.cases, '_runtime_capabilities', selected_scopes)
+    monkeypatch.setattr(shared_scope.cases.operation_contracts, 'get_contract', Mock(side_effect=AssertionError('已发布版本不可读取新契约')))
+    shared_scope.cases.runtime.operation_catalog.derive.reset_mock()
+    execution = shared_scope.service.execute(CONSUMER, version.capability_id, _request('legacy-shared-execution'))
+    assert execution.status == 'COMPLETED', execution.error
+    assert execution.outputs['report_id'] == 101
+    assert [call[0] for call in shared_scope.state['calls']] == [FACADE + 'queryReportByUniqueKey']
+    for call in selected_scopes.call_args_list:
+        scope = next(item for item in call.args[0].source_scopes if item.source_system_id == PROVIDER)
+        assert set(scope.selected_operation_ids) == {FACADE + 'queryReportByUniqueKey', FACADE + 'saveReport'}
+        assert scope.source_scan_id == 'scan-source-a'
+    assert all(call.args[1] == 'scan-source-a' for call in shared_scope.cases.runtime.operation_catalog.derive.call_args_list)
+    assert path.read_bytes() == frozen_bytes
+    assert shared_scope.service.records.get(PROVIDER, version.capability_id, 1).source_scopes[0].selected_operation_ids == []
+
+
 @pytest.mark.parametrize('allow_writes,wrong_create,expected',[(False,False,'FAILED'),(True,False,'COMPLETED'),(True,True,'FAILED')])
 def test_no_match_creates_only_when_authorized_and_rechecks(shared_scope: SimpleNamespace, allow_writes: bool,
                                                            wrong_create: bool, expected: str) -> None:
@@ -286,6 +322,32 @@ def test_two_cases_and_natural_task_share_version_without_baseline_change(shared
     assert all(call[0] != TARGET for call in shared_scope.state['calls'][before:])
 
 
+def test_same_fixed_generation_runs_twice_with_shared_data_request_index(shared_scope: SimpleNamespace, tmp_path: Path) -> None:
+    """同一固定Case的两次回归拥有各自数据请求，真实唯一索引不能阻断第二次执行。"""
+
+    from tests.v2.test_mysql_metadata import shared_workspace_pair
+
+    version = _publish(shared_scope)
+    generation = _generation(version)
+    frozen = generation.model_dump(mode='json')
+    handoff = SimpleNamespace(task_id='case-validation-task', system_id=CONSUMER, source_scopes=version.source_scopes)
+    registry = shared_scope.service._registry(handoff)
+    shared, _ = shared_workspace_pair(tmp_path)
+    data_store = DataCapabilityStore(shared)
+    executor = CaseTemplateExecutorV4(shared_scope.cases.runtime.operation_service, consumer_system_id=CONSUMER,
+                                     capabilities=shared_scope.capabilities, data_store=data_store)
+    execution_ids = []
+    # 两次使用相同Generation与Variant；只有本次执行身份变化，SQL约束仍为生产唯一索引。
+    for ordinal in (1, 2):
+        outcome = executor.execute('case-generation-execution-' + f'{ordinal:020x}', generation, registry)[0]
+        assert outcome.status == 'COMPLETED', outcome.error
+        execution_ids.extend(outcome.data_execution_ids)
+    records = [data_store.get_execution(CONSUMER, identity) for identity in execution_ids]
+    assert len({record.request_id for record in records}) == 2
+    assert all(record.outputs['report_id'] == 101 for record in records)
+    assert generation.model_dump(mode='json') == frozen
+
+
 def test_missing_provider_profile_preserves_case_failure_report_and_baseline(
     shared_scope: SimpleNamespace, tmp_path: Path,
 ) -> None:
@@ -309,7 +371,8 @@ def test_missing_provider_profile_preserves_case_failure_report_and_baseline(
     handoff = CaseTemplateHandoffV4(
         handoff_id=generation.handoff_id, system_id=CONSUMER, entry_id=TARGET,
         source_scan_id=generation.source_scan_id, status='PARTIAL',
-        source_scopes=version.source_scopes, generation_id=generation.generation_id,
+        source_scopes=[*shared_scope.cases._source_scopes(CONSUMER, 'scan-source-a', TARGET),
+                       *version.source_scopes], generation_id=generation.generation_id,
     )
     shared_scope.cases.handoffs.write(handoff)
     shared_scope.cases.generations.write(generation)
@@ -363,7 +426,13 @@ def test_shared_definition_can_compile_in_case_and_cannot_be_forged(shared_scope
     from opentest.domain.case_template_v4 import CaseTemplateCompilationInput
     version = _publish(shared_scope)
     generation = _generation(version)
-    handoff = SimpleNamespace(task_id='case-validation-task',system_id=CONSUMER, source_scopes=shared_scope.cases._source_scopes(CONSUMER,'scan-source-a'))
+    handoff = CaseTemplateHandoffV4(handoff_id='case-template-handoff-' + 'd' * 20,
+        system_id=CONSUMER, entry_id=TARGET, source_scan_id='scan-source-a', status='WAITING_FOR_AGENT',
+        source_scopes=shared_scope.cases._source_scopes(CONSUMER, 'scan-source-a', TARGET))
+    # Case选择共享版本后只导入函数实际调用的精确接口，不再默认开放provider全目录。
+    handoff = shared_scope.service.select_case_function_scopes(handoff, generation.submission)
+    provider_scope = next(scope for scope in handoff.source_scopes if scope.source_system_id == PROVIDER)
+    assert set(provider_scope.selected_operation_ids) == {FACADE + 'queryReportByUniqueKey', FACADE + 'saveReport'}
     ranges = shared_scope.service.validate_case_functions(handoff,generation.submission,{})
     assert ranges[PROVIDER]['ReportFacade.java'] == [(2,2)]
     registry = shared_scope.service._registry(handoff)
@@ -377,6 +446,71 @@ def test_shared_definition_can_compile_in_case_and_cannot_be_forged(shared_scope
     changed.data_functions[0].verify_steps[-1].predicates[0].right.value = True
     with pytest.raises(KnowledgeValidationError,match='内嵌共享定义'):
         shared_scope.service.validate_case_functions(handoff,changed,{})
+
+
+def test_legacy_generation_recovers_only_frozen_runtime_and_observer_references(shared_scope: SimpleNamespace) -> None:
+    """旧Generation空选择列表按固定DSL恢复数据和观察接口，不改资产或开放其他接口。
+
+    Args:
+        shared_scope: 两个系统的固定扫描及真实Case目录服务。
+    """
+
+    from opentest.domain.case_template_v4 import CaseOracle
+    version = _publish(shared_scope)
+    generation = _generation(version)
+    observer_id, unrelated_id = FACADE + 'observeReport', FACADE + 'unrelated'
+    shared_scope.capabilities.extend(shared_scope.capabilities[0].model_copy(update={'operation_id': identity})
+                                     for identity in (observer_id, unrelated_id))
+    oracle = CaseOracle(oracle_id='observed_report', channel='operation', function_id=observer_id,
+        assertions=[{'actual_path':'report.id','operator':'eq','expected':{'kind':'literal','value':101}}])
+    generation.submission.case_templates[0].oracles.append(oracle)
+    generation.variants[0].oracles.append(oracle)
+    generation.source_scopes = [scope.model_copy(update={'selected_operation_ids': [], 'selection_reasons': {}, 'contract_revisions': {}})
+        for scope in [*shared_scope.cases._source_scopes(CONSUMER, 'scan-source-a', TARGET), *version.source_scopes]]
+    handoff = CaseTemplateHandoffV4(handoff_id='case-template-handoff-' + 'e' * 20,
+        system_id=CONSUMER, entry_id=TARGET, source_scan_id='scan-source-a', status='COMPLETED',
+        source_scopes=generation.source_scopes, generation_id=generation.generation_id)
+    frozen_generation = generation.model_dump(mode='json')
+    frozen_handoff = handoff.model_dump(mode='json')
+    registry = shared_scope.cases._runtime_registry_for_execution(handoff, generation)
+    function_ids = {function.function_id for function in registry.functions}
+    assert {FACADE + 'queryReportByUniqueKey', FACADE + 'saveReport', observer_id} <= function_ids
+    assert unrelated_id not in function_ids
+    assert generation.model_dump(mode='json') == frozen_generation
+    assert handoff.model_dump(mode='json') == frozen_handoff
+
+
+def test_data_new_provider_requires_explicit_unmet_input_and_keeps_selected_scope(shared_scope: SimpleNamespace, monkeypatch) -> None:
+    """数据任务逐跳追溯需明确缺口和用途，只增加当前选中接口。
+
+    Args:
+        shared_scope: 注册的consumer/provider服务。
+        monkeypatch: 隔离关系解析，验证工具入参和冻结行为。
+    """
+
+    from opentest.application.system_relations import SystemRelationService
+    task = shared_scope.service.prepare(CONSUMER, DataCapabilityPrepareRequest(goal='准备补单输入', operation_id=TARGET))
+    selected = shared_scope.capabilities[0]
+    received_systems = []
+    def resolve(scopes, operation_id):
+        """记录选择发生时的冻结来源，并返回已确认的精确provider接口。"""
+
+        received_systems.append({scope.source_system_id for scope in scopes})
+        return selected
+    resolver = Mock(side_effect=resolve)
+    monkeypatch.setattr(SystemRelationService, 'resolve_from_scopes', resolver)
+    arguments = {'source_system_id': PROVIDER, 'operation_id': selected.operation_id}
+    with pytest.raises(KnowledgeValidationError, match='unmet_input_path和purpose'):
+        shared_scope.service.call_agent_tool(task.task_id, 'read_contract', arguments)
+    resolver.assert_not_called()
+    response = shared_scope.service.call_agent_tool(task.task_id, 'read_contract', {
+        **arguments, 'unmet_input_path': 'request.id', 'purpose': '查询并验证当前票对应报表'})
+    handoff = shared_scope.service.records.get_handoff(task.task_id)
+    provider_scope = next(scope for scope in handoff.source_scopes if scope.source_system_id == PROVIDER)
+    assert provider_scope.selected_operation_ids == [selected.operation_id]
+    assert provider_scope.source_scan_id == 'scan-source-a'
+    assert provider_scope.contract_revisions[selected.operation_id] == response['contract']['contract_revision']
+    assert received_systems == [{CONSUMER}]
 
 
 def test_interrupted_data_execution_is_not_replayed(shared_scope: SimpleNamespace) -> None:
@@ -525,7 +659,10 @@ def test_same_operation_id_in_two_systems_is_rejected(shared_scope: SimpleNamesp
     """
 
     shared_scope.capabilities.append(shared_scope.capabilities[0].model_copy(update={'system_id':CONSUMER}))
-    handoff = SimpleNamespace(task_id='case-validation-task',system_id=CONSUMER,source_scopes=shared_scope.cases._source_scopes(CONSUMER,'scan-source-a'))
+    # 明确选中两边的同名接口，不能以默认开放整个关联系统的旧行为制造歧义。
+    scopes = [*shared_scope.cases._source_scopes(CONSUMER, 'scan-source-a', FACADE + 'queryReportByUniqueKey'),
+              *shared_scope.cases._source_scopes(PROVIDER, 'scan-source-a', FACADE + 'queryReportByUniqueKey')]
+    handoff = SimpleNamespace(task_id='case-validation-task',system_id=CONSUMER,source_scopes=scopes)
     with pytest.raises(KnowledgeValidationError,match='多个所属系统'):
         shared_scope.service._registry(handoff)
 
@@ -558,8 +695,13 @@ def test_match_source_must_be_an_actual_query_result(shared_scope: SimpleNamespa
     assert shared_scope.state['calls'] == []
 
 
-def test_default_draft_trial_is_required_and_replayed_once(shared_scope: SimpleNamespace) -> None:
-    """默认共享方法必须通过当前revision真实试跑才能发布；同请求不得重复造数。"""
+def test_default_draft_trial_is_required_and_replayed_once(shared_scope: SimpleNamespace, monkeypatch) -> None:
+    """默认方法必须真实试跑；摘要目录下重试仍返回完整证据且不重复调用。
+
+    Args:
+        shared_scope: 实际服务、存储及可跟踪调用的测试Provider。
+        monkeypatch: 将列表读取替换为MySQL使用的小型执行摘要形状。
+    """
 
     from opentest.domain.data_capabilities import DataDraftExecutionRequest
 
@@ -577,8 +719,20 @@ def test_default_draft_trial_is_required_and_replayed_once(shared_scope: SimpleN
     trial = shared_scope.service.execute_draft(task.task_id, request)
     assert trial.status == 'COMPLETED'
     assert len([item for item in shared_scope.state['calls'] if item[0] == FACADE + 'saveReport']) == 1
+    business_calls = list(shared_scope.state['calls'])
+    list_executions = shared_scope.service.records.list_executions
+    def summaries(system_id):
+        """读取指定系统执行后省略大证据，复现共享MySQL列表的真实返回边界。"""
+
+        executions = list_executions(system_id)
+        return [item.model_copy(update={'outputs': {}, 'step_results': [], 'checks': []}) for item in executions]
+    monkeypatch.setattr(shared_scope.service.records, 'list_executions', summaries)
     replay = shared_scope.service.execute_draft(task.task_id, request)
     assert replay.execution_id == trial.execution_id
+    assert replay.outputs == trial.outputs and replay.outputs
+    assert replay.step_results == trial.step_results and replay.step_results
+    assert replay.checks == trial.checks and replay.checks
+    assert shared_scope.state['calls'] == business_calls
     assert len([item for item in shared_scope.state['calls'] if item[0] == FACADE + 'saveReport']) == 1
     shared_scope.service.call_agent_tool(task.task_id, 'publish_data_capability', {'expected_revision': 1})
     assert shared_scope.service.get_version(PROVIDER, definition['capability_id'], 1).source_scopes
@@ -590,6 +744,7 @@ def test_default_draft_trial_is_required_and_replayed_once(shared_scope: SimpleN
     recovered = shared_scope.service.execute_draft(task.task_id, request)
     assert recovered.status == 'FAILED'
     assert recovered.step_results == trial.step_results
+    assert shared_scope.state['calls'] == business_calls
     assert len([item for item in shared_scope.state['calls'] if item[0] == FACADE + 'saveReport']) == 1
 
 

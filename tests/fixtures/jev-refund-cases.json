@@ -1,0 +1,36 @@
+{
+  "development": [
+    {"id":"d01","text":"取消票号TTT3102161000001的退票单，取消原因你帮我填。","expected":["cancel_refund","execute","t1","automatic"]},
+    {"id":"d02","text":"查一下票号TTT3102161000002的退票单状态。","expected":["query_refund","execute","t1","unspecified"]},
+    {"id":"d03","text":"不要取消票号TTT3102161000003的退票单。","expected":["cancel_refund","refrain","t1","unspecified"]},
+    {"id":"d04","text":"票号TTT3102161000004怎么取消退票单？先解释，不要操作。","expected":["cancel_refund","inquire","t1","unspecified"]},
+    {"id":"d05","text":"把机票订单取消，票号TTT3102161000005，不是取消退票申请。","expected":["cancel_booking","execute","t1","unspecified"]},
+    {"id":"d06","text":"对票号TTT3102161000006发起新的退票申请。","expected":["create_refund","execute","t1","unspecified"]},
+    {"id":"d07","text":"帮我取消退票单，原因自动填。","expected":["cancel_refund","execute","none","automatic"]},
+    {"id":"d08","text":"取消票号TTT3102161000008和TTT3102161000009的退票申请，理由你选。","expected":["cancel_refund","execute","ambiguous","automatic"]},
+    {"id":"d09","text":"撤销票号TTT3102161000010的退票申请，取消原因填“用户要求取消”。","expected":["cancel_refund","execute","t1","explicit"]},
+    {"id":"d10","text":"今天天气如何？","expected":["other","inquire","none","unspecified"]}
+  ],
+  "heldout": [
+    {"id":"h01","text":"请撤销票号TTT4102161000001的退票申请，原因由你决定。","expected":["cancel_refund","execute","t1","automatic"]},
+    {"id":"h02","text":"票号TTT4102161000002那张退票单帮我取消掉，原因自动填写。","expected":["cancel_refund","execute","t1","automatic"]},
+    {"id":"h03","text":"取消退票单：票号7811234567890，取消原因你帮我选一个。","expected":["cancel_refund","execute","t1","automatic"]},
+    {"id":"h04","text":"请取消票号TTT4102161000004对应的退票单，原因写“行程不变，继续乘机”。","expected":["cancel_refund","execute","t1","explicit"]},
+    {"id":"h05","text":"票号TTT4102161000005的退票到哪一步了？帮我查查。","expected":["query_refund","execute","t1","unspecified"]},
+    {"id":"h06","text":"先查TTT4102161000006这张票的退款状态，不做取消。","expected":["query_refund","execute","t1","unspecified"]},
+    {"id":"h07","text":"千万别撤销票号TTT4102161000007的退票申请。","expected":["cancel_refund","refrain","t1","unspecified"]},
+    {"id":"h08","text":"刚才说要取消票号TTT4102161000008的退票单，现在改主意了，不取消。","expected":["cancel_refund","refrain","t1","unspecified"]},
+    {"id":"h09","text":"票号TTT4102161000009的退票单能取消吗？我只是问问，先别操作。","expected":["cancel_refund","inquire","t1","unspecified"]},
+    {"id":"h10","text":"讲一下取消退票申请的步骤，票号TTT4102161000010仅作例子。","expected":["cancel_refund","inquire","t1","unspecified"]},
+    {"id":"h11","text":"请取消票号TTT4102161000011的原始机票订单，不是撤销退票单。","expected":["cancel_booking","execute","t1","unspecified"]},
+    {"id":"h12","text":"票号TTT4102161000012不飞了，帮我新建退票申请。","expected":["create_refund","execute","t1","unspecified"]},
+    {"id":"h13","text":"把这笔退票申请撤销，取消原因自动填。","expected":["cancel_refund","execute","none","automatic"]},
+    {"id":"h14","text":"TTT4102161000014、TTT4102161000015这两张票的退票单都取消，原因你决定。","expected":["cancel_refund","execute","ambiguous","automatic"]},
+    {"id":"h15","text":"有票号TTT4102161000016和TTT4102161000017，取消其中一张的退票单，原因自动填。","expected":["cancel_refund","execute","ambiguous","automatic"]},
+    {"id":"h16","text":"保留票号TTT4102161000018的退票申请，只取消票号TTT4102161000019的退票单，原因你帮我填。","expected":["cancel_refund","execute","t2","automatic"]},
+    {"id":"h17","text":"取消票号TTT4102161000020的退票单；重复确认，票号是TTT4102161000020。原因自动填。","expected":["cancel_refund","execute","t1","automatic"]},
+    {"id":"h18","text":"票号TTT4102161000021的退票申请取消一下。","expected":["cancel_refund","execute","t1","unspecified"]},
+    {"id":"h19","text":"票号TTT4102161000022的退票单还没决定要不要取消，等我通知。","expected":["cancel_refund","unclear","t1","unspecified"]},
+    {"id":"h20","text":"请查询票号TTT4102161000023和TTT4102161000024的退票状态。","expected":["query_refund","execute","ambiguous","unspecified"]}
+  ]
+}

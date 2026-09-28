@@ -213,8 +213,8 @@ def _system_mq_rule_path(tmp_path: Path) -> tuple[Path, Path]:
     return system_root, rules_path
 
 
-def test_scanned_relation_controls_cross_system_search_detail_and_drift(tmp_path: Path) -> None:
-    """扫描关系、基线漂移和引用消失必须即时改变provider Candidate可见性。
+def test_scanned_relation_does_not_expand_candidates_and_provider_drift_is_local(tmp_path: Path) -> None:
+    """系统引用只供接口按需发现，provider目录和版本漂移不扩散到consumer候选。
 
     Args:
         tmp_path: Pytest隔离知识与源码根目录。
@@ -223,43 +223,29 @@ def test_scanned_relation_controls_cross_system_search_detail_and_drift(tmp_path
     application = OpenTestApplication(tmp_path / "knowledge")
     _publish_generic_scan(application, "consumer-app", "Consume", "consumer-v1")
     _publish_generic_scan(application, "provider-app", "Provision", "provider-v1")
-
-    unbound = application.search_candidate_operations("consumer-app", "ProvisionRequest")
-    assert unbound.complete is True
-    assert unbound.total == 0
     _connect_scanned_dsf(application, "consumer-app", "provider-app")
-    bound = application.search_candidate_operations("consumer-app", "ProvisionRequest")
-    provider_candidate = next(
-        candidate
-        for candidate in bound.candidates
-        if candidate.implementation_symbol_id.endswith("ProvisionRequest)")
-    )
+    consumer = application.search_candidate_operations("consumer-app", "ProvisionRequest")
+    assert consumer.complete is True
+    assert consumer.total == 0
+    assert {source.system_id for source in consumer.sources} == {"consumer-app"}
 
-    assert bound.complete is True
-    assert {source.system_id for source in bound.sources} == {"consumer-app", "provider-app"}
-    assert next(source for source in bound.sources if source.system_id == "provider-app").binding_id == ""
-    assert provider_candidate.system_id == "provider-app"
+    # 提供方自己的候选契约仍可读，但调用方不能凭系统关系获取整个目录。
+    provider = application.search_candidate_operations("provider-app", "ProvisionRequest")
+    provider_candidate = next(candidate for candidate in provider.candidates
+                              if candidate.implementation_symbol_id.endswith("ProvisionRequest)"))
     assert provider_candidate.executable is False
-    assert provider_candidate.contract_symbol_ids == [
-        "sample.ProvisionFacade#execute(sample.ProvisionRequest)"
-    ]
+    assert provider_candidate.contract_symbol_ids == ["sample.ProvisionFacade#execute(sample.ProvisionRequest)"]
     assert provider_candidate.dto_definitions[0].fields[0].collection is True
-    assert application.get_candidate_operation("consumer-app", provider_candidate.candidate_id) == provider_candidate
-
-    drifted = application.store.get_system("provider-app").baseline.model_copy(update={"commit": "provider-v2"})
-    application.store.update_source_baseline("provider-app", drifted)
-    drift_result = application.search_candidate_operations("consumer-app", "ProvisionRequest")
-    assert drift_result.complete is False
-    assert "SOURCE_SCAN_DRIFT:provider-app" in drift_result.blockers
+    assert application.get_candidate_operation("provider-app", provider_candidate.candidate_id) == provider_candidate
     with pytest.raises(KnowledgeNotFoundError):
         application.get_candidate_operation("consumer-app", provider_candidate.candidate_id)
 
-    # 恢复provider基线但移除caller引用，新发现不得继续使用先前的关系范围。
-    application.store.update_source_baseline("provider-app", provider_candidate.source_baseline)
-    artifacts = SourceScanArtifactStore(application.knowledge_root)
-    caller_manifest = artifacts.read("consumer-app", "latest")
-    caller_manifest.dsf_operations = [operation for operation in caller_manifest.dsf_operations if operation.provider_system_id == "consumer-app"]
-    artifacts.write_manifest(caller_manifest)
+    drifted = application.store.get_system("provider-app").baseline.model_copy(update={"commit": "provider-v2"})
+    application.store.update_source_baseline("provider-app", drifted)
+    drift_result = application.search_candidate_operations("provider-app", "ProvisionRequest")
+    assert drift_result.complete is False
+    assert "BLOCKED_CANDIDATE_SOURCE_DRIFT:provider-app" in drift_result.blockers
+    assert application.search_candidate_operations("consumer-app", "ProvisionRequest").complete is True
     with pytest.raises(KnowledgeNotFoundError):
         application.get_candidate_operation("consumer-app", provider_candidate.candidate_id)
 
@@ -360,7 +346,7 @@ def test_duplicate_candidate_identity_blocks_whole_source_snapshot(tmp_path: Pat
 
 
 def test_dependency_mutation_is_retired_and_discovery_uses_scanned_relations(tmp_path: Path) -> None:
-    """HTTP人工绑定退役，扫描关系可见且历史绑定不能增加无证据第三方。
+    """HTTP人工绑定退役，系统关系和历史绑定都不能自动扩大候选范围。
 
     Args:
         tmp_path: Pytest隔离知识与源码根目录。
@@ -393,14 +379,14 @@ def test_dependency_mutation_is_retired_and_discovery_uses_scanned_relations(tmp
             "/api/v2/systems/consumer-app/candidate-operations",
             params={"query": "Request"},
         )
-        provider_candidate = next(
+        consumer_candidate = next(
             item
             for item in search_response.json()["result"]["candidates"]
-            if item["system_id"] == "provider-app" and item["implementation_symbol_id"]
+            if item["system_id"] == "consumer-app" and item["implementation_symbol_id"]
         )
         detail_response = client.get(
             "/api/v2/systems/consumer-app/candidate-operations/"
-            + quote(provider_candidate["candidate_id"], safe="")
+            + quote(consumer_candidate["candidate_id"], safe="")
         )
         retired_response = client.post(
             "/api/v2/systems/consumer-app/capability-drafts",
@@ -412,7 +398,7 @@ def test_dependency_mutation_is_retired_and_discovery_uses_scanned_relations(tmp
     visible_systems = {
         item["system_id"] for item in search_response.json()["result"]["candidates"]
     }
-    assert visible_systems == {"consumer-app", "provider-app"}
+    assert visible_systems == {"consumer-app"}
     assert "third-app" not in visible_systems
     assert retired_response.status_code == 404
     assert not (application.store.system_root("consumer-app") / "capabilities" / "published.yaml").exists()

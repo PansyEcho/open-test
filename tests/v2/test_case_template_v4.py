@@ -7,7 +7,7 @@ import subprocess
 from copy import deepcopy
 from contextlib import nullcontext
 from pathlib import Path
-from unittest.mock import Mock
+from unittest.mock import Mock, patch
 
 import pytest
 from pydantic import ValidationError
@@ -486,9 +486,11 @@ def test_runtime_registry_does_not_promote_comments_or_initializers() -> None:
     assert "default" not in schema["properties"]["platFormId"]
 
 
-def test_outer_dsf_info_resolves_authorized_provider_facade_contract() -> None:
+def test_outer_dsf_info_resolves_authorized_provider_facade_contract(tmp_path: Path) -> None:
     """确认consumer外部索引按Java Facade符号解析booking provider真实契约。
 
+    Args:
+        tmp_path: 可修订handoff的隔离持久化目录。
     Returns:
         None；返回canonical provider、默认请求Schema、响应字段和源码范围时通过。
     """
@@ -555,12 +557,22 @@ def test_outer_dsf_info_resolves_authorized_provider_facade_contract() -> None:
         source_scan_id="scan-booking-v4",
         executable=True,
     )
-    handoffs = Mock()
-    handoffs.get.return_value = Mock()
+    handoffs = CaseTemplateHandoffStoreV4(tmp_path)
+    handoff_id = "case-template-handoff-" + "a" * 20
+    handoffs.write(CaseTemplateHandoffV4(
+        handoff_id=handoff_id, system_id=SYSTEM_ID, entry_id=CANCEL_ID,
+        source_scan_id=SCAN_ID, status="WAITING_FOR_AGENT", source_scopes=[
+            CaseTemplateSourceScope(source_system_id=SYSTEM_ID, source_scan_id=SCAN_ID,
+                                    source_baseline=SourceBaseline(source_path=str(tmp_path))),
+            CaseTemplateSourceScope(source_system_id=BOOKING_SYSTEM_ID, source_scan_id="scan-booking-v4",
+                                    source_baseline=SourceBaseline(source_path=str(tmp_path))),
+        ],
+    ))
     service = CaseTemplateV4Service(Mock(), Mock(), Mock(), handoffs)
-    service._runtime_capabilities = Mock(return_value=[consumer, provider])
-
-    info = service.read_outer_api_info("case-template-handoff-" + "a" * 20, outer_id)
+    catalog = Mock()
+    catalog.derive.side_effect = [[consumer], [provider]]
+    with patch("opentest.application.operations.OperationCapabilityCatalog", return_value=catalog):
+        info = service.read_outer_api_info(handoff_id, outer_id)
 
     assert info["provider_operation_id"] == TRADE_QUERY_LIST_ID
     assert info["provider_system_id"] == BOOKING_SYSTEM_ID
@@ -568,11 +580,12 @@ def test_outer_dsf_info_resolves_authorized_provider_facade_contract() -> None:
     assert info["response_fields"][0]["field_path"] == "ownerId"
     assert info["runtime_function"]["provider_ref"] == TRADE_QUERY_LIST_ID
     assert info["provider_source_refs"][0]["path"] == "TradeFacade.java"
-    handoffs.record_outer_provider_access.assert_called_once_with(
-        "case-template-handoff-" + "a" * 20,
-        outer_id,
-        TRADE_QUERY_LIST_ID,
-    )
+    # 当前scope直接保存精确选择和意图，替代只能用于本机的展开审计。
+    selected_scope = handoffs.get(handoff_id).source_scopes[1]
+    assert selected_scope.selected_operation_ids == [TRADE_QUERY_LIST_ID]
+    assert selected_scope.source_scan_id == "scan-booking-v4"
+    assert selected_scope.selection_reasons[TRADE_QUERY_LIST_ID]["purpose"]
+    assert info["revision"] == 1
 
 
 def _compile_golden() -> tuple[list, list]:
@@ -2769,8 +2782,8 @@ def test_missing_historical_cleanup_identity_does_not_block_successful_target() 
     assert [(stage.phase, stage.status) for stage in results[0].operations] == [("TARGET", "COMPLETED")]
 
 
-def test_oracle_argument_resolution_failure_preserves_blocked_phase_summary() -> None:
-    """Oracle参数在调用前缺失时必须保存独立ORACLE阻塞证据。
+def test_oracle_argument_resolution_failure_preserves_failed_assertion() -> None:
+    """Oracle参数在调用前缺失时必须保存观察失败断言与原始阶段证据。
 
     Returns:
         None；Observer未访问QA，报告保留独立观察失败且不执行历史清理。
@@ -2831,7 +2844,9 @@ def test_oracle_argument_resolution_failure_preserves_blocked_phase_summary() ->
     )
 
     phases = [(item.phase, item.status) for item in results[0].operations]
-    assert results[0].status == "BLOCKED"
+    assert results[0].status == "FAILED"
+    assert results[0].failure_kind == "OBSERVATION_FAILED"
+    assert results[0].assertions[0].passed is False
     assert phases == [("TARGET", "COMPLETED"), ("ORACLE", "BLOCKED")]
     assert [request.operation_id for _system_id, request in operations.calls] == [
         CREATE_ORDER_ID,
@@ -3143,6 +3158,7 @@ def test_partial_generation_executes_runnable_variants_and_can_run_again(
             CaseTemplateSourceScope(
                 source_system_id=SYSTEM_ID,
                 source_scan_id=SCAN_ID,
+                selected_operation_ids=[generation.operation_id],
                 source_baseline=SourceBaseline(source_path="/private/refund-core"),
             )
         ],
@@ -3496,7 +3512,9 @@ def test_v4_service_rebuilds_stale_input_contract_from_current_scan_operation(st
     store.list_nodes.return_value = [(node, Path("node.md"), "")]
     catalog = Mock()
     catalog.derive.return_value = [operation]
-    artifacts = Mock()
+    # 此夹具使用文件契约存储，显式声明扫描别名解析和无共享MySQL。
+    artifacts = Mock(metadata=None)
+    artifacts.resolve_scan_id.return_value = SCAN_ID
     artifacts.read.return_value = Mock(scan_id=SCAN_ID, baseline=SourceBaseline(source_path=str(tmp_path)))
     service = CaseTemplateV4Service(
         store,
@@ -3749,7 +3767,11 @@ def test_case_dsl_publication_persists_generation_without_dispatching_qa() -> No
 
 
 def test_handoff_catalog_never_exposes_registered_source_root() -> None:
-    """确认轮询目录即使包含线程和执行结果也不会泄漏源码绝对路径。"""
+    """确认轮询目录保存精确选择信息但不泄漏固定源码绝对路径。
+
+    Returns:
+        None；对外scope包含接口选择及契约版本，不包含本机路径。
+    """
 
     handoff = CaseTemplateHandoffV4(
         handoff_id=f"case-template-handoff-{'e' * 20}",
@@ -3774,7 +3796,8 @@ def test_handoff_catalog_never_exposes_registered_source_root() -> None:
 
     assert "/private/refund-core" not in json.dumps(catalog, ensure_ascii=False)
     assert catalog["handoff"]["source_scopes"] == [
-        {"source_system_id": SYSTEM_ID, "source_scan_id": SCAN_ID, "resolved_operations": []}
+        {"source_system_id": SYSTEM_ID, "source_scan_id": SCAN_ID, "resolved_operations": [],
+         "selected_operation_ids": [], "selection_reasons": {}, "contract_revisions": {}}
     ]
 
 
@@ -3842,7 +3865,9 @@ def test_rebuilt_input_contract_keeps_real_conflicts_blocked(tmp_path: Path) -> 
     store.list_nodes.return_value = [(node, Path("node.md"), "")]
     catalog = Mock()
     catalog.derive.return_value = [operation]
-    artifacts = Mock()
+    # 此夹具使用文件契约存储，显式声明扫描别名解析和无共享MySQL。
+    artifacts = Mock(metadata=None)
+    artifacts.resolve_scan_id.return_value = SCAN_ID
     artifacts.read.return_value = Mock(scan_id=SCAN_ID, baseline=SourceBaseline(source_path=str(tmp_path)))
     service = CaseTemplateV4Service(store, artifacts, Mock(), Mock(), CaseTemplateV4RuntimeServices(
         operation_catalog=catalog, operation_service=Mock(), environment_provider=default_case_template_environment_values,
@@ -3881,3 +3906,27 @@ def test_nullable_predicate_returns_located_type_validation(declared_type, compa
         assert (issues[0].code, issues[0].owner, issues[0].field) == (
             "FILTER_PREDICATE_TYPE_MISMATCH", "data_function:refund", "steps.eligible",
         )
+
+
+def test_unbound_shared_source_never_reads_current_working_directory() -> None:
+    """共享handoff没有本机源码绑定时必须拒绝源码操作，不能把空路径当cwd。
+
+    Returns:
+        None；明确报告未绑定，且Git capture和快照读取都未发生。
+    """
+
+    handoff = CaseTemplateHandoffV4(
+        handoff_id="case-template-handoff-" + "f" * 20, system_id=SYSTEM_ID,
+        entry_id=CANCEL_ID, source_scan_id=SCAN_ID, status="WAITING_FOR_AGENT",
+        source_scopes=[CaseTemplateSourceScope(
+            source_system_id=SYSTEM_ID, source_scan_id=SCAN_ID,
+            source_baseline=SourceBaseline(source_path=""),
+        )],
+    )
+    service = CaseTemplateV4Service(Mock(), Mock(), Mock(), Mock())
+    service.source_repository = Mock()
+    # 路径缺失应在任何本机Git或文件读取之前失败，防止读取当前项目代替另一系统源码。
+    with pytest.raises(KnowledgeValidationError, match="未绑定固定源码"):
+        service._require_current_source_scopes(handoff)
+    service.source_repository.capture.assert_not_called()
+    service.artifacts.require_source_snapshot.assert_not_called()

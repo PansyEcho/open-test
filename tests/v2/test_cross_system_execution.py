@@ -197,8 +197,10 @@ def test_fixed_runtime_scope_does_not_read_current_relations(execution_scope: Si
     operation_catalog = Mock()
     operation_catalog.derive.return_value = [execution_scope.capability]
     service = SimpleNamespace(store=execution_scope.store, runtime=SimpleNamespace(operation_catalog=operation_catalog))
+    # 新任务明确选中固定接口；重扫后的当前系统关系不能扩大或改变这份选择。
     handoff = SimpleNamespace(system_id="consumer", source_scopes=[
-        SimpleNamespace(source_system_id="provider", source_scan_id="scan-baseline-a", resolved_operations=[])])
+        SimpleNamespace(source_system_id="provider", source_scan_id="scan-baseline-a", resolved_operations=[],
+                        selected_operation_ids=[execution_scope.capability.operation_id])])
     assert CaseTemplateV4Service._runtime_capabilities(service, handoff) == [execution_scope.capability]
     operation_catalog.derive.assert_called_once_with("provider", "scan-baseline-a", include_registered=False, resolved_operations=[])
 

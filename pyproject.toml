@@ -12,6 +12,7 @@ dependencies = [
   "pydantic>=2.12,<3",
   "PyYAML>=6,<7",
   "uvicorn>=0.41,<1",
+  "PyMySQL>=1.1,<2",
 ]
 
 [project.optional-dependencies]
@@ -25,7 +26,7 @@ opentest = "opentest.cli:main"
 include = ["opentest*"]
 
 [tool.setuptools.package-data]
-opentest = ["web/*.html", "web/*.css", "web/*.js", "assets/*.yaml", "assets/*.json"]
+opentest = ["web/*.html", "web/*.css", "web/*.js", "assets/*.yaml", "assets/*.json", "assets/*.sql"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
