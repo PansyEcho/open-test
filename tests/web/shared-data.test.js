@@ -169,7 +169,7 @@ test("profile saves preserve independent environments without HTTP Job fields", 
   const requests = [];
   fields["qa-config-environment"].value = "test";
   fields["qa-labrador-token"].value = "qa-local-token";
-  const context = vm.createContext({fields,element:(id)=>fields[id],api:async(url,options)=>{requests.push({url,body:JSON.parse(options.body)});return{};},
+  const context = vm.createContext({savedEnvironmentProfiles:{qa:"",uat:""},environmentProfileSystemId:"",fields,element:(id)=>fields[id],api:async(url,options)=>{requests.push({url,body:JSON.parse(options.body)});return{};},
     captureSystemScope:()=>({systemId:"refund"}),isCurrentSystemScope:()=>true,systemFormMode:"edit",loadEnvironmentCatalog:async()=>true,
   });
   vm.runInContext(sourceFunction("readEnvironmentProfile") + sourceFunction("saveEnvironmentProfiles"), context);
@@ -179,9 +179,10 @@ test("profile saves preserve independent environments without HTTP Job fields", 
   fields["uat-config-environment"].value = "dev";
   fields["uat-labrador-token"].value = "uat-local-token";
   await vm.runInContext("saveEnvironmentProfiles()", context);
-  assert.equal(requests[2].body.environment, "uat");
-  assert.equal(requests[2].body.resource_config_environment, "dev");
-  assert.equal(requests[2].body.qa_labrador_token, undefined);
+  assert.equal(requests.length, 2); // 未修改的QA不应第二次提交。
+  assert.equal(requests[1].body.environment, "uat");
+  assert.equal(requests[1].body.resource_config_environment, "dev");
+  assert.equal(requests[1].body.qa_labrador_token, undefined);
   assert.equal(requests[1].body.qa_gateway_prefix, undefined);
   assert.ok(requests.every((request)=>request.url === "/systems/refund/local-settings"));
 });
@@ -190,7 +191,7 @@ test("profile saves preserve independent environments without HTTP Job fields", 
 test("profile reads use each logical environment and preserve unconfigured uat", async () => {
   const fields = profileFields();
   const urls = [];
-  const context = vm.createContext({fields,element:(id)=>fields[id],captureSystemScope:()=>({systemId:"refund"}),isCurrentSystemScope:()=>true,
+  const context = vm.createContext({savedEnvironmentProfiles:{qa:"",uat:""},environmentProfileSystemId:"",fields,element:(id)=>fields[id],captureSystemScope:()=>({systemId:"refund"}),isCurrentSystemScope:()=>true,
     api:async(url)=>{urls.push(url);return{local_settings:url.endsWith("=qa")?{resource_config_environment:"test",qa_labrador_token:"qa-only"}:{resource_config_environment:"auto",available:false}};},
   });
   vm.runInContext(sourceFunction("loadEnvironmentProfiles"), context);

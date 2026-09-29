@@ -1,5 +1,6 @@
 """验证配置普通保存边界，以及远端目录缓存的版本、隔离与容量。"""
 
+import threading
 from pathlib import Path
 from unittest.mock import Mock
 
@@ -42,6 +43,7 @@ def test_cache_reuses_payload_checks_remote_revision_and_does_not_mask_failure(t
     """相同目录不重复构建；外部写入立即失效，数据库断开不能返回伪正常旧目录。"""
 
     metadata = Mock()
+    metadata._local = threading.local()
     metadata.fetch_all.return_value = [{"system_id": "demo", "latest_scan_id": "scan-a", "workspace_revision": 1, "is_archived": 0}]
     cache = ConsoleReadCache(metadata, tmp_path)
     reads = []
@@ -70,6 +72,7 @@ def test_cache_eviction_and_inflight_revision_change(tmp_path):
     """容量压力淘汰旧目录，构建期间版本变化不保留旧代响应。"""
 
     metadata = Mock()
+    metadata._local = threading.local()
     first = [{"system_id": "demo", "latest_scan_id": "scan-a", "workspace_revision": 1, "is_archived": 0}]
     second = [{**first[0], "workspace_revision": 2}]
     metadata.fetch_all.return_value = first

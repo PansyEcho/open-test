@@ -5,6 +5,7 @@ from __future__ import annotations
 import threading
 import sqlite3
 import json
+import zlib
 from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 
@@ -158,6 +159,15 @@ def test_invalid_configuration_does_not_fall_back_to_local_truth(tmp_path):
         load_metadata_store(knowledge_root)
 
 
+def mysql_compress(payload):
+    """在SQLite驱动中模拟MySQL COMPRESS；NULL继续保留，中文按UTF-8字节计长。"""
+
+    if payload is None:
+        return None
+    raw = payload.encode("utf-8")
+    return len(raw).to_bytes(4, "little") + zlib.compress(raw)
+
+
 class SqliteConnection:
     """仅适配驱动语法，业务SQL和MySQL事务边界继续使用生产实现。"""
 
@@ -166,6 +176,13 @@ class SqliteConnection:
 
         self.connection = sqlite3.connect(path)
         self.connection.row_factory = sqlite3.Row
+        # SQLite仅模拟MySQL传输压缩格式，仍由生产解码器验证完整JSON。
+        self.connection.create_function("COMPRESS", 1, mysql_compress)
+
+    def autocommit(self, enabled):
+        """将测试连接映射为SQLite自动提交，模拟池中无空闲事务的读会话。"""
+
+        self.connection.isolation_level = None if enabled else ""
 
     def cursor(self):
         """返回支持DictCursor形状和with语法的测试游标。"""
@@ -206,8 +223,12 @@ class SqliteCursor:
 
         self.delegate.close()
 
-    def execute(self, sql, parameters):
-        """只转换SQLite不支持的驱动语法，不实现业务层行为。"""
+    def execute(self, sql, parameters=()):
+        """转换驱动占位符和只读会话设置，其余业务SQL在SQLite实际执行。"""
+
+        if sql == "SET SESSION TRANSACTION READ ONLY":
+            self.delegate.execute("PRAGMA query_only=ON")
+            return
 
         translated = sql.replace("%s", "?").replace(" FOR UPDATE", "").replace("CURRENT_TIMESTAMP(6)", "CURRENT_TIMESTAMP")
         self.delegate.execute(translated, parameters)

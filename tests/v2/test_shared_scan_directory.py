@@ -7,6 +7,8 @@ from unittest.mock import Mock
 import json
 import sqlite3
 
+from tests.v2.test_mysql_metadata import mysql_compress
+
 import pytest
 
 from opentest.adapters.operation_contract_store import OperationContractStore
@@ -33,6 +35,8 @@ class _SqlMetadata:
 
         self.connection = sqlite3.connect(":memory:", isolation_level=None)
         self.connection.row_factory = sqlite3.Row
+        # 仅模拟MySQL无损传输和聚合函数，关系选择仍执行生产SQL。
+        self.connection.create_function("COMPRESS", 1, mysql_compress)
         self.queries = []
         # 保留业务SQL消费的字段与唯一约束，不在桩中实现任何关系匹配。
         self.connection.executescript("""
@@ -47,13 +51,13 @@ class _SqlMetadata:
         """运行生产SQL的占位符等价形式，返回受影响行数。"""
 
         self.queries.append(sql)
-        return self.connection.execute(sql.replace("%s", "?").replace(" FOR UPDATE", ""), parameters).rowcount
+        return self.connection.execute(sql.replace("%s", "?").replace(" FOR UPDATE", "").replace("JSON_ARRAYAGG(", "json_group_array("), parameters).rowcount
 
     def fetch_all(self, sql, parameters=()):
         """返回驱动形状的字典列表，供生产领域模型校验。"""
 
         self.queries.append(sql)
-        cursor = self.connection.execute(sql.replace("%s", "?").replace(" FOR UPDATE", ""), parameters)
+        cursor = self.connection.execute(sql.replace("%s", "?").replace(" FOR UPDATE", "").replace("JSON_ARRAYAGG(", "json_group_array("), parameters)
         return [dict(row) for row in cursor.fetchall()]
 
     def fetch_one(self, sql, parameters=()):

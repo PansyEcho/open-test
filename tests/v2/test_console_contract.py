@@ -18,9 +18,9 @@ def test_console_static_client_uses_single_case_workflow_and_safe_rendering() ->
     script = (web_root / "app.js").read_text(encoding="utf-8")
 
     assert "<title>OpenTest Console</title>" in html
-    assert '<meta name="opentest-page-version" content="20260928-02">' in html
-    assert '/assets/app.js?v=20260928-02' in html
-    assert '/assets/styles.css?v=20260928-02' in html
+    assert '<meta name="opentest-page-version" content="20260929-09">' in html
+    assert '/assets/app.js?v=20260929-09' in html
+    assert '/assets/styles.css?v=20260929-09' in html
     assert 'const API_ROOT = "/api/v2"' in script
     assert "API_V3_ROOT" not in script
     assert "API_V4_ROOT" not in script

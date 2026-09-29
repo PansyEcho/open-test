@@ -1,8 +1,5 @@
-# knowledge-workspace-cache Specification
+## MODIFIED Requirements
 
-## Purpose
-TBD - created by archiving change codex-native-open-test-workspace. Update Purpose after archive.
-## Requirements
 ### Requirement: Knowledge details use a bounded revision-aware projection
 The system SHALL serve catalog and target lookup data from lightweight persisted scan fields and a bounded projection cache keyed by system, resolved scan and shared workspace revision. A single target SHALL be queried by its exact identity without first constructing the entire knowledge catalog. It SHALL NOT retain complete parsed scan manifests in the console cache.
 
@@ -35,4 +32,3 @@ The system SHALL query MySQL scan history from existing baseline and summary met
 - **WHEN** a file scan is added, changed or deleted, or the cache exceeds its limits
 - **THEN** changed files are parsed, deleted summaries are removed and least recently used summaries are evicted
 - **AND** invalid or cross-system manifests still fail validation rather than serving a known stale summary
-

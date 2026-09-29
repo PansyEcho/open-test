@@ -518,9 +518,9 @@ def test_knowledge_workflow_does_not_require_all_internal_nodes() -> None:
     application.knowledge_discovery = Mock()
     application.knowledge_discovery.get_context.return_value = Mock(background_completed_at=None, interview_skipped=False)
     application.scan_catalogs = Mock()
-    application.scan_catalogs.build_catalog.return_value = Mock(targets=[
+    application.get_scan_catalog = Mock(return_value=Mock(targets=[
         Mock(category="facade", knowledge_status=KnowledgeTargetStatus.NOT_GENERATED),
-    ])
+    ]))
     application.tasks = Mock()
     application.tasks.list_records.return_value = []
     # 背景用于理解业务，但不能成为不依赖它的接口调用和Case的批量生成前置。
