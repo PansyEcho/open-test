@@ -1,0 +1,217 @@
+opentest/application/operation_contracts.py
+  s_e3a072a222ce24::t_1fe7781ee4965d 210-211,214
+opentest/web/app.js
+  s_e3a072a222ce24::t_55a441f49e6b69 614,616,618,621,625,627,629,631,634-635,640,642,647-648
+  s_e3a072a222ce24::t_be1a440194a7cb 585-593,597-598,610-613,615,617,619-620,622-623,626,628,630,632-633,650-661,663-664,666-677,680-694,696-722
+  s_e3a072a222ce24::t_6b01f40ea00375 78-83,393-418,440-446,580-583,788-790,794-795,1013-1018,1035-1036,1075-1076,1080,1157-1158,1164,1182-1183,1218,1261-1262,1274,1303,1617-1618,2010-2014,2020-2021,2208-2218,2225,2231,2256,2376,2387-2388,5447,5467,5474-5475,5483,5494,5843,5864,6143-6146,6242-6243,6249-6253
+  s_e3a072a222ce24::t_1de8fd5198f9bf 6072-6074,6081-6082
+  s_e3a072a222ce24::t_a04097d2207461 678-679,2596-2597,2600,2643-2648,3836,3950,5880
+  s_e3a072a222ce24::t_39cb21ff132757 2544-2545,2637-2641,5363,5874,5881,6244-6248
+  s_e3a072a222ce24::t_1c9ee8545b0c06 1114-1115,2237-2244,5326,5342,5379-5381,5383-5387,5401-5403,5405-5407,5409,5411,5816,6187-6188,6191,6209-6210
+  s_e3a072a222ce24::t_d007c6b3ae6e87 5307
+  s_e3a072a222ce24::t_f802c3cabc44d3 594-596,599-609,624,636-639,641,643-646,649,5876
+  s_e3a072a222ce24::t_25ae71f4eeb51b 2551
+  s_e3a072a222ce24::t_20e7e29e231b3d 3806,3809-3835
+  s_e3a072a222ce24::t_23bbfc5244b6c2 695,1108,1123,1180,2380,2560-2563,2568,2591-2594,2610-2614,2634-2636,2642,2649-2651,2919-2920,3943-3944
+  s_e3a072a222ce24::t_f09a2f006ff469 2841,2843-2845
+  s_e3a072a222ce24::t_93063e118c7643 3807-3808
+  s_e3a072a222ce24::t_568a923860e766 84
+  s_e3a072a222ce24::t_00fd17a1554653 584
+  s_e3a072a222ce24::t_34af8d201761fe 662
+  s_e3a072a222ce24::t_50f3b8e48ca1e3 665
+  s_e3a072a222ce24::t_d75d2ed2ae7e6e 3803-3805
+  s_e3a072a222ce24::t_bbb9f054d5da24 3945-3949
+  s_e3a072a222ce24::t_0a0dcd8daf8a2c 5339-5341
+  s_e3a072a222ce24::t_e52517022396ef 5404
+  s_e3a072a222ce24::t_a1d1f6e56d7aa1 5861-5863
+  s_e3a072a222ce24::t_85dcec959abab4 5865-5867,5871-5873
+  s_e3a072a222ce24::t_7f99bbb7f3d789 5875
+  s_e3a072a222ce24::t_0739b70a6bccfa 5877-5879
+  s_37cd4ceef6a5cc::t_ff200218782e7b 3800,4676,5338,5357-5358,5868-5870,6179
+tests/web/system-settings.test.js
+  s_e3a072a222ce24::t_1de8fd5198f9bf 118-119
+  s_e3a072a222ce24::t_94b3234a39b4e1 16,18,21-22,24-31,34-40
+  s_e3a072a222ce24::t_803f5fc6b9e91a 143-177
+  s_e3a072a222ce24::t_430ceaa3fa11fc 178-199
+  s_e3a072a222ce24::t_7072331b45ad34 52-117,120-142
+  s_e3a072a222ce24::t_55a441f49e6b69 200-210,212-213,215-226
+  s_e3a072a222ce24::t_93063e118c7643 211,214
+scripts/benchmark_console_latency.py
+  s_e3a072a222ce24::t_9c22c8caa064b8 106,115,117-120,198-200,324-325,327,347-348
+  s_e3a072a222ce24::t_059e76878faeeb 1-51,55,57-74,76-105,107-114,116,121-175,177,179-197,201-208,290-311,314-316,320,326,328-346,349-373,375-390
+  s_e3a072a222ce24::t_7f8c4d320813c5 52-54,56,75,176,178
+  s_e3a072a222ce24::t_430ceaa3fa11fc 217-272,276-288
+  s_e3a072a222ce24::t_ad301b1a53224c 273-275
+  s_e3a072a222ce24::t_ef785b5b3fa74a 319,321-323
+  s_e3a072a222ce24::t_fd2858bf9c85a5 209-216,289,312-313,317-318,374
+opentest/adapters/case_template_v4_store.py
+  s_e3a072a222ce24::t_0325740e650211 17,142,145-146
+opentest/adapters/data_capability_store.py
+  s_e3a072a222ce24::t_0325740e650211 13,74,77-78
+opentest/application/tasks.py
+  s_e3a072a222ce24::t_0d28b7f56a0a57 482-487
+opentest/web/case-view.js
+  s_e3a072a222ce24::t_6d8bf593c699e7 715-718
+  s_e3a072a222ce24::t_d007c6b3ae6e87 641-642
+  s_e3a072a222ce24::t_430ceaa3fa11fc 913,919,1094
+  s_e3a072a222ce24::t_6d341d26e1a88c 617-630
+pyproject.toml
+  s_e3a072a222ce24::t_c63683405ad9ec 16
+opentest/application/knowledge_discovery.py
+  s_e3a072a222ce24::t_a8bb4d722c8646 1247
+  s_e3a072a222ce24::t_e956584631441a 100-104,111
+tests/v2/test_console_latency.py
+  s_e3a072a222ce24::t_803f5fc6b9e91a 195-213,216-222
+  s_e3a072a222ce24::t_bdda77787c38d1 1-119
+  s_e3a072a222ce24::t_b6cbe41ca1369e 120-194
+  s_e3a072a222ce24::t_7f8891f51d78c0 223-288
+  s_e3a072a222ce24::t_11b727b6eba5ad 289-307
+  s_e3a072a222ce24::t_d0556256708bc6 214-215
+opentest/adapters/mysql_knowledge.py
+  s_e3a072a222ce24::t_9bbc0e0eb835a7 13,391,395,397,400
+  s_e3a072a222ce24::t_437ad7b50b3e8a 328,330-331,335-336
+opentest/application/http_timing.py
+  s_e3a072a222ce24::t_810b3f43767b89 21-22,51,58-60
+  s_e3a072a222ce24::t_c63683405ad9ec 1-20,23-50,52-57,61-68
+opentest/api.py
+  s_e3a072a222ce24::t_a8bb4d722c8646 20,1918,1990,1996,2002-2003,2008
+  s_e3a072a222ce24::t_23bbfc5244b6c2 802
+  s_e3a072a222ce24::t_81401a1604f2ab 1383-1384,1386
+  s_e3a072a222ce24::t_529d199ce9c6fc 110
+  s_e3a072a222ce24::t_f4d30b00df0ec0 828-832
+  s_e3a072a222ce24::t_b9fbf5c45966cf 1610,2227-2234
+  s_e3a072a222ce24::t_923e1cf9b30162 403-404
+  s_e3a072a222ce24::t_cbc10c80f2b808 11,410,500,1808-1813,1919,1929-1931,1991,2090-2091,2101-2102,2174-2175,2185-2186,2203,2207,2213-2215,2218-2220,2222
+  s_e3a072a222ce24::t_0c92c3c58bb1e7 795-801,803-805
+  s_e3a072a222ce24::t_78280a736e5ce7 497-498,501,1606-1608,1611,1614-1619
+opentest/adapters/operation_contract_store.py
+  s_e3a072a222ce24::t_0325740e650211 115-119
+scripts/backfill_console_projections.py
+  s_e3a072a222ce24::t_ce27e475dde2bf 1-33,35-62
+  s_e3a072a222ce24::t_7e321096819867 34
+opentest/web/index.html
+  s_e3a072a222ce24::t_529d199ce9c6fc 6,8,306-307
+opentest/application/mysql_tasks.py
+  s_e3a072a222ce24::t_d2723b5bb1556e 89-99
+  s_e3a072a222ce24::t_04fa9747d91648 64,68-87
+  s_e3a072a222ce24::t_f10630f6b619f3 88
+opentest/application/catalogs.py
+  s_e3a072a222ce24::t_6d2dbb4d57a93b 264-268,683
+  s_e3a072a222ce24::t_4a8f833109d996 442-444,448,700-710
+  s_e3a072a222ce24::t_eea04c2a26e6fe 467
+  s_e3a072a222ce24::t_2ce6e6676cef98 433,453-457,461-462
+  s_e3a072a222ce24::t_9bbc0e0eb835a7 488-489,491-493
+  s_e3a072a222ce24::t_1cb2318bf3673b 422-432,434-441,445-447,449-451,458,460,463-466,468-487,490,494-507
+  s_e3a072a222ce24::t_b6a1c8995e6767 452
+  s_e3a072a222ce24::t_286a69ffeae1cb 459
+  s_e3a072a222ce24::t_bea556038cddd4 699
+opentest/application/system_relations.py
+  s_e3a072a222ce24::t_0325740e650211 14
+  s_e3a072a222ce24::t_2ce6e6676cef98 409-416,421-422,434-436,438
+opentest/application/web_generation.py
+  s_e3a072a222ce24::t_d2723b5bb1556e 237,243-244
+opentest/application/console_queries.py
+  s_e3a072a222ce24::t_ddff79deb48640 15-24,50,88-89,95,98
+  s_e3a072a222ce24::t_5e96614b82a15e 1-8,10-14,25-32,46-49,51-60,62-87,90-94,96-97,99-110,114-117,119-132,134-137,141-142,146-147,150,152-179,181-186,191-196,198-283
+  s_e3a072a222ce24::t_a8bb4d722c8646 33-45,133,138-140,143-145,148-149,151,180,187-188,190,197
+  s_e3a072a222ce24::t_b57264061dea87 61
+  s_e3a072a222ce24::t_98ad9859fe42f2 9
+  s_e3a072a222ce24::t_bd421e5f971489 111-113
+  s_e3a072a222ce24::t_f3248b2629898b 118
+  s_e3a072a222ce24::t_c9307f60f92bff 189
+opentest/application/foundation.py
+  s_e3a072a222ce24::t_fa6f623e7b6fbe 3099-3114
+  s_e3a072a222ce24::t_e8e94af9e3a794 308-312,345-347
+  s_e3a072a222ce24::t_a8bb4d722c8646 3013-3016
+  s_e3a072a222ce24::t_2edb4be9aa0b59 313,3150,3155,3196
+  s_e3a072a222ce24::t_9376da7660ea91 1734-1741,3008-3009
+  s_e3a072a222ce24::t_923e1cf9b30162 5769-5770
+  s_e3a072a222ce24::t_6d2dbb4d57a93b 341,5758,5764
+  s_14c5c460578353::t_b815756b4eb6c8 3160-3168,3170-3187
+openspec/changes/archive/2026-09-29-optimize-console-end-to-end-latency/design.md
+  s_e3a072a222ce24::t_0138b930e3fb1a 1-117
+opentest/adapters/mysql_metadata.py
+  s_e3a072a222ce24::t_923e1cf9b30162 12,21-23,217,236-238,246,274-296,343,345-346,349-350,358-381
+  s_e3a072a222ce24::t_6d2dbb4d57a93b 353-354,356-357
+  s_e3a072a222ce24::t_9bbc0e0eb835a7 11,136-151,401-403
+  s_e3a072a222ce24::t_0325740e650211 133
+  s_e3a072a222ce24::t_18bd6593c8853b 125-132,351-352,355
+  s_e3a072a222ce24::t_32d86573c297b3 135
+tests/v2/test_mysql_metadata.py
+  s_e3a072a222ce24::t_c3681b5eb9a7b1 8,162-170,179-180
+  s_e3a072a222ce24::t_6ea5422bd06538 181-185,226-231
+opentest/application/data_capabilities.py
+  s_e3a072a222ce24::t_d5b049617cfb7f 87-96
+tests/web/shared-data.test.js
+  s_e3a072a222ce24::t_25ae71f4eeb51b 172,182-185,194
+tests/v2/test_shared_scan_directory.py
+  s_e3a072a222ce24::t_b6cbe41ca1369e 10-11,38-39,54,60
+opentest/application/console_read_cache.py
+  s_e3a072a222ce24::t_6d2dbb4d57a93b 79-81
+  s_e3a072a222ce24::t_f10086eec811a6 9,37,39,45,47-54,57,65-66,74,76-78,82-84,91-121
+tests/v2/test_console_contract.py
+  s_e3a072a222ce24::t_529d199ce9c6fc 21-23
+opentest/adapters/source_analysis.py
+  s_e3a072a222ce24::t_dde33fbbe68280 2746-2747,2769-2798,2802-2804,2806-2809,2812-2816
+  s_e3a072a222ce24::t_0325740e650211 2799-2801,2805,2810-2811
+  s_e3a072a222ce24::t_812892e698dcf1 2817
+opentest/application/resources.py
+  s_e3a072a222ce24::t_3b8aa41fd69feb 95-97,135-160
+  s_e3a072a222ce24::t_f76ba8f9281078 161-162
+openspec/changes/archive/2026-09-29-optimize-console-end-to-end-latency/specs/console-query-latency/spec.md
+  s_e3a072a222ce24::t_79a5b65ed41c7c 1-76
+openspec/changes/archive/2026-09-29-optimize-console-end-to-end-latency/specs/generation-knowledge-workflow/spec.md
+  s_e3a072a222ce24::t_1909f24c81de54 1-9
+openspec/changes/archive/2026-09-29-optimize-console-end-to-end-latency/specs/knowledge-workspace-cache/spec.md
+  s_e3a072a222ce24::t_ad0d362d5573e9 1-34
+openspec/changes/archive/2026-09-29-optimize-console-end-to-end-latency/specs/v2-console/spec.md
+  s_e3a072a222ce24::t_59b531c3afd534 1-16
+openspec/changes/archive/2026-09-29-optimize-console-end-to-end-latency/tasks.md
+  s_e3a072a222ce24::t_cd9acbb5e55bcb 1-6
+openspec/specs/console-query-latency/spec.md
+  s_e3a072a222ce24::t_ebb5a7512731cd 1-80
+openspec/specs/generation-knowledge-workflow/spec.md
+  s_e3a072a222ce24::t_e9e7d5419a4dcf 51,54-56
+openspec/specs/knowledge-workspace-cache/spec.md
+  s_e3a072a222ce24::t_96b83b9f3ca5d5 7,11-12,16-17,20,28,31-32,35-36
+openspec/specs/v2-console/spec.md
+  s_e3a072a222ce24::t_f766bcab76dab1 203,206-207,213-216
+tests/v2/test_console_settings_cache.py
+  s_e3a072a222ce24::t_965b36e6fae86f 3,46,75
+tests/v2/test_operation_contracts.py
+  s_e3a072a222ce24::t_23806190d76488 521,523
+openspec/changes/archive/2026-09-29-optimize-console-end-to-end-latency/proposal.md
+  s_37cd4ceef6a5cc::t_274f249197009f 1-14
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.2",
+  "base_commit_sha": "ba0e1b9efa18fd52ee33568397c71c1e065a5d7f",
+  "prompts": {},
+  "sessions": {
+    "s_14c5c460578353": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a0ec55-b443-7d13-b7b3-03fb988231fd",
+        "model": "unknown"
+      },
+      "human_author": "shizhen <yuuu.shizhen@gmail.com>"
+    },
+    "s_37cd4ceef6a5cc": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a0ebdc-2f9e-7d60-be8f-d96d609cd1fc",
+        "model": "unknown"
+      },
+      "human_author": "shizhen <yuuu.shizhen@gmail.com>"
+    },
+    "s_e3a072a222ce24": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a0e5fc-f853-7631-af2a-8bda6ef8555c",
+        "model": "gpt-6-astra"
+      },
+      "human_author": "shizhen <yuuu.shizhen@gmail.com>"
+    }
+  }
+}
