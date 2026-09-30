@@ -1,0 +1,125 @@
+openspec/changes/simplify-java-system-onboarding/specs/console-reliability/spec.md
+  s_ccd8702a308f76::t_a7822b2b6f0cf4 1-11
+tests/v2/test_system_relations.py
+  s_ccd8702a308f76::t_44028caac46fbf 210,221,231-235
+opentest/web/index.html
+  s_ccd8702a308f76::t_3b3f77e66030ca 6,8,60,306-307
+openspec/changes/simplify-java-system-onboarding/tasks.md
+  s_ccd8702a308f76::t_a7822b2b6f0cf4 1-2
+  s_ccd8702a308f76::t_492a437ec509ae 3-34
+  s_ccd8702a308f76::t_2c741b16aebe8e 35-36
+opentest/web/app.js
+  s_ccd8702a308f76::t_d5623fdacbcf06 3-13,246,610,614,644-645,781,1386,2769,2809,3408,3410,3440,4338-4339,4343-4354,4356,4358-4360,4365-4383,4388,4395,4397,4399,4428
+  s_ccd8702a308f76::t_01c1f9b4460b72 3442
+  s_ccd8702a308f76::t_4bf60ea78ab5a7 1630,2818-2820,4024
+  s_ccd8702a308f76::t_3b3f77e66030ca 3287
+tests/web/system-settings.test.js
+  s_ccd8702a308f76::t_01c1f9b4460b72 221,225
+opentest/application/operation_input_knowledge.py
+  s_ccd8702a308f76::t_01c1f9b4460b72 65,102
+opentest/application/data_capabilities.py
+  s_ccd8702a308f76::t_3f857f49d7fdd2 128,132-138,154,240-246,285-287,305,308-332
+  s_ccd8702a308f76::t_4ccd245b198757 333
+opentest/application/web_generation.py
+  s_ccd8702a308f76::t_3b3f77e66030ca 290-292
+  s_ccd8702a308f76::t_3f857f49d7fdd2 350-351
+AGENTS.md
+  s_ccd8702a308f76::t_6c043755d1ea0e 1-9
+opentest/application/knowledge.py
+  s_ccd8702a308f76::t_31d58241ec99b1 1952,1954-1955
+opentest/application/operation_contracts.py
+  s_ccd8702a308f76::t_3f857f49d7fdd2 17,31,40-41,62,68-69,275-276,287-288,308,333-363
+  s_ccd8702a308f76::t_3ae49e0968cb3c 364
+workers/qa-oracle-worker/src/main/java/com/opentest/qaoracle/active/ActiveOperationService.java
+  s_ccd8702a308f76::t_965245e3490dea 4-9,72-75,86-141
+  s_ccd8702a308f76::t_73f054216641f3 142-143
+openspec/changes/simplify-java-system-onboarding/proposal.md
+  s_ccd8702a308f76::t_a7822b2b6f0cf4 1-14
+openspec/changes/simplify-java-system-onboarding/handoff.md
+  s_ccd8702a308f76::t_6c043755d1ea0e 1-111,113-152,155-172
+  s_ccd8702a308f76::t_2c741b16aebe8e 112,153-154
+openspec/changes/simplify-java-system-onboarding/specs/resource-projection/spec.md
+  s_ccd8702a308f76::t_a7822b2b6f0cf4 1-15
+  s_ccd8702a308f76::t_492a437ec509ae 16-19
+openspec/changes/simplify-java-system-onboarding/specs/shared-mysql-workspace/spec.md
+  s_ccd8702a308f76::t_a7822b2b6f0cf4 1-7
+opentest/application/resources.py
+  s_ccd8702a308f76::t_478477ec03225e 16,22,298,301,304-305,321-327,341-344,540,549-552,555,583,593
+  s_ccd8702a308f76::t_01c1f9b4460b72 17,142,144,151,157,531,568,591,608,628
+  s_ccd8702a308f76::t_a19660a1308c1c 996-997
+  s_ccd8702a308f76::t_a6f848d4a2117d 162,178,193,623
+opentest/application/source_analysis.py
+  s_ccd8702a308f76::t_44754b1c0d6b1b 5,97,103,255,257,285-286,288-293,296-323,325-326,448-449
+  s_ccd8702a308f76::t_44028caac46fbf 256,287,294-295,324,327-331
+  s_ccd8702a308f76::t_6420d9ee26c60b 332
+opentest/domain/models.py
+  s_ccd8702a308f76::t_31d58241ec99b1 2455-2460
+  s_ccd8702a308f76::t_01c1f9b4460b72 1059
+  s_ccd8702a308f76::t_daacb2d4ab67a7 2166
+tests/v2/test_onboarding_runtime.py
+  s_ccd8702a308f76::t_1dc6a51168a543 1-44,46-54,56-89
+  s_ccd8702a308f76::t_9f3af6e916ed2a 45,55
+opentest/web/styles.css
+  s_ccd8702a308f76::t_d5623fdacbcf06 4-6,9,17,19-22,75,101-102,104,107,172,272,294,433,543-555
+opentest/application/operations.py
+  s_ccd8702a308f76::t_44754b1c0d6b1b 19,68,111-112,118-197,286-316,357,388,391-394,585-588,594-595,605,1048-1051,1187
+openspec/changes/simplify-java-system-onboarding/design.md
+  s_ccd8702a308f76::t_492a437ec509ae 9-16
+  s_ccd8702a308f76::t_a7822b2b6f0cf4 1-8
+opentest/application/system_relations.py
+  s_ccd8702a308f76::t_44754b1c0d6b1b 109-113,598,615-616
+opentest/application/foundation.py
+  s_ccd8702a308f76::t_01c1f9b4460b72 3111,3200-3214,5391,5402-5403,5824
+  s_ccd8702a308f76::t_9f3af6e916ed2a 22,2935-2977,3001-3002,3005
+  s_ccd8702a308f76::t_31d58241ec99b1 43,89-90,1168,1287,2978-3000,3003-3004,3006-3010,3012,3014-3015,3017-3054,3056
+  s_ccd8702a308f76::t_3745e5b4c9b175 46,201,212-213,236,312-331,358,361-362,1746-1752,3115,3241
+  s_ccd8702a308f76::t_478477ec03225e 5352-5354,5356-5360
+  s_ccd8702a308f76::t_f043d3a73cabec 21,842-843,1609-1611,3011,3013,3016,3660-3662,5355
+tests/v2/test_resource_service.py
+  s_ccd8702a308f76::t_a19660a1308c1c 47-48,50,61,77-79,82-84,168,172,191,314
+  s_ccd8702a308f76::t_bc466ea7e241c6 80,363-393
+openspec/changes/simplify-java-system-onboarding/specs/system-settings-relations/spec.md
+  s_ccd8702a308f76::t_a7822b2b6f0cf4 1-7
+opentest/adapters/source_analysis.py
+  s_ccd8702a308f76::t_44754b1c0d6b1b 2179,2190,2206-2208
+opentest/application/knowledge_discovery.py
+  s_ccd8702a308f76::t_31d58241ec99b1 254,256
+  s_ccd8702a308f76::t_56fb64a76ceb7d 304-305
+opentest/adapters/agent_runner.py
+  s_ccd8702a308f76::t_3b3f77e66030ca 648-649,662-666
+openspec/changes/simplify-java-system-onboarding/specs/scriptgen-source-scan/spec.md
+  s_ccd8702a308f76::t_a7822b2b6f0cf4 1-31
+opentest/api.py
+  s_ccd8702a308f76::t_3b3f77e66030ca 111
+  s_ccd8702a308f76::t_31d58241ec99b1 65,1633-1637
+  s_ccd8702a308f76::t_8adb984a5e3e9c 1638
+openspec/changes/simplify-java-system-onboarding/specs/generalized-knowledge-workflow/spec.md
+  s_ccd8702a308f76::t_492a437ec509ae 20-30
+  s_ccd8702a308f76::t_a7822b2b6f0cf4 1-19
+opentest/adapters/qa_active_worker.py
+  s_ccd8702a308f76::t_54606e0700950f 25,121-178,180,186-188,191-192
+opentest/adapters/resource_inventory.py
+  s_ccd8702a308f76::t_0416c778a0e04c 296,397-398,410
+tests/v2/test_dependency_interfaces.py
+  s_ccd8702a308f76::t_9248a086b9d494 305-356
+tests/v2/test_operation_contracts.py
+  s_ccd8702a308f76::t_53eeb60c26f759 646,783-814
+tests/v2/test_source_analysis.py
+  s_ccd8702a308f76::t_9884a75934f7c9 1114,1120,1156-1157,1345,1386-1389,1437,1530,1536
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.2",
+  "base_commit_sha": "502d22fb43aa822b6f39433cc6944b82b18301e9",
+  "prompts": {},
+  "sessions": {
+    "s_ccd8702a308f76": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a0f0ff-a1ad-7c50-8704-7f7150899ec7",
+        "model": "gpt-6-astra"
+      },
+      "human_author": "shizhen <yuuu.shizhen@gmail.com>"
+    }
+  }
+}
