@@ -218,9 +218,9 @@ test("candidate supersedes target loading and cleans its overlay on failure",asy
 });
 
 /** 必要子面板自行显示错误并返回false时，页面计时仍必须记录失败。 */
-test("workspace completion rejects failed required subreads",async()=>{
+test("workspace completion reports failed subreads without a duplicate global error",async()=>{
   const context=vm.createContext({loadEnvironmentCatalog:async()=>false,loadDataCapabilities:async()=>true,
     isCurrentSystemScope:()=>true});
   vm.runInContext(sourceFunction("readWorkspaceData"),context);
-  await assert.rejects(vm.runInContext("readWorkspaceData('data-capabilities',{systemId:'a'})",context),/部分数据读取失败/);
+  assert.equal(await vm.runInContext("readWorkspaceData('data-capabilities',{systemId:'a'})",context),false);
 });

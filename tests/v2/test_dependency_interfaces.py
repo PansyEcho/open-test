@@ -302,3 +302,55 @@ def test_boot_with_unrelated_parameter_keeps_default_package_scan(dependency_pro
         'package demo; @Configuration @ImportResource("classpath:client.xml") class Config {}')
     scanner = DependencyInterfaceScanner(root, {'demo.enabled': 'false'}, catalog)
     assert any(path == 'client.xml' for _, path, _ in scanner.resources())
+
+
+@pytest.mark.parametrize("system_id,owner", [("renamed-service", "alternate.api.Endpoint"), ("another-service", "demo.api.QueryService")])
+def test_local_published_interface_uses_exact_jar_contract(dependency_project, monkeypatch, system_id, owner):
+    """不依赖Facade后缀、系统名或包名，从实际JAR补齐继承泛型并隔离缺失DTO。
+
+    Args:
+        dependency_project: 已编译的真实二进制JAR与精确classpath。
+        monkeypatch: 将扫描依赖仓库限定到fixture，禁止借用本机其他版本。
+        system_id: 两个互不关联的项目身份。
+        owner: 不以Facade结尾的已发布接口全名。
+    """
+
+    from opentest.adapters.knowledge_store import GitKnowledgeStore
+    from opentest.adapters.source_analysis import SourceScanArtifactStore
+    from opentest.application.operations import OperationCapabilityCatalog
+    from opentest.domain.models import ScanManifest, SemanticAnalysisResult, SemanticMethodDefinition, SourceBaseline, SystemDefinition
+
+    root, dependencies, _ = dependency_project
+    monkeypatch.setattr("opentest.application.operations.JavaDependencyCatalog", lambda: dependencies)
+    store = GitKnowledgeStore(root.parent / "knowledge")
+    store.register_system(SystemDefinition(system_id=system_id, name="通用接口", source_path=str(root)))
+    methods, providers = [], []
+    # 两个声明共用一套发布路径；真正不存在的类型必须留下目标级缺口。
+    for action, request_type in [("query", "demo.api.Request"), ("queryMissing", "missing.Request")]:
+        reference = SourceReference(path="src/main/java/Endpoint.java", symbol=f"{owner}#{action}", line=2)
+        methods.append(SemanticMethodDefinition(symbol_id=f"{owner}#{action}({request_type})",
+            qualified_class_name=owner, method_name=action, source_ref=reference,
+            parameter_qualified_types=[request_type], return_qualified_type="demo.api.Request"))
+        providers.append(DsfOperationDefinition(operation_id=f"dsf:{system_id}:endpoint:{action}",
+            provider_system_id=system_id, gs_name="group", service_name="endpoint", version="1",
+            action=action, request_type=request_type, response_type="demo.api.Request",
+            mutability="READ_ONLY", source_refs=[reference]))
+    manifest = ScanManifest(scan_id="scan-generic-jar", system_id=system_id,
+        baseline=SourceBaseline(source_path=str(root)), dsf_operations=providers,
+        semantic_analysis=SemanticAnalysisResult(schema_version=4, system_id=system_id, methods=methods))
+    catalog = OperationCapabilityCatalog(store, SourceScanArtifactStore(store.root))
+    issues = catalog.resolve_facade_contracts(manifest, root)
+    assert len(manifest.entries) == 2
+    assert len(issues) == 1 and "missing.Request" in issues[0].message
+    schema = providers[0].request_schema
+    assert schema["properties"]["traceId"]["type"] == "string"
+    assert schema["properties"]["value"]["items"]["properties"]["code"]["type"] == "string"
+    assert manifest.entries[0].metadata["contract_dependencies"][0]["coordinate"] == "demo:client:1"
+    operations = catalog.derive_manifest(manifest)
+    assert next(item for item in operations if item.operation_id.endswith("#query")).executable
+    assert not next(item for item in operations if item.operation_id.endswith("#queryMissing")).executable
+    # 依赖补齐后同一路径恢复请求契约；无需Agent或改动历史扫描。
+    dependencies._schemas.clear()
+    methods[1].parameter_qualified_types = ["demo.api.Request"]
+    assert catalog.resolve_facade_contracts(manifest, root) == []
+    assert "contract_gap" not in manifest.entries[1].metadata

@@ -207,7 +207,7 @@ def test_legacy_binding_is_readable_but_does_not_widen_discovery(tmp_path: Path)
 
 @pytest.mark.parametrize("change", ["partial", "pin", "unregistered"])
 def test_unavailable_intermediate_never_uses_previous_relations(tmp_path: Path, change: str) -> None:
-    """中间系统部分扫描、pin变化或移除后不能沿其历史证据到达第二层。
+    """中间系统可靠部分扫描保留关系；pin变化或移除使关系不可执行。
 
     Args:
         tmp_path: 隔离链路存储。
@@ -218,7 +218,7 @@ def test_unavailable_intermediate_never_uses_previous_relations(tmp_path: Path, 
     manifest = manifests["middle"]
     if change == "partial":
         partial = manifest.model_copy(update={"completeness": ScanCompleteness.PARTIAL, "publication_outcome": ScanPublicationOutcome.PARTIAL_PROJECTION})
-        # 模拟磁盘中不完整的latest内容，正常发布API本身已拒绝partial。
+        # 局部缺口没有删除已证明的关系，partial仍可贡献这部分证据。
         SourceScanArtifactStore(store.root).write_manifest(partial)
     elif change == "pin":
         system = store.get_system("middle")
@@ -228,8 +228,11 @@ def test_unavailable_intermediate_never_uses_previous_relations(tmp_path: Path, 
     else:
         store.unregister_system("middle")
     catalog = SystemRelationService(store, SourceScanArtifactStore(store.root)).catalog("refund")
-    assert not catalog.downstream
-    assert any(gap.code in {"SOURCE_SCAN_INCOMPLETE", "SOURCE_SCAN_DRIFT", "DSF_PROVIDER_UNRESOLVED"} for gap in catalog.gaps)
+    if change == "partial":
+        assert {item.system_id for item in catalog.downstream} == {"middle", "end"}
+    else:
+        assert not catalog.downstream
+        assert any(gap.code in {"SOURCE_SCAN_DRIFT", "DSF_PROVIDER_UNRESOLVED"} for gap in catalog.gaps)
 
 
 def _mq_source(root: Path, role: str, config: dict[str, str]) -> None:

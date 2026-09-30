@@ -1111,13 +1111,13 @@ def test_explicit_information_warning_still_publishes_complete_scan(tmp_path: Pa
 def test_java_parse_warning_keeps_reliable_results_as_partial_projection(
     tmp_path: Path,
 ) -> None:
-    """必需Java文件解析失败时保留可靠入口，但不得发布完整latest。
+    """必需Java文件解析失败时发布可靠入口，并保持partial及失败范围。
 
     Args:
         tmp_path: pytest隔离源码、知识根和扫描产物目录。
 
     Returns:
-        None；可靠scriptgen入口可见、失败范围结构化且完整基线不变时通过。
+        None；可靠入口可读、失败范围结构化且latest保留partial语义时通过。
     """
 
     source = tmp_path / "source"
@@ -1153,8 +1153,8 @@ def test_java_parse_warning_keeps_reliable_results_as_partial_projection(
     ]
     assert java_result.issues[0].affects_completeness is True
     assert artifacts.read("train-booking-core", manifest.scan_id) == manifest
-    with pytest.raises(KnowledgeNotFoundError):
-        service.get_manifest("train-booking-core")
+    # 局部失败仍发布可靠接口，消费者从目标契约判断是否可用。
+    assert service.get_manifest("train-booking-core").scan_id == manifest.scan_id
 
 
 def test_unknown_scanner_warning_is_incomplete_by_default(tmp_path: Path) -> None:
@@ -1342,7 +1342,7 @@ def test_source_analysis_rolls_back_baseline_when_latest_publish_fails(tmp_path:
 
 
 def test_partial_resource_scan_is_visible_without_becoming_complete_baseline(tmp_path: Path) -> None:
-    """首次部分扫描应展示可靠资源，但不得发布知识和Case使用的latest基线。
+    """首次部分扫描发布可靠资源，保留真实缺口而不把资源标成不可靠。
 
     Args:
         tmp_path: Pytest提供的隔离源码和知识目录。
@@ -1383,12 +1383,10 @@ def test_partial_resource_scan_is_visible_without_becoming_complete_baseline(tmp
     assert discovery.source_scan_id == manifest.scan_id
     assert discovery.complete_baseline_scan_id == ""
     assert [resource.logical_name for resource in discovery.resources] == ["currentDatasource"]
-    assert discovery.resources[0].provisional is True
-    assert store.get_system("train-booking-core").baseline is None
-    with pytest.raises(KnowledgeValidationError, match="only a complete scan baseline"):
-        artifacts.publish_latest("train-booking-core", manifest.scan_id)
-    with pytest.raises(KnowledgeNotFoundError):
-        service.get_manifest("train-booking-core")
+    assert discovery.resources[0].provisional is False
+    # 已发布部分结果与固定基线一致，无关损坏文件不影响此资源。
+    assert store.get_system("train-booking-core").baseline == manifest.baseline
+    assert service.get_manifest("train-booking-core").scan_id == manifest.scan_id
 
 
 def test_partial_resource_scan_retains_only_failed_scope_until_next_complete_scan(tmp_path: Path) -> None:
@@ -1436,7 +1434,7 @@ def test_partial_resource_scan_retains_only_failed_scope_until_next_complete_sca
     partial = service.analyze(SourceScanRequest(system_id="train-booking-core"))
     partial_resources = {resource.logical_name: resource for resource in resource_service.discover("train-booking-core").resources}
 
-    assert service.get_manifest("train-booking-core").scan_id == first.scan_id
+    assert service.get_manifest("train-booking-core").scan_id == partial.scan_id
     assert set(partial_resources) == {"newDatasource", "redis.orders"}
     assert "oldDatasource" not in partial_resources
     assert partial_resources["newDatasource"].source_scan_id == partial.scan_id
@@ -1529,12 +1527,12 @@ def test_partial_scan_task_and_history_preserve_manifest_outcome(tmp_path: Path)
     )
     history = application.list_scan_history("train-booking-core")
 
-    # 线程任务本身正常结束；业务结果明确说明该Manifest只能用于可靠部分展示。
+    # 线程任务正常结束并发布可靠部分，历史仍明确保留partial而不冒充complete。
     assert terminal.status.value == "completed"
     assert terminal.result["completeness"] == "partial"
     assert terminal.result["publication_outcome"] == "partial_projection"
     assert manifest.completeness == ScanCompleteness.PARTIAL
     assert history[0].scan_id == manifest.scan_id
-    assert history[0].latest is False
+    assert history[0].latest is True
     assert history[0].completeness == ScanCompleteness.PARTIAL
     assert history[0].publication_outcome == ScanPublicationOutcome.PARTIAL_PROJECTION

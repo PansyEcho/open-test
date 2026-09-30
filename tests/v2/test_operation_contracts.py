@@ -643,7 +643,7 @@ def test_purpose_and_response_supplements_publish_independent_versions(tmp_path:
     assert response.contract_revision == 2
     assert response.operation_summary == purpose.operation_summary
     assert response.response_fields[0].description == "补单是否成功"
-    assert service.get_contract(SYSTEM_ID, OPERATION_ID, SCAN_ID, 1).response_fields == []
+    assert service.get_contract(SYSTEM_ID, OPERATION_ID, SCAN_ID, 1).response_fields[0].description == ""
     assert service.get_contract(SYSTEM_ID, OPERATION_ID, SCAN_ID).response_fields == response.response_fields
     with pytest.raises(KnowledgeValidationError, match="没有绑定"):
         service.supplement(SYSTEM_ID, OPERATION_ID, SCAN_ID, OperationContractSupplement(
@@ -780,3 +780,35 @@ def test_integer_contract_rejects_non_integral_values(number):
 
     with pytest.raises(KnowledgeValidationError, match='integer'):
         OperationExecutionService._validate_schema_value(number, {'type': 'integer'}, 'segment.sequence')
+
+
+def test_unknown_field_type_completion_checks_declaration_and_keeps_frozen_revision(tmp_path: Path) -> None:
+    """未知标量只能按同一固定字段声明补齐，历史契约和确定类型保持不变。"""
+
+    service = _service(tmp_path)
+    source_root = Path(service.store.get_system(SYSTEM_ID).source_path)
+    (source_root / "Request.java").write_text("class Request {\n java.time.LocalDate optional;\n}\n", encoding="utf-8")
+    manifest = service.artifacts.read(SYSTEM_ID, SCAN_ID)
+    manifest.baseline = GitSourceRepository().capture(source_root)
+    service.artifacts.write_manifest(manifest)
+    operation = service.catalog.derive.return_value[0]
+    field = operation.input_fields[-1]
+    field.declared_type = "java.time.LocalDate"
+    field.source_ref = SourceReference(path="Request.java", symbol="demo.Request#optional", line=2)
+    operation.publication_input_schema["properties"]["optional"] = {}
+    operation.input_schema["properties"]["optional"] = {}
+    original = service.get_contract(SYSTEM_ID, OPERATION_ID, SCAN_ID)
+    supplement = OperationFieldSupplement(path="optional", schema={"type": "string"},
+        declared_type="java.time.LocalDate", evidence_refs=[field.source_ref])
+    # 真实源码证据和类型均匹配时只追加新版本，固定零版保留原缺口。
+    completed = service.supplement(SYSTEM_ID, OPERATION_ID, SCAN_ID, OperationContractSupplement(fields=[supplement]))
+    assert completed.request_schema["properties"]["optional"] == {"type": "string"}
+    assert original.request_schema["properties"]["optional"] == {}
+    assert service.get_contract(SYSTEM_ID, OPERATION_ID, SCAN_ID, 0).request_schema["properties"]["optional"] == {}
+    # 已确定类型、错误Java类型和借用其他字段证据都不能通过补充覆盖。
+    for changed in ({"schema": {"type": "integer"}}, {"declared_type": "String"},
+                    {"evidence_refs": [SourceReference(path="RefundFacade.java", symbol="demo.RefundFacade#billSupplement", line=3)]}):
+        with pytest.raises(KnowledgeValidationError):
+            service.supplement(SYSTEM_ID, OPERATION_ID, SCAN_ID,
+                OperationContractSupplement(fields=[supplement.model_copy(update=changed)]))
+    assert service.get_contract(SYSTEM_ID, OPERATION_ID, SCAN_ID).contract_revision == 1

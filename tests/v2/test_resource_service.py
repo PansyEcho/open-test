@@ -44,8 +44,10 @@ def _write_resource_source(source_root: Path) -> None:
 <beans xmlns="http://www.springframework.org/schema/beans" xmlns:sof="http://schema.ly.com/schema/sof">
   <bean id="bookingCoreDatasource" class="com.ly.dal.datasource.RoutableDataSource">
     <property name="dbName" value="TETravelTrainSupplychainOrder"/>
+    <property name="projectId" value="${uniform.projectId}"/>
+    <property name="env" value="${uniform.env}"/>
   </bean>
-  <sof:consumer id="jobMessageListener" group="${mq.job.group}">
+  <sof:consumer id="jobMessageListener" group="${mq.job.group}" nameSrvAddress="${mq.nameSrvAddress}">
     <sof:listener ref="jobListener"/>
     <sof:channels><sof:channel topic="${mq.job.topic}"/></sof:channels>
   </sof:consumer>
@@ -56,7 +58,7 @@ def _write_resource_source(source_root: Path) -> None:
 
 
 def _resource_service(tmp_path: Path, with_catalog: bool = False) -> ResourceInventoryService:
-    """构造使用固定QA应用身份的资源服务，不创建本地连接配置。
+    """构造使用项目QA配置的资源服务，不配置任何真实连接。
 
     Args:
         tmp_path: Pytest提供的隔离临时目录。
@@ -72,7 +74,14 @@ def _resource_service(tmp_path: Path, with_catalog: bool = False) -> ResourceInv
     source_root = tmp_path / "source"
     source_root.mkdir()
     _write_resource_source(source_root)
+    # 使用无凭据的项目filter，验证连接检测不再从业务Profile取得资源身份。
+    filters = source_root / "app/deploy/src/main/filters"
+    filters.mkdir(parents=True)
+    (filters / "filter.qa").write_text("uniform.projectId=demo.app\nuniform.env=qa\nmq.nameSrvAddress=127.0.0.1:9876\nmq.job.topic=demo.topic\n")
     knowledge_root = tmp_path / "knowledge"
+    environments = knowledge_root / ".opentest/environments" / SYSTEM_ID
+    environments.mkdir(parents=True)
+    (environments / "qa.yaml").write_text(yaml.safe_dump({"system_id": SYSTEM_ID, "environment": "qa", "resource_config_environment": "qa"}))
     store = GitKnowledgeStore(knowledge_root)
     store.register_system(SystemDefinition(system_id=SYSTEM_ID, name="火车票预订", source_path=str(source_root)))
     artifacts = SourceScanArtifactStore(knowledge_root)
@@ -156,11 +165,11 @@ def test_probe_reports_missing_worker_for_database_and_mq_cluster(tmp_path: Path
     states = {item.resource_id: item for item in service.probe(SYSTEM_ID, "qa")}
 
     assert states[MYSQL_RESOURCE_ID].status == ResourceStatus.BLOCKED
-    assert states[MYSQL_RESOURCE_ID].error_code == "QA_WORKER_MISSING"
+    assert states[MYSQL_RESOURCE_ID].error_code == "QA_ACTIVE_WORKER_UNAVAILABLE"
     assert states[MYSQL_RESOURCE_ID].last_probe_at is not None
     assert states[MYSQL_RESOURCE_ID].last_business_validation_at is None
     assert states[MQ_CLUSTER_ID].status == ResourceStatus.BLOCKED
-    assert states[MQ_CLUSTER_ID].error_code == "QA_WORKER_MISSING"
+    assert states[MQ_CLUSTER_ID].error_code == "QA_ACTIVE_WORKER_UNAVAILABLE"
     assert states[MQ_CLUSTER_ID].last_probe_at is not None
 
 
@@ -179,7 +188,7 @@ def test_legacy_mq_id_resolves_for_probe_and_business_evidence(tmp_path: Path, m
 
         return {"status": "ok", "projection": {}}
 
-    monkeypatch.setattr("opentest.application.resources.QaWorkerClient.execute", successful_execute)
+    monkeypatch.setattr("opentest.application.resources.QaActiveWorkerLauncher.probe_resolved", successful_execute)
     states = {item.resource_id: item for item in service.probe(SYSTEM_ID, "qa", [MQ_RESOURCE_ID])}
     assert states[MQ_CLUSTER_ID].status == ResourceStatus.CONNECTED
 
@@ -302,7 +311,7 @@ def test_successful_probe_does_not_downgrade_ready_business_evidence(
 
         return {"status": "ok", "projection": {}}
 
-    monkeypatch.setattr("opentest.application.resources.QaWorkerClient.execute", successful_execute)
+    monkeypatch.setattr("opentest.application.resources.QaActiveWorkerLauncher.probe_resolved", successful_execute)
     states = {item.resource_id: item for item in service.probe(SYSTEM_ID, "qa", [MYSQL_RESOURCE_ID])}
     state = states[MYSQL_RESOURCE_ID]
 
@@ -351,3 +360,34 @@ def test_failed_probe_preserves_ready_business_evidence(
     assert state.business_evidence == evidence
     assert public_state["connection_state"] == "FAILED"
     assert public_state["business_validation_state"] == "VERIFIED"
+
+
+def test_probe_uses_selected_uat_configuration_and_records_environment(tmp_path: Path, monkeypatch) -> None:
+    """同一源码资源按用户所选UAT配置探测，状态明确记录环境且不要求业务Profile。"""
+
+    service = _resource_service(tmp_path)
+    source = Path(service.store.get_system(SYSTEM_ID).source_path)
+    qa_filter = source / "app/deploy/src/main/filters/filter.qa"
+    # 配置值仅为隔离样本；探测桩验证选中了UAT而非默认QA。
+    uat_filter = source / "app/deploy/src/main/filters/filter.uat"
+    uat_filter.write_text(qa_filter.read_text().replace("=qa", "=uat"), encoding="utf-8")
+    environment_root = service.store.root / ".opentest/environments" / SYSTEM_ID
+    definition = yaml.safe_load((environment_root / "qa.yaml").read_text())
+    definition["environment"] = "uat"
+    definition["resource_config_environment"] = "uat"
+    (environment_root / "uat.yaml").write_text(yaml.safe_dump(definition))
+    selected = []
+
+    def probe_selected(self, environment, resource):
+        """记录实际解析的配置后返回成功，禁止访问任何外部服务。"""
+
+        selected.append((environment.definition.environment, environment.resource_values["uniform.env"]))
+        return {}
+
+    monkeypatch.setattr("opentest.application.resources.QaActiveWorkerLauncher.probe_resolved", probe_selected)
+    states = service.probe(SYSTEM_ID, "uat", [MYSQL_RESOURCE_ID])
+    state = next(item for item in states if item.resource_id == MYSQL_RESOURCE_ID)
+    assert selected == [("uat", "uat")]
+    assert state.probe_environment == "uat"
+    assert state.connection_state == ResourceConnectionState.CONNECTED
+    assert state.business_validation_state == BusinessValidationState.UNVERIFIED

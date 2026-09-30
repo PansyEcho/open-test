@@ -1,3 +1,12 @@
+## 当前未完成任务交接（2026-09-30）
+
+- 用户已批准实施 Java 系统接入简化方案，随后要求保存现场，由另一台电脑上的 AI 继续。当前实现尚未验收完成，禁止把现场保存理解为功能完成。
+- 开工先读 [交接记录](openspec/changes/simplify-java-system-onboarding/handoff.md)，再读同 change 的 proposal、design、tasks 和 delta specs。它记录已验证结果、失败任务、测试缺口、本机配置与数据清理边界；继续时维护该记录和 tasks。
+- 唯一选定 OpenSpec change：`simplify-java-system-onboarding`；未归档。本轮实现尚未提交/推送，跨电脑先确认完整代码 diff 已带过去。
+- 已知扫描缺陷必须通过程序修复，禁用解析 AI 兜底验收，不加业务系统名/包名硬编码。MySQL-only 不能为迁就旧测试恢复文件回退。
+- 后续必须完成真实查询Case闭环、通用系统回归、页面验收、验证后清理、OCR delegation独立审查和严格OpenSpec校验；所有步骤通过后才能归档。
+- 本轮用户的注释、日志上下文、参数设计与独立审查规则在交接记录第8节；继续编码必须遵守。不得删除 `local_only` 归档及恢复所需内容，不整体删除运行目录。
+
 ## Offline testing and verified outcomes
 
 - 线下环境的数据服务于测试。用户要求生成Case、准备数据或执行业务操作，即授权在该任务范围内自主查询、创建、修改、删除测试数据及调用业务接口，无需逐步确认；生产环境不在此授权范围。
