@@ -1,6 +1,6 @@
 # OpenTest Java 系统接入修复：跨电脑交接
 
-更新时间：2026-09-30，Asia/Shanghai。用户准备离开，要求保留方案、进度、问题和清理规则，由后续 AI 继续。本次是保存未完成现场，**不是完成验收**。
+更新时间：2026-10-05，Asia/Shanghai。第1–8节保留2026-09-30原机交接现场；第9节为新电脑继续后的最新状态。当前**未完成整体验收**。
 
 ## 1. 先读与现场身份
 
@@ -170,3 +170,31 @@ openspec validate --specs --strict --no-interactive
 本轮用户额外编码验收规则须延续：新改函数必须有说明业务目的、参数、返回值及重要副作用/异常的文档注释，非平凡阶段有解释“为何”的内部注释；遵循项目语言与日志格式。日志工作流入口绑定trace/filter1/filter2并用现有上下文管理器/finally清理，不泄露载荷。默认最多5个显式参数；私有6–7参数仅在少量调用、生命周期不同且包装更差时有文档说明；不要为凑数引入一次性Context/Map。清晰单次无副作用表达式保持直接，多阶段I/O、状态变化、复杂空值/集合查找应命名拆开。完成前检查整个diff。
 
 独立审查选择：已知本机OCR 1.8.8配置的Responses端点要求流式、direct review不兼容；直接选delegation，不先重现失败。读 `open-code-review` skill，运行 `ocr delegate preview --background ...` 核对本任务文件，再 `ocr delegate rule <task-owned-paths...> --background ...`，向一个只读子agent提供规则、完整本任务patch、用户验收要求和上下文。metadata工具失败则给同一子agent显式patch与规则；不改Git状态隔离diff，不把本机配置/凭据送审。High/Medium争议集中发回同一子agent仲裁。后续最终报告注明review范围、接受修复、拒绝及仲裁、复验和是否产生代码变更。
+
+## 9. 新电脑继续记录（2026-10-05）
+
+### 9.1 迁移与环境
+
+- 新工作目录：`/Users/shizhen/virtualMacOS/code/open-test`。原交接39文件实现已包含在提交`502d22f`（父提交`ba0e1b9`），无需重打原补丁。开工时只有`.idea/misc.xml`和`.idea/open-test.iml`两处用户修改，均未改动。
+- 新机器没有`.opentest/metadata-mysql.yaml`、原机本地运行配置、源码绑定或运行数据目录。未连接共享库、未查询/重放原Case任务、未创建共享workspace身份、未清理任何历史数据或归档。
+- 使用本机已有Python 3.12.14建立项目`.venv`并安装`.[dev,qa]`。PyCharm可选择`/Users/shizhen/virtualMacOS/code/open-test/.venv/bin/python`；系统`/usr/bin/python3`为3.9.6，不满足项目要求。虚拟环境基础解释器来自`/Users/shizhen/.cache/codex-runtimes/codex-primary-runtime/dependencies/python/bin/python3`。
+- PATH没有Maven，但已找到`/Applications/IntelliJ IDEA.app/Contents/plugins/maven/lib/maven3/bin/mvn`。使用现有JDK25成功构建Java语义分析器，28项Java测试通过，生成JAR仅位于Git忽略的target目录。
+- `qa-oracle-worker`及`qa-dsf-worker`离线构建失败：本机缺少精确公司依赖，如`com.ly.dsf:dsf-client:2.5.11`、`com.ly.turbomq:*:4.2.5`和`com.ly.tcbase:configcenterclient:6.2.8`，且`~/.m2/settings.xml`不存在。需恢复公司Maven私服配置/网络或相同版本依赖缓存，不能换版本冒充通过。
+- 只找到`/Users/shizhen/virtualMacOS/code/ifightchainsaas.java.refund.core`，其当前HEAD是`e51e1a8c`；尚未与共享库固定commit核对。未找到指定补单、`ifightchainsaas.java.booking.core`及scriptgen agent-harness。现有`travelsystem.java.dsf.supplychain.booking.core`不是同一仓库，不可替换。
+- PATH上的Codex为`/Applications/ChatGPT.app/Contents/Resources/codex`，报告`0.154.0-alpha.6.2`；只验证版本，未验证模型认证或MCP实际调用，也未更换所选模型。
+- 待用户提供本机共享MySQL配置文件路径（或安全放到项目`.opentest/metadata-mysql.yaml`）、上述源码及scriptgen路径，以及公司Maven配置。MySQL配置需要host/port/user/password或password_env/database；不要复制旧workspace_id，留空由项目生成本机身份。不要把密码发到对话或写入Git。
+
+### 9.2 本轮代码、验证与审查
+
+- 复现并修复`_background_source_evidence`三项缺陷：调用边按顺序迭代时突破两层、同文件首个片段掩盖远端方法、空白Java被当作有效背景证据。
+- 每层调用先物化再合并；按文件/行号取片段，同文件只读一次，已覆盖行不重复计入预算；保留注册源码校验及脱敏，每段最多10,000字符、总计100,000字符。只改背景取证，不替代未完成的CLI/MCP、同步扫描和页面验收。
+- 修复前6文件基线为135 passed / 9 failed；9项均为第4节记录的旧应用测试夹具未配置MySQL，未通过放宽生产启动规则或跳过测试掩盖。
+- 修复后`dependency_interfaces + resource_service + system_relations + onboarding_runtime`为74 passed；新增背景回归含两种调用边顺序、同文件远端覆盖/去重/脱敏、空白拒绝及字符预算。`system-settings + native-handoff`为14 passed。这些结果不可累加成全项目统一通过数。
+- 本轮代码选择OCR delegation审查。新机器无`ocr`命令或`open-code-review` skill，`ocr delegate preview`和`ocr delegate rule`均确认不可用；按AGENTS明确回退规则给一个只读子agent完整本轮patch及项目审查要求。
+- 审查范围为本轮`foundation.py::_background_source_evidence`、新增测试与对应delta/design，排除预存IDE修改和已提交的旧实现。独立运行`test_onboarding_runtime.py`为9 passed；无High/Medium/Low发现、无拒绝项、无审查驱动代码变化，无需第二轮。完整接入实现的最终审查仍须待真实环境和整体初验后完成。
+- 临时安装OpenSpec 1.14.0于`/private/tmp/opentest-onboarding-tools`。本change严格校验通过；`openspec validate --specs --strict --no-interactive`为0 passed / 43 failed，全部命中既有Purpose占位说明在新版严格模式下的规则。未为此次局部修复批量改写其他规范，也未降级CLI掩盖结果。
+- 已更新本change的design、delta、tasks；不归档。没有启动OpenTest HTTP服务；本轮结束检查8788/8790均无监听。
+
+### 9.3 恢复环境后的下一步
+
+先用新workspace配置只读核对共享任务`task-e6380ce8bcdbca61`及执行状态，绑定三个真实仓库的既有固定commit并验证scriptgen、公司JAR和CLI/MCP，然后继续第4节全部开放项。测试夹具迁移、真实查询Case闭环、三系统扫描、QA/UAT与页面复验、安全清理/重启和整体验收均未完成。需要同时处理新版OpenSpec的Purpose校验问题，全部实际完成后才能归档。
