@@ -10,7 +10,6 @@ from pathlib import Path
 from unittest.mock import MagicMock
 
 import pytest
-import yaml
 
 from opentest.adapters.knowledge_store import GitKnowledgeStore
 from opentest.adapters.runtime_settings import RuntimeToolSettingsStore
@@ -29,6 +28,7 @@ from opentest.domain.models import (
     OperationKind,
     OperationMutability,
     RuntimeToolSettings,
+    ScanManifest,
     SourceBaseline,
     SourceScanRequest,
     SystemDefinition,
@@ -160,11 +160,9 @@ def test_git_system_registration_persists_pin_and_ordinary_actions_cannot_switch
             updated.model_copy(update={"source_path": str(other_source)}),
         )
 
-    # 新应用实例必须从source.yaml恢复pin；registry只保留空路由占位而不复制版本真相。
+    # 新应用实例必须从共享系统记录恢复同一pin。
     restarted = OpenTestApplication(knowledge_root)
     assert restarted.store.get_system(registered.system_id).source_version == first_pin
-    registry = yaml.safe_load((knowledge_root / "registry/systems.yaml").read_text(encoding="utf-8"))
-    assert registry["systems"][0].get("source_version") is None
 
     explicitly_updated = restarted.update_source_version(registered.system_id, second_commit)
     assert explicitly_updated.source_version is not None
@@ -212,8 +210,9 @@ def test_legacy_git_system_without_pin_uses_last_complete_baseline_not_current_h
     ).stdout.strip()
 
     knowledge_root = tmp_path / "knowledge"
-    store = GitKnowledgeStore(knowledge_root)
-    store.register_system(
+    application = OpenTestApplication(knowledge_root)
+    # 直接写入无pin的旧系统记录；注册入口会立即创建pin，无法模拟升级前状态。
+    application.store.register_system(
         SystemDefinition(
             system_id="legacy-refund-core",
             name="历史退款核心",
@@ -231,7 +230,6 @@ def test_legacy_git_system_without_pin_uses_last_complete_baseline_not_current_h
     subprocess.run(["git", "-C", str(source), "add", "RefundFacade.java"], check=True)
     subprocess.run(["git", "-C", str(source), "commit", "-q", "-m", "new head"], check=True)
 
-    application = OpenTestApplication(knowledge_root)
     effective = application._source_scan_request(
         SourceScanRequest(system_id="legacy-refund-core")
     )
@@ -377,17 +375,29 @@ def test_runtime_settings_diagnose_real_scriptgen_without_restart(tmp_path: Path
     assert stat.S_IMODE(store.settings_path.stat().st_mode) == 0o600
 
 
-def test_invocation_contract_is_not_searchable_in_normal_knowledge_fts(tmp_path: Path) -> None:
-    """接口调用契约中的专用词不得污染普通全文知识检索。
+def test_invocation_contract_is_not_searchable_in_normal_knowledge_search(tmp_path: Path) -> None:
+    """接口调用契约中的专用词不得污染普通知识检索。
 
     Args:
-        tmp_path: Pytest提供的隔离知识仓库与SQLite索引路径。
+        tmp_path: Pytest提供的隔离源码与知识根目录。
 
     Returns:
         None；正文仍可搜索，而仅存在于调用契约的词无法命中时通过。
     """
 
-    store, first, second = _register_two_systems(tmp_path)
+    application = OpenTestApplication(tmp_path / "knowledge")
+    for system_id, name in (("first-system", "系统一"), ("second-system", "系统二")):
+        source = tmp_path / system_id
+        source.mkdir()
+        application.store.register_system(SystemDefinition(system_id=system_id, name=name, source_path=str(source)))
+    first = application.store.get_system("first-system")
+    second = application.store.get_system("second-system")
+    store = application.store
+    # 当前扫描不含该接口，用于验证历史契约不能独自制造可调用Operation。
+    application.source_analysis.publish_manifest(ScanManifest(
+        scan_id="scan-first-empty", system_id=first.system_id,
+        baseline=SourceBaseline(source_path=first.source_path), entries=[],
+    ))
     node = KnowledgeNode(
         node_id="facade:FirstFacade#query",
         system_id=first.system_id,
@@ -418,14 +428,11 @@ def test_invocation_contract_is_not_searchable_in_normal_knowledge_fts(tmp_path:
         ),
         "另一系统的普通业务知识。",
     )
-    index = SqliteKnowledgeIndex(store.root / ".opentest/index.sqlite")
+    index = application.index
 
-    # 重建只把正文、标题与摘要写入普通FTS；结构化契约走独立能力索引。
-    index.rebuild(store)
-
+    # 普通检索只匹配正文、标题与摘要；结构化契约走独立能力检索。
     assert index.search("查询退票单", first.system_id)
     assert index.search("JulyVoluntaryRefund", first.system_id) == []
-    application = OpenTestApplication(store.root)
 
     # 历史调用契约仍可读取，但不能独自制造一个当前扫描不存在的可调用Operation。
     assert index.search_invocation_contracts("JulyVoluntaryRefund", first.system_id)
@@ -455,6 +462,7 @@ def test_invocation_contract_is_not_searchable_in_normal_knowledge_fts(tmp_path:
     assert routed["matches"][0]["invocation_contract"]["read_only"]
     assert routed["clarifications"] == ["请确认日期指创建、申请、出发还是更新时间"]
     assert routed["executed"] is False
+    application.close()
 
 
 def test_runtime_prompt_and_codex_speed_settings_persist_with_0600(tmp_path: Path) -> None:

@@ -7,7 +7,6 @@ from pathlib import Path
 import pytest
 
 from opentest.adapters.knowledge_tracing import JavaKnowledgeTracer
-from opentest.adapters.source_analysis import SourceScanArtifactStore
 from opentest.application.foundation import OpenTestApplication
 from opentest.adapters.agent_runner import AgentRunner
 from opentest.domain.errors import KnowledgeValidationError
@@ -199,9 +198,7 @@ def test_open_high_questions_block_draft_publication_until_all_are_answered(tmp_
     application = OpenTestApplication(knowledge_root)
     application.register_system(SystemDefinition(system_id="demo-system", name="演示系统", source_path=str(source)))
     manifest = manifest.model_copy(update={"baseline": application.knowledge.git_repository.capture(source)})
-    artifacts = SourceScanArtifactStore(knowledge_root)
-    artifacts.write_manifest(manifest)
-    artifacts.publish_latest("demo-system", manifest.scan_id)
+    application.source_analysis.publish_manifest(manifest)
     application.store.update_source_baseline("demo-system", manifest.baseline)
     application.skip_background_interview("demo-system")
     # 历史夹具保留已有资产保护覆盖，不重新开放已退役的长文生成入口。
@@ -323,9 +320,7 @@ def test_retired_generation_blocks_before_agent_detection(tmp_path: Path) -> Non
     application = OpenTestApplication(knowledge_root)
     application.register_system(SystemDefinition(system_id="demo-system", name="演示系统", source_path=str(source)))
     manifest = manifest.model_copy(update={"baseline": application.knowledge.git_repository.capture(source)})
-    artifacts = SourceScanArtifactStore(knowledge_root)
-    artifacts.write_manifest(manifest)
-    artifacts.publish_latest("demo-system", manifest.scan_id)
+    application.source_analysis.publish_manifest(manifest)
     application.store.update_source_baseline("demo-system", manifest.baseline)
     application.skip_background_interview("demo-system")
 
@@ -365,9 +360,7 @@ def test_agent_prompt_excludes_sensitive_inputs_and_invalid_output_is_not_adopte
     application = OpenTestApplication(knowledge_root)
     application.register_system(SystemDefinition(system_id="demo-system", name="演示系统", source_path=str(source)))
     manifest = manifest.model_copy(update={"baseline": application.knowledge.git_repository.capture(source)})
-    artifacts = SourceScanArtifactStore(knowledge_root)
-    artifacts.write_manifest(manifest)
-    artifacts.publish_latest("demo-system", manifest.scan_id)
+    application.source_analysis.publish_manifest(manifest)
     application.store.update_source_baseline("demo-system", manifest.baseline)
     application.skip_background_interview("demo-system")
     runner = _InvalidOutputAgentRunner(tmp_path / "unused")

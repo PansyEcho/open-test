@@ -18,7 +18,6 @@ from opentest.adapters.source_analysis import SourceScanArtifactStore
 from opentest.application.mysql_tasks import MySqlTaskManager
 from opentest.application.metadata_migration import MetadataMigration
 from opentest.application.system_relations import SystemRelationService
-from opentest.application.program_case_analysis import ProgramCaseAnalysisBuilder
 from opentest.domain.errors import ScopeViolationError
 from opentest.domain.models import (
     KnowledgeNode, KnowledgeNodeKind, SystemDefinition, TaskRecord, TaskStatus,
@@ -217,10 +216,9 @@ def test_concurrent_scan_publication_completes_both_directions(workspace, tmp_pa
         manifest = ScanManifest(system_id=system_id, scan_id="scan-" + uuid.uuid4().hex,
             baseline=SourceBaseline(source_path=store.get_system(system_id).source_path, commit="a" * 40),
             dsf_operations=[declaration])
-        analysis = ProgramCaseAnalysisBuilder().build(manifest)
         relations = SystemRelationService(store, artifacts)
-        artifacts.write_scan_bundle(manifest, analysis)
-        relations.prepare_interfaces(manifest, [], analysis)
+        artifacts.write_manifest(manifest)
+        relations.prepare_interfaces(manifest, [])
         with store.metadata.transaction():
             relations.reconcile_published_scan(system_id, manifest.scan_id)
             artifacts.publish_latest(system_id, manifest.scan_id)

@@ -176,7 +176,7 @@ def _application(tmp_path: Path) -> tuple[OpenTestApplication, ScanManifest]:
             ),
         ],
     )
-    artifacts = SourceScanArtifactStore(application.knowledge_root)
+    artifacts = application.source_analysis.artifacts
     artifacts.write_manifest(manifest)
     artifacts.publish_latest(SYSTEM_ID, manifest.scan_id)
     application.store.update_source_baseline(SYSTEM_ID, baseline)
@@ -481,23 +481,22 @@ def _wait_for_task(application: OpenTestApplication, task_id: str) -> None:
     raise AssertionError(f"conversation task did not finish: {task_id}")
 
 
-def test_conversation_storage_is_private_persistent_and_system_isolated(tmp_path: Path) -> None:
-    """聊天历史应使用0700目录和0600文件并在应用重启后恢复。
+def test_conversation_storage_is_persistent_and_system_isolated(tmp_path: Path) -> None:
+    """聊天历史应保存在共享MySQL中，应用重启后恢复且不跨系统可见。
 
     Args:
         tmp_path: pytest隔离知识根。
 
     Returns:
-        None；权限、恢复和跨系统读取断言全部通过即满足契约。
+        None；共享记录、恢复和跨系统读取断言全部通过即满足契约。
     """
 
     application, _ = _application(tmp_path)
     turn = application.knowledge_conversation.create_turn(SYSTEM_ID, _background_request())
-    root = application.knowledge_root / ".opentest" / "knowledge-conversations" / SYSTEM_ID
-    path = root / f"{turn.turn_id}.json"
 
-    assert root.stat().st_mode & 0o077 == 0
-    assert path.stat().st_mode & 0o077 == 0
+    # MySQL-only模式下会话不再落本地文件，持久化真相是共享工作流记录。
+    assert application.store.metadata.get_workflow("knowledge_conversation", turn.turn_id)["turn_id"] == turn.turn_id
+    assert not (application.knowledge_root / ".opentest" / "knowledge-conversations").exists()
     resumed = OpenTestApplication(application.knowledge_root)
     assert resumed.list_knowledge_conversation_turns(SYSTEM_ID)[0].user_message == turn.user_message
     resumed.close()
@@ -508,28 +507,6 @@ def test_conversation_storage_is_private_persistent_and_system_isolated(tmp_path
         SystemDefinition(system_id="other-conversation-system", name="其他系统", source_path=str(other_source))
     )
     assert application.list_knowledge_conversation_turns("other-conversation-system") == []
-
-
-def test_conversation_storage_rejects_symbolic_link_parent(tmp_path: Path) -> None:
-    """会话类别目录被替换为符号链接时不得跟随写出知识根。
-
-    Args:
-        tmp_path: pytest隔离知识根和外部目标目录。
-
-    Returns:
-        None；安全存储在写入前拒绝符号链接即通过。
-    """
-
-    application, _ = _application(tmp_path)
-    category = application.knowledge_root / ".opentest" / "knowledge-conversations"
-    outside = tmp_path / "outside"
-    outside.mkdir()
-    category.parent.mkdir(parents=True, exist_ok=True)
-    category.symlink_to(outside, target_is_directory=True)
-
-    with pytest.raises(KnowledgeValidationError):
-        application.knowledge_conversation.create_turn(SYSTEM_ID, _background_request())
-    assert list(outside.iterdir()) == []
 
 
 def test_agent_proposal_enters_question_cycle_without_publishing_and_keeps_staged_answers(tmp_path: Path) -> None:
@@ -634,17 +611,16 @@ def test_missing_conversation_task_remains_read_only_in_historical_listing(tmp_p
     application, _ = _application(tmp_path)
     turn = application.knowledge_conversation.create_turn(SYSTEM_ID, _background_request())
     application.knowledge_conversation.attach_task(SYSTEM_ID, turn.turn_id, "task-does-not-exist")
-    interview_store = application.knowledge.interview_store
-    # 历史GET必须是字节级只读；关联任务缺失也不能隐式迁移原记录。
-    turn_path = interview_store._conversation_root(SYSTEM_ID) / f"{turn.turn_id}.json"
-    original_bytes = turn_path.read_bytes()
+    metadata = application.store.metadata
+    # 历史GET必须只读；关联任务缺失也不能隐式迁移原记录。
+    original_payload = metadata.get_workflow("knowledge_conversation", turn.turn_id)
 
     listed = application.list_knowledge_conversation_turns(SYSTEM_ID)[0]
 
     assert listed.status == KnowledgeConversationTurnStatus.ANALYZING
     assert listed.user_message == turn.user_message
     assert listed.task_id == "task-does-not-exist"
-    assert turn_path.read_bytes() == original_bytes
+    assert metadata.get_workflow("knowledge_conversation", turn.turn_id) == original_payload
 
 
 def test_multiple_chinese_candidate_proposals_publish_with_distinct_ids(tmp_path: Path) -> None:
@@ -1021,14 +997,14 @@ def test_candidate_scope_can_only_revise_selected_candidate(tmp_path: Path) -> N
     } == {candidate.candidate_id: candidate.business_meaning for candidate in candidates}
 
 
-def test_proposal_write_targets_reject_existing_batch_and_pending_conflicts(tmp_path: Path) -> None:
-    """节点提案不得与开放问题、同信封或另一作用域未决提案争写。
+def test_proposal_write_targets_reject_existing_open_question_conflict(tmp_path: Path) -> None:
+    """节点提案不得与已有开放问题争写同一节点。
 
     Args:
-        tmp_path: pytest隔离三个冲突检测分支。
+        tmp_path: pytest隔离知识根；每个冲突分支独占一个测试库以免系统ID冲突。
 
     Returns:
-        None；三类冲突都只形成BLOCKED会话且不覆盖首个未决提案。
+        None；冲突只形成BLOCKED会话即通过。
     """
 
     existing_application, existing_manifest = _application(tmp_path / "existing")
@@ -1055,6 +1031,17 @@ def test_proposal_write_targets_reject_existing_batch_and_pending_conflicts(tmp_
         existing_turn.turn_id,
     ).status == KnowledgeConversationTurnStatus.BLOCKED
 
+
+def test_proposal_write_targets_reject_duplicate_batch_conflict(tmp_path: Path) -> None:
+    """同一信封内重复写同一节点的提案必须被拒绝。
+
+    Args:
+        tmp_path: pytest隔离知识根。
+
+    Returns:
+        None；重复提案只形成BLOCKED会话即通过。
+    """
+
     batch_application, batch_manifest = _application(tmp_path / "batch")
     batch_contents = _write_target_nodes(batch_application)
     duplicate_payload = _node_revision_envelope(batch_manifest, batch_contents)
@@ -1065,6 +1052,17 @@ def test_proposal_write_targets_reject_existing_batch_and_pending_conflicts(tmp_
         SYSTEM_ID,
         batch_turn.turn_id,
     ).status == KnowledgeConversationTurnStatus.BLOCKED
+
+
+def test_proposal_write_targets_reject_other_scope_pending_conflict(tmp_path: Path) -> None:
+    """另一作用域已有未决提案时，新提案不得覆盖其写目标。
+
+    Args:
+        tmp_path: pytest隔离知识根。
+
+    Returns:
+        None；首个提案保持待确认、第二个提案BLOCKED即通过。
+    """
 
     pending_application, pending_manifest = _application(tmp_path / "pending")
     pending_contents = _write_target_nodes(pending_application)
@@ -1090,18 +1088,18 @@ def test_proposal_write_targets_reject_existing_batch_and_pending_conflicts(tmp_
     assert second_analyzed.status == KnowledgeConversationTurnStatus.BLOCKED
 
 
-def test_multi_node_partial_publish_resumes_without_rewriting_applied_node(
+def test_multi_node_publish_failure_rolls_back_and_retries_cleanly(
     tmp_path: Path,
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    """多节点发布中断后应记录partial，并只补写仍处于before态的节点。
+    """多节点发布中断时共享事务整体回滚，重试从未开始状态完整发布。
 
     Args:
-        tmp_path: pytest隔离多节点知识和会话文件。
+        tmp_path: pytest隔离多节点知识和会话记录。
         monkeypatch: 在第二个节点写入前注入一次进程故障。
 
     Returns:
-        None；重试后两个节点和提案都完整发布即通过。
+        None；失败后无节点被改写，重试后两个节点和提案都完整发布即通过。
     """
 
     application, manifest = _application(tmp_path)
@@ -1142,8 +1140,13 @@ def test_multi_node_partial_publish_resumes_without_rewriting_applied_node(
     monkeypatch.setattr(application.store, "write_node", fail_second_node)
     with pytest.raises(RuntimeError, match="second-node"):
         application.knowledge_conversation.apply_answer(SYSTEM_ID, question, "确认发布")
+    # MySQL系统事务原子回滚：首节点写入随第二节点失败一起撤销，不留下partial中间态。
     interrupted = application.list_knowledge_conversation_turns(SYSTEM_ID)[0]
-    assert interrupted.proposals[0].application_state.value == "partial"
+    assert interrupted.proposals[0].application_state.value == "not_started"
+    assert interrupted.proposals[0].status.value == "PENDING_CONFIRMATION"
+    for node_id, proposed in proposal.proposed_by_node.items():
+        _, _, body = application.store.get_node(SYSTEM_ID, node_id)
+        assert proposed not in body
 
     monkeypatch.setattr(application.store, "write_node", original_write_node)
     application.knowledge_conversation.apply_answer(SYSTEM_ID, question, "确认发布")
@@ -1218,18 +1221,18 @@ def test_node_publish_retry_rebuilds_index_after_all_files_were_written(
     assert published.proposals[0].application_state.value == "published"
 
 
-def test_partial_node_publish_rejects_external_change_to_unaffected_scope(
+def test_node_publish_retry_rejects_external_change_to_unaffected_scope(
     tmp_path: Path,
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    """部分恢复只能忽略本提案已写节点，目标内其他变化仍必须触发stale。
+    """发布中断回滚后，目标内未受提案影响的节点变化仍必须让重试触发stale。
 
     Args:
         tmp_path: pytest隔离三个同目标节点和会话快照。
         monkeypatch: 在第二个提案节点写入前模拟一次中断。
 
     Returns:
-        None；未受提案影响的第三节点变化使恢复被稳定拒绝即通过。
+        None；未受提案影响的第三节点变化使重试被稳定拒绝即通过。
     """
 
     application, manifest = _application(tmp_path)
@@ -1264,7 +1267,7 @@ def test_partial_node_publish_rejects_external_change_to_unaffected_scope(
 
         nonlocal write_count
         write_count += 1
-        # 首节点落盘后持久化partial，第二节点前中断，留下可恢复的精确中间态。
+        # 第二节点前中断，验证整次发布回滚后作用域校验仍然生效。
         if write_count == 2:
             raise RuntimeError("simulated partial publish")
         return original_write_node(node, content)
@@ -1281,7 +1284,7 @@ def test_partial_node_publish_rejects_external_change_to_unaffected_scope(
     with pytest.raises(KnowledgeQuestionCycleStaleError):
         application.knowledge_conversation.apply_answer(SYSTEM_ID, question, "确认发布")
     interrupted = application.list_knowledge_conversation_turns(SYSTEM_ID)[0]
-    assert interrupted.proposals[0].application_state.value == "partial"
+    assert interrupted.proposals[0].application_state.value == "not_started"
     assert interrupted.proposals[0].status.value == "PENDING_CONFIRMATION"
 
 

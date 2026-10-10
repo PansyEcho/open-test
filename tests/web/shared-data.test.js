@@ -216,7 +216,7 @@ test("environment selectors ignore actual filter names and unavailable profiles"
   }
 });
 
-/** 系统目录保留上游深度，并展示未注册的直接下游而不扩大执行目录。 */
+/** 系统目录保留上下游深度，合并DSF外部引用与MQ下游，并展示接口关系类型与源码证据。 */
 test("relations page renders bounded directions, source evidence and gaps", async () => {
   const nodes = [];
   const list = {replaceChildren(){nodes.length=0;},appendChild(node){nodes.push(node);}};
@@ -226,6 +226,8 @@ test("relations page renders bounded directions, source evidence and gaps", asyn
     external_systems:[{gs_name:"dsf.resource.core",interfaces:[{operation_id:"external:resource#query"}]}],
     relations:[{source_system_id:"booking",target_system_id:"refund",relation_type:"DSF",evidence:[{system_id:"booking",source_scan_id:"scan-booking",source_ref:{path:"src/Client.java",line:12,symbol:"submit"},detail:"已确认DSF引用"}]},
       {source_system_id:"refund",target_system_id:"report",relation_type:"MQ",evidence:[]}],
+    interface_relations:[{source_system_id:"booking",target_system_id:"refund",relation_type:"DSF",source_operation_id:"facade:booking#submit",target_operation_id:"facade:refund#apply"},
+      {source_system_id:"refund",target_system_id:"report",relation_type:"MQ",source_operation_id:"mq:refund#notify",target_operation_id:"mq:report#consume"}],
     gaps:[{system_id:"report",code:"MISSING_TOPIC",message:"缺少Topic配置"}],};
   const context = vm.createContext({captureSystemScope:()=>({systemId:"refund"}),isCurrentSystemScope:()=>true,
     currentExternalSystems:[{gs_name:"historical-system"}],scanCatalog:null,renderKnowledgeTree:()=>{},
@@ -237,8 +239,9 @@ test("relations page renders bounded directions, source evidence and gaps", asyn
   await vm.runInContext("loadDependencies()", context);
   assert.deepEqual(requests, [{url:"/systems/refund/relations",options:undefined}]);
   const output = JSON.stringify(nodes);
-  for (const content of ["上游", "下游", "第 1 层", "dsf.resource.core", "1 个引用接口", "DSF", "MQ", "src/Client.java:12", "scan-booking", "缺少Topic配置"]) assert.ok(output.includes(content));
-  assert.ok(!output.includes("第 2 层"));
+  for (const content of ["上游", "下游", "第 1 层", "dsf.resource.core", "1 个引用接口", "DSF", "MQ", "src/Client.java:12", "scan-booking", "缺少Topic配置"]) assert.ok(output.includes(content), content);
+  // 已闭合MQ关系的下游即使不在DSF外部引用中也要显示，并保留扫描给出的层级。
+  assert.ok(output.includes("report · 第 2 层"));
   // 系统关系始终读取latest；它不能覆盖知识库已选历史扫描的外部引用树。
   assert.equal(vm.runInContext("currentExternalSystems[0].gs_name", context), "historical-system");
 });

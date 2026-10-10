@@ -37,7 +37,7 @@ Web generation SHALL use the existing local Codex runner, native Provider config
 
 ### Requirement: V4 source and outer-interface discovery is scoped and version-frozen
 
-The system SHALL expose bounded `list_source_files`, `search_source`, `read_source` and on-demand `read_outer_api_info` tools only within the handoff's authorized source scopes, while keeping registered absolute source roots out of the public catalog.
+The system SHALL expose bounded `list_source_files`, `search_source`, `read_source` and on-demand `read_outer_api_info` tools only within the handoff's authorized source scopes, while keeping registered absolute source roots out of the public catalog. The handoff SHALL list discovery candidates from the full frozen target-scope scan, including same-Facade sibling operations and the target system's own DATABASE data sources, while execution remains limited to explicitly selected operations.
 
 #### Scenario: Working tree changes after handoff creation
 
@@ -50,6 +50,17 @@ The system SHALL expose bounded `list_source_files`, `search_source`, `read_sour
 - **WHEN** the target system cannot construct a required business identity and a scanned direct dependency exposes an authorized provider Facade
 - **THEN** Codex may request that exact provider Operation contract on demand
 - **AND** unrequested third-party interfaces and credentials are not added to the prompt or tool result
+
+#### Scenario: Codex selects the target system's own data source
+
+- **WHEN** only the target operation is selected and the frozen scan contains a same-system DATABASE data source
+- **THEN** the handoff lists that data source as a candidate without adding it to the Runtime registry
+- **AND** selecting it with `read_outer_api_info` returns every Runtime Function it registers, including its DATA-phase `:query` and `:data` functions
+
+#### Scenario: Codex searches inside one known source file
+
+- **WHEN** `search_source` receives a path naming a single readable source file
+- **THEN** the search is limited to that file under the same file gate as `read_source`
 
 ### Requirement: V4 DSL is finite, typed and provenance-checked
 
@@ -67,6 +78,12 @@ The system SHALL accept only structured `data_functions`, `case_templates` and `
 - **THEN** compilation returns a precise issue or `BLOCKED`
 - **AND** the target mutation is not invoked
 
+#### Scenario: Database data function declares its SQL
+
+- **WHEN** a DATA step calls a database `:query` or `:data` Runtime Function with literal `statement`, `purpose` or `parameters`
+- **THEN** those SQL protocol fields are not treated as business identity seeds
+- **AND** identities projected from the step must still come from the actual database response
+
 #### Scenario: Variant expansion exceeds the limit
 
 - **WHEN** a template would compile to more than 100 Variants or exceed its operation limit
@@ -74,7 +91,7 @@ The system SHALL accept only structured `data_functions`, `case_templates` and `
 
 ### Requirement: V4 oracles and execution results are machine-verifiable
 
-The system SHALL model every Oracle as a channel, phase, controlled function, typed arguments and structured assertions, and SHALL preserve actual requests, responses, execution IDs, expected values, actual values and assertion outcomes. Before observations SHALL run after data preparation and before the target, and after observations MAY reference a unique before observation's known output path. Required MQ sends, internal RPC calls, Redis commands and call order without a direct observation source SHALL produce failed assertions and `FAILED` / `OBSERVATION_FAILED` while preserving independently obtained results. Return values, route probes and OpenTest's own outgoing call log SHALL NOT substitute for internal event evidence.
+The system SHALL model every Oracle as a channel, phase, controlled function, typed arguments and structured assertions, and SHALL preserve actual requests, responses, execution IDs, expected values, actual values and assertion outcomes. Before observations SHALL run after data preparation and before the target, and after observations MAY reference a unique before observation's known output path. A Variant's result SHALL be determined only by the assertions it actually executes; the system SHALL NOT add assertions derived from static scan analysis. An assertion whose observation cannot be executed SHALL fail as `OBSERVATION_FAILED` without affecting independently obtained results. Return values, route probes and OpenTest's own outgoing call log SHALL NOT be reported as evidence of internal events.
 
 #### Scenario: Execute a generated Variant
 - **WHEN** a persisted READY generation is executed
@@ -84,18 +101,11 @@ The system SHALL model every Oracle as a channel, phase, controlled function, ty
 #### Scenario: AI proposes a MySQL observer
 - **WHEN** an authorized database Runtime Function, matching source and resource evidence, one bounded parameterized read-only SELECT and a closed output schema are all present
 - **THEN** the Observer may be compiled as a handoff-scoped Runtime Function
-- **AND** an asserted database effect must match the exact resource, table and known modified fields rather than an unrelated query
-- **AND** field existence alone does not discharge a write obligation; until the fixed scan proves how the affected business row is bound to this request, matching SQL observations still retain an explicit `OBSERVATION_FAILED` responsibility while preserving their independent assertion results
-
-#### Scenario: A matching table query reads an unrelated business row
-- **WHEN** an Oracle queries a matching table and changed field but the frozen evidence does not prove its row key belongs to the target write
-- **THEN** the Oracle cannot establish write coverage, even if its expected value matches or its query argument references a request field
-- **AND** a mere field-exists assertion is rejected as an insufficient effect observer
+- **AND** its assertions pass or fail on the values actually read
 
 #### Scenario: AI proposes a Redis or MQ observer
 - **WHEN** the frozen Runtime Function registry contains an independently authorized read-only Redis or MQ observer with matching evidence, typed arguments and a closed output schema
 - **THEN** the state Observer may be compiled and executed through that function
-- **AND** a send-only MQ operation, route probe or Redis state read does not prove a send or command occurred; a required direct observation remains an explicit failed assertion when unavailable
 
 #### Scenario: Compare actual before and after values
 - **WHEN** an after assertion references a prior observation's declared field
@@ -105,6 +115,10 @@ The system SHALL model every Oracle as a channel, phase, controlled function, ty
 #### Scenario: An observation fails
 - **WHEN** a before or after observer is unavailable or its arguments cannot resolve
 - **THEN** the result contains a failed observation assertion, independent observations continue, and the final Variant is `FAILED` with `OBSERVATION_FAILED`
+
+#### Scenario: Historical generation carries frozen coverage gaps
+- **WHEN** a Generation created before coverage analysis was removed is executed and its variants still contain frozen observation-failure records
+- **THEN** those records are ignored and the Variant result reflects only its executed assertions
 
 ### Requirement: Input contracts preserve enum and normalized schema consistency
 
@@ -130,21 +144,4 @@ The system SHALL rebuild an existing BLOCKED input contract from its requested s
 #### Scenario: The blocker still exists
 - **WHEN** re-derivation still finds incomplete or conflicting evidence
 - **THEN** generation remains blocked with a precise reason
-
-### Requirement: V4 coverage is verified against frozen scan obligations
-
-The system SHALL freeze per-entry ProgramCaseAnalysisArtifact with the production-source Generation and compare actual compiled request partitions and Oracle bindings against its immutable coverage denominator. Missing or false AI bindings SHALL identify exact obligations for targeted supplementation. A validated Semantic Draft MAY append typed obligations but SHALL NOT delete program requirements. Existing historical generations without this asset SHALL remain readable; new starts and explicit regenerate-latest SHALL obtain the selected scan's asset.
-
-#### Scenario: AI reports a branch outcome without a matching request
-- **WHEN** a coverage binding claims FALSE but all compiled input vectors evaluate to TRUE
-- **THEN** generation reports `DECISION_OUTCOME_UNCOVERED` and does not accept the declared outcome as proof
-
-#### Scenario: AI omits a required program partition
-- **WHEN** a fixed decision, boundary or factor has no matching bindings or required values
-- **THEN** compilation returns a precise missing-coverage issue without reducing the denominator
-
-#### Scenario: A newer scan is published
-- **WHEN** an existing Generation is continued or executed after another scan appears
-- **THEN** its scan identity, program obligations and expected values remain fixed, and execution records differences for human judgment
-- **AND** only explicit regenerate-latest creates a successor using newer scan assets
 

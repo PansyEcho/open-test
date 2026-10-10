@@ -16,7 +16,6 @@ from opentest.adapters.source_analysis import SourceScanArtifactStore
 from opentest.application.operation_contracts import OperationContractService
 from opentest.application.catalogs import ScanCatalogService
 from opentest.application.operation_input_knowledge import OperationInputKnowledgeBuilder
-from opentest.application.program_case_analysis import ProgramCaseAnalysisBuilder
 from opentest.application.system_relations import SystemRelationService
 from opentest.domain.errors import KnowledgeValidationError
 from opentest.domain.models import (
@@ -156,8 +155,7 @@ def _publish(service, manifest, operations=()):
     # 发布关系的扫描身份也必须存在于共享历史，页面会校验当前指针是否有效。
     if service.artifacts.metadata.fetch_one("SELECT scan_id FROM ot_scan WHERE scan_id=%s", (manifest.scan_id,)) is None:
         service.artifacts.metadata.execute("INSERT INTO ot_scan(scan_id,system_id) VALUES(%s,%s)", (manifest.scan_id, manifest.system_id))
-    catalog = ProgramCaseAnalysisBuilder().build(manifest)
-    service.prepare_interfaces(manifest, list(operations), catalog)
+    service.prepare_interfaces(manifest, list(operations))
     with service.artifacts.metadata.transaction():
         service.reconcile_published_scan(manifest.system_id, manifest.scan_id)
         service.artifacts.metadata.execute("UPDATE ot_system SET latest_scan_id=%s WHERE system_id=%s", (manifest.scan_id, manifest.system_id))
@@ -282,7 +280,7 @@ def test_basic_contract_is_persisted_and_read_without_derivation(tmp_path):
         mutability=OperationMutability.READ_ONLY, source_scan_id=manifest.scan_id,
         publication_input_schema={"type": "object", "properties": {}})
     relations = SystemRelationService(_Store(tmp_path, database), artifacts)
-    relations.prepare_interfaces(manifest, [operation], ProgramCaseAnalysisBuilder().build(manifest))
+    relations.prepare_interfaces(manifest, [operation])
     base = OperationInputKnowledgeBuilder().build(operation, None, manifest.scan_id).model_copy(update={"source_commit": manifest.baseline.commit})
     store = OperationContractStore(tmp_path / "contracts", database)
     store.save("aaa", base)
@@ -295,11 +293,11 @@ def test_basic_contract_is_persisted_and_read_without_derivation(tmp_path):
     # 中断后的相同扫描重放不能抹去补充版本或后来登记的精确外部定义。
     resolved = _remote().model_copy(update={"operation_id": operation.operation_id})
     store.register_operation("aaa", manifest.scan_id, resolved)
-    relations.prepare_interfaces(manifest, [operation], ProgramCaseAnalysisBuilder().build(manifest))
+    relations.prepare_interfaces(manifest, [operation])
     assert store.get_latest("aaa", manifest.scan_id, operation.operation_id).contract_revision == 1
     assert store.read_operations("aaa", manifest.scan_id)[operation.operation_id] == resolved
     with pytest.raises(KnowledgeValidationError, match="原始事实发生冲突"):
-        relations.prepare_interfaces(manifest, [operation.model_copy(update={"business_name": "被改写"})], ProgramCaseAnalysisBuilder().build(manifest))
+        relations.prepare_interfaces(manifest, [operation.model_copy(update={"business_name": "被改写"})])
     with pytest.raises(KnowledgeValidationError, match="覆盖历史"):
         store.save("aaa", base.model_copy(update={"contract_revision": 1}))
 

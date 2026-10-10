@@ -12,6 +12,7 @@ import pytest
 
 from opentest.api import create_app
 from opentest.adapters.case_template_v4_store import CaseTemplateGenerationStoreV4
+from opentest.application.case_template_v4 import CASE_TEMPLATE_ANALYSIS_INSTRUCTIONS
 from opentest.application.foundation import OpenTestApplication
 from opentest.domain.case_template_v4 import CaseTemplateDraftRevisionRequest, CaseTemplatePublicationRequest
 from opentest.domain.models import KnowledgeQuestion, SystemDefinition, TaskRecord, TaskStatus, utc_now
@@ -124,6 +125,8 @@ class ControlledAgent:
             None；业务效果通过正式服务持久化。
         """
         assert request.task_id == TASK_ID
+        # 工作线程必须读到已提交的run_id；否则证据写入随机目录，诊断与恢复都找不到本次运行。
+        assert request.run_id and request.run_id == self.application.tasks.get(TASK_ID).web_run_id
         self.calls += 1
         if self.calls == 1:
             context = self.application.get_task_context(TASK_ID)
@@ -247,6 +250,25 @@ def test_restart_attaches_existing_run_and_rejects_invalid_tool_submission(tmp_p
         application.close()
 
 
+def test_case_handoff_tool_lists_rules_and_interface_index_before_schemas(tmp_path):
+    """网页Agent读取handoff时规则与候选接口在大Schema之前，截断长响应也不丢取数入口。"""
+    application, _handoff_record = _application(tmp_path)
+    # 按服务端原始顺序构造：大Schema在前、规则在后，验证网页工具层负责重排。
+    original_keys = ("handoff", "input_contract", "submission_schema", "draft_revision_schema",
+                     "related_interface_index", "outer_interface_index", "runtime_function_registry",
+                     "shared_data_capabilities", "analysis_instructions", "execution_mode", "dsl_rules")
+    application.get_case_template_handoff_v4 = Mock(return_value={key: key for key in original_keys})
+    try:
+        catalog = application.web_generation.call_tool(TASK_ID, "get_handoff", {})
+        keys = list(catalog)
+        assert keys[:4] == ["analysis_instructions", "dsl_rules", "execution_mode", "related_interface_index"]
+        assert keys.index("shared_data_capabilities") < keys.index("handoff") < keys.index("submission_schema")
+        assert set(keys) == set(original_keys)
+        assert "read_outer_api_info" in CASE_TEMPLATE_ANALYSIS_INSTRUCTIONS
+    finally:
+        application.close()
+
+
 def test_unreadable_publication_cannot_be_reported_as_complete(tmp_path):
     """正式Generation被移除后，网页必须显示工程失败并保留可读草稿。
 
@@ -259,8 +281,16 @@ def test_unreadable_publication_cannot_be_reported_as_complete(tmp_path):
     try:
         ControlledAgent(application).publish()
         published = application.case_template_v4.handoffs.get(handoff.handoff_id)
-        root = application.case_template_v4.generations._root(SYSTEM_ID)
-        (root / f"{published.generation_id}.json").unlink()
+        generations = application.case_template_v4.generations
+        if generations.metadata is not None:
+            # MySQL模式删除正式Generation行，文件模式沿用原JSON删除路径。
+            generations.metadata.execute(
+                "DELETE FROM ot_case_generation WHERE system_id=%s AND generation_id=%s",
+                (SYSTEM_ID, published.generation_id),
+            )
+        else:
+            root = generations._root(SYSTEM_ID)
+            (root / f"{published.generation_id}.json").unlink()
         # 丢失的是正式产物，任务上下文及原草稿仍应完整可读。
         application.web_generation._settle(TASK_ID, "")
         task = application.tasks.get(TASK_ID)

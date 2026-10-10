@@ -3222,6 +3222,21 @@ def test_registered_source_reader_scans_only_main_source_and_audits_access(tmp_p
         # 文件名和连字符目录也属于固定安全边界，不能只依赖精确父目录名称。
         with pytest.raises(ValueError, match="protected|not allowed"):
             reader.read_source(protected_path)
+    # 普通源码猜错路径时给出可修正的不存在说明，而不是误报为类型受限。
+    with pytest.raises(ValueError, match="does not exist"):
+        reader.read_source("src/main/java/demo/MissingQuery.java")
+    # 搜索入口指向单个受保护文件时，存在与否必须返回同一错误，不能借差异探测其存在。
+    for probe_path in ("src/main/resources/SecretConfig.yml", "src/main/resources/MissingSecretConfig.yml"):
+        with pytest.raises(ValueError, match="not allowed"):
+            reader.search_source("x", path=probe_path)
+    # 无扩展名文件在存在性检查前无法按名称识别为文件；存在与缺失也必须返回同一错误。
+    (source / "src/main/resources/credentials").write_text("token: fake\n", encoding="utf-8")
+    extensionless_errors = []
+    for probe_path in ("src/main/resources/credentials", "src/main/java/credentials"):
+        with pytest.raises(ValueError) as probe_error:
+            reader.search_source("x", path=probe_path)
+        extensionless_errors.append(str(probe_error.value))
+    assert extensionless_errors[0] == extensionless_errors[1]
 
 
 def test_registered_source_reader_refuses_a_symlink_at_open_time(tmp_path: Path) -> None:

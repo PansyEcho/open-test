@@ -362,6 +362,75 @@ def test_failed_probe_preserves_ready_business_evidence(
     assert public_state["business_validation_state"] == "VERIFIED"
 
 
+def _publish_rescan(service: ResourceInventoryService, scan_id: str) -> None:
+    """按当前源码重新捕获基线和资源并发布为最新扫描。
+
+    Args:
+        service: 测试夹具构造的资源服务。
+        scan_id: 新扫描ID；每次重扫都会生成新的扫描时间。
+
+    Side Effects:
+        写入新Manifest、更新系统基线并切换最新扫描指针。
+    """
+
+    source = Path(service.store.get_system(SYSTEM_ID).source_path)
+    baseline = GitSourceRepository().capture(source)
+    discovery = SourceResourceDiscoverer().discover(SYSTEM_ID, source)
+    manifest = ScanManifest(
+        scan_id=scan_id,
+        system_id=SYSTEM_ID,
+        baseline=baseline,
+        resources=discovery.resources,
+        resource_inventory_captured=True,
+    )
+    service.artifacts.write_manifest(manifest)
+    service.store.update_source_baseline(SYSTEM_ID, baseline)
+    service.artifacts.publish_latest(SYSTEM_ID, scan_id)
+
+
+def test_same_source_rescan_keeps_state_and_resource_change_marks_stale(tmp_path: Path, monkeypatch) -> None:
+    """同一源码重扫只换扫描ID和时间不应判过期；资源声明变化重扫后必须过期。
+
+    Args:
+        tmp_path: Pytest提供的隔离源码和扫描目录。
+        monkeypatch: 替换Worker探测以避免访问真实环境。
+    """
+
+    service = _resource_service(tmp_path)
+
+    def probe_ok(self, environment, resource):
+        """模拟连接检测成功，不访问任何外部服务。"""
+
+        return {}
+
+    monkeypatch.setattr("opentest.application.resources.QaActiveWorkerLauncher.probe_resolved", probe_ok)
+    service.probe(SYSTEM_ID, "qa", [MYSQL_RESOURCE_ID])
+
+    def mysql_state() -> dict[str, object]:
+        """读取页面主表中主库资源的当前展示状态。"""
+
+        return next(
+            item["state"]
+            for item in service.list_resources(SYSTEM_ID)
+            if item["definition"]["resource_id"] == MYSQL_RESOURCE_ID
+        )
+
+    # 同源重扫：基线时间和扫描ID变化，源码与资源投影不变。
+    _publish_rescan(service, "scan-resource-service-same-source")
+    assert mysql_state()["status"] == "CONNECTED"
+
+    # 资源声明变化后重扫：已保存连接结论不再对应当前资源，必须展示过期。
+    resource_path = tmp_path / "source/app/biz/src/main/resources/META-INF/spring/resources.xml"
+    resource_path.write_text(
+        resource_path.read_text(encoding="utf-8").replace("TETravelTrainSupplychainOrder", "ChangedDatabaseName"),
+        encoding="utf-8",
+    )
+    _publish_rescan(service, "scan-resource-service-changed-source")
+    changed = mysql_state()
+    assert changed["status"] == "STALE"
+    assert changed["error_code"] == "SOURCE_DIGEST_DRIFT"
+
+
 def test_probe_uses_selected_uat_configuration_and_records_environment(tmp_path: Path, monkeypatch) -> None:
     """同一源码资源按用户所选UAT配置探测，状态明确记录环境且不要求业务Profile。"""
 

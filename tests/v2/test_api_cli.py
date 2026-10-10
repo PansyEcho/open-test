@@ -67,8 +67,6 @@ def test_fastapi_registers_multiple_systems_without_overwrite(tmp_path: Path, mo
                 "system_id": "train-booking-core",
                 "name": "火车票预订",
                 "source_path": str(first_source),
-                "qa_labrador_token": "first-token",
-                "qa_gateway_prefix": "http://servicegw.qa.example/first/v2",
             },
         )
         second_response = client.post(
@@ -77,8 +75,6 @@ def test_fastapi_registers_multiple_systems_without_overwrite(tmp_path: Path, mo
                 "system_id": "settlement-core",
                 "name": "结算",
                 "source_path": str(second_source),
-                "qa_labrador_token": "second-token",
-                "qa_gateway_prefix": "http://servicegw.qa.example/second/v2",
             },
         )
 
@@ -256,7 +252,8 @@ def test_runtime_settings_put_hides_legacy_models_and_preserves_http_job_setting
             knowledge_agent_prompt_template="旧模板 {{target_id}}",
         )
     )
-    application.save_local_settings(
+    # 直接写入历史HTTP Job本地键，模拟仍需惰性保留的旧配置文件。
+    application.local_settings.write(
         "train-booking-core",
         "job-token-must-remain",
         "https://jobs.qa.invalid/gateway/v2",
@@ -310,8 +307,12 @@ def test_runtime_settings_put_hides_legacy_models_and_preserves_http_job_setting
     legacy_settings = application.runtime_settings.read()
     assert legacy_settings.knowledge_agent == "claude"
     assert legacy_settings.case_template_v4_model == "company-case-model"
-    assert preserved_job_settings["qa_labrador_token"] == "job-token-must-remain"
-    assert preserved_job_settings["qa_gateway_prefix"] == "https://jobs.qa.invalid/gateway/v2"
+    # 公开设置契约不再回显旧Job凭据，历史值只能通过本地设置存储惰性审计。
+    assert "qa_labrador_token" not in preserved_job_settings
+    assert "qa_gateway_prefix" not in preserved_job_settings
+    preserved_local = application.local_settings.read("train-booking-core")
+    assert preserved_local.qa_labrador_token == "job-token-must-remain"
+    assert preserved_local.qa_gateway_prefix == "https://jobs.qa.invalid/gateway/v2"
 
 
 def test_v2_openapi_contains_single_system_generation_and_execution_workflow(
@@ -491,7 +492,8 @@ def test_case_generation_start_returns_prepare_task_without_background_thread(
     assert received_request["value"].request_id == "case-start-api-request-0001"
     assert not hasattr(received_request["value"], "codex_model")
     assert not hasattr(received_request["value"], "reasoning_effort")
-    assert not hasattr(received_request["value"], "execution_mode")
+    # execution_mode仍是当前生成契约字段，未显式提交时保持默认生成并验证。
+    assert received_request["value"].execution_mode == "generate_and_verify"
 
 
 def test_case_generation_rejects_removed_background_model_fields(

@@ -70,6 +70,7 @@ from opentest.domain.models import (
     SemanticAnalysisResult,
     SemanticFieldDefinition,
     SemanticMethodDefinition,
+    SemanticResolutionStatus,
     SemanticTypeDefinition,
     SourceBaseline,
     SourceReference,
@@ -550,6 +551,7 @@ def _query_list_manifest(source_root: Path) -> ScanManifest:
                         symbol_id="com.example.refund.RefundOrderQueryRequest",
                         qualified_class_name="com.example.refund.RefundOrderQueryRequest",
                         simple_name="RefundOrderQueryRequest",
+                        static_field_names=["serialVersionUID"],
                         fields=[
                             SemanticFieldDefinition(
                                 field_name="page",
@@ -956,6 +958,13 @@ def test_unified_catalog_executes_external_dsf_mq_and_database_operations(tmp_pa
                     action="queryList",
                     mutability=DsfOperationMutability.READ_ONLY,
                     source_refs=[external_ref],
+                    # 外部操作必须携带已解析的输入输出契约才允许执行；这里直接登记解析完成后的契约。
+                    request_schema={
+                        "type": "object",
+                        "properties": {"status": {"type": "integer"}},
+                        "additionalProperties": True,
+                    },
+                    response_schema={"type": "object"},
                 ),
             ],
             "resources": [
@@ -991,15 +1000,7 @@ def test_unified_catalog_executes_external_dsf_mq_and_database_operations(tmp_pa
         capabilities = {item.kind: item for item in service.search(SYSTEM_ID, "", 100)}
         assert {OperationKind.EXTERNAL_DSF, OperationKind.MQ, OperationKind.DATABASE} <= set(capabilities)
 
-        # 旧External DSF引用不能替代远端项目接入，缺项目时必须先报告明确缺口。
-        with pytest.raises(KnowledgeNotFoundError, match="booking.core"):
-            service.execute(SYSTEM_ID, OperationExecutionRequest(
-                operation_id=capabilities[OperationKind.EXTERNAL_DSF].operation_id,
-                arguments={"status": 4}, request_id="request-external-unregistered",
-            ))
-        booking_source = tmp_path / "booking-source"
-        booking_source.mkdir()
-        store.register_system(SystemDefinition(system_id="booking.core", name="Booking", source_path=str(booking_source)))
+        # 外部DSF执行只要求固定扫描证明的完整契约，提供方无需先接入知识项目。
         external = service.execute(
             SYSTEM_ID,
             OperationExecutionRequest(
@@ -1084,13 +1085,16 @@ def test_query_list_semantic_contract_does_not_promote_defaults_or_documentation
         selected = matches[0]
         assert selected.mutability.value == "READ_ONLY"
         assert selected.required_fields == []
-        assert "required" not in selected.input_schema
+        # 发布契约固定输出required数组，但默认值和文档说明不得把任何字段提升为必填。
+        assert selected.input_schema.get("required", []) == []
         assert "safe_defaults" not in selected.model_dump(mode="json")
         evidence = {field.field_name: field for field in selected.input_fields}
         assert evidence["page"].declared_initializer == 1
         assert evidence["pageSize"].declared_initializer == 20
         assert evidence["platFormId"].documentation_required is True
         assert evidence["platFormId"].runtime_required is False
+        # scriptgen模板中的类常量由Java static声明剔除，不进入模型可见字段。
+        assert "serialVersionUID" not in evidence
         assert any(field.description == "退票单号" for field in selected.output_fields)
 
         nested_schema = {
@@ -1119,6 +1123,74 @@ def test_query_list_semantic_contract_does_not_promote_defaults_or_documentation
         assert completed.execution_id == duplicate.execution_id
         assert provider.facade_calls == 1
         assert provider.facade_arguments == [{"ticketNo": "SYNTHETIC-TICKET-001"}]
+    finally:
+        tasks.close()
+
+
+def test_template_static_fields_are_removed_by_declared_modifier_not_name(tmp_path: Path) -> None:
+    """嵌套对象、集合元素和父类的static常量被剔除；无修饰符证据的层级和同名实例字段保留。"""
+
+    store, _ = _registered_workspace(tmp_path)
+    service, tasks = _operation_service(store, SourceScanArtifactStore(store.root), FakeOperationProvider())
+    ref = SourceReference(path="app/Demo.java", symbol="demo", line=1)
+
+    def field(name: str, referenced: str = "", collection: bool = False) -> SemanticFieldDefinition:
+        """构造一个已解析的直接实例字段。"""
+        return SemanticFieldDefinition(field_name=name, declared_type="Object", referenced_type=referenced,
+                                       collection=collection, source_ref=ref)
+
+    def semantic_type(name: str, **values: Any) -> SemanticTypeDefinition:
+        """构造一个精确FQN的语义类型。"""
+        return SemanticTypeDefinition(symbol_id=name, qualified_class_name=name, simple_name=name.rsplit(".", 1)[-1],
+                                      source_ref=ref, **values)
+
+    analysis = SemanticAnalysisResult(
+        schema_version=4, analyzer="test-semantic-analyzer", analyzer_version="static-template-test", system_id=SYSTEM_ID,
+        types=[
+            semantic_type("demo.Request", static_field_names=["serialVersionUID"],
+                          fields=[field("order", "demo.Order"), field("items", "demo.Item", True), field("raw")]),
+            semantic_type("demo.Order", static_field_names=["serialVersionUID"], fields=[field("orderNo")]),
+            semantic_type("demo.Item", base_types=["demo.BaseItem"], fields=[field("code"), field("serialVersionUID")]),
+            semantic_type("demo.BaseItem", static_field_names=["TYPE"]),
+        ],
+    )
+    template = {
+        "serialVersionUID": 0,
+        "order": {"serialVersionUID": 0, "orderNo": ""},
+        "items": [{"TYPE": "", "code": "", "serialVersionUID": 0}],
+        "raw": {"serialVersionUID": 0},
+    }
+    try:
+        pruned = service.catalog._without_static_template_fields(template, analysis.types[0], analysis)
+        assert pruned == {
+            "order": {"orderNo": ""},
+            # 子类实例字段与名字无关地保留；父类static常量被剔除。
+            "items": [{"code": "", "serialVersionUID": 0}],
+            # raw没有可解析的Java类型，缺少修饰符证据时原样保留。
+            "raw": {"serialVersionUID": 0},
+        }
+        # 旧扫描类型缺少static证据时不按名字猜测。
+        assert service.catalog._without_static_template_fields(template, None, analysis) == template
+
+        # 自引用DTO每一层嵌套实例都按同一修饰符规则剔除，不能因类型已出现而跳过内层。
+        tree = semantic_type("demo.TreeNode", static_field_names=["serialVersionUID"],
+                             fields=[field("name"), field("children", "demo.TreeNode", True)])
+        tree_analysis = analysis.model_copy(update={"types": [tree]})
+        tree_template = {"serialVersionUID": 0, "name": "", "children": [{"serialVersionUID": 0, "name": "", "children": []}]}
+        assert service.catalog._without_static_template_fields(tree_template, tree, tree_analysis) == {
+            "name": "", "children": [{"name": "", "children": []}],
+        }
+
+        # 嵌套响应字段未解析时，发布Schema失败关闭而非猜测形状；字段证据仍保留该缺口路径。
+        response = semantic_type("demo.Response", fields=[
+            field("code"),
+            SemanticFieldDefinition(field_name="detail", declared_type="Detail", source_ref=ref,
+                                    resolution_status=SemanticResolutionStatus.PARTIAL),
+        ])
+        response_analysis = analysis.model_copy(update={"types": [*analysis.types, response]})
+        assert service.catalog._publication_schema_for_semantic_type(response, response_analysis, "demo.Response") == {}
+        response_paths = [item.field_path for item in service.catalog._type_field_evidence(response, response_analysis)]
+        assert response_paths == ["code", "detail"]
     finally:
         tasks.close()
 
@@ -1632,6 +1704,8 @@ def test_operation_plugin_and_generated_skill_are_explicit_and_fixed(
         "get_data_execution",
         "list_task_agent_tools",
         "call_task_agent_tool",
+        "search_downstream_interfaces",
+        "resolve_downstream_operation",
     }
     execute_tool = next(tool for tool in tools if tool["name"] == "execute_operation")
     assert execute_tool["annotations"]["destructiveHint"] is True
@@ -1738,8 +1812,9 @@ def test_operation_plugin_and_generated_skill_are_explicit_and_fixed(
     assert "新任务先调用`search_data_capabilities`" in skill
     assert "不同Case与自然语言任务复用同一方法" in skill
     assert "不批量生成接口内部流程、公共函数长文或回归点库" in skill
-    assert "仅调用Skill或要求生成知识/Case不构成执行授权" in skill
-    assert "只有用户明确要求执行某个READY/PARTIAL Generation时" in skill
+    # 执行授权措辞已更新为任务范围内默认授权，Skill正文必须固定这一边界。
+    assert "用户请求执行测试即授权范围内必要的数据准备、QA增删改查和目标业务调用，无需逐步确认" in skill
+    assert "发布后自动试跑并检查真实报告" in skill
     assert "同系统对外Facade优先，外部DSF次之" in skill
     assert "DELETE" in skill and "不重复询问" in skill
     assert "allow_implicit_invocation: false" in metadata

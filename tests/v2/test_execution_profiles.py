@@ -357,7 +357,10 @@ def test_external_dsf_uses_registered_target_project_profile(tmp_path: Path, pas
     store.register_system(SystemDefinition(system_id="provider", name="目标项目", source_path=str(source)))
     settings = LocalSystemSettingsStore(store.root / ".opentest/environments")
     settings.write("provider", "", resource_config_environment="dev", environment="uat")
-    operation = _operation()
+    # 外部DSF必须带已解析的请求和响应结构才允许执行。
+    operation = _operation().model_copy(update={
+        "request_schema": {"type": "object"}, "response_schema": {"type": "object"},
+    })
     artifacts = Mock()
     artifacts.read.return_value = SimpleNamespace(dsf_operations=[operation])
     launcher = Mock()
@@ -380,25 +383,29 @@ def test_external_dsf_uses_registered_target_project_profile(tmp_path: Path, pas
     assert launcher.execute.call_count == 1
 
 
-def test_external_dsf_unregistered_target_is_blocked_before_worker(tmp_path: Path) -> None:
-    """外部引用或伪造已解析Profile不能代替目标项目接入。
+def test_external_dsf_unregistered_provider_rejects_forged_provider_profile(tmp_path: Path) -> None:
+    """提供方未接入时由调用方客户端执行，伪造的提供方Profile不能冒充该归属。
 
     Args:
         tmp_path: pytest隔离知识目录。
     Returns:
-        None；无目标项目时在读取本地配置和启动Worker前拒绝。
+        None；归属回落到调用方且伪造Profile在启动Worker前被拒绝时通过。
     """
 
     store = GitKnowledgeStore(tmp_path / "knowledge")
     store.initialize()
-    operation = _operation()
+    store.register_system(SystemDefinition(system_id="caller", name="调用方项目", source_path=str(tmp_path)))
+    operation = _operation().model_copy(update={
+        "request_schema": {"type": "object"}, "response_schema": {"type": "object"},
+    })
     artifacts = Mock()
     artifacts.read.return_value = SimpleNamespace(dsf_operations=[operation])
     launcher = Mock()
     service = DsfOperationService(store, artifacts, Mock(), Mock(), launcher)
-    # 即使传入看似完整的远端Profile，也必须重新验证当前项目仍然接入。
+    assert service.execution_owner("caller", operation).system_id == "caller"
+    # 即使传入看似完整的远端Profile，也必须属于实际执行归属的调用方项目。
     profile = DsfClientProfile(system_id="provider", routing_environment="qa", target_environment="test")
-    with pytest.raises(KnowledgeNotFoundError, match="provider"):
+    with pytest.raises(ScopeViolationError, match="target project"):
         service.execute_external_indexed("caller", "scan-caller-a", DsfExecutionRequest(operation_id=operation.operation_id, environment="qa"), profile=profile)
     launcher.execute.assert_not_called()
 

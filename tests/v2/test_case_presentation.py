@@ -43,6 +43,9 @@ def test_execution_get_preserves_recorded_values_and_absence(value) -> None:
     application = Mock()
     application.get_case_generation_execution.return_value = execution
     application.list_case_generation_executions.return_value = [execution]
+    # 页面读缓存在建应用时绑定存储根；本用例只验证执行GET序列化，不需要共享版本源。
+    application.store.metadata = None
+    application.store.root = Path("unused-knowledge-root")
     client = TestClient(create_app(application))
     for suffix in ("", "/" + execution.execution_id):
         response = client.get("/api/v2/systems/sample.java.system/case-executions" + suffix)

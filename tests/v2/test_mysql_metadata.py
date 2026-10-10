@@ -25,7 +25,7 @@ from opentest.domain.data_capabilities import DataCapabilityHandoff, DataCapabil
 from opentest.domain.errors import KnowledgeNotFoundError, KnowledgeValidationError, ScopeViolationError
 from opentest.domain.models import (
     CandidateRef, KnowledgeInterview, KnowledgeNode, KnowledgeNodeKind, KnowledgeRevisionPlan, OperationInputKnowledgeContract, OperationMutability,
-    ProgramCaseAnalysisArtifact, ProviderOperationRef, PublishedOperationCapability, SourceBaseline, SystemDefinition,
+    ProviderOperationRef, PublishedOperationCapability, SourceBaseline, SystemDefinition,
 )
 
 
@@ -426,15 +426,13 @@ def fixed_source_scope(system_id="refund-core"):
 
 
 def test_case_generation_and_handoff_use_reader_source_bindings(tmp_path):
-    """两类Case聚合及嵌套程序分析仅共享commit，无绑定读者不会得到旧机器路径。"""
+    """两类Case聚合仅共享commit，无绑定读者不会得到旧机器路径。"""
 
     first, second = shared_workspace_pair(tmp_path)
     scope = fixed_source_scope()
-    analysis = ProgramCaseAnalysisArtifact(artifact_id="analysis-fixed", system_id="refund-core",
-        source_scan_id="scan-fixed", source_baseline=scope.source_baseline, entry_id="facade:refund", status="ANALYZED")
     generation = CaseTemplateGenerationV4(generation_id="case-template-generation-" + "a" * 20,
         system_id="refund-core", operation_id="facade:refund", source_scan_id="scan-fixed",
-        source_scopes=[scope], program_analysis=analysis, coverage_id="coverage-fixed",
+        source_scopes=[scope], coverage_id="coverage-fixed",
         runtime_registry_version="runtime/v1", value_registry_version="value-functions/v1", status="BLOCKED",
         input_contract=OperationInputKnowledgeContract(target_id="facade:refund", source_scan_id="scan-fixed",
             status="BLOCKED", request_schema={}, blocked_reason="test contract unavailable"),
@@ -442,13 +440,12 @@ def test_case_generation_and_handoff_use_reader_source_bindings(tmp_path):
     CaseTemplateGenerationStoreV4(first).write(generation)
     handoff = CaseTemplateHandoffV4(handoff_id="case-template-handoff-" + "a" * 20,
         system_id="refund-core", entry_id="facade:refund", source_scan_id="scan-fixed",
-        source_scopes=[scope], program_analysis=analysis, status="WAITING_FOR_AGENT")
+        source_scopes=[scope], status="WAITING_FOR_AGENT")
     CaseTemplateHandoffStoreV4(first.root / ".opentest", first.metadata).write(handoff)
     reader = CaseTemplateGenerationStoreV4(second)
     handoffs = CaseTemplateHandoffStoreV4(second.root / ".opentest", second.metadata)
     unbound = reader.get("refund-core", generation.generation_id)
     assert unbound.source_scopes[0].source_baseline.readable_source_path == ""
-    assert unbound.program_analysis.source_baseline.readable_source_path == ""
     assert handoffs.get(handoff.handoff_id).source_scopes[0].source_baseline.readable_source_path == ""
     # 工作台后来绑定本机源码后，固定版本保持不变，所有读取路径都改用本机commit缓存。
     local_source = tmp_path / "second-source"
@@ -457,7 +454,6 @@ def test_case_generation_and_handoff_use_reader_source_bindings(tmp_path):
     expected_snapshot = str(second.root / ".opentest" / "source-snapshots" / "refund-core" / scope.source_baseline.commit)
     rebound = reader.list("refund-core")[0]
     assert rebound.source_scopes[0].source_baseline.source_path == str(local_source)
-    assert rebound.program_analysis.source_baseline.snapshot_path == expected_snapshot
     assert handoffs.list()[0].source_scopes[0].source_baseline.snapshot_path == expected_snapshot
     assert portable_scope_payload(rebound) == portable_scope_payload(generation)
     row = first.metadata.fetch_one("SELECT generation_json FROM ot_case_generation WHERE generation_id=%s", (generation.generation_id,))
@@ -497,6 +493,22 @@ def test_data_versions_and_handoffs_hydrate_each_scope_without_rewriting_busines
     stored = decode_json(row["definition_json"])
     assert stored["source_scopes"][0]["source_baseline"]["source_path"] == ""
     assert stored["query_steps"][0]["arguments"]["business_path"]["value"] == business_literal
+
+
+def test_data_version_agent_summary_omits_steps_and_frozen_scopes():
+    """Agent检索摘要只含选择所需字段，完整步骤与冻结范围留给精确版本读取。"""
+
+    fixture_path = Path(__file__).parents[1] / "fixtures" / "data-capabilities" / "refund-supplement-report.json"
+    definition = json.loads(fixture_path.read_text())
+    version = DataCapabilityVersion(**definition, owner_system_id="refund-core", version=3,
+                                    source_scopes=[fixed_source_scope()])
+
+    summary = version.agent_summary()
+
+    assert set(summary) == {"owner_system_id", "capability_id", "version", "name", "purpose", "inputs", "outputs"}
+    assert (summary["owner_system_id"], summary["capability_id"], summary["version"]) == (
+        "refund-core", definition["capability_id"], 3)
+    assert len(summary["outputs"]) == len(definition["outputs"])
 
 
 def test_published_capability_keeps_portable_candidate_baseline_and_idempotence(tmp_path):

@@ -41,7 +41,6 @@ from opentest.domain.models import (
     KnowledgeQuestion,
     OperationInputFieldKnowledge,
     OperationInputKnowledgeContract,
-    ProgramCaseAnalysisArtifact,
     SourceBaseline,
     SourceVersionPin,
     SystemDefinition,
@@ -53,20 +52,13 @@ OPERATION_ID = "facade:com.example.RefundFacade#cancel"
 SCAN_ID = "scan-case-revision"
 
 
-def _program_asset(scan_id: str = SCAN_ID) -> ProgramCaseAnalysisArtifact:
-    """提供固定生产源码覆盖资产，使版本继续测试检查真实模型而非空Mock。
-
-    Args:
-        scan_id: 用于区分旧生产基线与显式新代际的扫描身份。
-    Returns:
-        无额外业务义务的已分析资产，测试不会触发业务请求。
-    """
-
-    return ProgramCaseAnalysisArtifact(
-        artifact_id=f"program-analysis:{scan_id}", system_id=SYSTEM_ID,
-        source_scan_id=scan_id, source_baseline=SourceBaseline(source_path="/frozen/source"),
-        entry_id=OPERATION_ID, status="ANALYZED",
-    )
+# 程序覆盖分析删除前写入handoff的历史快照形状；只用于验证旧记录可读且不被继承。
+LEGACY_PROGRAM_ANALYSIS = {
+    "contract_version": "program-case-analysis/v2",
+    "artifact_id": f"program-analysis:{SCAN_ID}",
+    "entry_id": OPERATION_ID,
+    "status": "ANALYZED",
+}
 
 
 def _submission(unresolved: bool = False) -> CaseTemplateSubmission:
@@ -409,7 +401,6 @@ def test_start_prepares_same_task_without_starting_background_agent(tmp_path: Pa
     )
     service._input_contract = Mock(return_value=_contract())
     service._source_scopes = Mock(return_value=_handoff(tmp_path).source_scopes)
-    service._program_analysis = Mock(return_value=_program_asset())
     request = CaseTemplateGenerationStartRequest(
         operation_id="RefundFacade#cancel",
         request_id="case-start-native-001",
@@ -433,7 +424,8 @@ def test_start_prepares_same_task_without_starting_background_agent(tmp_path: Pa
     assert first.status == "WAITING_FOR_AGENT"
     assert first.task_id == f"task-{'1' * 16}"
     assert first.entry_id == OPERATION_ID
-    assert first.program_analysis.source_scan_id == SCAN_ID
+    # 程序覆盖分析已删除，新handoff不再冻结覆盖快照。
+    assert first.program_analysis is None
     assert first.thread_id == ""
     assert store.get_system.call_count == 1
     artifacts.read.assert_called_once_with(SYSTEM_ID, "latest")
@@ -668,6 +660,46 @@ def test_case_unknown_answer_stays_open_and_confirmation_keeps_target_scope(
     assert reloaded.questions[0].answer == "不知道，需要业务方继续确认"
     assert reloaded.confirmations[0].confirmed_node_ids == []
     assert reloaded.confirmations[0].affected_target_ids == ["case.ready"]
+
+
+def test_case_question_rejection_names_each_violated_field(tmp_path: Path) -> None:
+    """Agent问题越界时错误逐项指出字段，便于按准确缺口修订。
+
+    Args:
+        tmp_path: pytest临时目录。
+
+    Returns:
+        None；错误只列出实际违规的source与affected_node_ids时通过。
+    """
+
+    service, handoffs, _generations = _service(tmp_path, _compiled())
+    handoff = _handoff(tmp_path)
+    handoffs.write(handoff)
+    question = KnowledgeQuestion(
+        question_id="case-question-test-data",
+        system_id=SYSTEM_ID,
+        source="draft",
+        title="测试数据入口",
+        detail="是否有可用的数据准备接口",
+        affected_node_ids=["case.ready"],
+        affected_target_ids=["case.ready"],
+        status="open",
+    )
+
+    with pytest.raises(KnowledgeValidationError) as rejected:
+        service.revise_draft(
+            handoff.handoff_id,
+            CaseTemplateDraftRevisionRequest(
+                request_id="draft-question-invalid-001",
+                expected_revision=0,
+                submission=_submission(),
+                questions=[question],
+            ),
+        )
+
+    assert "source must be case_template" in str(rejected.value)
+    assert "affected_node_ids must be empty" in str(rejected.value)
+    assert "answer must be empty" not in str(rejected.value)
 
 
 def test_answer_cannot_bypass_deterministic_type_issue(tmp_path: Path) -> None:
@@ -1107,7 +1139,7 @@ def test_formal_generation_continue_creates_new_frozen_successor(tmp_path: Path)
 
     handoffs = CaseTemplateHandoffStoreV4(tmp_path)
     predecessor = _handoff(tmp_path, status="COMPLETED", revision=4)
-    predecessor.program_analysis = _program_asset()
+    predecessor.program_analysis = LEGACY_PROGRAM_ANALYSIS
     legacy_fields = {
         "execution_mode": "QA_AFTER_GENERATION",
         "execution_results": [{"status": "COMPLETED", "historical_payload": {"opaque": True}}],
@@ -1148,7 +1180,9 @@ def test_formal_generation_continue_creates_new_frozen_successor(tmp_path: Path)
     assert successor.generation_id != generation.generation_id
     assert successor.predecessor_generation_id == generation.generation_id
     assert successor.source_scan_id == predecessor.source_scan_id
-    assert successor.program_analysis == predecessor.program_analysis
+    # 父记录的历史覆盖快照原样可读，后继不再继承。
+    assert parent.program_analysis == LEGACY_PROGRAM_ANALYSIS
+    assert successor.program_analysis is None
     assert successor.source_scopes == predecessor.source_scopes
     assert successor.task_id == f"task-{'d' * 16}"
     assert parent.successor_handoff_id == successor.handoff_id
@@ -1293,7 +1327,6 @@ def test_regenerate_latest_rebinds_only_on_explicit_intent(tmp_path: Path) -> No
         source_baseline=SourceBaseline(source_path=str(tmp_path / "latest")),
     )
     service._source_scopes = Mock(return_value=[latest_scope])
-    service._program_analysis = Mock(return_value=_program_asset(latest_scan_id))
 
     successor = service.continue_generation(
         SYSTEM_ID,
@@ -1307,7 +1340,7 @@ def test_regenerate_latest_rebinds_only_on_explicit_intent(tmp_path: Path) -> No
     )
 
     assert successor.source_scan_id == latest_scan_id
-    assert successor.program_analysis.source_scan_id == latest_scan_id
+    assert successor.program_analysis is None
     assert successor.source_scopes == [latest_scope]
     assert successor.continuation_intent == "regenerate_latest"
     assert successor.predecessor_generation_id == generation.generation_id

@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import hashlib
 import os
 from pathlib import Path
 from urllib.parse import quote
@@ -15,7 +16,6 @@ from opentest.adapters.semantic_analysis import default_semantic_analyzer_path
 from opentest.adapters.source_analysis import JavaStructureScanner, SourceScanArtifactStore
 from opentest.api import create_app
 from opentest.application.foundation import OpenTestApplication
-from opentest.application.program_case_analysis import ProgramCaseAnalysisBuilder
 from opentest.domain.errors import KnowledgeNotFoundError, KnowledgeValidationError, ScopeViolationError
 from opentest.domain.models import (
     DsfOperationDefinition,
@@ -49,10 +49,10 @@ def _publish_generic_scan(
         application: 隔离知识仓库应用。
         system_id: 独立注册和扫描的系统ID。
         method_prefix: 用于区分consumer与provider候选的通用方法前缀。
-        commit: 当前系统自己的源码基线标识。
+        commit: 当前系统自己的源码基线标签，换算为Git形态的40位commit。
 
     Side Effects:
-        创建通用Java源码文件，并原子发布Manifest、Program Catalog、baseline和latest。
+        创建通用Java源码文件，并原子发布Manifest、baseline和latest。
     """
 
     source_root = application.knowledge_root.parent / f"source-{system_id}"
@@ -62,6 +62,8 @@ def _publish_generic_scan(
         f"class {method_prefix}FacadeImpl {{ Object execute(Object request) {{ return request; }} }}\n",
         encoding="utf-8",
     )
+    # 生产commit总是Git SHA；共享库只为该形态在两侧一致地物化快照路径。
+    commit = hashlib.sha1(commit.encode("utf-8")).hexdigest()
     baseline = SourceBaseline(source_path=str(source_root), commit=commit)
     application.register_system(
         SystemDefinition(system_id=system_id, name=system_id, source_path=str(source_root))
@@ -164,10 +166,9 @@ def _publish_generic_scan(
             source_refs=[source_ref.model_copy(update={"symbol": f"{interface_name}#execute"})],
         )],
     )
-    artifacts = SourceScanArtifactStore(application.knowledge_root)
-    program_catalog = ProgramCaseAnalysisBuilder().build(manifest)
-    # 正式bundle和注册baseline先就绪，最后切换latest，复现生产发布顺序。
-    artifacts.write_scan_bundle(manifest, program_catalog)
+    artifacts = application.source_analysis.artifacts
+    # 正式Manifest和注册baseline先就绪，最后切换latest，复现生产发布顺序。
+    artifacts.write_manifest(manifest)
     application.store.update_source_baseline(system_id, baseline)
     artifacts.publish_latest(system_id, manifest.scan_id)
 
@@ -180,10 +181,10 @@ def _connect_scanned_dsf(application: OpenTestApplication, caller: str, provider
         caller: 调用方扫描系统ID。
         provider: 发布方扫描系统ID。
     Side Effects:
-        仅在测试目录补充调用方扫描引用，发布方保持原有版本。
+        为调用方发布一个补充引用的新扫描版本，发布方保持原有版本。
     """
 
-    artifacts = SourceScanArtifactStore(application.knowledge_root)
+    artifacts = application.source_analysis.artifacts
     caller_manifest = artifacts.read(caller, "latest")
     provider_manifest = artifacts.read(provider, "latest")
     publication = provider_manifest.dsf_operations[0]
@@ -191,7 +192,10 @@ def _connect_scanned_dsf(application: OpenTestApplication, caller: str, provider
     reference = publication.model_copy(deep=True, update={"provider_system_id": f"route-{provider}"})
     reference.source_refs = [publication.source_refs[0].model_copy(update={"path": "references.xml"})]
     caller_manifest.dsf_operations.append(reference)
-    artifacts.write_manifest(caller_manifest)
+    # 共享扫描身份不可变，补充引用必须作为新scan发布。
+    connected_manifest = caller_manifest.model_copy(update={"scan_id": f"{caller_manifest.scan_id}-connected"})
+    artifacts.write_manifest(connected_manifest)
+    artifacts.publish_latest(caller, connected_manifest.scan_id)
 
 
 def _system_mq_rule_path(tmp_path: Path) -> tuple[Path, Path]:
@@ -259,8 +263,8 @@ def test_entry_binding_requires_one_exact_concrete_implementation(tmp_path: Path
 
     application = OpenTestApplication(tmp_path / "knowledge")
     _publish_generic_scan(application, "consumer-app", "Consume", "consumer-v1")
-    artifacts = SourceScanArtifactStore(application.knowledge_root)
-    manifest, _ = artifacts.read_scan_bundle("consumer-app", "latest")
+    artifacts = application.source_analysis.artifacts
+    manifest = artifacts.read("consumer-app", "latest")
     analysis = manifest.semantic_analysis
     assert analysis is not None
     original_implementation = analysis.methods[1]
@@ -284,10 +288,7 @@ def test_entry_binding_requires_one_exact_concrete_implementation(tmp_path: Path
             "semantic_analysis": ambiguous_analysis,
         }
     )
-    artifacts.write_scan_bundle(
-        ambiguous_manifest,
-        ProgramCaseAnalysisBuilder().build(ambiguous_manifest),
-    )
+    artifacts.write_manifest(ambiguous_manifest)
     artifacts.publish_latest("consumer-app", ambiguous_manifest.scan_id)
 
     catalog = application.candidate_operation_catalog("consumer-app")
@@ -317,8 +318,8 @@ def test_duplicate_candidate_identity_blocks_whole_source_snapshot(tmp_path: Pat
 
     application = OpenTestApplication(tmp_path / "knowledge")
     _publish_generic_scan(application, "consumer-app", "Consume", "consumer-v1")
-    artifacts = SourceScanArtifactStore(application.knowledge_root)
-    manifest, _ = artifacts.read_scan_bundle("consumer-app", "latest")
+    artifacts = application.source_analysis.artifacts
+    manifest = artifacts.read("consumer-app", "latest")
     analysis = manifest.semantic_analysis
     assert analysis is not None
     duplicate_analysis = analysis.model_copy(
@@ -330,10 +331,7 @@ def test_duplicate_candidate_identity_blocks_whole_source_snapshot(tmp_path: Pat
             "semantic_analysis": duplicate_analysis,
         }
     )
-    artifacts.write_scan_bundle(
-        duplicate_manifest,
-        ProgramCaseAnalysisBuilder().build(duplicate_manifest),
-    )
+    artifacts.write_manifest(duplicate_manifest)
     artifacts.publish_latest("consumer-app", duplicate_manifest.scan_id)
 
     search = application.search_candidate_operations("consumer-app", "")

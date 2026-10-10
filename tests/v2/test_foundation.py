@@ -464,29 +464,35 @@ def test_concurrent_index_rebuilds_use_independent_temporary_files(tmp_path: Pat
     assert not list(index.database_path.parent.glob("*.building"))
 
 
-def test_application_falls_back_to_git_exact_search_without_sqlite(tmp_path: Path) -> None:
-    """派生索引缺失时应用服务仍应从Git文件精确查找ID、别名和源码符号。"""
+def test_application_search_reads_shared_nodes_by_exact_symbol(tmp_path: Path) -> None:
+    """应用检索直接读取共享知识节点，按源码符号精确命中，无需本地派生索引。"""
 
-    store, _ = _registered_store(tmp_path)
-    facade, _ = _write_sample_graph(store)
-    application = OpenTestApplication(store.root)
+    source = tmp_path / "source"
+    source.mkdir()
+    application = OpenTestApplication(tmp_path / "knowledge")
     try:
+        application.store.register_system(
+            SystemDefinition(system_id="train-booking-core", name="火车票预订", source_path=str(source)))
+        facade, _ = _write_sample_graph(application.store)
         matches = application.search_knowledge("TradeFacade#createOrder", "train-booking-core")
     finally:
         application.close()
 
     assert matches[0]["node_id"] == facade.node_id
-    assert matches[0]["match_type"] == "git_exact"
+    assert matches[0]["match_type"] == "exact"
 
 
 def test_background_rebuild_preserves_task_id_log_context(tmp_path: Path) -> None:
     """后台索引工作流应沿用任务ID作为filter2，而不是被内部固定操作名覆盖。"""
 
-    store, _ = _registered_store(tmp_path)
-    application = OpenTestApplication(store.root)
+    source = tmp_path / "source"
+    source.mkdir()
+    application = OpenTestApplication(tmp_path / "knowledge")
+    application.store.register_system(
+        SystemDefinition(system_id="train-booking-core", name="火车票预订", source_path=str(source)))
     observed_filter2: list[str] = []
 
-    def record_context(_: GitKnowledgeStore) -> dict[str, int]:
+    def record_context(_: object) -> dict[str, int]:
         """记录索引适配器被调用时的filter2并返回空索引计数。"""
 
         observed_filter2.append(current_log_context().filter2)

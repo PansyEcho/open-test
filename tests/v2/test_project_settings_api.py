@@ -152,11 +152,14 @@ def test_retired_dependency_mutations_preserve_historical_binding_files(
 
     application, client = project_client
     # 通过保留的存储实现建立历史夹具；产品关系写入口仍必须永久退役。
-    application.store.put_system_dependency_binding(SYSTEM_ID, SystemDependencyBindingSubmission(
+    seeded = application.store.put_system_dependency_binding(SYSTEM_ID, SystemDependencyBindingSubmission(
         provider_system_id=PROVIDER_ID, role="DOWNSTREAM", purposes=["SETUP"],
     ))
+    # MySQL模式的历史绑定保存在共享元数据库，通过存储API快照替代文件字节。
+    catalog_before = application.store.list_system_dependency_bindings(SYSTEM_ID)
+    revision_before = application.store.get_system_dependency_binding_revision(SYSTEM_ID, seeded.binding_revision_id)
     system_root = application.store.system_root(SYSTEM_ID)
-    binding_paths = [system_root / "dependencies.yaml", *(system_root / "dependencies").rglob("*.yaml")]
+    binding_paths = [path for path in [system_root / "dependencies.yaml", *(system_root / "dependencies").rglob("*.yaml")] if path.exists()]
     before = {path: path.read_bytes() for path in binding_paths}
     url = f"/api/v2/systems/{SYSTEM_ID}/dependency-bindings/{PROVIDER_ID}"
     updated = client.put(url, json={"provider_system_id": PROVIDER_ID, "role": "UPSTREAM", "purposes": ["ACTION"]})
@@ -164,7 +167,8 @@ def test_retired_dependency_mutations_preserve_historical_binding_files(
     assert updated.status_code == deleted.status_code == 410
     assert "扫描" in updated.json()["detail"]
     assert {path: path.read_bytes() for path in binding_paths} == before
-    assert set((system_root / "dependencies").rglob("*.yaml")) == set(binding_paths[1:])
+    assert application.store.list_system_dependency_bindings(SYSTEM_ID) == catalog_before
+    assert application.store.get_system_dependency_binding_revision(SYSTEM_ID, seeded.binding_revision_id) == revision_before
 
 
 def test_relations_http_returns_direct_scan_catalog_with_depth_and_evidence(
@@ -190,12 +194,14 @@ def test_relations_http_returns_direct_scan_catalog_with_depth_and_evidence(
         gaps=[SystemRelationGap(system_id=PROVIDER_ID, code="MISSING_TOPIC", message="缺少MQ Topic配置")])
     projected = Mock(return_value=catalog)
     monkeypatch.setattr(SystemRelationService, "discovery_catalog", projected)
+    # MySQL模式不再落盘dependencies.yaml；存在历史文件时仍需保持字节不变。
     historical_binding = application.store.system_root(SYSTEM_ID) / "dependencies.yaml"
-    before = historical_binding.read_bytes()
+    before = historical_binding.read_bytes() if historical_binding.exists() else None
     # 使用真实FastAPI序列化入口，保证模型字段与浏览器协商结果一致。
     response = client.get(f"/api/v2/systems/{SYSTEM_ID}/relations")
     assert response.status_code == 200
     assert response.json() == catalog.model_dump(mode="json")
     projected.assert_called_once_with(SYSTEM_ID)
     assert "catalog" not in response.json()
-    assert historical_binding.read_bytes() == before
+    if before is not None:
+        assert historical_binding.read_bytes() == before

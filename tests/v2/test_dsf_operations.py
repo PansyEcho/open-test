@@ -300,6 +300,56 @@ def test_dsf_source_discovery_resolves_main_properties_and_rejects_non_qa_enviro
     assert any("允许的qa/test/dev/uat集合" in warning for warning in profile.warnings)
 
 
+def test_dsf_filter_duplicate_key_in_one_file_uses_the_later_value(tmp_path: Path) -> None:
+    """同一filter文件内重复键按Java Properties后出现值生效，跨文件冲突仍显式丢弃。
+
+    Args:
+        tmp_path: pytest隔离的filter目录。
+
+    Returns:
+        None；同文件重复取后出现值、跨文件冲突保留警告且不产键时通过。
+
+    Side Effects:
+        仅创建本地配置样本，不读取任何真实项目。
+    """
+
+    source_root = tmp_path / "project"
+    filter_dir = source_root / "conf/filter"
+    filter_dir.mkdir(parents=True)
+    # 真实项目会在同一properties文件里为不同发送者重复声明同名键；运行时加载遵循后出现值覆盖。
+    (filter_dir / "dubbo.properties.qa").write_text(
+        "mq.demo.sender.topic=order_topic\n"
+        "mq.demo.sender.group=order_group\n"
+        "mq.demo.sender.topic=refund_order_topic\n"
+        "mq.demo.sender.group=refund_order_group\n"
+        "mq.demo.shared.group=from_dubbo\n"
+        "mq.demo.settled.group=final_group\n",
+        encoding="utf-8",
+    )
+    # 后一个文件中间值不同但生效值相同，跨文件比较只能看各自生效值，不能误判冲突。
+    (filter_dir / "tcbase.properties.qa").write_text(
+        "mq.demo.shared.group=from_tcbase\n"
+        "mq.demo.settled.group=draft_group\n"
+        "mq.demo.settled.group=final_group\n",
+        encoding="utf-8",
+    )
+
+    values, _, warnings, selected_environment = DsfSourceDiscoverer()._load_environment_properties(
+        source_root, "qa"
+    )
+
+    assert selected_environment == "qa"
+    assert values["mq.demo.sender.topic"] == "refund_order_topic"
+    assert values["mq.demo.sender.group"] == "refund_order_group"
+    assert any("mq.demo.sender.topic" in warning for warning in warnings)
+    # 跨文件同名不同值无法确定真实加载顺序，维持冲突丢弃而不是按文件名单测。
+    assert "mq.demo.shared.group" not in values
+    assert any("冲突属性" in warning and "mq.demo.shared.group" in warning for warning in warnings)
+    assert values["mq.demo.settled.group"] == "final_group"
+    assert not any("冲突属性" in warning and "mq.demo.settled.group" in warning for warning in warnings)
+    assert not any("冲突" in warning and "mq.demo.sender.topic" in warning for warning in warnings)
+
+
 def test_dsf_source_discovery_treats_mixed_read_write_verbs_as_write(tmp_path: Path) -> None:
     """queryAndUpdate与getAndDelete等混合动词不得被读前缀降级为只读。"""
 
@@ -578,7 +628,7 @@ def test_indexed_execution_derives_legacy_routing_environment_without_rewriting_
         ),
         dsf_operations=[_operation()],
     )
-    artifacts = SourceScanArtifactStore(application.knowledge_root)
+    artifacts = application.source_analysis.artifacts
     manifest_path = artifacts.write_manifest(manifest)
     artifacts.publish_latest(SYSTEM_ID, manifest.scan_id)
     original_bytes = manifest_path.read_bytes()
@@ -631,7 +681,7 @@ def test_indexed_execution_reads_clean_legacy_profile_from_recorded_commit(tmp_p
         ),
         dsf_operations=[_operation()],
     )
-    artifacts = SourceScanArtifactStore(application.knowledge_root)
+    artifacts = application.source_analysis.artifacts
     manifest_path = artifacts.write_manifest(manifest)
     artifacts.publish_latest(SYSTEM_ID, manifest.scan_id)
     original_bytes = manifest_path.read_bytes()
@@ -686,7 +736,7 @@ def test_indexed_execution_rejects_changed_dirty_legacy_profile(tmp_path: Path) 
         ),
         dsf_operations=[_operation()],
     )
-    artifacts = SourceScanArtifactStore(application.knowledge_root)
+    artifacts = application.source_analysis.artifacts
     manifest_path = artifacts.write_manifest(manifest)
     artifacts.publish_latest(SYSTEM_ID, manifest.scan_id)
     original_bytes = manifest_path.read_bytes()
@@ -760,7 +810,7 @@ def test_application_fixture_execution_uses_confirmed_operation_and_consumer_evi
             ],
         ),
     )
-    artifacts = SourceScanArtifactStore(application.knowledge_root)
+    artifacts = application.source_analysis.artifacts
     artifacts.write_manifest(manifest)
     artifacts.publish_latest(SYSTEM_ID, manifest.scan_id)
     worker_jar = tmp_path / "worker.jar"
@@ -821,7 +871,7 @@ def test_dsf_confirmation_is_invalidated_by_scan_or_operation_definition_drift(t
         dsf_profile=profile,
         dsf_operations=[operation],
     )
-    artifacts = SourceScanArtifactStore(application.knowledge_root)
+    artifacts = application.source_analysis.artifacts
     artifacts.write_manifest(first)
     artifacts.publish_latest(SYSTEM_ID, first.scan_id)
     application.store.update_source_baseline(SYSTEM_ID, baseline)
@@ -873,7 +923,7 @@ def test_dsf_confirmation_rejects_duplicate_operation_ids(tmp_path: Path) -> Non
         ),
         dsf_operations=[operation],
     )
-    artifacts = SourceScanArtifactStore(application.knowledge_root)
+    artifacts = application.source_analysis.artifacts
     artifacts.write_manifest(manifest)
     artifacts.publish_latest(SYSTEM_ID, manifest.scan_id)
 
@@ -906,7 +956,7 @@ def test_dsf_canary_fixture_api_never_echoes_sensitive_payload(tmp_path: Path) -
         ),
         dsf_operations=[operation],
     )
-    artifacts = SourceScanArtifactStore(application.knowledge_root)
+    artifacts = application.source_analysis.artifacts
     artifacts.write_manifest(manifest)
     artifacts.publish_latest(SYSTEM_ID, manifest.scan_id)
 

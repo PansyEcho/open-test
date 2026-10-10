@@ -480,6 +480,8 @@ def test_case_recovery_preserves_audit_and_projects_current_execution_protocol(
     monkeypatch.setattr(application.case_template_v4.handoffs, "get", lambda _handoff_id: handoff)
     monkeypatch.setattr(application.case_template_v4, "_input_contract", lambda *_args: blocked_contract)
     monkeypatch.setattr(application.case_template_v4, "_runtime_capabilities", lambda _handoff: [])
+    # 接口候选索引同样来自冻结scan；本用例只验证提示审计，不提供scan产物。
+    monkeypatch.setattr(application.case_template_v4.runtime.operation_catalog, "derive", lambda *_args, **_kwargs: [])
     # 历史任务保留原提示审计；当前工具说明升级，执行权限仍由独立execution_mode限制。
     monkeypatch.setattr(application.data_capabilities, "list_capabilities", lambda _system_id: [])
 

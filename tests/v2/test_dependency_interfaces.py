@@ -325,12 +325,12 @@ def test_local_published_interface_uses_exact_jar_contract(dependency_project, m
     store = GitKnowledgeStore(root.parent / "knowledge")
     store.register_system(SystemDefinition(system_id=system_id, name="通用接口", source_path=str(root)))
     methods, providers = [], []
-    # 两个声明共用一套发布路径；真正不存在的类型必须留下目标级缺口。
-    for action, request_type in [("query", "demo.api.Request"), ("queryMissing", "missing.Request")]:
+    # 三个声明共用一套发布路径；真正不存在的类型必须留下目标级缺口，无参方法只得到空请求对象。
+    for action, request_type in [("query", "demo.api.Request"), ("queryMissing", "missing.Request"), ("ping", "")]:
         reference = SourceReference(path="src/main/java/Endpoint.java", symbol=f"{owner}#{action}", line=2)
         methods.append(SemanticMethodDefinition(symbol_id=f"{owner}#{action}({request_type})",
             qualified_class_name=owner, method_name=action, source_ref=reference,
-            parameter_qualified_types=[request_type], return_qualified_type="demo.api.Request"))
+            parameter_qualified_types=[request_type] if request_type else [], return_qualified_type="demo.api.Request"))
         providers.append(DsfOperationDefinition(operation_id=f"dsf:{system_id}:endpoint:{action}",
             provider_system_id=system_id, gs_name="group", service_name="endpoint", version="1",
             action=action, request_type=request_type, response_type="demo.api.Request",
@@ -340,7 +340,7 @@ def test_local_published_interface_uses_exact_jar_contract(dependency_project, m
         semantic_analysis=SemanticAnalysisResult(schema_version=4, system_id=system_id, methods=methods))
     catalog = OperationCapabilityCatalog(store, SourceScanArtifactStore(store.root))
     issues = catalog.resolve_facade_contracts(manifest, root)
-    assert len(manifest.entries) == 2
+    assert len(manifest.entries) == 3
     assert len(issues) == 1 and "missing.Request" in issues[0].message
     schema = providers[0].request_schema
     assert schema["properties"]["traceId"]["type"] == "string"
@@ -349,6 +349,9 @@ def test_local_published_interface_uses_exact_jar_contract(dependency_project, m
     operations = catalog.derive_manifest(manifest)
     assert next(item for item in operations if item.operation_id.endswith("#query")).executable
     assert not next(item for item in operations if item.operation_id.endswith("#queryMissing")).executable
+    ping = next(item for item in operations if item.operation_id.endswith("#ping"))
+    assert ping.executable and ping.input_schema == {"type": "object", "properties": {}, "additionalProperties": False}
+    assert "contract_gap" not in next(entry for entry in manifest.entries if entry.source_id.endswith("#ping")).metadata
     # 依赖补齐后同一路径恢复请求契约；无需Agent或改动历史扫描。
     dependencies._schemas.clear()
     methods[1].parameter_qualified_types = ["demo.api.Request"]

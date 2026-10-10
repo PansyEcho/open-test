@@ -7,6 +7,7 @@ import subprocess
 from copy import deepcopy
 from contextlib import nullcontext
 from pathlib import Path
+from types import SimpleNamespace
 from unittest.mock import Mock, patch
 
 import pytest
@@ -333,6 +334,28 @@ def test_source_search_glob_matches_root_and_nested_java_files(tmp_path: Path) -
     }
 
 
+def test_source_search_accepts_single_file_path(tmp_path: Path) -> None:
+    """确认path指向单个源码文件时只在该文件内搜索，而不是拒绝请求。
+
+    Args:
+        tmp_path: Pytest提供的隔离源码与审计目录。
+
+    Returns:
+        None；仅返回指定文件内的匹配时通过。
+    """
+
+    source_root = tmp_path / "source"
+    nested_root = source_root / "app" / "src"
+    nested_root.mkdir(parents=True)
+    (source_root / "Root.java").write_text("class Root { String marker; }", encoding="utf-8")
+    (nested_root / "Nested.java").write_text("class Nested { String marker; }", encoding="utf-8")
+    reader = RegisteredSourceReader(source_root, tmp_path / "source-audit.jsonl")
+
+    matches = reader.search_source("marker", path="app/src/Nested.java")
+
+    assert [item["path"] for item in matches["matches"]] == ["app/src/Nested.java"]
+
+
 def test_v4_source_tool_reads_frozen_commit_snapshot_after_working_tree_changes(
     tmp_path: Path,
 ) -> None:
@@ -579,6 +602,7 @@ def test_outer_dsf_info_resolves_authorized_provider_facade_contract(tmp_path: P
     assert "default" not in info["request_schema"]["properties"]["page"]
     assert info["response_fields"][0]["field_path"] == "ownerId"
     assert info["runtime_function"]["provider_ref"] == TRADE_QUERY_LIST_ID
+    assert info["runtime_functions"] == [info["runtime_function"]]
     assert info["provider_source_refs"][0]["path"] == "TradeFacade.java"
     # 当前scope直接保存精确选择和意图，替代只能用于本机的展开审计。
     selected_scope = handoffs.get(handoff_id).source_scopes[1]
@@ -586,6 +610,43 @@ def test_outer_dsf_info_resolves_authorized_provider_facade_contract(tmp_path: P
     assert selected_scope.source_scan_id == "scan-booking-v4"
     assert selected_scope.selection_reasons[TRADE_QUERY_LIST_ID]["purpose"]
     assert info["revision"] == 1
+
+
+def test_selecting_own_database_returns_its_data_phase_functions(tmp_path: Path) -> None:
+    """选取本系统数据源时同时返回:query与:data两个DATA函数，Agent才知道可以取数或造数。
+
+    Args:
+        tmp_path: 可修订handoff的隔离持久化目录。
+    Returns:
+        None；返回ORACLE观察函数及两个DATA函数并记录选择时通过。
+    """
+
+    database_id = f"database:{SYSTEM_ID}:orderdatasource"
+    database = OperationCapability(
+        operation_id=database_id, system_id=SYSTEM_ID, business_name="查询或写入orderDatasource",
+        kind=OperationKind.DATABASE, mutability=OperationMutability.WRITE,
+        input_schema={"type": "object", "properties": {"statement": {"type": "string"}}},
+        provider_kind=OperationProviderKind.DATABASE_RESOURCE, provider_operation_id="resource:orderdatasource",
+        source_scan_id=SCAN_ID, executable=True,
+    )
+    handoffs = CaseTemplateHandoffStoreV4(tmp_path)
+    handoff_id = "case-template-handoff-" + "b" * 20
+    handoffs.write(CaseTemplateHandoffV4(
+        handoff_id=handoff_id, system_id=SYSTEM_ID, entry_id=CANCEL_ID,
+        source_scan_id=SCAN_ID, status="WAITING_FOR_AGENT", source_scopes=[
+            CaseTemplateSourceScope(source_system_id=SYSTEM_ID, source_scan_id=SCAN_ID,
+                                    source_baseline=SourceBaseline(source_path=str(tmp_path))),
+        ],
+    ))
+    service = CaseTemplateV4Service(Mock(), Mock(), Mock(), handoffs)
+    catalog = Mock()
+    catalog.derive.return_value = [database]
+    with patch("opentest.application.operations.OperationCapabilityCatalog", return_value=catalog):
+        info = service.read_outer_api_info(handoff_id, database_id, "createDateStart", "从任务表取真实创建时间")
+
+    phases = {item["function_id"]: item["allowed_phases"] for item in info["runtime_functions"]}
+    assert phases == {database_id: ["ORACLE"], f"{database_id}:query": ["DATA"], f"{database_id}:data": ["DATA"]}
+    assert handoffs.get(handoff_id).source_scopes[0].selected_operation_ids == [database_id]
 
 
 def _compile_golden() -> tuple[list, list]:
@@ -860,6 +921,42 @@ def test_data_seed_rejects_literal_hidden_behind_function_input() -> None:
 
     assert variants == []
     assert "UNTRUSTED_DATA_SEED" in {item.code for item in issues}
+
+
+@pytest.mark.parametrize("read_only", [True, False])
+def test_database_sql_protocol_literals_are_not_untrusted_data_seeds(read_only: bool) -> None:
+    """确认数据库:query/:data的statement、purpose和parameters是查询协议而非业务身份种子。
+
+    Args:
+        read_only: True对应只读:query，False对应准备语句:data。
+    Returns:
+        None；两种数据库DATA函数的SQL协议literal都不产生UNTRUSTED_DATA_SEED时通过。
+    """
+
+    suffix = "query" if read_only else "data"
+    descriptor = RuntimeFunctionDescriptor(
+        function_id=f"{DATABASE_ID}:{suffix}", kind="mysql", description="数据库DATA函数",
+        input_schema={"type": "object", "properties": {"statement": {"type": "string"}, "purpose": {"type": "string"},
+                                                       "parameters": {"type": "array"}},
+                      "required": ["statement", "purpose", "parameters"]},
+        output_schema={}, read_only=read_only, allowed_phases=["DATA"],
+        source_system_id=SYSTEM_ID, provider_ref=DATABASE_ID,
+    )
+    step = SimpleNamespace(operation="runtime_call", function_id=descriptor.function_id, step_id="task", arguments={
+        "statement": DslValueSource(kind="literal", value="SELECT id FROM task ORDER BY id DESC LIMIT 1"),
+        "purpose": DslValueSource(kind="literal", value="case"),
+        "parameters": DslValueSource(kind="literal", value=[]),
+    })
+    # 无verify_steps才会进入seed门禁，最小替身只提供该私有校验读取的属性。
+    function = SimpleNamespace(name="latest_task", verify_steps=[], all_steps=lambda: [step])
+    call = SimpleNamespace(call_id="task_record", function_name="latest_task")
+    template = SimpleNamespace(parameters=[], data_calls=[call])
+    compilation = SimpleNamespace(submission=SimpleNamespace(data_functions=[function]),
+                                  runtime_registry=RuntimeFunctionRegistry(functions=[descriptor]))
+
+    issues = CaseTemplateValidatorV4()._data_seed_issues(compilation, "case_template:latest", template, call, set())
+
+    assert issues == []
 
 
 def test_dynamic_data_output_type_is_checked_before_qa() -> None:
@@ -3799,6 +3896,50 @@ def test_handoff_catalog_never_exposes_registered_source_root() -> None:
         {"source_system_id": SYSTEM_ID, "source_scan_id": SCAN_ID, "resolved_operations": [],
          "selected_operation_ids": [], "selection_reasons": {}, "contract_revisions": {}}
     ]
+
+
+def test_handoff_interface_index_lists_unselected_frozen_scan_operations() -> None:
+    """仅选中目标时，目录索引仍应列出同Facade方法、本系统数据源和外部DSF供Agent发现取数入口。
+
+    Returns:
+        None；索引来自完整冻结scan，而执行目录仍只含明确选择的操作即通过。
+    """
+
+    handoff = CaseTemplateHandoffV4(
+        handoff_id=f"case-template-handoff-{'f' * 20}",
+        system_id=SYSTEM_ID,
+        entry_id=CANCEL_ID,
+        source_scan_id=SCAN_ID,
+        status="WAITING_FOR_AGENT",
+        source_scopes=[CaseTemplateSourceScope(source_system_id=SYSTEM_ID, source_scan_id=SCAN_ID,
+                                               source_baseline=SourceBaseline(source_path="/private/refund-core"))],
+    )
+
+    def capability(operation_id: str, kind: OperationKind) -> OperationCapability:
+        """构造冻结scan中的一个可执行操作，只区分身份和种类。"""
+        return OperationCapability(operation_id=operation_id, system_id=SYSTEM_ID, business_name=operation_id,
+                                   kind=kind, mutability=OperationMutability.READ_ONLY, input_schema={},
+                                   source_scan_id=SCAN_ID, executable=True)
+
+    target = capability(CANCEL_ID, OperationKind.FACADE)
+    sibling = capability(CANCEL_ID.replace("#cancel", "#queryList"), OperationKind.FACADE)
+    other_facade = capability("facade:com.ly.flight.chainsaas.refund.facade.OtherFacade#query", OperationKind.FACADE)
+    database = capability(DATABASE_ID, OperationKind.DATABASE)
+    external = capability("dsf:ifightchainsaas.booking.core:trade:queryList", OperationKind.EXTERNAL_DSF)
+    handoffs = Mock()
+    handoffs.get.return_value = handoff
+    service = CaseTemplateV4Service(Mock(), Mock(), Mock(), handoffs)
+    service._input_contract = Mock(return_value=_cancel_contract())
+    # 执行授权只含目标；发现索引必须读取完整冻结scan。
+    service._runtime_capabilities = Mock(return_value=[target])
+    service.runtime = SimpleNamespace(operation_catalog=Mock(
+        derive=Mock(return_value=[target, sibling, other_facade, database, external])))
+
+    catalog = service.catalog(handoff.handoff_id)
+
+    assert [item["operation_id"] for item in catalog["related_interface_index"]] == [sibling.operation_id, DATABASE_ID]
+    assert [item["operation_id"] for item in catalog["outer_interface_index"]] == [external.operation_id]
+    assert all(item["function_id"] != DATABASE_ID for item in catalog["runtime_function_registry"]["functions"])
 
 
 def test_enum_leaf_and_collection_schema_share_normalized_contract() -> None:

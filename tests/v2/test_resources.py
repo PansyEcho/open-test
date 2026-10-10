@@ -521,7 +521,7 @@ def test_resource_probe_requires_explicit_logical_environment(
         assert canonical_task is submitted_task
         assert observed_environments == ["qa"]
         assert submitted_jobs == [
-            {"resource_count": 0, "states": []},
+            {"resource_count": 0, "success_count": 0, "failure_count": 0, "states": []},
         ]
     finally:
         application.close()

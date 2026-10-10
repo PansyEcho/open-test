@@ -125,8 +125,11 @@ def test_search_rejects_unknown_downstream_and_never_chooses_another_version(tmp
 
     service, scope, jar_root = _search_fixture(tmp_path)
     # 任意系统参数必须在文件搜索前被拒绝，而不是借机枚举本机依赖仓库。
-    with pytest.raises(ScopeViolationError):
+    with pytest.raises(ScopeViolationError, match="not declared"):
         service.search("caller", [scope], "dsf.unrelated")
+    # 任务系统自身不是下游；错误需指向自身候选索引与选择工具，Agent才能修正调用而非放弃取数。
+    with pytest.raises(ScopeViolationError, match="related_interface_index; select one with read_outer_api_info"):
+        service.search("caller", [scope], "caller")
     different = jar_root.parent / "9.0"
     different.mkdir()
     with zipfile.ZipFile(different / "provider-api-9.0-sources.jar", "w") as archive:

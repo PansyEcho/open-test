@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import stat
 from pathlib import Path
 from types import SimpleNamespace
 
@@ -100,7 +99,7 @@ def test_interview_propagates_to_multiple_drafts_without_publishing(tmp_path: Pa
         baseline=baseline,
         entries=[EntryPoint(entry_id="facade:demo.OrderFacade#query", system_id="demo-system", kind="facade", display_name="OrderFacade#query", source_id="demo.OrderFacade#query", source_path=str(source / "OrderFacade.java"))],
     )
-    artifacts = SourceScanArtifactStore(application.knowledge_root)
+    artifacts = application.source_analysis.artifacts
     artifacts.write_manifest(manifest)
     artifacts.publish_latest("demo-system", manifest.scan_id)
     application.store.update_source_baseline("demo-system", manifest.baseline)
@@ -125,8 +124,10 @@ def test_interview_propagates_to_multiple_drafts_without_publishing(tmp_path: Pa
     published_nodes = application.store.list_nodes("demo-system")
     assert published_nodes
     assert {node.status for node, _, _ in published_nodes} == {KnowledgeStatus.CODE_VERIFIED}
-    interview_path = application.knowledge_root / ".opentest/knowledge-interviews/demo-system/interview.json"
-    assert stat.S_IMODE(interview_path.stat().st_mode) == 0o600
+    # 访谈保存在共享元数据中，新读取应得到同一用途和术语。
+    saved_interview = application.get_knowledge_interview("demo-system")
+    assert saved_interview.system_purpose == "订单查询"
+    assert saved_interview.business_terms == {"EBK": "供应商工作台"}
     application.close()
 
 
@@ -152,7 +153,7 @@ def test_resaving_interview_preserves_answered_draft_content(tmp_path: Path) -> 
         baseline=baseline,
         entries=[EntryPoint(entry_id="facade:demo.OrderFacade#query", system_id="demo-system", kind="facade", display_name="OrderFacade#query", source_id="demo.OrderFacade#query", source_path=str(source / "OrderFacade.java"))],
     )
-    artifacts = SourceScanArtifactStore(application.knowledge_root)
+    artifacts = application.source_analysis.artifacts
     artifacts.write_manifest(manifest)
     artifacts.publish_latest("demo-system", manifest.scan_id)
     application.store.update_source_baseline("demo-system", manifest.baseline)
@@ -207,8 +208,10 @@ def test_revision_requires_answer_and_preserves_manual_region(tmp_path: Path) ->
     application = OpenTestApplication(tmp_path / "knowledge")
     application.register_system(SystemDefinition(system_id="demo-system", name="演示", source_path=str(source)))
     node = KnowledgeNode(node_id="facade:OrderFacade#query", system_id="demo-system", kind=KnowledgeNodeKind.FACADE, title="查询订单", status=KnowledgeStatus.USER_CONFIRMED)
-    path = application.store.write_node(node, "初始自动内容")
-    path.write_text(path.read_text(encoding="utf-8") + "\n人工备注：保留此段\n", encoding="utf-8")
+    application.store.write_node(node, "初始自动内容")
+    # 人工备注位于自动区之外；共享存储没有可编辑文件，直接保存带人工段的完整正文。
+    initial_body = application.store.get_node("demo-system", node.node_id)[2]
+    application.store._save_node(node, initial_body + "\n人工备注：保留此段\n")
 
     plan = application.create_knowledge_revision("demo-system", KnowledgeRevisionRequest(node_id=node.node_id, feedback="遗漏EBK筛选规则"))
     question = plan.questions[0]

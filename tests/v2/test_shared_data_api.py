@@ -115,13 +115,16 @@ def test_shared_runner_requires_readable_publication_and_uses_scoped_tools(tmp_p
         context["capability" if kind == "data_capability" else "contract"] = {"version": 1}
         application.web_generation._settle(task.task_id, "")
         assert application.tasks.get(task.task_id).status == TaskStatus.COMPLETED
-        assert application.web_generation.tool_definitions(task.task_id) == [{"name": "read_context"}]
+        # 共享任务工具由服务按绑定类型提供，另附固定的线下验证工具。
+        offline_tools = application.web_generation._offline_tool_definitions()
+        assert application.web_generation.tool_definitions(task.task_id) == [{"name": "read_context"}, *offline_tools]
         assert application.web_generation.call_tool(task.task_id, "read_context", {}) == {"kind": kind}
         service.agent_tools.assert_called_once_with(task.task_id)
         service.call_agent_tool.assert_called_once_with(task.task_id, "read_context", {})
         prompt = application.web_generation._analysis_prompt(task)
-        assert "不调用QA" in prompt
-        assert "正式产物保存成功" in prompt
+        # 线下环境默认自主验证；发布成功不能代替真实执行报告。
+        assert "默认自主完成线下验证" in prompt
+        assert "不能把发布成功当成业务验证成功" in prompt
         assert "八个业务章节" not in prompt
     finally:
         application.close()

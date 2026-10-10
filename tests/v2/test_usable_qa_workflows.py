@@ -33,7 +33,7 @@ def _execution_service(tmp_path, pool):
     generations = Mock()
     generations.get.return_value = generation
     handoffs = Mock()
-    handoffs.get.return_value = SimpleNamespace(system_id=SYSTEM_ID, generation_id=generation.generation_id)
+    handoffs.get.return_value = SimpleNamespace(system_id=SYSTEM_ID, generation_id=generation.generation_id, source_scopes=[])
     executions = CaseGenerationExecutionStoreV4(tmp_path)
     runtime = CaseTemplateV4RuntimeServices(Mock(), Mock(), lambda _: {},
                                           task_manager=SimpleNamespace(_executor=pool), execution_store=executions)

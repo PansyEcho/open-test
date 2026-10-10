@@ -748,6 +748,46 @@ def test_default_draft_trial_is_required_and_replayed_once(shared_scope: SimpleN
     assert len([item for item in shared_scope.state['calls'] if item[0] == FACADE + 'saveReport']) == 1
 
 
+def test_contract_supplement_records_rejection_and_adoption_in_task(shared_scope: SimpleNamespace) -> None:
+    """契约补充被拒绝时任务保存原因且不再接受提交；成功补充记录采纳并完成同一任务。"""
+
+    from opentest.domain.models import TaskStatus
+
+    operation_id = FACADE + 'queryReportByUniqueKey'
+    contract = OperationInputKnowledgeContract(contract_version='operation-contract/v2', target_id=operation_id,
+        request_type='Request', source_scan_id='scan-source-a', status='READY',
+        request_schema={'type': 'object', 'properties': {}, 'additionalProperties': False}, fields=[])
+    contracts = Mock()
+    contracts.get_contract.return_value = contract
+    contracts.supplement.side_effect = KnowledgeValidationError('补充Schema不属于受支持的确定结构')
+    shared_scope.cases.operation_contracts = contracts
+    supplement = {'fields': [{'path': 'ownerId', 'description': '归属方', 'evidence_refs': [
+        {'path': 'ReportFacade.java', 'symbol': 'example.ReportFacade#query', 'line': 1}]}]}
+
+    rejected = shared_scope.service.prepare(PROVIDER, DataCapabilityPrepareRequest(
+        goal='补充ownerId', operation_id=operation_id, kind='contract', request_id='contract-reject'))
+    with pytest.raises(KnowledgeValidationError, match='不属于受支持'):
+        shared_scope.service.call_agent_tool(rejected.task_id, 'supplement_contract', {'expected_revision': 0, 'supplement': supplement})
+    record = shared_scope.tasks.get(rejected.task_id)
+    assert record.status == TaskStatus.FAILED
+    assert record.result['contract_completion']['adoption'] == 'rejected'
+    assert record.result['contract_completion']['reason'] == '补充Schema不属于受支持的确定结构'
+    # 再次提交不得重复调用契约服务，且提示保留首次拒绝根因。
+    with pytest.raises(KnowledgeValidationError, match='原因：补充Schema不属于受支持的确定结构'):
+        shared_scope.service.call_agent_tool(rejected.task_id, 'supplement_contract', {'expected_revision': 0, 'supplement': supplement})
+    assert contracts.supplement.call_count == 1
+
+    contracts.supplement.side_effect = None
+    contracts.supplement.return_value = contract.model_copy(update={'contract_revision': 1})
+    accepted = shared_scope.service.prepare(PROVIDER, DataCapabilityPrepareRequest(
+        goal='补充ownerId', operation_id=operation_id, kind='contract', request_id='contract-accept'))
+    shared_scope.service.call_agent_tool(accepted.task_id, 'supplement_contract', {'expected_revision': 0, 'supplement': supplement})
+    record = shared_scope.tasks.get(accepted.task_id)
+    assert record.status == TaskStatus.COMPLETED
+    assert record.result['contract_completion']['adoption'] == 'accepted'
+    assert record.result['contract_completion']['reason'] == ''
+
+
 def test_generate_only_draft_cannot_access_business_provider(shared_scope: SimpleNamespace) -> None:
     """明确禁止执行时，直接试跑入口也必须在访问业务Provider前拒绝。"""
 

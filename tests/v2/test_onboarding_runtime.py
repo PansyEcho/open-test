@@ -20,6 +20,7 @@ from opentest.domain.models import (
 )
 
 
+@pytest.mark.production_metadata_loader
 def test_runtime_requires_mysql_without_creating_local_database(tmp_path):
     """缺失MySQL配置立即报告，不产生可被误当成生产库的本地文件。"""
 

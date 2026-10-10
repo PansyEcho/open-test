@@ -35,3 +35,10 @@ TBD - created by archiving change fix-system-settings-and-relations. Update Purp
 - **THEN** 不自动请求旧DSF全局目录，不展示成排红色未接入错误卡
 - **AND** 可展开查看接口及来源证据，真实读取失败仍明确可见
 
+### Requirement: 关系目录读取已发布可靠扫描
+系统 SHALL 从当前已发布扫描读取已确认关系，包括部分完成的扫描；尚无扫描时返回可解释空态，不抛出manifest不存在错误。
+
+#### Scenario: 新系统及局部扫描
+- **WHEN** 系统没有扫描或只有部分完成的已发布扫描
+- **THEN** 分别展示空态或已确认上下游，未接入下游仍可见
+

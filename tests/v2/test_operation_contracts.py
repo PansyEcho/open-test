@@ -151,10 +151,8 @@ def _contract_application(tmp_path: Path) -> OpenTestApplication:
             method_name="process", parameter_qualified_types=["demo.Request"], has_executable_body=True,
             source_ref=SourceReference(path="Listener.java", symbol="demo.Listener#process(demo.Request)", line=3)),
     ]))
-    artifacts = SourceScanArtifactStore(application.knowledge_root)
-    artifacts.write_manifest(manifest)
-    artifacts.publish_latest(SYSTEM_ID, SCAN_ID)
-    application.store.update_source_baseline(SYSTEM_ID, baseline)
+    # 走生产扫描发布路径，同时登记共享接口目录和基础契约。
+    application.source_analysis.publish_manifest(manifest)
     return application
 
 
@@ -239,7 +237,7 @@ def test_mq_binding_rejects_other_class_or_unrelated_annotation(
     """
 
     application = _contract_application(tmp_path)
-    artifacts = SourceScanArtifactStore(application.knowledge_root)
+    artifacts = application.source_analysis.artifacts
     manifest = artifacts.read(SYSTEM_ID, SCAN_ID)
     source = Path(manifest.baseline.source_path)
     binding_source = (
@@ -252,8 +250,10 @@ def test_mq_binding_rejects_other_class_or_unrelated_annotation(
     listener = next(item for item in manifest.semantic_analysis.types if item.simple_name == "Listener")
     # 第一种把Listener证据放在Other的注解行；第二种保留正确位置但没有Spring bean含义。
     listener.source_ref = listener.source_ref.model_copy(update={"line": 1})
-    artifacts.write_manifest(manifest.model_copy(update={"baseline": GitSourceRepository().capture(source)}))
-    contract = application.operation_contracts.get_contract(SYSTEM_ID, f"mq:{SYSTEM_ID}:refundconsumer", SCAN_ID)
+    # 共享扫描身份不可变，改写后的源码作为新scan发布，契约在发布时按新源码固定。
+    rebound = manifest.model_copy(update={"scan_id": "scan-contract-rebound", "baseline": GitSourceRepository().capture(source)})
+    application.source_analysis.publish_manifest(rebound)
+    contract = application.operation_contracts.get_contract(SYSTEM_ID, f"mq:{SYSTEM_ID}:refundconsumer", rebound.scan_id)
     assert contract.fields == []
     assert contract.operation_summary == "消费refundConsumer消息。"
 
@@ -273,22 +273,21 @@ def test_http_catalog_freezes_external_tree_to_selected_scan(tmp_path: Path) -> 
     from unittest.mock import patch
 
     application = _contract_application(tmp_path)
-    artifacts = SourceScanArtifactStore(application.knowledge_root)
+    artifacts = application.source_analysis.artifacts
     original = artifacts.read(SYSTEM_ID, SCAN_ID)
     newer = original.model_copy(update={"scan_id": "scan-contract-next", "generated_at": utc_now()})
-    artifacts.write_manifest(newer)
-    artifacts.publish_latest(SYSTEM_ID, newer.scan_id)
-    # 聚合算法另有真实DSF覆盖；这里检查HTTP交付的Manifest身份，故意让两代返回不同目录。
-    external_tree = Mock(side_effect=lambda manifest: [{"gs_name": manifest.scan_id, "interfaces": []}])
+    application.source_analysis.publish_manifest(newer)
+    # 聚合算法另有真实DSF覆盖；这里检查HTTP交付的扫描身份，故意让两代返回不同目录。
+    external_tree = Mock(side_effect=lambda system_id, scan_id: [{"gs_name": scan_id, "interfaces": []}])
     try:
-        with patch.object(SystemRelationService, "external_systems", external_tree), TestClient(create_app(application)) as client:
+        with patch.object(SystemRelationService, "_shared_external_systems", external_tree), TestClient(create_app(application)) as client:
             for selected, expected in [("latest", newer.scan_id), (SCAN_ID, SCAN_ID)]:
                 response = client.get(f"/api/v2/systems/{SYSTEM_ID}/scans/{selected}/catalog")
                 assert response.status_code == 200
                 payload = response.json()
                 assert payload["catalog"]["scan_id"] == expected
                 assert payload["external_systems"][0]["gs_name"] == expected
-                assert external_tree.call_args.args[0].scan_id == expected
+                assert external_tree.call_args.args == (SYSTEM_ID, expected)
     finally:
         application.close()
 
@@ -303,7 +302,7 @@ def test_contract_catalog_separates_historical_narrative_and_scan_versions(tmp_p
     """
 
     application = _contract_application(tmp_path)
-    artifacts = SourceScanArtifactStore(application.knowledge_root)
+    artifacts = application.source_analysis.artifacts
     original = artifacts.read(SYSTEM_ID, SCAN_ID)
     old_contract = application.operation_contracts.get_contract(SYSTEM_ID, OPERATION_ID, SCAN_ID)
     application.operation_contracts.supplement(SYSTEM_ID, OPERATION_ID, SCAN_ID, OperationContractSupplement(
@@ -322,8 +321,7 @@ def test_contract_catalog_separates_historical_narrative_and_scan_versions(tmp_p
     changed_analysis.methods[0].javadoc_summary = "新扫描的退款补单用途"
     newer = original.model_copy(update={"scan_id": "scan-contract-next", "semantic_analysis": changed_analysis,
                                        "generated_at": utc_now()})
-    artifacts.write_manifest(newer)
-    artifacts.publish_latest(SYSTEM_ID, newer.scan_id)
+    application.source_analysis.publish_manifest(newer)
     latest = application.get_knowledge_target_detail(SYSTEM_ID, OPERATION_ID)
     assert latest.target.knowledge_status == KnowledgeTargetStatus.STALE
     assert latest.operation_contract.source_scan_id == newer.scan_id

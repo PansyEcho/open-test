@@ -5,11 +5,12 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
+from opentest.application.foundation import OpenTestApplication
 from opentest.cli import main
 
 
 def test_cli_initializes_and_registers_system(tmp_path: Path, capsys: object) -> None:
-    """CLI成功注册系统时应输出机器可读JSON并写入同一知识registry。"""
+    """CLI成功注册系统时应输出机器可读JSON并写入同一共享系统目录。"""
 
     source = tmp_path / "source"
     source.mkdir()
@@ -31,11 +32,16 @@ def test_cli_initializes_and_registers_system(tmp_path: Path, capsys: object) ->
     assert exit_code == 0
     assert payload["success"] is True
     assert payload["result"]["system_id"] == "train-booking-core"
-    assert (knowledge_root / "registry" / "systems.yaml").exists()
+    # 系统身份保存在共享元数据中；新应用实例读取到同一注册即证明已持久化。
+    application = OpenTestApplication(knowledge_root)
+    try:
+        assert application.store.get_system("train-booking-core").name == "火车票预订"
+    finally:
+        application.close()
 
 
 def test_cli_maps_invalid_system_to_structured_validation_error(tmp_path: Path, capsys: object) -> None:
-    """非法系统定义不得打印traceback或在校验失败前写入知识目录。"""
+    """非法系统定义不得打印traceback或在校验失败前登记系统。"""
 
     source = tmp_path / "source"
     source.mkdir()
@@ -56,4 +62,9 @@ def test_cli_maps_invalid_system_to_structured_validation_error(tmp_path: Path, 
     assert exit_code == 2
     assert payload["success"] is False
     assert payload["error"]["code"] == "validation_error"
-    assert not (knowledge_root / "registry" / "systems.yaml").exists()
+    # 校验失败不得登记任何系统。
+    application = OpenTestApplication(knowledge_root)
+    try:
+        assert application.store.list_systems() == []
+    finally:
+        application.close()

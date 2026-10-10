@@ -166,7 +166,7 @@ test("task pagination keeps the selected Case identity", async()=>{
     currentCaseInstruction:"",currentKnowledgeWorkflow:null,consolePages:{tasks:2},
     isCurrentSystemScope:()=>true,renderConsolePager:()=>{},renderWorkbenchTasks:()=>{},
     renderCodexTaskPane:()=>{},renderSelectedKnowledgeGenerationAttempt:()=>{},
-    taskContinuationInstruction:()=>"",element:()=>({}),
+    taskContinuationInstruction:()=>"",element:()=>({}),TASK_POLL_FAILURE_TEXT:"任务状态刷新失败，可手动重试",
     api:async path=>{calls.push(path);return path.startsWith("/tasks?")?{tasks:[{task_id:"other",operation:"case-generation",active_handoff_id:"handoff-other"}]}:{task:selected};},
   });
   vm.runInContext(sourceFunction("readTaskCatalog"),context);
@@ -174,6 +174,25 @@ test("task pagination keeps the selected Case identity", async()=>{
   assert.equal(context.currentCaseTask.task_id,"selected");
   assert.equal(context.activeCaseHandoffId,"handoff-selected");
   assert.equal(calls[1],"/tasks/selected?view=summary");
+});
+
+/** 轮询失败提示不能在任务目录恢复后长期滞留；正常健康文案不触发额外健康请求。 */
+test("task catalog recovery clears the stale poll failure notice", async()=>{
+  const health={textContent:"任务状态刷新失败，可手动重试"};
+  let healthChecks=0;
+  const context=vm.createContext({currentCaseTask:null,currentTasks:[],currentKnowledgeWorkflow:null,consolePages:{tasks:1},
+    isCurrentSystemScope:()=>true,renderConsolePager:()=>{},renderWorkbenchTasks:()=>{},
+    renderCodexTaskPane:()=>{},renderSelectedKnowledgeGenerationAttempt:()=>{},
+    element:id=>id==="health-text"?health:{},TASK_POLL_FAILURE_TEXT:"任务状态刷新失败，可手动重试",
+    checkHealth:async()=>{healthChecks+=1;health.textContent="V0.2.0 READY";},
+    api:async()=>({tasks:[]}),
+  });
+  vm.runInContext(sourceFunction("readTaskCatalog"),context);
+  await vm.runInContext("readTaskCatalog({systemId:'a',generation:1})",context);
+  assert.equal(healthChecks,1);
+  assert.equal(health.textContent,"V0.2.0 READY");
+  await vm.runInContext("readTaskCatalog({systemId:'a',generation:1})",context);
+  assert.equal(healthChecks,1);
 });
 
 /** 隐藏报告页只列批次，不把摘要当完整证据；用户进入结果页后才读取全文。 */
@@ -223,4 +242,22 @@ test("workspace completion reports failed subreads without a duplicate global er
     isCurrentSystemScope:()=>true});
   vm.runInContext(sourceFunction("readWorkspaceData"),context);
   assert.equal(await vm.runInContext("readWorkspaceData('data-capabilities',{systemId:'a'})",context),false);
+});
+
+/** 连接检测任务详情必须从任务结果展示所属环境和逐项失败原因，不依赖已被复测覆盖的资源主表。 */
+test("resource probe task detail shows environment and failure reasons", () => {
+  const node = (tag, text = "", className = "") => ({tag, text, className, children: [], appendChild(child) { this.children.push(child); }});
+  const context = vm.createContext({textNode: node});
+  vm.runInContext(sourceFunction("appendResourceProbeResult"), context);
+  const dialog = node("dialog");
+  context.appendResourceProbeResult(dialog, {operation: "resource-probe", result: {states: [
+    {resource_id: "resource:sys.a:mysql:database:main", connection_state: "CONNECTED", probe_environment: "qa", error_code: "", safe_summary: "ok"},
+    {resource_id: "resource:sys.a:mq:cluster:dpms", connection_state: "FAILED", probe_environment: "qa", error_code: "QA_ACTIVE_OPERATION_FAILED", safe_summary: "Topic不存在"},
+  ]}});
+  assert.equal(dialog.children[0].text, "检测环境：QA · 1项成功，1项失败");
+  assert.equal(dialog.children[1].children[0].text, "mq:cluster:dpms：QA_ACTIVE_OPERATION_FAILED · Topic不存在");
+
+  const other = node("dialog");
+  context.appendResourceProbeResult(other, {operation: "source-scan", result: {states: [{probe_environment: "qa"}]}});
+  assert.equal(other.children.length, 0);
 });

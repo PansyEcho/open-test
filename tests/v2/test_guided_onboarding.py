@@ -32,12 +32,12 @@ def test_registration_defaults_to_dotted_source_basename_and_never_echoes_token(
     monkeypatch,
     caplog,
 ) -> None:
-    """注册应使用源码目录名作为ID，并让Token只进入0600本地文件。
+    """注册应使用源码目录名作为ID，只保存0600资源环境设置，并拒绝已退役的Token字段。
 
     Args:
         tmp_path: Pytest提供的隔离源码和知识目录。
         monkeypatch: 替换后台扫描提交，避免接入契约测试启动scriptgen。
-        caplog: 捕获日志以验证Token不会进入诊断输出。
+        caplog: 捕获日志以验证旧Token不会进入诊断输出。
     """
 
     source = tmp_path / "travelsystem.java.dsf.example_core"
@@ -57,7 +57,8 @@ def test_registration_defaults_to_dotted_source_basename_and_never_echoes_token(
     monkeypatch.setattr(application, "submit_source_scan", submit_scan_without_execution)
     monkeypatch.setattr(application, "ensure_scanner_ready", lambda: None)
     with caplog.at_level(logging.INFO), TestClient(create_app(application), client=("127.0.0.1", 50000)) as client:
-        response = client.post(
+        # 注册契约已退役Labrador Token及HTTP Job网关，携带旧字段的请求必须在写入前被拒绝。
+        legacy_response = client.post(
             "/api/v2/systems",
             json={
                 "name": "示例DSF系统",
@@ -67,18 +68,31 @@ def test_registration_defaults_to_dotted_source_basename_and_never_echoes_token(
                 "qa_gateway_prefix": "http://servicegw.qa.example/gateway/example/v2",
             },
         )
+        response = client.post(
+            "/api/v2/systems",
+            json={
+                "name": "示例DSF系统",
+                "source_path": str(source),
+                "service_type": "DSF",
+                "resource_config_environment": "qa",
+            },
+        )
 
+    assert legacy_response.status_code == 422
     body = response.json()
     assert response.status_code == 201
     assert body["system"]["system_id"] == source.name
     assert body["scan_task"]["system_id"] == source.name
-    assert token not in response.text
+    assert "qa_labrador_token" not in response.text
     assert token not in caplog.text
 
     settings_path = tmp_path / "knowledge/.opentest/environments" / source.name / "qa.yaml"
     assert stat.S_IMODE(settings_path.stat().st_mode) == 0o600
-    assert token in settings_path.read_text(encoding="utf-8")
-    task_text = "\n".join(path.read_text(encoding="utf-8") for path in (tmp_path / "knowledge/.opentest/tasks").glob("*.json"))
+    settings_text = settings_path.read_text(encoding="utf-8")
+    assert yaml.safe_load(settings_text)["resource_config_environment"] == "qa"
+    assert token not in settings_text
+    # MySQL模式的任务记录只能通过任务管理器读取，确认任务结果同样不含旧Token。
+    task_text = "\n".join(record.model_dump_json() for record in application.tasks.list_records(source.name))
     assert token not in task_text
 
 
@@ -128,7 +142,7 @@ def test_local_settings_preserve_fixture_and_support_environment_reference(tmp_p
 
 
 def test_local_settings_api_rejects_non_loopback_client(tmp_path: Path) -> None:
-    """非回环请求不得读取或覆盖允许完整回显的本地Token。"""
+    """非回环请求不得读取或覆盖本地资源环境设置。"""
 
     source = tmp_path / "source"
     source.mkdir()
@@ -136,29 +150,29 @@ def test_local_settings_api_rejects_non_loopback_client(tmp_path: Path) -> None:
     application.register_system(
         SystemDefinition(system_id=BOOKING_SYSTEM_ID, name="火车票预订", source_path=str(source))
     )
-    application.save_local_settings(BOOKING_SYSTEM_ID, "local-only-token")
+    application.save_local_settings(BOOKING_SYSTEM_ID, "", resource_config_environment="test")
 
     with TestClient(create_app(application), client=("10.20.30.40", 50000)) as client:
         read_response = client.get(f"/api/v2/systems/{BOOKING_SYSTEM_ID}/local-settings")
         write_response = client.put(
             f"/api/v2/systems/{BOOKING_SYSTEM_ID}/local-settings",
-            json={"qa_labrador_token": "replacement"},
+            json={"resource_config_environment": "uat"},
         )
 
     assert read_response.status_code == 409
     assert write_response.status_code == 409
-    assert "local-only-token" not in read_response.text
-    assert "replacement" not in write_response.text
+    assert "resource_config_environment" not in read_response.text
+    assert application.get_local_settings(BOOKING_SYSTEM_ID).resource_config_environment == "test"
 
 
 def test_local_settings_environment_update_preserves_omitted_token(tmp_path: Path) -> None:
-    """仅切换资源filter时不得因请求未带Token而清除已有凭据。
+    """仅切换资源filter时不得因请求未带Token而清除历史文件中的旧凭据。
 
     Args:
         tmp_path: pytest隔离的系统源码、知识和0600设置目录。
 
     Returns:
-        None；仅更新资源环境后原Token仍可读取时通过。
+        None；仅更新资源环境后历史Token仍在本地文件且响应不回显时通过。
 
     Side Effects:
         通过回环测试客户端更新本地设置，不启动扫描或访问远程资源。
@@ -167,13 +181,25 @@ def test_local_settings_environment_update_preserves_omitted_token(tmp_path: Pat
     source = tmp_path / "source"
     source.mkdir()
     application = OpenTestApplication(tmp_path / "knowledge")
-    # 先保存不可泄露也不可被环境单字段更新覆盖的已有Token。
     application.register_system(
         SystemDefinition(system_id=BOOKING_SYSTEM_ID, name="火车票预订", source_path=str(source))
     )
-    application.save_local_settings(BOOKING_SYSTEM_ID, "existing-local-token")
+    # 模拟历史遗留的本地凭据文件，环境更新既不解析也不清除这些旧键。
+    settings_path = tmp_path / "knowledge/.opentest/environments" / BOOKING_SYSTEM_ID / "qa.yaml"
+    settings_path.parent.mkdir(parents=True)
+    settings_path.write_text(
+        yaml.safe_dump(
+            {
+                "system_id": BOOKING_SYSTEM_ID,
+                "environment": "qa",
+                "values": {"tool_environment": {"LABRADOR_TOKEN": "existing-local-token"}},
+            },
+            sort_keys=False,
+        ),
+        encoding="utf-8",
+    )
 
-    # 请求体刻意不提供Token，用于覆盖页面或API只切换资源环境的真实路径。
+    # 请求体只切换资源环境，覆盖页面或API单字段更新的真实路径。
     with TestClient(create_app(application), client=("127.0.0.1", 50000)) as client:
         response = client.put(
             f"/api/v2/systems/{BOOKING_SYSTEM_ID}/local-settings",
@@ -182,8 +208,11 @@ def test_local_settings_environment_update_preserves_omitted_token(tmp_path: Pat
 
     assert response.status_code == 200
     local_settings = response.json()["local_settings"]
-    assert local_settings["qa_labrador_token"] == "existing-local-token"
+    # 退役字段不再进入响应，历史凭据继续原样保存在0600本地文件中。
+    assert "qa_labrador_token" not in local_settings
     assert local_settings["resource_config_environment"] == "uat"
+    saved_text = settings_path.read_text(encoding="utf-8")
+    assert "existing-local-token" in saved_text
 
 
 def test_registration_update_and_scan_reject_non_loopback_resource_changes(
@@ -223,8 +252,7 @@ def test_registration_update_and_scan_reject_non_loopback_resource_changes(
             json={
                 "name": "远程系统",
                 "source_path": str(source),
-                "qa_labrador_token": "remote-registration-token",
-                "qa_gateway_prefix": "http://servicegw.qa.example/gateway/remote/v2",
+                "resource_config_environment": "qa",
             },
         )
         update = client.put(
@@ -232,8 +260,7 @@ def test_registration_update_and_scan_reject_non_loopback_resource_changes(
             json={
                 "name": "火车票预订",
                 "source_path": str(source),
-                "qa_labrador_token": "remote-update-token",
-                "qa_gateway_prefix": "http://servicegw.qa.example/gateway/booking/v2",
+                "resource_config_environment": "qa",
             },
         )
         environment_update = client.put(
@@ -241,7 +268,6 @@ def test_registration_update_and_scan_reject_non_loopback_resource_changes(
             json={
                 "name": "火车票预订",
                 "source_path": str(source),
-                "qa_gateway_prefix": "http://servicegw.qa.example/gateway/booking/v2",
                 "resource_config_environment": "uat",
             },
         )
