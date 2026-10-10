@@ -1,0 +1,21 @@
+openspec/changes/archive/2026-10-10-simplify-java-system-onboarding/proposal.md
+  s_ccd8702a308f76::t_c19c1b32ad00a5 1-14
+openspec/changes/archive/2026-10-10-simplify-java-system-onboarding/specs/system-settings-relations/spec.md
+  s_ccd8702a308f76::t_c086b4b2f1e853 1-7
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.2",
+  "base_commit_sha": "710090550461d9b0c70d7f3c2d84cd194823f91a",
+  "prompts": {},
+  "sessions": {
+    "s_ccd8702a308f76": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a0f0ff-a1ad-7c50-8704-7f7150899ec7",
+        "model": "gpt-6-astra"
+      },
+      "human_author": "shizhen <yuuu.shizhen@gmail.com>"
+    }
+  }
+}
