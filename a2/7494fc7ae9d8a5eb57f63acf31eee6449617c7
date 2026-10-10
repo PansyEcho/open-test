@@ -1,0 +1,152 @@
+openspec/specs/candidate-operation-catalog/spec.md
+  h_3484aac7699d62 84
+openspec/specs/case-template-generation-v4/spec.md
+  h_3484aac7699d62 40,54-64,81-86,94,104,119-122
+openspec/specs/console-reliability/spec.md
+  h_3484aac7699d62 59-73
+openspec/specs/generalized-knowledge-workflow/spec.md
+  h_3484aac7699d62 30,34-60
+openspec/specs/resource-projection/spec.md
+  h_3484aac7699d62 7,10-11,14,17-28
+openspec/specs/scriptgen-source-scan/spec.md
+  h_3484aac7699d62 7,10-11,19-42
+openspec/specs/shared-mysql-workspace/spec.md
+  h_3484aac7699d62 82-90,96-97,99-101
+openspec/specs/system-settings-relations/spec.md
+  h_3484aac7699d62 38-44
+opentest/adapters/dsf_operations.py
+  h_3484aac7699d62 279,283-284,291-295,299-303,305-308
+opentest/adapters/mysql_index.py
+  h_3484aac7699d62 39,42-43
+opentest/adapters/registered_source_mcp.py
+  h_3484aac7699d62 88,113-124,176-177,180,183,186,197-210,391,512,519-523
+opentest/adapters/semantic_analysis.py
+  h_3484aac7699d62 20,26,45,51,110
+opentest/adapters/source_analysis.py
+  h_3484aac7699d62 2129,2403,2409,2413,2421-2423,2509
+opentest/api.py
+  h_3484aac7699d62 111
+opentest/application/case_template_compiler_v4.py
+  h_3484aac7699d62 678-680
+opentest/application/case_template_executor_v4.py
+  h_3484aac7699d62 485
+opentest/application/case_template_v4.py
+  h_3484aac7699d62 87,97,402-419,425,436,461,464-468,476,483,567,625-632,645,775-776,1316-1334,1400,1402-1403
+opentest/application/data_capabilities.py
+  h_3484aac7699d62 270,287-290
+opentest/application/downstream_interfaces.py
+  h_3484aac7699d62 85-92,104-107
+opentest/application/foundation.py
+  h_3484aac7699d62 4092-4109,4111-4114,4116-4155,4157-4220
+opentest/application/metadata_migration.py
+  h_3484aac7699d62 126,135-137
+opentest/application/operations.py
+  h_3484aac7699d62 566-571,769-816,896,1012
+opentest/application/resources.py
+  h_3484aac7699d62 643-644,648-654,656
+opentest/application/source_analysis.py
+  h_3484aac7699d62 181,185,252,256,267-306
+opentest/application/system_relations.py
+  h_3484aac7699d62 23,199-200,205-206,208,216,223,229
+opentest/application/web_generation.py
+  h_3484aac7699d62 83-84,87-88,114,120-122,135-140,143-150,152,338-343,471-474,479,557-562,579
+opentest/domain/case_template_v4.py
+  h_3484aac7699d62 478,519-520,692-693,758-759,816-817
+opentest/domain/data_capabilities.py
+  h_3484aac7699d62 74-92
+opentest/domain/models.py
+  h_3484aac7699d62 806-807
+opentest/web/app.js
+  h_3484aac7699d62 17,692,1714-1737,1762,2253,2267-2268
+opentest/web/index.html
+  h_3484aac7699d62 6,8,306-307
+opentest/web/styles.css
+  h_3484aac7699d62 412,531
+tests/v2/test_api_cli.py
+  h_3484aac7699d62 255-256,310-315,495-496
+tests/v2/test_candidate_operation_catalog_phase2.py
+  h_3484aac7699d62 5,52,55,65-66,169-171,184,187,195-198,266-267,291,321-322,334
+tests/v2/test_case_presentation.py
+  h_3484aac7699d62 46-48
+tests/v2/test_case_template_v4.py
+  h_3484aac7699d62 10,337-358,605,615-651,926-961,3901-3944
+tests/v2/test_case_template_v4_revision.py
+  h_3484aac7699d62 55-61,427-428,665-704,1142,1183-1185,1343
+tests/v2/test_cli.py
+  h_3484aac7699d62 8,13,35-40,44,65-70
+tests/v2/test_codex_native_workspace.py
+  h_3484aac7699d62 73,554,961-967,1003,1088-1089,1096-1097,1130-1197,1707-1708,1815-1817
+tests/v2/test_console_contract.py
+  h_3484aac7699d62 21-25
+tests/v2/test_dependency_interfaces.py
+  h_3484aac7699d62 328-329,333,343,352-354
+tests/v2/test_downstream_interfaces.py
+  h_3484aac7699d62 128,130-132
+tests/v2/test_dsf_operations.py
+  h_3484aac7699d62 303-352,631,684,739,813,874,926,959
+tests/v2/test_execution_profiles.py
+  h_3484aac7699d62 360-363,386-387,392,397-400,405-406,408
+tests/v2/test_foundation.py
+  h_3484aac7699d62 467-468,470-472,474-476,482,488-492,495
+tests/v2/test_generalized_workflows.py
+  h_3484aac7699d62 201,323,363
+tests/v2/test_guided_onboarding.py
+  h_3484aac7699d62 35,40,60-61,71-79,81,86,91-95,145,153,159,164-165,169,175,187-200,202,211-212,214-215,255,263
+tests/v2/test_knowledge_conversation.py
+  h_3484aac7699d62 179,484-485,491,497-499,614-616,623,1000-1001,1004,1007,1034-1044,1056-1066,1091,1095,1098,1102,1143,1145-1149,1224,1228,1235,1270,1287
+tests/v2/test_knowledge_interview_create_order_mvp.py
+  h_3484aac7699d62 102,127-130,156,211-214
+tests/v2/test_knowledge_interview_frontier.py
+  h_3484aac7699d62 790-791,806,808,810,812,815-816,825-826,832,841-850,852-853,855,857-860,1217,1234,1343,1435,1489,1511,1528,1563,1661,1976-1978,2222-2223,2226,2229,2237,2239,2241-2243,2266,2269,2284,2496,2498,2500,2739,2860,2864,2871,2904-2907,2936,2940,2947,2989-2990,3014,3592,3664,3742,3802,3834-3835,3879,3964,3998-4003,4009-4011,4019,4047,4134,4248,4598,5318-5319,5352,5399-5401,5547,5614,5624-5625,5646-5649,5651,5664,5666
+tests/v2/test_knowledge_tracing.py
+  h_3484aac7699d62 3225-3239
+tests/v2/test_multi_system_reliability.py
+  h_3484aac7699d62 31,163,213-215,378-379,382,388-400,431,433,465
+tests/v2/test_mysql_metadata.py
+  h_3484aac7699d62 28,429,435,443,498-513
+tests/v2/test_mysql_workspace_integration.py
+  h_3484aac7699d62 220-221
+tests/v2/test_native_agent_api.py
+  h_3484aac7699d62 483-484
+tests/v2/test_onboarding_runtime.py
+  h_3484aac7699d62 23
+tests/v2/test_operation_contracts.py
+  h_3484aac7699d62 154-155,240,253-256,276,279-281,283,290,305,324
+tests/v2/test_project_settings_api.py
+  h_3484aac7699d62 155,158-160,162,170-171,197,199,206-207
+tests/v2/test_resource_service.py
+  h_3484aac7699d62 365-433
+tests/v2/test_resources.py
+  h_3484aac7699d62 524
+tests/v2/test_shared_data_api.py
+  h_3484aac7699d62 118-120,125-127
+tests/v2/test_shared_data_capabilities.py
+  h_3484aac7699d62 751-790
+tests/v2/test_shared_scan_directory.py
+  h_3484aac7699d62 158,283,296,300
+tests/v2/test_usable_qa_workflows.py
+  h_3484aac7699d62 36
+tests/v2/test_web_generation.py
+  h_3484aac7699d62 15,128-129,253-271,284-293
+tests/web/shared-data.test.js
+  h_3484aac7699d62 219,229-230,242-244
+tests/web/system-settings.test.js
+  h_3484aac7699d62 169,179-197,246-263
+workers/java-semantic-analyzer/src/main/java/com/opentest/semantic/JavaSemanticAnalyzerService.java
+  h_3484aac7699d62 58,88-89,184,193-194,876,879,907-908,912-1058
+workers/java-semantic-analyzer/src/test/java/com/opentest/semantic/FrameworkEffectAnalyzerTest.java
+  h_3484aac7699d62 111-214
+workers/java-semantic-analyzer/src/test/java/com/opentest/semantic/JavaSemanticAnalyzerServiceTest.java
+  h_3484aac7699d62 348-349
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.2",
+  "base_commit_sha": "a27494fc7ae9d8a5eb57f63acf31eee6449617c7",
+  "prompts": {},
+  "humans": {
+    "h_3484aac7699d62": {
+      "author": "shizhen <yuuu.shizhen@gmail.com>"
+    }
+  }
+}
