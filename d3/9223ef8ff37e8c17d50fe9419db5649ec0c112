@@ -1,0 +1,32 @@
+workers/java-semantic-analyzer/src/test/java/com/opentest/semantic/FrameworkEffectAnalyzerTest.java
+  s_454dd09d978d90::t_e74893e4ea2317 12-13,155-276
+  s_f7fa9744ac9e66::t_199a7f47cb4149 277
+openspec/specs/scriptgen-source-scan/spec.md
+  s_454dd09d978d90::t_2d41428b8cd982 42-51
+workers/java-semantic-analyzer/src/main/java/com/opentest/semantic/JavaSemanticAnalyzerService.java
+  s_454dd09d978d90::t_025082dd2646b0 60-62,916,919-921,924-925,929-931,934-950,952,955-984,986-990,992-994,996-999,1001
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.2",
+  "base_commit_sha": "d39223ef8ff37e8c17d50fe9419db5649ec0c112",
+  "prompts": {},
+  "sessions": {
+    "s_454dd09d978d90": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a12e24-0fc2-7711-a743-7cae3b644b83",
+        "model": "gpt-6-astra"
+      },
+      "human_author": "shizhen <yuuu.shizhen@gmail.com>"
+    },
+    "s_f7fa9744ac9e66": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a12ed7-cfb4-77b3-b242-3c004079bf49",
+        "model": "gpt-6-astra"
+      },
+      "human_author": "shizhen <yuuu.shizhen@gmail.com>"
+    }
+  }
+}
