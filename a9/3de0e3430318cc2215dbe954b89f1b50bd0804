@@ -1,0 +1,25 @@
+openspec/changes/archive/2026-10-12-fix-sof-dispatch-overload-resolution/tasks.md
+  s_454dd09d978d90::t_2d41428b8cd982 1-7
+openspec/changes/archive/2026-10-12-fix-sof-dispatch-overload-resolution/design.md
+  s_454dd09d978d90::t_c6de4fe4efc527 1-5
+openspec/changes/archive/2026-10-12-fix-sof-dispatch-overload-resolution/proposal.md
+  s_454dd09d978d90::t_b8db933d45e9fa 1-12
+openspec/changes/archive/2026-10-12-fix-sof-dispatch-overload-resolution/specs/scriptgen-source-scan/spec.md
+  s_454dd09d978d90::t_ac519c1e24ed81 1-34
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.2",
+  "base_commit_sha": "a93de0e3430318cc2215dbe954b89f1b50bd0804",
+  "prompts": {},
+  "sessions": {
+    "s_454dd09d978d90": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a12e24-0fc2-7711-a743-7cae3b644b83",
+        "model": "gpt-6-astra"
+      },
+      "human_author": "shizhen <yuuu.shizhen@gmail.com>"
+    }
+  }
+}
