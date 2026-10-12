@@ -109,3 +109,7 @@ TBD - created by archiving change candidate-operation-catalog. Update Purpose af
 - **WHEN** 同一扫描已存在接口事实、补充契约和后续解析定义
 - **THEN** 相同原始事实可重放且保留补充版本；不同原始事实报冲突，不能覆盖历史
 
+#### Scenario: 模型新增默认字段后重放旧扫描
+- **WHEN** 已保存扫描早于模型新增的默认字段，迁移重放同一扫描的相同原始事实
+- **THEN** 双方经当前扫描模型校验补齐默认值后比较，不判为冲突；规范化后仍不同或已保存内容无法通过模型校验时报冲突
+

@@ -324,6 +324,40 @@ def test_web_executor_shutdown_does_not_leave_task_running(tmp_path):
         application.close()
 
 
+def test_web_start_save_failure_releases_global_gate(tmp_path, monkeypatch):
+    """RUNNING记录保存失败时没有工作线程接手，启动方必须释放全局长任务门禁。
+
+    Args:
+        tmp_path: 隔离任务目录。
+        monkeypatch: 让RUNNING记录写入失败，模拟数据库断连或身份冲突。
+    Returns:
+        None；失败后其他长任务仍可占用门禁时通过。
+    """
+    application, _ = _application(tmp_path)
+    original_save = application.tasks.save_business_record
+
+    def failing_running_save(record):
+        """只拒绝启动阶段的RUNNING写入，其他保存保持真实行为。"""
+
+        if record.web_run_active:
+            raise RuntimeError("metadata write failed")
+        return original_save(record)
+
+    monkeypatch.setattr(application.tasks, "save_business_record", failing_running_save)
+    try:
+        with pytest.raises(RuntimeError, match="metadata write failed"):
+            application.web_generation.start(TASK_ID, "web-save-failure", 0)
+        task = application.tasks.get(TASK_ID)
+        assert not task.web_run_active
+        assert TASK_ID not in application.web_generation._observing
+        # 门禁泄漏时同进程任何后续长任务都会报another long task is active。
+        other = task.model_copy(update={"task_id": "task-fedcba0987654321"})
+        application.tasks._reserve_exclusive(other)
+        application.tasks._release_exclusive(other.task_id)
+    finally:
+        application.close()
+
+
 def test_task_runner_keeps_provider_but_exposes_only_bound_mcp(tmp_path, monkeypatch):
     """网页运行保留Provider配置，只批准当前任务桥并关闭其他扩展。
 

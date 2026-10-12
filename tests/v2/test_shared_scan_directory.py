@@ -4,6 +4,7 @@ from contextlib import contextmanager
 from pathlib import Path
 from types import SimpleNamespace
 from unittest.mock import Mock
+import gzip
 import json
 import sqlite3
 
@@ -300,6 +301,30 @@ def test_basic_contract_is_persisted_and_read_without_derivation(tmp_path):
         relations.prepare_interfaces(manifest, [operation.model_copy(update={"business_name": "被改写"})])
     with pytest.raises(KnowledgeValidationError, match="覆盖历史"):
         store.save("aaa", base.model_copy(update={"contract_revision": 1}))
+
+
+def test_replaying_scan_saved_before_new_default_field_is_not_a_conflict(tmp_path):
+    """模型新增默认字段前保存的扫描，重放相同事实时按模型规范化后比较，不同事实仍判冲突。"""
+
+    database = _SqlMetadata()
+    database.execute("INSERT INTO ot_system(system_id) VALUES('aaa')")
+    artifacts = SourceScanArtifactStore(tmp_path, database)
+    semantic = SemanticAnalysisResult(system_id="aaa", types=[{
+        "symbol_id": "sample.OrderDTO", "qualified_class_name": "sample.OrderDTO", "simple_name": "OrderDTO",
+        "source_ref": {"path": "src/main/java/sample/OrderDTO.java", "line": 1},
+    }])
+    manifest = _scan("aaa", "scan-replay", [], tmp_path).model_copy(update={"semantic_analysis": semantic})
+    artifacts.write_manifest(manifest)
+    # 模拟旧版本模型保存的包：类型上尚无static_field_names字段。
+    row = database.fetch_one("SELECT manifest_gzip FROM ot_scan WHERE scan_id=%s", (manifest.scan_id,))
+    bundle = json.loads(gzip.decompress(bytes(row["manifest_gzip"])))
+    for item in bundle["manifest"]["semantic_analysis"]["types"]:
+        del item["static_field_names"]
+    legacy = gzip.compress(json.dumps(bundle, ensure_ascii=False, sort_keys=True).encode(), mtime=0)
+    database.execute("UPDATE ot_scan SET manifest_gzip=%s WHERE scan_id=%s", (legacy, manifest.scan_id))
+    artifacts.write_manifest(manifest)
+    with pytest.raises(KnowledgeValidationError, match="不能覆盖"):
+        artifacts.write_manifest(manifest.model_copy(update={"warnings": ["被改写"]}))
 
 
 def test_second_workspace_downloads_each_immutable_artifact_only_once(tmp_path):

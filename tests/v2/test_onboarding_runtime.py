@@ -29,6 +29,17 @@ def test_runtime_requires_mysql_without_creating_local_database(tmp_path):
     assert not (tmp_path / "knowledge").exists()
 
 
+def test_import_time_default_app_never_reads_workspace_metadata():
+    """测试导入opentest.api构造的模块级应用只能连接测试临时库与临时知识根，不能读取工作台真实配置。"""
+
+    from opentest import api
+
+    application = api.app.state.opentest
+    assert application.tasks.metadata.configuration["database"].startswith("ot_test_")
+    repository_knowledge = Path(__file__).resolve().parents[2] / "open-test-knowledge"
+    assert Path(application.knowledge_root).resolve() != repository_knowledge.resolve()
+
+
 def test_runtime_mysql_failure_never_uses_file_fallback(tmp_path, monkeypatch):
     """元数据连接故障保留明确错误并关闭连接，不读取旧文件库。"""
 
