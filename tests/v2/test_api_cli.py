@@ -299,7 +299,8 @@ def test_runtime_settings_put_hides_legacy_models_and_preserves_http_job_setting
 
     assert response.status_code == 200
     saved = response.json()["settings"]
-    assert set(saved) == {"scriptgen_pythonpath", "knowledge_agent_prompt_template"}
+    # 覆盖工具与独立审查模型属于新增活动字段；旧 Agent 模型键仍不能进入页面。
+    assert set(saved) == {"scriptgen_pythonpath", "knowledge_agent_prompt_template", "jacoco_cli_path", "jacoco_java_command", "coverage_review_model"}
     assert saved["knowledge_agent_prompt_template"] == "新模板 {{target_id}}"
     assert removed_field_response.status_code == 422
     assert "codex_model" in removed_field_response.text

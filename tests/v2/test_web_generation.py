@@ -12,7 +12,7 @@ import pytest
 
 from opentest.api import create_app
 from opentest.adapters.case_template_v4_store import CaseTemplateGenerationStoreV4
-from opentest.application.case_template_v4 import CASE_TEMPLATE_ANALYSIS_INSTRUCTIONS
+from opentest.application.case_template_v4 import CASE_TEMPLATE_ANALYSIS_INSTRUCTIONS, PreparedCaseExecution
 from opentest.application.foundation import OpenTestApplication
 from opentest.domain.case_template_v4 import CaseTemplateDraftRevisionRequest, CaseTemplatePublicationRequest
 from opentest.domain.models import KnowledgeQuestion, SystemDefinition, TaskRecord, TaskStatus, utc_now
@@ -38,7 +38,7 @@ def _application(tmp_path):
     handoff = _handoff(tmp_path).model_copy(update={"task_id": TASK_ID, "root_task_id": TASK_ID, "execution_mode": "generate_only"})
     handoffs.write(handoff)
     application.case_template_v4 = service
-    application.store.get_system = Mock(return_value=SimpleNamespace(source_path=str(tmp_path)))
+    application.store.get_system = Mock(return_value=SimpleNamespace(source_path=str(tmp_path), coverage_assistance=None))
     application.codex_system_skill_name = Mock(return_value="open-test-test-system")
     task = TaskRecord(task_id=TASK_ID, system_id=SYSTEM_ID, operation="case-generation",
                       target_id=OPERATION_ID, root_task_id=TASK_ID, active_handoff_id=handoff.handoff_id,
@@ -76,25 +76,35 @@ def test_publication_execution_mode_and_request_replay(tmp_path, mode, expected_
     application.submit_case_template_v4(handoff.handoff_id, CaseTemplateDraftRevisionRequest(
         request_id='publication-mode-draft', expected_revision=0, submission=_submission()))
     executions = []
+    dispatches = []
 
     def list_executions(system_id, generation_id):
         """返回已保存的本代执行，模拟发布重入时权威执行存储的读取。"""
         return executions
 
-    def execute(system_id, generation_id, request, background=False):
-        """记录真实默认环境和后台请求，留下后续发布可复用的唯一运行。"""
+    def prepare_execution(system_id, generation_id, request):
+        """在发布事务中记录默认QA执行，返回供提交后派发的固定准备结果。"""
         assert request.environment_id == 'qa'
-        assert background is True
+        assert getattr(application.store.metadata._local, "connection", None) is not None
         execution = SimpleNamespace(execution_id='case-generation-execution-test', status='RUNNING')
         executions.append(execution)
-        return execution
+        generation = application.case_template_v4.generations.get(system_id, generation_id)
+        return PreparedCaseExecution(execution, generation, None, "publication-test")
+
+    def dispatch_execution(prepared):
+        """确认外层事务提交后才接手同一执行，重放不能再次进入此派发边界。"""
+        assert getattr(application.store.metadata._local, "connection", None) is None
+        dispatches.append(prepared.running)
+        return prepared.running
 
     application.case_template_v4.list_executions = list_executions
-    application.case_template_v4.execute_generation = execute
+    application.case_template_v4.prepare_execution = prepare_execution
+    application.case_template_v4.dispatch_execution = dispatch_execution
     request = CaseTemplatePublicationRequest(request_id='publication-mode-publish', expected_revision=1, mode='complete')
     first = application.publish_case_template_v4(handoff.handoff_id, request)
     replay = application.publish_case_template_v4(handoff.handoff_id, request)
     assert len(executions) == expected_runs
+    assert len(dispatches) == expected_runs
     assert first['generation'].generation_id == replay['generation'].generation_id
     assert ('execution' in first) == bool(expected_runs)
     if expected_runs:
@@ -545,3 +555,31 @@ def test_prepare_response_loss_replays_original_run_revision(tmp_path, operation
         }).status_code == 409
     finally:
         application.close()
+
+
+def test_coverage_goal_precedes_generic_case_prompt_and_large_context(tmp_path):
+    """覆盖补充目标与逐缺口协议先于普通生成提示和大handoff，避免只修复原断言。"""
+
+    from opentest.domain.coverage_workflow import CoverageEnhancement, ReviewedCoverageGap
+    from opentest.domain.coverage import CodeLocation, CoverageCounter
+    application, handoff = _application(tmp_path)
+    task = application.tasks.get(TASK_ID)
+    workflow = CoverageEnhancement(enhancement_id="coverage-prompt", task_id="task-owner", system_id=SYSTEM_ID,
+        operation_id=OPERATION_ID, base_generation_id="base", enhanced_generation_id=handoff.generation_id,
+        supplement_task_id=task.task_id, source_scan_id="scan-fixed", source_commit="a" * 40,
+        gaps=[ReviewedCoverageGap(gap_id="gap-query", kind="METHOD", location=CodeLocation(
+            class_name="com/example/Query", method_name="query", source_path="Query.java", line=12),
+            scope_reason="入口方法", before=CoverageCounter(covered=0, missed=1))])
+    application.coverage_assistance.records.for_generation = Mock(return_value=workflow)
+    # 验证实际模型入口，不把提示文案只放在永远不会被调用的辅助函数中。
+    prompt = application.web_generation._analysis_prompt(task)
+    assert prompt.startswith("本轮是覆盖缺口补充任务")
+    assert "gap-query" in prompt and "coverage_dispositions" in prompt and "UNRESOLVED" in prompt
+    assert "handoff.draft_variants[*].variant_id" in prompt and "不要为取得ID先发布" in prompt
+    context = {"handoff": {"large": "x" * 100_000}, "coverage_assistance": {"instructions": "逐缺口答复"}, "revision": 1}
+    application.get_task_context = Mock(return_value=context)
+    application.get_case_template_handoff_v4 = Mock(return_value=context)
+    assert next(iter(application.web_generation.call_tool(TASK_ID, "read_context", {}))) == "coverage_assistance"
+    assert next(iter(application.web_generation.call_tool(TASK_ID, "get_handoff", {}))) == "coverage_assistance"
+    application.coverage_assistance.records.for_generation.return_value = None
+    assert not application.web_generation._analysis_prompt(task).startswith("本轮是覆盖缺口补充任务")

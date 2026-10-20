@@ -6,6 +6,34 @@ import re
 from pathlib import Path
 
 
+def test_handoff_status_projects_successor_without_loading_full_context() -> None:
+    """后继投影使页面能打开原任务，状态读取不加载模型上下文或源码。
+
+    Returns:
+        None；摘要SQL包含后继字段，且返回其精确身份时通过。
+    """
+
+    import json
+    from types import SimpleNamespace
+
+    from opentest.application.console_queries import ConsoleQueries
+
+    def fetch_one(sql: str, parameters: tuple) -> dict:
+        """模拟单条持久状态读取，校验后继投影和参数化handoff身份。"""
+
+        # 页面需要与revision同一次查询取得后继，不应按最新任务猜测关联。
+        assert "'successor_handoff_id',JSON_EXTRACT(payload_json,'$.successor_handoff_id')" in sql
+        assert parameters == ("base-handoff",)
+        return {"summary": json.dumps({"handoff_id": "base-handoff", "revision": 2,
+                                      "successor_handoff_id": "child-handoff"}),
+                "validation_issue_count": 0, "open_question_count": 0}
+
+    application = SimpleNamespace(store=SimpleNamespace(metadata=SimpleNamespace(fetch_one=fetch_one)))
+    result = ConsoleQueries(application).handoff_status("base-handoff")
+    assert result["handoff"]["successor_handoff_id"] == "child-handoff"
+    assert result["handoff"]["revision"] == 2
+
+
 def test_console_static_client_uses_single_case_workflow_and_safe_rendering() -> None:
     """静态控制台应展示业务主入口、共享数据与统一任务，并分离Case生成与显式执行。
 
@@ -58,7 +86,8 @@ def test_console_static_client_uses_single_case_workflow_and_safe_rendering() ->
         script.index("async function startCaseGeneration") : script.index("async function refreshCaseHandoff")
     ]
     assert "operation_id: operationId" in start_generation
-    assert 'request_id: getOrCreateCaseRequestId("start", operationId)' in start_generation
+    assert 'request_id: getOrCreateCaseRequestId("start", requestIdentity)' in start_generation
+    assert 'source_revision: sourceRevision' in start_generation
     assert "execution_mode" not in start_generation
     assert "/case-generations" in start_generation
     assert 'interaction_mode: "web"' in start_generation

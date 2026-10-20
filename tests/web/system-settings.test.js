@@ -20,6 +20,7 @@ test("late edit cannot overwrite another system form", async () => {
   const context = vm.createContext({
     registeredSystems: [{system_id:"b", name:"B"}], currentSystem:{system_id:"a"}, systemFormMode:"view", systemRequestGeneration:0,
     environmentProfileSystemId:"", savedEnvironmentProfiles:{qa:"",uat:""},
+    skyeyeSettingsSystemId:"", loadSkyeyeSettings:async()=>true, resetSkyeyeSettingsForm:()=>{},
     element: id => fields[id] || (fields[id] = {}),
     cancelSystemReads: () => {}, clearSystemWorkspaceState: () => {}, renderSystemSelector: () => {},
     window:{localStorage:{setItem:()=>{}}}, renderSystemFormMode: () => {},
@@ -59,6 +60,8 @@ function saveHarness(uat = "uat") {
     registeredSystems:[], savedEnvironmentProfiles:{qa:"qa",uat:"uat"}, environmentProfileSystemId:"a",
     element:id => fields[id] || (fields[id]={}), validateSystemForm:()=>true,
     readEnvironmentProfile:()=>({environment:"uat",resource_config_environment:uat}),
+    readSkyeyeSettingsPatch:()=>null,
+    readCoverageAssistancePolicy:()=>({enabled:false,report_retention_scope:"SYSTEM_ENVIRONMENT"}),
     renderSystemSelector:()=>{}, renderSystemList:()=>{}, renderSystemFormMode:()=>{}, render:()=>{},
     window:{localStorage:{setItem:()=>{}}}, showToast:message=>notices.push(message),
     renderError:(_id,error)=>notices.push(error.message),
@@ -167,6 +170,7 @@ test("task pagination keeps the selected Case identity", async()=>{
     isCurrentSystemScope:()=>true,renderConsolePager:()=>{},renderWorkbenchTasks:()=>{},
     renderCodexTaskPane:()=>{},renderSelectedKnowledgeGenerationAttempt:()=>{},
     taskContinuationInstruction:()=>"",element:()=>({}),TASK_POLL_FAILURE_TEXT:"任务状态刷新失败，可手动重试",
+    renderCaseContinuationActions:()=>{},
     api:async path=>{calls.push(path);return path.startsWith("/tasks?")?{tasks:[{task_id:"other",operation:"case-generation",active_handoff_id:"handoff-other"}]}:{task:selected};},
   });
   vm.runInContext(sourceFunction("readTaskCatalog"),context);
