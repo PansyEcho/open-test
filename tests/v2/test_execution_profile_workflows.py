@@ -417,3 +417,132 @@ def test_job_source_identity_mismatch_never_dispatches(profile_workflow: SimpleN
     with pytest.raises(KnowledgeValidationError, match="HTTP Job已退役"):
         profile_workflow.service.for_execution(["refund"], "uat", ["refund"])
     profile_workflow.job_dispatch.assert_not_called()
+
+
+def test_shared_case_uat_materializes_fixed_source_for_target_and_external_owner(profile_workflow, tmp_path, monkeypatch):
+    """无原仓库的新电脑执行共享Case时，目标及外部提供方都从共享固定源码解析真实UAT配置。"""
+
+    import shutil
+    import tarfile
+    from opentest.adapters.shared_workspace_store import SharedWorkspaceStore
+    from opentest.application.case_template_v4 import CaseTemplateV4Service
+    from opentest.domain.case_template_v4 import CaseGenerationExecutionV4, CaseTemplateSourceScope
+    from opentest.domain.shared_workspace import CreateCodeBaseline, StoredArtifact
+    from test_case_template_v4_revision import _handoff
+    from test_shared_baselines import BaselineDatabase
+
+    database = BaselineDatabase()
+    workspace = SharedWorkspaceStore(database)
+    manifests, archives, scopes = {}, {}, []
+    target = profile_workflow.capabilities["refund"].model_copy(update={"input_schema": {
+        "type": "object", "properties": {"id": {"type": "integer"}}, "additionalProperties": False}})
+    external_definition = DsfOperationDefinition(operation_id="dsf:external:supplement:query", provider_system_id="supplement",
+        gs_name="supplement-baseline-a", service_name="report", version="version-a", action="query",
+        request_schema={"type": "object", "properties": {}}, response_schema={"type": "object"},
+        mutability=DsfOperationMutability.READ_ONLY, source_refs=[SourceReference(path="Report.java", symbol="query")])
+    external = OperationCapability(operation_id="external:supplement:query", system_id="refund", business_name="补单观察",
+        kind=OperationKind.EXTERNAL_DSF, mutability=OperationMutability.READ_ONLY, executable=True,
+        source_scan_id=target.source_scan_id, provider_operation_id=external_definition.operation_id,
+        provider_definition=external_definition, input_schema={"type": "object", "properties": {}})
+    for system_id, actual, digit in [("refund", "test", "a"), ("supplement", "dev", "b")]:
+        database.execute("INSERT INTO ot_system(system_id) VALUES(%s)", (system_id,))
+        baseline = workspace.create_baseline(CreateCodeBaseline(system_id=system_id, source_commit=digit * 40,
+            selected_revision="shared-release", user_id="employee-a"))
+        original = profile_workflow.sources[system_id]
+        archive = tmp_path / f"{system_id}-source.tar.gz"
+        # 归档包含真实filter文件；删除作者目录后，测试只能从实际归档字节恢复。
+        with tarfile.open(archive, "w:gz") as output:
+            output.add(original / "conf", arcname="conf")
+        artifact = StoredArtifact(artifact_id=f"source-{system_id}", artifact_kind="SOURCE", bucket="test",
+            object_key=f"{system_id}.tar.gz", byte_size=archive.stat().st_size, content_type="application/gzip")
+        workspace.register_artifact(artifact)
+        workspace.attach_source(baseline.baseline_id, artifact.artifact_id, "employee-a")
+        archives[artifact.artifact_id] = archive
+        manifest = profile_workflow.artifacts.read(system_id, f"scan-{system_id}-a")
+        manifest = manifest.model_copy(update={"baseline": SourceBaseline(source_path=str(original),
+            snapshot_path=str(original / "author-snapshot"), commit=digit * 40)})
+        if system_id == "refund":
+            manifest = manifest.model_copy(update={"dsf_operations": [*manifest.dsf_operations, external_definition]})
+        manifests[(system_id, manifest.scan_id)] = manifest
+        scopes.append(CaseTemplateSourceScope(source_system_id=system_id, source_scan_id=manifest.scan_id,
+            source_baseline=manifest.baseline, selected_operation_ids=[target.operation_id, external.operation_id]
+            if system_id == "refund" else [profile_workflow.capabilities["supplement"].operation_id]))
+        profile_workflow.settings.write(system_id, "", resource_config_environment=actual, environment="uat")
+        shutil.rmtree(original)
+    artifacts = SourceScanArtifactStore(tmp_path / "fresh-computer", database)
+
+    def download(reference, destination):
+        """对象存储仅提供原包真实字节，不能从错误本机绑定补全源码。"""
+
+        shutil.copyfile(archives[reference.artifact_id], destination)
+        return destination
+
+    def read_manifest(system_id, scan_id):
+        """仅接受固定scan读取，latest会在此直接失败。"""
+
+        return manifests[(system_id, scan_id)]
+
+    store = profile_workflow.catalog.store
+    original_get = store.get_system
+    wrong_root = tmp_path / "unrelated-checkout"
+    _write_filter(wrong_root, "wrong-project", "dev")
+
+    def local_system(system_id):
+        """模拟目标未绑定、提供方绑定错误checkout，两者都不能影响共享Case配置来源。"""
+
+        return original_get(system_id).model_copy(update={"source_path": "" if system_id == "refund" else str(wrong_root)})
+
+    artifacts.object_storage = SimpleNamespace(download_file=download)
+    monkeypatch.setattr(artifacts, "read", read_manifest)
+    monkeypatch.setattr(store, "get_system", local_system)
+    # 同批未选Case可能还登记其他系统，其源码包缺失不能阻塞当前实际调用集合。
+    store.register_system(SystemDefinition(system_id="unused", name="未选Case的系统", source_path=""))
+    scopes.append(CaseTemplateSourceScope(source_system_id="unused", source_scan_id="scan-unused",
+        source_baseline=SourceBaseline(source_path="", commit="c" * 40), selected_operation_ids=["unused-operation"]))
+    profile_workflow.service.provider.artifacts = artifacts
+    profile_workflow.service.provider.dsf_operations.artifacts = artifacts
+    assert not artifacts.source_snapshot_root.exists()
+    oracle = {"oracle_id": "external-owner", "channel": "operation", "function_id": "external:supplement:query",
+        "assertions": [{"actual_path": "systemId", "operator": "eq", "expected": {"kind": "literal", "value": "supplement"}}]}
+    template = {"template_id": "single-query", "title": "共享查询", "coverage_kind": "business",
+        "request_bindings": [{"field": "id", "source": {"kind": "literal", "value": 1}}],
+        "combination": "each", "oracles": [oracle], "evidence": [{"source_system_id": "refund", "path": "Report.java"}]}
+    submission = CaseTemplateSubmission(data_functions=[], case_templates=[template], unresolved=[])
+    variant = CaseVariantV4(variant_id="case-variant-v4-" + "a" * 20, template_id="single-query", ordinal=1,
+        parameter_values={}, request_values={"id": 1}, data_calls=[], oracles=submission.case_templates[0].oracles)
+    handoff = _handoff(tmp_path).model_copy(update={"system_id": "refund", "entry_id": target.operation_id,
+        "source_scan_id": target.source_scan_id, "baseline_id": "shared-baseline", "source_scopes": scopes})
+    generation = CaseTemplateGenerationV4(generation_id="case-template-generation-" + "a" * 20,
+        handoff_id=handoff.handoff_id, system_id="refund", operation_id=target.operation_id, source_scan_id=target.source_scan_id,
+        baseline_id="shared-baseline", source_scopes=scopes, environment_id="uat", coverage_id="coverage:shared",
+        status="READY", runtime_registry_version="runtime-functions/v1", value_registry_version="value-functions/v1",
+        input_contract=OperationInputKnowledgeContract(target_id=target.operation_id, source_scan_id=target.source_scan_id,
+            status="READY", request_schema=target.input_schema,
+            fields=[{"path": "id", "field_name": "id", "schema": {"type": "integer"}}]), submission=submission, variants=[variant])
+    registry = RuntimeFunctionRegistry(functions=[RuntimeFunctionDescriptor(function_id=external.operation_id,
+        kind="dsf", description="外部观察", input_schema=external.input_schema, output_schema={"type": "object"},
+        allowed_phases=["ORACLE"], source_system_id="refund", provider_ref=external.operation_id)])
+    engine = CaseTemplateV4Service.__new__(CaseTemplateV4Service)
+    engine.store = store
+    engine.handoffs = SimpleNamespace(get=Mock(return_value=handoff))
+    engine.runtime = SimpleNamespace(operation_service=profile_workflow.service, environment_provider=None,
+        operation_catalog=SimpleNamespace(derive=Mock(side_effect=lambda system_id, *_args, **_kwargs:
+            [target, external] if system_id == "refund" else [profile_workflow.capabilities["supplement"]])))
+    engine.data_capabilities = None
+    engine.executions = SimpleNamespace(update=lambda execution: execution)
+    running = CaseGenerationExecutionV4(execution_id="case-generation-execution-" + "a" * 20,
+        generation_id=generation.generation_id, system_id="refund", baseline_id="shared-baseline", environment_id="uat", status="RUNNING")
+    completed = engine._run_execution(running, generation, registry, "fixed-source-run")
+    assert completed.status == "PASSED", completed.model_dump_json()
+    assert {call.args[0]: call.args[1].registry_host for call in profile_workflow.dsf_worker.execute.call_args_list} == {
+        "refund": "refund-test.invalid", "supplement": "supplement-dev.invalid"}
+    assert all(call.args[1].environment == "uat" for call in profile_workflow.dsf_worker.execute.call_args_list)
+    assert profile_workflow.service.provider._fixed_source_scopes is None
+    assert profile_workflow.service.provider._execution_profiles == {}
+    assert store.get_system("refund").source_path == ""
+    assert store.get_system("supplement").source_path == str(wrong_root)
+    assert not artifacts.source_snapshot_path("unused", "c" * 40).exists()
+    # 外部提供方必须持有自己的冻结范围；不能在缺失时偷偷读取错误本机checkout。
+    incomplete = profile_workflow.service.for_fixed_sources([scopes[0]])
+    with pytest.raises(KnowledgeValidationError, match="执行项目缺少固定源码"):
+        incomplete.for_execution(["refund", "supplement"], "uat", capabilities=[target, external])

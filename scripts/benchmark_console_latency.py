@@ -36,57 +36,37 @@ class Endpoint:
 
 
 def fixture_endpoints(metadata, system: dict) -> list[Endpoint]:
-    """从共享库身份构造当前系统端点与完整性预期；不读取源码或更改版本。"""
+    """从一个已发布基准构造当前页面端点；只测当前共享Case，不枚举历史Generation原文。"""
 
     sid = system["system_id"]
-    base = f"/systems/{quote(sid)}"
-    rows = metadata.fetch_all("SELECT operation_id FROM ot_interface WHERE system_id=%s AND scan_id=%s "
-                              "AND definition_json->>'$.operation.kind' IN ('FACADE','MQ') ORDER BY operation_id",
-                              (sid, system["latest_scan_id"]))
-    targets = [row["operation_id"] for row in rows]
-    tasks = metadata.fetch_all("SELECT record_id FROM ot_workflow_record WHERE record_kind='task' AND system_id=%s ORDER BY created_at DESC", (sid,))
-    generations = metadata.fetch_all("SELECT generation_id FROM ot_case_generation WHERE system_id=%s ORDER BY created_at DESC", (sid,))
-    handoffs = metadata.fetch_all("SELECT record_id FROM ot_workflow_record WHERE record_kind='case_handoff' AND system_id=%s ORDER BY created_at DESC LIMIT 1", (sid,))
-    capabilities = metadata.fetch_all("SELECT capability_id,version FROM ot_data_capability_version WHERE system_id=%s ORDER BY created_at DESC LIMIT 1", (sid,))
-    executions = metadata.fetch_all("SELECT execution_id,execution_kind FROM ot_execution WHERE system_id=%s ORDER BY created_at DESC", (sid,))
-    summary = metadata.fetch_one("SELECT summary_json FROM ot_scan WHERE scan_id=%s", (system["latest_scan_id"],))
-    counts = json.loads(summary["summary_json"])["counts"]
-    entry_count = sum(counts.get(kind, 0) for kind in ("facade", "mq_consumer"))
+    base = f"/systems/{quote(sid, safe='')}"
+    baseline = metadata.fetch_one("SELECT b.baseline_id FROM ot_code_baseline b WHERE b.system_id=%s "
+        "AND EXISTS(SELECT 1 FROM ot_baseline_interface i WHERE i.baseline_id=b.baseline_id AND i.availability='AVAILABLE') "
+        "ORDER BY b.created_at DESC LIMIT 1", (sid,))
+    if baseline is None:
+        raise ValueError(f"system {sid} has no current published baseline to benchmark")
+    shared = base + "/baselines/" + quote(baseline["baseline_id"], safe="")
+    cases = metadata.fetch_all("SELECT c.case_id,c.current_generation_id FROM ot_case c JOIN ot_baseline_interface i "
+        "ON i.baseline_interface_id=c.baseline_interface_id WHERE i.baseline_id=%s AND c.current_generation_id IS NOT NULL "
+        "ORDER BY c.case_id", (baseline["baseline_id"],))
+    # 计数来自当前共享指针；执行详情必须通过单Case历史列表发现，不拿数据库任意旧ID强读。
     endpoints = [Endpoint("systems", "/systems", "systems"),
-        Endpoint("workbench", base + "/console-summary", "entry_count", entry_count),
+        Endpoint("workbench", base + "/console-summary?baseline_id=" + baseline["baseline_id"] + "&environment_id=qa"),
         Endpoint("environments", base + "/environments", "environments"),
         Endpoint("settings", base + "/local-settings?environment=qa"),
-        Endpoint("scans", base + "/scans", "scans"),
-        Endpoint("catalog", base + "/scans/latest/catalog", "catalog", set(targets) | {"background:system"}),
-        Endpoint("relations", base + "/relations"),
-        Endpoint("context", base + "/knowledge/context", "context"),
-        Endpoint("workflow", base + "/knowledge/workflow?view=summary", "workflow"),
-        Endpoint("background", base + "/knowledge/targets/background%3Asystem?include_questions=false&include_context=false"),
-        Endpoint("resources", base + "/resources", "resources"),
+        Endpoint("scans", base + "/baselines", "items"),
+        Endpoint("catalog", shared + "/knowledge/catalog?view=published", "items"),
+        Endpoint("relations", base + "/relations"), Endpoint("context", shared + "/context", "context"),
+        Endpoint("resources", shared + "/resources?view=published&environment_id=qa", "resources"),
         Endpoint("validation", base + "/validation-capabilities", "capabilities"),
-        Endpoint("tasks", f"/tasks?system_id={sid}&view=summary", "tasks", min(20, len(tasks))),
-        Endpoint("tasks_page2", f"/tasks?system_id={sid}&view=summary&page=2", "tasks", min(20, max(0, len(tasks) - 20))),
-        Endpoint("generations", base + "/case-generations?view=summary", "generations", min(20, len(generations))),
+        Endpoint("tasks", f"/tasks?system_id={quote(sid, safe='')}&view=summary", "tasks"),
+        Endpoint("cases", shared + "/cases?view=published", "items", len(cases)),
         Endpoint("data", base + "/data-capabilities?view=summary", "capabilities"),
-        Endpoint("data_reports", base + "/data-executions?view=summary", "executions"),
-        Endpoint("case_reports", base + "/case-executions?view=summary", "executions")]
-    # 精确详情也参加验收；ID来自库内现有对象，不能把空列表当成详情成功。
-    if targets:
-        endpoints.extend([Endpoint("contract", base + "/operation-contracts/" + quote(targets[0], safe=""), "operation_contract"),
-            Endpoint("target", base + "/knowledge/targets/" + quote(targets[0], safe="") + "?include_questions=false&include_context=false")])
-    if tasks:
-        endpoints.append(Endpoint("task_status", "/tasks/" + tasks[0]["record_id"] + "?view=summary", "task"))
-    if handoffs:
-        endpoints.append(Endpoint("handoff", "/case-handoffs/" + handoffs[0]["record_id"] + "/status", "handoff"))
-    if generations:
-        endpoints.append(Endpoint("generation_detail", base + "/case-generations/" + generations[0]["generation_id"], "generation"))
-    if capabilities:
-        item = capabilities[0]
-        endpoints.append(Endpoint("data_detail", base + f"/data-capabilities/{quote(item['capability_id'])}/versions/{item['version']}?owner_system_id={sid}"))
-    for kind in ("case", "data"):
-        execution = next((item for item in executions if item["execution_kind"] == kind), None)
-        if execution:
-            endpoints.append(Endpoint(kind + "_report_detail", base + f"/{kind}-executions/" + execution["execution_id"]))
+        Endpoint("data_reports", base + "/data-executions?view=summary", "executions")]
+    if cases:
+        case_base = shared + "/cases/" + quote(cases[0]["case_id"], safe="")
+        endpoints.extend([Endpoint("case_detail", case_base + "?view=published", "case_id", cases[0]["case_id"]),
+                          Endpoint("case_reports", case_base + "/executions?view=published&environment_id=qa", "items")])
     return endpoints
 
 
@@ -140,9 +120,12 @@ class Workload:
                     shutil.copytree(original, destination)
                 elif original.exists():
                     shutil.copy2(original, destination)
+            print(f"请先登录验收工作台：http://127.0.0.1:{port}（独立会话，不复用其他进程凭据）", flush=True)
             log = (self.root / f"service-{index}.log").open("w")
             self.logs.append(log)
-            environment = dict(os.environ, OPENTEST_KNOWLEDGE_ROOT=str(knowledge))
+            environment = dict(os.environ, OPENTEST_KNOWLEDGE_ROOT=str(knowledge),
+                OPENTEST_PUBLIC_ORIGIN=f"http://127.0.0.1:{port}",
+                OPENTEST_CREDENTIAL_FILE=str(workspace / ".opentest" / "credentials.json"))
             self.processes.append(subprocess.Popen([sys.executable, "-m", "uvicorn", "opentest.api:app",
                 "--host", "127.0.0.1", "--port", str(port)], env=environment, stdout=log, stderr=subprocess.STDOUT))
 
@@ -186,6 +169,24 @@ class Workload:
             await asyncio.sleep(0.25)
         raise RuntimeError("service did not become ready")
 
+    async def login(self, client, index: int) -> None:
+        """等待员工在该独立进程完成正式登录，再读取该服务自身的短期凭据；不伪造或跨进程转移会话。"""
+
+        credential = self.root / str(index) / ".opentest" / "credentials.json"
+        deadline = perf_counter() + self.arguments.login_seconds
+        while perf_counter() < deadline:
+            if credential.exists():
+                saved = json.loads(credential.read_text())
+                expected_origin = f"http://127.0.0.1:{self.arguments.port + index}"
+                if saved.get("origin") != expected_origin or not saved.get("bearer"):
+                    raise ValueError("benchmark credential origin does not match its own service")
+                client.headers["Authorization"] = "Bearer " + saved["bearer"]
+                response = await client.get("/api/v2/systems")
+                response.raise_for_status()
+                return
+            await asyncio.sleep(0.5)
+        raise RuntimeError("请完成每个验收工作台的公司登录，再重新执行测量；脚本不会绕过身份校验")
+
     async def cold(self, client, index: int) -> None:
         """每工作台完整走两系统的全部端点，首次读取前没有预热业务缓存。"""
 
@@ -211,14 +212,13 @@ class Workload:
 
         for group in self.endpoints:
             endpoints = {endpoint.name: endpoint for endpoint in group}
-            base = endpoints["catalog"].path.split("/scans/")[0]
+            base = endpoints["environments"].path.removesuffix("/environments")
+            shared = endpoints["catalog"].path.split("/knowledge/")[0]
             started = perf_counter()
             sample_start = len(self.samples)
             case_selections = []
             await self.request(client, endpoints["systems"], "journey_request", index)
 
-            if self.arguments.journey == "knowledge":
-                endpoints["context"] = Endpoint("context_summary", base + "/knowledge/context?view=summary", "context")
 
             async def read(name):
                 """调用同一页面需要的端点，完整保留HTTP失败和必需字段校验。"""
@@ -228,25 +228,23 @@ class Workload:
             async def knowledge():
                 """历史确定所选扫描后读取目录与背景，保持浏览器实际串行依赖。"""
 
-                history = await read("scans")
-                scan_id = history["scans"][0]["scan_id"] if history.get("scans") else "latest"
-                await self.request(client, Endpoint("selected_catalog", base + f"/scans/{scan_id}/catalog", "catalog"), "journey_request", index)
-                # 背景页只消费context中的完整事实，重复读会经过浏览器合并/服务端版本缓存。
+                await read("scans")
+                await read("catalog")
                 await read("context")
 
             async def cases():
                 """环境、入口/版本目录、精确DSL与对应环境报告按UI依赖依次读取。"""
 
                 environments = await read("environments")
-                generations, catalog = await asyncio.gather(read("generations"), read("catalog"))
+                cases, catalog = await asyncio.gather(read("cases"), read("catalog"))
                 # 首次进入先展示入口与版本目录，不替用户选择业务接口。
-                versions = generations.get("generations", [])
+                versions = cases.get("items", [])
                 if versions:
-                    case_selections.append((base, versions[0], environments.get("environments", [])))
+                    case_selections.append((shared, versions[0], environments.get("environments", [])))
 
             name = self.arguments.journey
             if name == "knowledge":
-                await asyncio.gather(knowledge(), read("context"), read("workflow"), read("tasks"))
+                await asyncio.gather(knowledge(), read("context"), read("tasks"))
             elif name == "cases":
                 await asyncio.gather(cases(), read("tasks"))
             elif name == "system":
@@ -269,23 +267,19 @@ class Workload:
         base, chosen, environments = selection
         started = perf_counter()
         sample_start = len(self.samples)
-        query = base + "/case-generations?view=summary&operation_id=" + quote(chosen["operation_id"], safe="")
-        versions, _ = await asyncio.gather(
-            self.request(client, Endpoint("selected_versions", query, "generations"), "journey_request", index),
-            self.request(client, Endpoint("selected_catalog", base + "/scans/latest/catalog", "catalog"), "journey_request", index))
-        selected = versions.get("generations", [None])[0]
-        if selected is None:
-            raise AssertionError("selected operation lost its generation")
-        generation_id = selected["generation_id"]
+        case_base = base + "/cases/" + quote(chosen["case_id"], safe="")
         environment_id = next((item["environment"] for item in environments if item["environment"] == "qa" and item.get("available") is not False), "")
+        if not environment_id:
+            raise ValueError("QA environment is unavailable for this benchmark")
         generation, reports = await asyncio.gather(
-            self.request(client, Endpoint("selected_generation", base + "/case-generations/" + generation_id, "generation"), "journey_request", index),
-            self.request(client, Endpoint("filtered_reports", base + "/case-executions?view=summary&generation_id=" + generation_id + "&environment_id=" + environment_id, "executions"), "journey_request", index))
+            self.request(client, Endpoint("selected_case", case_base + "?view=published", "case_id", chosen["case_id"]), "journey_request", index),
+            self.request(client, Endpoint("filtered_reports", case_base + "/executions?view=published&environment_id=" + environment_id, "items"), "journey_request", index))
         own_samples = [item for item in self.samples[sample_start:] if item["workspace"] == index]
         self.samples.append({"workspace": index, "phase": "journey_action", "endpoint": "select_case_entry",
                              "seconds": perf_counter() - started, "ok": bool(generation) and all(item["ok"] for item in own_samples)})
-        if reports.get("executions"):
-            await self.request(client, Endpoint("open_report", base + "/case-executions/" + reports["executions"][0]["execution_id"], "execution"), "journey_action", index)
+        if reports.get("items"):
+            report_id = quote(reports["items"][0]["execution_id"], safe="")
+            await self.request(client, Endpoint("open_report", case_base + "/executions/" + report_id + "?view=published", "case_id", chosen["case_id"]), "journey_action", index)
 
     async def warm(self, client, index: int, deadline: float) -> None:
         """持续混合读取并定期同值保存，固定间隔模拟独立用户，不重试错误请求。"""
@@ -314,6 +308,7 @@ class Workload:
                    for index in range(self.arguments.workspaces)]
         try:
             await asyncio.gather(*(self.ready(client) for client in clients))
+            await asyncio.gather(*(self.login(client, index) for index, client in enumerate(clients)))
             if self.arguments.journey:
                 await asyncio.gather(*(self.journey(client, index) for index, client in enumerate(clients)))
                 return
@@ -373,6 +368,7 @@ def main() -> None:
     parser.add_argument("--workspaces", type=int, default=10)
     parser.add_argument("--journey", choices=("knowledge", "cases", "system", "workbench", "data", "tasks"))
     parser.add_argument("--duration", type=float, default=600)
+    parser.add_argument("--login-seconds", type=float, default=300, help="等待各独立工作台正式登录的最长秒数")
     parser.add_argument("--port", type=int, default=8800)
     parser.add_argument("--output", type=Path, default=Path(tempfile.gettempdir()) / "opentest-console-load.json")
     arguments = parser.parse_args()

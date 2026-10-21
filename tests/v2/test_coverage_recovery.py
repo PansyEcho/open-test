@@ -402,8 +402,9 @@ def test_terminal_workflow_still_retries_idempotent_finish():
     service = _service(workflow_status="PARTIAL", stage="FINISHED")
     service.state.task.owner_pid = service.tasks._owner_pid
     service.state.task.owner_instance_id = service.tasks._owner_instance_id
-    CoverageRecovery(service)._recover(service.state.workflow)
-    service.finish.assert_called_once_with(service.state.workflow.model_copy(update={"revision": 0, "reason_codes": []}), "PARTIAL", "")
+    original = service.state.workflow.model_copy(deep=True)
+    CoverageRecovery(service)._recover(original)
+    service.finish.assert_called_once_with(original, "PARTIAL", "")
     service.schedule_analysis.assert_not_called()
 
 
@@ -438,3 +439,138 @@ def test_supplement_claim_persists_original_owner_exit_before_observation():
     assert SUPPLEMENT_OWNER_EXITED in service.state.workflow.reason_codes
     assert service.state.task.owner_instance_id == service.tasks._owner_instance_id
     service.finish.assert_not_called()
+
+
+def _claim_in_child_process() -> None:
+    """独立Python进程读取同一测试库，屏障后竞争同一owner/revision claim。
+
+    输入仅通过stdin传入隔离测试库配置；stdout返回准备和claim结果，不输出连接凭据。
+    """
+
+    import json
+    import opentest.application.foundation as foundation
+
+    settings = json.loads(sys.stdin.readline())
+    foundation.load_metadata_store = lambda _root: MySqlMetadataStore(settings["configuration"], settings["workspace_id"])
+    app = foundation.OpenTestApplication(settings["knowledge_root"])
+    try:
+        # 两个服务先各自读取同一个旧owner快照，再由父进程同时放行数据库竞争。
+        service = app.coverage_assistance
+        workflow = service.records.get(settings["enhancement_id"])
+        owner = app.tasks.get(workflow.task_id)
+        print(json.dumps({"ready": True, "revision": workflow.revision}), flush=True)
+        sys.stdin.readline()
+        claimed = service.recovery._close_interrupted(workflow, owner)
+        print(json.dumps({"claimed": claimed is not None, "pid": app.tasks._owner_pid,
+            "instance": app.tasks._owner_instance_id}), flush=True)
+    finally:
+        app.close()
+
+
+def test_two_real_processes_claim_one_terminal_case_analysis_owner(tmp_path):
+    """两个实际服务进程竞争已结束Case的恢复，真实MySQL锁/CAS只能产生一个接管者。"""
+
+    import json
+
+    app = OpenTestApplication(tmp_path / "knowledge")
+    processes = []
+    try:
+        template_service = _service(stage="BASELINE_ANALYZING")
+        _valid_dump(template_service, "baseline")
+        template = template_service.state
+        app.store.register_system(SystemDefinition(system_id=template.workflow.system_id,
+            name="双进程接管验收", source_path=str(tmp_path)))
+        for execution in template.executions.values():
+            app.case_template_v4.executions.create(execution.model_copy(update={"status": "RUNNING"}))
+            app.case_template_v4.executions.update(execution)
+        owner = template.task.model_copy(update={"owner_workspace_id": app.store.metadata.workspace_id,
+            "status": TaskStatus.WAITING_FOR_COMPLETION, "ended_at": utc_now(),
+            "result": {"request_id": template.workflow.enhancement_id, "enhancement_id": template.workflow.enhancement_id}})
+        app.tasks.create_business_record(owner)
+        app.tasks.save_business_record(owner.model_copy(update={"status": TaskStatus.RUNNING, "ended_at": None}))
+        app.coverage_assistance.records.create(template.workflow)
+        app.coverage_assistance.records.save_report(template.report)
+        settings = {"knowledge_root": str(tmp_path / "knowledge"),
+            "configuration": app.store.metadata.configuration, "workspace_id": app.store.metadata.workspace_id,
+            "enhancement_id": template.workflow.enhancement_id}
+        for _ in range(2):
+            process = subprocess.Popen([sys.executable, "-c",
+                "from tests.v2.test_coverage_recovery import _claim_in_child_process; _claim_in_child_process()"],
+                stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
+            processes.append(process)
+            process.stdin.write(json.dumps(settings) + "\n")
+            process.stdin.flush()
+        # 双方必须都拿到revision=0后再放行；失败只清理这些测试子进程。
+        ready = [json.loads(process.stdout.readline()) for process in processes]
+        assert ready == [{"ready": True, "revision": 0}] * 2
+        for process in processes:
+            process.stdin.write("go\n")
+            process.stdin.flush()
+        results = [json.loads(process.stdout.readline()) for process in processes]
+        for process in processes:
+            assert process.wait(timeout=10) == 0, process.stderr.read()
+        assert sum(item["claimed"] for item in results) == 1
+        winner = next(item for item in results if item["claimed"])
+        saved = app.tasks.get(template.workflow.task_id)
+        assert saved.owner_pid == winner["pid"] and saved.owner_instance_id == winner["instance"]
+        assert app.coverage_assistance.records.get(template.workflow.enhancement_id).revision == 1
+        assert app.case_template_v4.executions.get(template.workflow.system_id,
+            template.workflow.baseline_case_execution_id).status == "PASSED"
+    finally:
+        for process in processes:
+            if process.poll() is None:
+                process.kill()
+                process.wait(timeout=5)
+            for stream in (process.stdin, process.stdout, process.stderr):
+                stream.close()
+        app.close()
+
+
+def test_generic_mysql_orphan_scan_cannot_overwrite_strict_coverage_claim(tmp_path, monkeypatch):
+    """通用启动扫描拿到旧Task快照后，不能覆盖严格覆盖恢复刚提交的新owner；普通孤儿仍中断。"""
+
+    app = OpenTestApplication(tmp_path / "knowledge")
+    try:
+        service = app.coverage_assistance
+        template_service = _service(stage="BASELINE_ANALYZING")
+        _valid_dump(template_service, "baseline")
+        template = template_service.state
+        app.store.register_system(SystemDefinition(system_id=template.workflow.system_id,
+            name="通用孤儿扫描隔离验收", source_path=str(tmp_path)))
+        execution = next(iter(template.executions.values()))
+        app.case_template_v4.executions.create(execution.model_copy(update={"status": "RUNNING"}))
+        app.case_template_v4.executions.update(execution)
+        old_owner = template.task.model_copy(update={"owner_workspace_id": app.store.metadata.workspace_id,
+            "status": TaskStatus.RUNNING, "result": {"request_id": template.workflow.enhancement_id}})
+        app.tasks._write(old_owner)
+        ordinary = TaskRecord(task_id="task-" + "f" * 16, operation="source-scan",
+            system_id=template.workflow.system_id, trace_id="ordinary-orphan", status=TaskStatus.RUNNING,
+            owner_workspace_id=app.store.metadata.workspace_id, owner_pid=999998,
+            owner_started_at="old-start", owner_instance_id="old-ordinary")
+        app.tasks._write(ordinary)
+        service.records.create(template.workflow)
+        service.records.save_report(template.report)
+        old_snapshot = app.tasks.get(old_owner.task_id).model_copy(deep=True)
+        # 通用启动扫描已持有旧整包Task；严格恢复在它写回前完成一次真实MySQL owner/revision claim。
+        monkeypatch.setattr(app.tasks, "_owner_is_alive", Mock(return_value=False))
+        monkeypatch.setattr("opentest.application.coverage_recovery.os.kill", Mock(side_effect=ProcessLookupError))
+        monkeypatch.setattr(service, "schedule_analysis", Mock())
+        service.recovery._recover(service.records.get(template.workflow.enhancement_id))
+        claimed = app.tasks.get(old_owner.task_id)
+        assert claimed.owner_instance_id == app.tasks._owner_instance_id
+        monkeypatch.setattr(app.tasks, "_records", Mock(return_value=[old_snapshot, ordinary]))
+        app.tasks._owner_is_alive.reset_mock()
+        monkeypatch.setattr(app.tasks, "_write", Mock(wraps=app.tasks._write))
+        app.tasks._mark_orphaned_tasks_interrupted()
+        # 专属任务连通用存活探测都不进入；普通任务保留原INTERRUPTED语义和身份。
+        app.tasks._owner_is_alive.assert_called_once_with(ordinary)
+        app.tasks._write.assert_called_once()
+        assert app.tasks._write.call_args.args[0].task_id == ordinary.task_id
+        assert app.tasks.get(old_owner.task_id) == claimed
+        interrupted = app.tasks.get(ordinary.task_id)
+        assert interrupted.status == TaskStatus.INTERRUPTED
+        assert interrupted.error == "process restarted before task completed"
+        assert interrupted.owner_instance_id == ordinary.owner_instance_id and interrupted.ended_at is not None
+        assert service.records.get(template.workflow.enhancement_id).revision == 1
+    finally:
+        app.close()

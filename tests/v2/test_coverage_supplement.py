@@ -485,3 +485,18 @@ def test_target_attempt_failure_before_operation_record_still_allows_supplement(
     supplement.advance(state.workflow.enhancement_id)
     assert state.workflow.status == "RUNNING" and "TARGET_NOT_EXECUTED" not in state.workflow.reason_codes
     supplement.app.web_generation.start.assert_called_once()
+
+
+def test_known_run_without_worker_state_does_not_prove_run_finished(tmp_path):
+    """持久run身份早于worker证据时不能把缺文件当作终态，等待原运行恢复。"""
+
+    supplement, state = _fixture(tmp_path)
+    state.workflow.stage, state.workflow.round_used = "SUPPLEMENT_RUNNING", 1
+    state.workflow.supplement_task_id = state.child.task_id
+    state.workflow.model_runs = [CoverageModelRun(role="SUPPLEMENT", task_id=state.child.task_id,
+        run_id="agent-" + "d" * 16)]
+    state.workflow.reason_codes = [SUPPLEMENT_OWNER_EXITED]
+    supplement.advance(state.workflow.enhancement_id)
+    assert state.workflow.status == "RUNNING"
+    supplement.service.finish.assert_not_called()
+    supplement.app.web_generation.start.assert_not_called()

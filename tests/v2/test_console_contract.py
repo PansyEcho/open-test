@@ -51,6 +51,11 @@ def test_console_static_client_uses_single_case_workflow_and_safe_rendering() ->
     assert page_version is not None
     assert f'/assets/app.js?v={page_version.group(1)}' in html
     assert f'/assets/styles.css?v={page_version.group(1)}' in html
+    # 健康检查返回的版本也必须同步，否则刚打开的新页面会被误判为过期。
+    api_source = (web_root.parent / "api.py").read_text(encoding="utf-8")
+    api_page_version = re.search(r'^CONSOLE_PAGE_VERSION = "([^"]+)"$', api_source, re.MULTILINE)
+    assert api_page_version is not None
+    assert api_page_version.group(1) == page_version.group(1)
     assert 'const API_ROOT = "/api/v2"' in script
     assert "API_V3_ROOT" not in script
     assert "API_V4_ROOT" not in script
@@ -77,7 +82,7 @@ def test_console_static_client_uses_single_case_workflow_and_safe_rendering() ->
     ):
         assert f'data-workspace="{retired_workspace}"' not in html
 
-    # Case生成请求不含执行模式；QA只能由第二个显式动作触发。
+    # 新生成固定当前基准和环境；覆盖开启时必须先有部署确认。
     assert 'id="start-case-generation"' in html
     assert 'id="execute-case-generation"' in html
     assert "执行本版本用例" in html
@@ -87,7 +92,10 @@ def test_console_static_client_uses_single_case_workflow_and_safe_rendering() ->
     ]
     assert "operation_id: operationId" in start_generation
     assert 'request_id: getOrCreateCaseRequestId("start", requestIdentity)' in start_generation
-    assert 'source_revision: sourceRevision' in start_generation
+    assert 'source_revision' not in start_generation
+    assert 'baseline_id: baselineScope.baselineId' in start_generation
+    assert 'environment_id: baselineScope.environment' in start_generation
+    assert 'confirmSharedDeployment(baselineScope)' in start_generation
     assert "execution_mode" not in start_generation
     assert "/case-generations" in start_generation
     assert 'interaction_mode: "web"' in start_generation
@@ -95,15 +103,12 @@ def test_console_static_client_uses_single_case_workflow_and_safe_rendering() ->
     execute_generation = script[
         script.index("async function executeCaseGeneration") : script.index("function delay")
     ]
-    assert "/executions" in execute_generation
-    assert 'const environmentId = element("case-execution-environment").value' in execute_generation
-    assert "body: JSON.stringify({ environment_id: environmentId })" in execute_generation
-    assert 'currentCaseGeneration?.generation_id !== generationId' in execute_generation
-    assert '!["READY", "PARTIAL"].includes(currentCaseGeneration?.status)' in execute_generation
-    assert "caseGenerationViewRequestGeneration" in script
-    assert "caseExecutionViewRequestGeneration" in script
-    assert "FAILED Generation没有不可变文件" in script
-    assert "切换瞬间先撤销旧Generation的执行资格和报告" in script
+    shared = (web_root / "shared-workspace.js").read_text(encoding="utf-8")
+    assert "executeSelectedSharedCase()" in execute_generation
+    assert "case_selection:" in shared
+    assert "generation_id:item.generation_id" in shared
+    assert "variant_id:item.variant.variant_id" in shared
+    assert "environment_id:scope.environment" in shared
     assert "/natural-language-tests/" not in script
     assert "/regression-suites/" not in script
     assert "/snapshots" not in script
@@ -201,10 +206,12 @@ def test_console_ignores_late_failures_from_previous_system_scope() -> None:
     retry_scan = script[script.index("async function retryScan()") : script.index("async function loadScanHistory")]
     load_catalog = script[script.index("async function loadScanCatalog") : script.index("async function loadDsfOperationCatalog")]
     load_tasks = script[script.index("async function loadTaskCatalog") : script.index("function renderSelectedKnowledgeGenerationAttempt")]
-    assert "const requestScope = captureSystemScope();" in retry_scan
-    assert retry_scan.count("if (!isCurrentSystemScope(requestScope))") >= 3
-    assert "requestScope.systemId" in retry_scan
-    assert "if (!catalogRequestIsCurrent())" in load_catalog[load_catalog.index("catch (error)"):]
+    shared = script_path.with_name("shared-workspace.js").read_text(encoding="utf-8")
+    rescan = shared[shared.index("async function rescanSharedBaseline"):shared.index("function sharedRequestId")]
+    assert "rescanSharedBaseline()" in retry_scan
+    assert "const scope = sharedScope();" in rescan
+    assert rescan.index("if (!sharedScopeCurrent(scope))") < rescan.index("showBusinessTask(response.task)")
+    assert "!isCurrentSystemScope(requestScope)" in load_catalog[load_catalog.index("catch (error)"):]
     assert "if (!isCurrentSystemScope(requestScope))" in load_tasks
     assert "/tasks?system_id=" in load_tasks
     assert "updateCurlPreview" not in script
@@ -215,7 +222,7 @@ def test_scan_completion_message_uses_persisted_manifest_outcome() -> None:
     """扫描任务completed时，页面仍应按Manifest结果准确提示partial projection。
 
     Returns:
-        None；任务轮询返回持久结果，三个扫描入口均复用业务结果判断时通过。
+        None；任务轮询返回持久结果，旧系统接入仍按持久结果判断；共享基准另读明确的创建阶段。
     """
 
     script_path = Path(__file__).parents[2] / "opentest" / "web" / "app.js"
@@ -233,7 +240,9 @@ def test_scan_completion_message_uses_persisted_manifest_outcome() -> None:
     assert 'scanProgress?.result?.publication_outcome === "partial_projection"' in classifier
     assert 'scanProgress?.result?.completeness === "partial"' in classifier
     assert "result: taskPayload.task.result || {}" in progress
-    assert scan_workflows.count("isPartialScanResult(scanProgress)") == 3
+    assert "isPartialScanResult(scanProgress)" in scan_workflows
+    shared = script_path.with_name("shared-workspace.js").read_text(encoding="utf-8")
+    assert "baseline?.last_creation" in script and "creation.status" in shared
     assert 'scanProgress.status === "partial"' not in scan_workflows
 
 
@@ -409,7 +418,7 @@ def test_knowledge_target_loading_ignores_out_of_order_detail_responses() -> Non
 
 
 def test_console_element_lookups_match_static_dom_contract() -> None:
-    """脚本中的静态元素读取和短动作绑定必须全部命中当前HTML。
+    """脚本元素读取及短动作绑定必须命中静态HTML或共享工作区初始化时创建的控件。
 
     Returns:
         None；删除旧Agent区域后不存在会在初始化阶段抛错的悬空DOM ID时通过。
@@ -422,7 +431,10 @@ def test_console_element_lookups_match_static_dom_contract() -> None:
     element_ids = set(re.findall(r'\belement\("([^"]+)"\)', script))
     bound_action_ids = set(re.findall(r'\bbindShortAction\("([^"]+)"', script))
 
-    assert element_ids <= html_ids, sorted(element_ids - html_ids)
+    shared = (web_root / "shared-workspace.js").read_text(encoding="utf-8")
+    # 共享面板的静态模板在登录后插入；业务字符串仍通过textContent渲染。
+    dynamic_ids = set(re.findall(r'\.id\s*=\s*"([^"]+)"', shared)) | set(re.findall(r'\bid="([^"]+)"', shared))
+    assert element_ids <= html_ids | dynamic_ids, sorted(element_ids - html_ids - dynamic_ids)
     assert bound_action_ids <= html_ids, sorted(bound_action_ids - html_ids)
 
 
@@ -497,104 +509,53 @@ def test_task_center_replaces_global_knowledge_attention_pane() -> None:
     assert 'generateButtonLabel = "重新生成知识"' not in action_renderer
 
 
-def test_console_exposes_pinned_source_version_and_explicit_baseline_update() -> None:
-    """顶部应全局显示固定Git版本，且只有专用动作可以切换现有系统基准。
-
-    Returns:
-        None；Tag、完整Commit、分支提示、扫描状态和显式更新端点均存在时通过。
-    """
+def test_console_exposes_personal_baseline_and_explicit_creation() -> None:
+    """顶部切换只保存在本人偏好，创建必须固定源码来源和测试环境而不写旧全局pin。"""
 
     web_root = Path(__file__).parents[2] / "opentest" / "web"
     html = (web_root / "index.html").read_text(encoding="utf-8")
-    script = (web_root / "app.js").read_text(encoding="utf-8")
-    styles = (web_root / "styles.css").read_text(encoding="utf-8")
-    source_renderer = script[
-        script.index("function renderConfiguredSourceVersion") : script.index("function clearSystemWorkspaceState")
-    ]
-    updater = script[
-        script.index("async function updateSourceVersionAndScan") : script.index("async function retryScan")
-    ]
-    retry_scan = script[
-        script.index("async function retryScan") : script.index("async function loadScanHistory")
-    ]
-
-    for element_id in (
-        "source-version-chip",
-        "source-version-tag",
-        "source-version-commit",
-        "source-version-state",
-        "source-revision",
-        "update-source-version",
-    ):
+    shared = (web_root / "shared-workspace.js").read_text(encoding="utf-8")
+    # 当前基准、环境与显式创建是三个独立动作，旧源码生成输入不再参与请求。
+    for element_id in ("current-baseline-select", "current-environment-select", "create-shared-baseline"):
         assert f'id="{element_id}"' in html
-    assert "system.source_version || null" in source_renderer
-    assert "sourceVersion?.managed_tag" in source_renderer
-    assert "sourceVersion?.commit" in source_renderer
-    assert "sourceVersion?.branch_hint" in source_renderer
-    assert "完整扫描已发布" in source_renderer
-    assert ".source-version-chip" in styles
-
-    assert "/source-version`" in updater
-    assert 'method: "POST"' in updater
-    assert "body: JSON.stringify({ revision })" in updater
-    assert "response.scan_task.task_id" in updater
-    assert "loadScanHistory(requestScope, true)" in updater
-    assert "source_revision" not in retry_scan
+    assert "sharedWorkspace.baseline?.source_commit" in shared
+    assert "sharedWorkspace.baseline?.selected_revision" in shared
+    assert 'sharedPreference(`baseline.${systemId()}`)' in shared
+    assert "revision:revision.value.trim()" in shared
+    assert "inherited_from_baseline_id:scope.baselineId" in shared
+    assert "environment_id:scope.environment" in shared
+    assert "/source-version" not in shared
 
 
-def test_scan_catalog_rejects_invalidated_and_out_of_order_scan_responses() -> None:
-    """目录失效或历史扫描快速切换时，迟到响应不得写缓存或重绘页面。
+def test_baseline_catalog_rejects_out_of_order_scope_responses() -> None:
+    """同系统内切换基准或环境也必须丢弃旧目录响应，不以系统latest扫描重置选择。"""
 
-    Returns:
-        None；目录拥有独立代次、AbortController且缓存写入位于scope校验之后时通过。
-    """
-
-    script_path = Path(__file__).parents[2] / "opentest" / "web" / "app.js"
-    script = script_path.read_text(encoding="utf-8")
-    invalidation = script[
-        script.index("function invalidateKnowledgeReadCaches") : script.index("function knowledgeGenerationAttemptTargetId")
-    ]
-    loader = script[script.index("async function loadScanCatalog") : script.index("async function loadDsfOperationCatalog")]
-
-    assert "knowledgeScanCatalogRequestGeneration += 1" in invalidation
-    assert "activeKnowledgeScanCatalogController.abort()" in invalidation
-    assert "const scanId = element(\"scan-history\").value || \"latest\"" in loader
-    assert "catalogGeneration === knowledgeScanCatalogRequestGeneration" in loader
-    assert '(element("scan-history").value || "latest") === scanId' in loader
-    request = loader.index("payload = await api")
-    scope_guard = loader.index("if (!catalogRequestIsCurrent())", request)
-    cache_write = loader.index("knowledgeScanCatalogCache.set(catalogCacheKey, payload)")
-    assert request < scope_guard < cache_write
-    assert "signal: requestController.signal" in loader
+    web_root = Path(__file__).parents[2] / "opentest" / "web"
+    shared = (web_root / "shared-workspace.js").read_text(encoding="utf-8")
+    loader = shared[shared.index("async function loadSharedBaselines"):shared.index("function renderSharedBaselineHeader")]
+    # 代次检查必须在读取响应后、写页面选择之前，覆盖同系统的快速切换。
+    request = loader.index("const payload = await api")
+    guard = loader.index("requestedGeneration !== systemRequestGeneration")
+    assignment = loader.index("sharedWorkspace.baseline =")
+    assert request < guard < assignment
+    assert "requestedSystem !== systemId()" in loader
+    assert "/scans/latest" not in loader
 
 
-def test_generation_list_invalidates_active_handoff_polling() -> None:
-    """查看已有Generation前必须废弃在途handoff响应和轮询定时器。
+def test_case_list_is_scoped_and_active_handoff_polling_rejects_stale_responses() -> None:
+    """Case目录按基准和个人视图读取，活动handoff轮询保留独立代次防止过期结果覆盖。"""
 
-    Returns:
-        None；目录、handoff和启动请求共享同一代次门禁时通过。
-    """
-
-    script_path = Path(__file__).parents[2] / "opentest" / "web" / "app.js"
-    script = script_path.read_text(encoding="utf-8")
-    list_loader = script[
-        script.index("async function loadCaseGenerations") : script.index("async function loadCaseHandoff")
-    ]
-    handoff_loader = script[
-        script.index("async function loadCaseHandoff") : script.index("async function startCaseGeneration")
-    ]
-    starter = script[
-        script.index("async function startCaseGeneration") : script.index("async function refreshCaseHandoff")
-    ]
-
-    # Generation目录和handoff共享展示区，用户主动切换目录前必须先废弃旧轮询。
-    stop_polling = list_loader.index("stopCaseHandoffPolling(false)")
-    generation_request = list_loader.index("payload = await api")
-    assert stop_polling < generation_request
-    assert handoff_loader.count("requestGeneration !== caseRequestGeneration") >= 2
-    assert "activeCaseHandoffId !== handoffId" in handoff_loader
-    assert "const startRequestGeneration = caseRequestGeneration" in starter
-    assert starter.count("startRequestGeneration !== caseRequestGeneration") >= 2
+    web_root = Path(__file__).parents[2] / "opentest" / "web"
+    script = (web_root / "app.js").read_text(encoding="utf-8")
+    shared = (web_root / "shared-workspace.js").read_text(encoding="utf-8")
+    loader = shared[shared.index("async function loadSharedCaseWorkspace"):shared.index("function selectSharedOperation")]
+    handoff = script[script.index("async function loadCaseHandoff"):script.index("async function startCaseGeneration")]
+    # Case列表写入必须在基准及视图两项检查之后，不读取退役整份Generation接口。
+    assert loader.index("if (!sharedScopeCurrent(scope)") < loader.index("sharedWorkspace.cases =")
+    assert "view !== sharedWorkspace.caseView" in loader
+    assert "/cases?view=${view}" in loader and "/case-generations" not in loader
+    assert handoff.count("requestGeneration !== caseRequestGeneration") >= 2
+    assert "activeCaseHandoffId !== handoffId" in handoff
 
 
 def test_scan_history_change_restores_confirmed_baseline_after_catalog_failure() -> None:
@@ -629,8 +590,8 @@ def test_console_scan_failure_stops_manifest_loading_and_success_feedback() -> N
 
     assert "await loadScanHistory(scope, true);" in save_system
     assert "await loadScanCatalog(scope, true);" in save_system
-    assert "await loadScanHistory(requestScope, true);" in retry_scan
-    assert "await loadScanCatalog(requestScope, true);" in retry_scan
+    assert "await rescanSharedBaseline()" in retry_scan
+    assert "showToast(error.message" in retry_scan
     assert 'if (["failed", "interrupted"].includes(progress.status))' in task_progress
     assert "throw new Error(taskPayload.task.error" in task_progress
     assert "扫描任务执行成功" not in task_progress

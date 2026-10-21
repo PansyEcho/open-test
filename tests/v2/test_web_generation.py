@@ -557,6 +557,31 @@ def test_prepare_response_loss_replays_original_run_revision(tmp_path, operation
         application.close()
 
 
+def test_corrupt_optional_coverage_does_not_block_base_case_prompt(tmp_path):
+    """覆盖记录无法解析时仍生成基础Case要求，不启动模型或访问QA。
+
+    Args:
+        tmp_path: 隔离应用与任务目录。
+    Returns:
+        None；真实安全投影吞掉可选记录读取失败，基础任务提示保留时通过。
+    """
+
+    application, _ = _application(tmp_path)
+    try:
+        task = application.tasks.get(TASK_ID)
+        # 失败注入在持久记录读取处，确保被测提示确实经过生产安全投影。
+        application.coverage_assistance.records.for_generation = Mock(
+            side_effect=ValueError("stored coverage payload cannot be parsed"))
+        prompt = application.web_generation._analysis_prompt(task)
+        assert prompt.startswith("完成当前OpenTest Case生成任务")
+        assert "本轮是覆盖缺口补充任务" not in prompt
+        assert task.task_id in prompt and "search_data_capabilities" in prompt
+        application.coverage_assistance.records.for_generation.assert_called_once_with(
+            task.system_id, task.generation_id)
+    finally:
+        application.close()
+
+
 def test_coverage_goal_precedes_generic_case_prompt_and_large_context(tmp_path):
     """覆盖补充目标与逐缺口协议先于普通生成提示和大handoff，避免只修复原断言。"""
 

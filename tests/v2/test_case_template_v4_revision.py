@@ -429,7 +429,7 @@ def test_start_prepares_same_task_without_starting_background_agent(tmp_path: Pa
     assert first.thread_id == ""
     assert store.get_system.call_count == 1
     artifacts.read.assert_called_once_with(SYSTEM_ID, "latest")
-    service._input_contract.assert_called_once_with(SYSTEM_ID, OPERATION_ID, SCAN_ID)
+    service._input_contract.assert_called_once_with(SYSTEM_ID, OPERATION_ID, SCAN_ID, None)
     operation_service.execute.assert_not_called()
     with pytest.raises(CaseTemplateWriteConflictError):
         service.start(SYSTEM_ID, request.model_copy(update={"interaction_mode": "web"}))

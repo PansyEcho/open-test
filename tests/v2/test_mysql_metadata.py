@@ -262,15 +262,16 @@ def shared_workspace_pair(tmp_path):
                 context_json TEXT,questions_json TEXT,created_at TEXT,is_archived INTEGER DEFAULT 0,workspace_revision INTEGER DEFAULT 0);
             CREATE TABLE ot_workflow_record(record_kind TEXT,record_id TEXT,system_id TEXT,
                 parent_record_id TEXT,target_id TEXT,status TEXT,revision INTEGER,
-                owner_workspace_id TEXT,payload_json TEXT,created_at TEXT,updated_at TEXT,
+                owner_workspace_id TEXT,owner_user_id TEXT,baseline_id TEXT,environment_id TEXT,
+                payload_json TEXT,created_at TEXT,updated_at TEXT,
                 PRIMARY KEY(record_kind,record_id));
             CREATE TABLE ot_execution(execution_id TEXT PRIMARY KEY,execution_kind TEXT,
                 system_id TEXT,request_namespace TEXT,request_id TEXT,owner_workspace_id TEXT,
-                generation_id TEXT,environment_id TEXT,status TEXT,summary_json TEXT,
+                generation_id TEXT,environment_id TEXT,baseline_id TEXT,owner_user_id TEXT,status TEXT,summary_json TEXT,
                 payload_gzip BLOB,created_at TEXT,updated_at TEXT,
                 UNIQUE(execution_kind,request_namespace,request_id));
             CREATE TABLE ot_case_generation(generation_id TEXT PRIMARY KEY,system_id TEXT,
-                operation_id TEXT,source_scan_id TEXT,status TEXT,generation_json TEXT,created_at TEXT);
+                operation_id TEXT,source_scan_id TEXT,baseline_id TEXT,owner_user_id TEXT,status TEXT,generation_json TEXT,created_at TEXT);
             CREATE TABLE ot_data_capability_version(system_id TEXT,capability_id TEXT,
                 version INTEGER,definition_json TEXT,created_at TEXT,
                 PRIMARY KEY(system_id,capability_id,version));

@@ -35,7 +35,7 @@ def workflow(identity: str, operation_id: str = "Api#query") -> CoverageEnhancem
 
 
 def report_for(record: CoverageEnhancement) -> CoverageReport:
-    """构造可裁剪的虚构测量包，保留真实报告的压缩和领域校验路径。
+    """构造需永久保留的虚构测量包，保留真实报告的压缩和领域校验路径。
 
     Args:
         record: 报告所属增强。
@@ -119,8 +119,8 @@ def test_queries_and_recovery_use_exact_generation_and_execution_bindings(stores
     assert owner.for_execution("") is None
 
 
-def test_report_retention_only_prunes_older_terminal_owner_material(stores) -> None:
-    """新有效终态包按保留粒度清理旧原始材料，保留摘要、他机、其他系统与在途记录。
+def test_report_retention_preserves_all_material_across_legacy_policies(stores) -> None:
+    """任何遗留保留策略均不得删除历史原始材料，摘要与原有所有权仍独立校验。
 
     Args:
         stores: 同库两个工作台的隔离覆盖存储。
@@ -128,24 +128,23 @@ def test_report_retention_only_prunes_older_terminal_owner_material(stores) -> N
 
     owner, foreign = stores
     old_time = utc_now() - timedelta(days=1)
-    saved_records = {}
+    saved_reports = {}
     for identity, operation, status in (("old-same", "Api#query", "COMPLETED"), ("old-other", "Api#cancel", "COMPLETED"),
                                         ("in-flight", "Api#query", "RUNNING")):
         record = workflow(identity, operation).model_copy(update={"status": status, "created_at": old_time})
         owner.create(record)
         owner.save_report(report_for(record))
-        saved_records[identity] = record
+        saved_reports[identity] = report_for(record)
     foreign_record = workflow("foreign-report").model_copy(update={"status": "COMPLETED", "created_at": old_time})
     foreign.create(foreign_record)
     foreign.save_report(report_for(foreign_record))
     newest = workflow("new-report").model_copy(update={"status": "COMPLETED", "baseline": CoverageMeasurement(status="VALID"), "report_retention_scope": "OPERATION"})
     owner.create(newest)
     owner.save_report(report_for(newest))
-    # 操作粒度只替换同接口材料；原摘要永远不带 exec 或私有制品路径。
+    # 兼容旧接口粒度配置时也永久保留原始材料，避免跨机器续跑失去输入。
     owner.prune(newest)
-    assert owner.report("old-same").result == {}
-    assert owner.report("old-other").result
-    assert owner.report("in-flight").result
+    for identity, saved_report in saved_reports.items():
+        assert owner.report(identity) == saved_report
     assert foreign.report("foreign-report").result
     # 共享增强摘要可查看，但原始报告的本机路径和环境引用只能由采集 owner 消费。
     with pytest.raises(ScopeViolationError, match="another workspace"):
@@ -153,7 +152,8 @@ def test_report_retention_only_prunes_older_terminal_owner_material(stores) -> N
     summary = owner.metadata.fetch_one("SELECT summary_json FROM ot_execution WHERE execution_id=%s", ("new-report",))
     assert "result" not in decode_json(summary["summary_json"])
     owner.prune(newest.model_copy(update={"report_retention_scope": "SYSTEM_ENVIRONMENT"}))
-    assert owner.report("old-other").result == {}
+    for identity, saved_report in saved_reports.items():
+        assert owner.report(identity) == saved_report
     assert owner.get("old-other") is not None
     # 无有效测量或新包为空时，失败运行不应擦除上一次有效包。
     failed = workflow("failed").model_copy(update={"status": "FAILED"})
@@ -163,12 +163,12 @@ def test_report_retention_only_prunes_older_terminal_owner_material(stores) -> N
 
 
 @pytest.mark.parametrize("scope", ["SYSTEM_ENVIRONMENT", "OPERATION"])
-def test_late_older_report_prunes_itself_after_newer_valid_completion(stores, scope: str) -> None:
-    """旧窗口晚完成时按采集创建顺序保留最新有效包，不以完成回调顺序决定。
+def test_late_older_report_keeps_material_after_newer_valid_completion(stores, scope: str) -> None:
+    """旧窗口晚完成也保留全部有效与失败材料，不因完成顺序或遗留策略丢失历史。
 
     Args:
         stores: 同库两个独立工作台，验证保留范围不越过 owner。
-        scope: 系统环境或接口粒度，均需保持在途和最近有效材料。
+        scope: 遗留系统环境或接口粒度，升级后均不再裁剪材料。
     """
 
     owner, foreign = stores
@@ -182,7 +182,7 @@ def test_late_older_report_prunes_itself_after_newer_valid_completion(stores, sc
     })
     owner.create(newer)
     owner.save_report(report_for(newer))
-    # 更晚的失败或空包不能挤掉有效窗口；更早仍活动、其他 owner 的材料不允许裁剪。
+    # 失败、空包、在途和其他所有者的材料均保留；旧配置不能重新启用裁剪。
     invalid = workflow("invalid-latest").model_copy(update={
         "status": "FAILED", "baseline": CoverageMeasurement(status="INVALID"),
         "created_at": started + timedelta(minutes=2), "report_retention_scope": scope,
@@ -210,18 +210,18 @@ def test_late_older_report_prunes_itself_after_newer_valid_completion(stores, sc
     owner.prune(empty)
     assert owner.report(newer.enhancement_id).result
 
-    # B 先完成时 A 仍在分析，不能删除 A 的恢复材料。
+    # B 先完成时 A 仍在分析，A 的原始材料在活动及后续终态都必须完整保留。
     owner.prune(newer)
     assert owner.report(older.enhancement_id).result
     older = owner.save(older.model_copy(update={"status": "COMPLETED", "baseline": CoverageMeasurement(status="VALID")}))
     owner.save_report(report_for(older))
     owner.prune(older)
-    assert owner.report(older.enhancement_id).result == {}
+    assert owner.report(older.enhancement_id) == report_for(older)
     assert owner.report(newer.enhancement_id).result
     assert owner.report(active.enhancement_id).result
     assert owner.report(invalid.enhancement_id).result
     assert foreign.report(foreign_record.enhancement_id).result
-    assert bool(owner.report(other_operation.enhancement_id).result) is (scope == "OPERATION")
+    assert owner.report(other_operation.enhancement_id) == report_for(other_operation)
     assert owner.get(older.enhancement_id).baseline.status == "VALID"
 
 
@@ -254,18 +254,26 @@ def test_large_exec_roundtrip_uses_compressed_mysql_detail_without_summary_paylo
 
 
 def test_real_measurement_lock_contends_across_workspaces_and_releases(stores) -> None:
-    """真实 MySQL 命名锁跨工作台互斥、零等待，释放后同系统可再次测量。
+    """真实 MySQL 命名锁按系统和环境跨工作台互斥，QA与UAT可独立测量。
 
     Args:
         stores: 同库两个不同所有者的覆盖存储。
     """
 
     owner, foreign = stores
-    first = owner.measurement_lock("refund", time.monotonic() + 5)
+    first = owner.measurement_lock("refund", time.monotonic() + 5, "qa")
     try:
         with pytest.raises(CoverageUnavailable) as failure:
-            foreign.measurement_lock("refund", time.monotonic() + 5)
+            foreign.measurement_lock("refund", time.monotonic() + 5, "qa")
         assert failure.value.reason_code == "COVERAGE_LOCK_BUSY"
+        # 同系统的UAT可独立测量，但第二个UAT采集仍须被拒绝，避免互相重置探针。
+        uat = foreign.measurement_lock("refund", time.monotonic() + 5, "uat")
+        try:
+            with pytest.raises(CoverageUnavailable) as uat_failure:
+                owner.measurement_lock("refund", time.monotonic() + 5, "uat")
+            assert uat_failure.value.reason_code == "COVERAGE_LOCK_BUSY"
+        finally:
+            uat.release()
         # 不同系统不共享命名锁，也无需持有业务写事务。
         other = foreign.measurement_lock("other", time.monotonic() + 5)
         other.release()
@@ -416,3 +424,27 @@ def test_measurement_lock_does_not_query_after_connection_consumes_budget(monkey
     assert expired.value.reason_code == "COVERAGE_PREFLIGHT_TIMEOUT"
     assert connection.commands == [] and connection.closed == 1
     metadata.close()
+
+
+def test_case_coverage_selection_precedes_latest_workflow_limit(stores) -> None:
+    """真实SQL按基线或复测选集筛选，再选择最近本人测量，不能被同批兄弟Case遮住。"""
+
+    from opentest.domain.shared_workspace import CaseSelection
+
+    first, _ = stores
+    original = workflow("case-query-original").model_copy(update={"owner_user_id": "employee-a", "environment_id": "uat",
+        "base_generation_id": "shared-generation", "enhanced_generation_id": "enhanced-generation",
+        "verification_case_execution_id": "verification-case-query",
+        "case_selection": [CaseSelection(case_id="case-a", generation_id="shared-generation", variant_id="variant-a")]})
+    later = workflow("case-query-later").model_copy(update={"owner_user_id": "employee-a", "environment_id": "uat",
+        "base_generation_id": "shared-generation", "created_at": original.created_at + timedelta(seconds=1),
+        "case_selection": [CaseSelection(case_id="case-b", generation_id="shared-generation", variant_id="variant-b")]})
+    first.create(original)
+    first.create(later)
+    first.metadata.save_execution("case", {"execution_id": original.verification_case_execution_id,
+        "system_id": "refund", "generation_id": "enhanced-generation", "environment_id": "uat", "status": "COMPLETED",
+        "selected_cases": [CaseSelection(case_id="case-enhanced", generation_id="enhanced-generation", variant_id="variant-enhanced").model_dump(mode="json")]})
+    assert first.for_generation("refund", "shared-generation", "employee-a", "uat", "case-a").enhancement_id == original.enhancement_id
+    assert first.for_generation("refund", "shared-generation", "employee-a", "uat", "case-b").enhancement_id == later.enhancement_id
+    assert first.for_generation("refund", "enhanced-generation", "employee-a", "uat", "case-enhanced").enhancement_id == original.enhancement_id
+    assert first.for_generation("refund", "shared-generation", "employee-a", "uat", "case-missing") is None

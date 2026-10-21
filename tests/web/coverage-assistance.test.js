@@ -149,6 +149,34 @@ test("continuation buttons follow matching handoff or coverage successor only", 
   assert.equal(nodes["continue-case-generation"].textContent, "继续原基线任务");
 });
 
+/** Loading结束后仍按已建立后继重新应用门禁，不能把重新生成按钮无条件恢复可用。 */
+test("loading completion keeps regeneration disabled after successor discovery", async () => {
+  const {context, nodes, parent, child} = continuationHarness();
+  const button = {id: "regenerate-case-latest", classList: {add() {}, remove() {}}, setAttribute() {}};
+  nodes[button.id] = button;
+  context.button = button;
+  context.action = async () => {
+    context.currentCaseHandoff = {...parent, successor_handoff_id: child.handoff_id};
+  };
+  vm.runInContext(sourceFunction("withButtonLoading"), context);
+  await vm.runInContext("withButtonLoading(button, action)", context);
+  assert.equal(button.disabled, true);
+});
+
+/** 用户在后继读取途中切换Case任务，迟到响应不能打开旧任务的弹窗。 */
+test("late successor response cannot open a task after the user changes selection", async () => {
+  const {context, parent, child, opened} = continuationHarness();
+  parent.successor_handoff_id = child.handoff_id;
+  context.parent = parent;
+  let complete;
+  context.api = () => new Promise(resolve => {complete = resolve;});
+  const pending = vm.runInContext('openCaseSuccessor(parent, {systemId: "refund"})', context);
+  context.currentCaseTask = {task_id: "other-task", generation_id: "other"};
+  complete({handoff: child});
+  assert.equal(await pending, false);
+  assert.deepEqual(opened, []);
+});
+
 /**
  * 为覆盖卡片提供小型DOM和失败通知，检验公开原因与任务入口。
  * @returns {object} 包含渲染节点、消息和真实卡片函数的测试环境。
@@ -181,4 +209,21 @@ test("coverage panel hides internal maintenance codes and reports task lookup fa
   assert.equal(notices.length, 1);
   assert.match(notices[0][0], /增强任务打开失败：network unavailable/);
   assert.equal(notices[0][1], "error");
+});
+
+/** 已被替代的共享任务只能单Case修订；过期按钮也不得发起整批POST或打开旧后继。 */
+test("shared terminal continuation is disabled and cannot send a successor request", async () => {
+  for (const intent of ["continue", "regenerate_latest"]) {
+    const {context, nodes, parent, requests, opened} = continuationHarness();
+    context.currentCaseTask.result = {baseline_id: "baseline-one", environment_id: "uat"};
+    context.currentCaseHandoff = {...parent, baseline_id: "baseline-one", successor_handoff_id: "hidden-old-child"};
+    context.api = async route => {requests.push(route); throw new Error("unexpected request");};
+    vm.runInContext("renderCaseContinuationActions()", context);
+    assert.equal(nodes["continue-case-generation"].disabled, true);
+    assert.equal(nodes["regenerate-case-latest"].disabled, true);
+    assert.match(nodes["continue-case-generation"].textContent, /单个Case/);
+    await assert.rejects(vm.runInContext(`continueCaseGeneration("${intent}")`, context), /单个Case/);
+    assert.deepEqual(requests, []);
+    assert.deepEqual(opened, []);
+  }
 });

@@ -66,15 +66,16 @@ def test_class_match_requires_real_intersection() -> None:
     assert CoverageAnalyzer._match_classes({"demo/Service": "a" * 16}, "aaaaaaaaaaaaaaaa 1 of 3 demo/Service") == (1, 0)
 
 
-def test_classinfo_retains_method_lines_and_rejects_duplicates() -> None:
-    """原生 classinfo 的逐方法行集合用于精确排除未执行方法内部缺口。"""
+def test_classinfo_retains_method_lines_and_rejects_conflicting_duplicates() -> None:
+    """同字节类的重复 CLI 输出可合并；不同 ID 必须继续阻止模糊报告。"""
 
     text = "class 0xaaaaaaaaaaaaaaaa demo/Service\n +- method run()V\n 1 0 +- line 12\n 1 0 +- line 18"
-    classes, lines = CoverageAnalyzer._class_details(text)
+    # 完整字节比较由物化阶段负责，CLI 同 ID 的重复条目不能清空已有方法行集合。
+    classes, lines = CoverageAnalyzer._class_details(text + "\n" + text)
     assert classes == {"demo/Service": "a" * 16}
     assert lines[("demo/Service", "run", "()V")] == {12, 18}
     with pytest.raises(CoverageUnavailable) as failure:
-        CoverageAnalyzer._class_details(text + "\nclass 0xaaaaaaaaaaaaaaaa demo/Service")
+        CoverageAnalyzer._class_details(text + "\nclass 0xbbbbbbbbbbbbbbbb demo/Service")
     assert failure.value.reason_code == "ARTIFACT_DUPLICATE_CLASS"
 
 
@@ -237,6 +238,129 @@ def test_source_archive_cannot_escape_workspace(tmp_path: Path) -> None:
         reader.materialize(frozen, tmp_path / "analysis")
     assert failure.value.reason_code == "ARTIFACT_PATH_INVALID"
     assert not (tmp_path / "outside.java").exists()
+
+
+def _business_jar(entries: list[tuple[str, bytes]]) -> bytes:
+    """按给定成员顺序制作筛选测试用 JAR，允许有意重复的 ZIP 类名。"""
+
+    content = io.BytesIO()
+    names = [name for name, _ in entries]
+    # 重复成员是需要覆盖的真实归档形式，显式接收 zipfile 的构建警告。
+    warning = pytest.warns(UserWarning, match="Duplicate name") if len(set(names)) != len(names) else nullcontext()
+    with warning, ZipFile(content, "w") as archive:
+        for name, bytecode in entries:
+            archive.writestr(name, bytecode)
+    return content.getvalue()
+
+
+@pytest.mark.parametrize("layout", ["WEB-INF", "BOOT-INF"])
+@pytest.mark.parametrize("location", ["direct_and_jar", "different_jars", "same_jar_name", "inside_jar"])
+@pytest.mark.parametrize("identical", [False, True])
+def test_selected_business_classes_compare_complete_bytes(
+    tmp_path: Path, layout: str, location: str, identical: bool,
+) -> None:
+    """两种部署布局的实际分析输入须一致，业务 JAR 中未在源码列出的类也检查。"""
+
+    # 沿用筛选测试的类字节夹具，不交给 JaCoCo；差异位于第二块以验证完整字节比较。
+    original = b"class-fixture" + b"x" * (64 * 1024)
+    other = original if identical else original[:-1] + b"y"
+    artifact = tmp_path / "application.jar"
+    sources = {"demo/Service", "demo/Other"}
+    with ZipFile(artifact, "w") as archive:
+        if location == "direct_and_jar":
+            archive.writestr(f"{layout}/classes/demo/Service.class", original)
+            archive.writestr(f"{layout}/lib/business.jar", _business_jar([("demo/Service.class", other)]))
+        elif location in {"different_jars", "same_jar_name"}:
+            # 两个 JAR 各由不同源码类入选，冲突类却不在源码集内，不能只验证源码交集。
+            first = "first/business.jar" if location == "same_jar_name" else "first.jar"
+            second = "second/business.jar" if location == "same_jar_name" else "second.jar"
+            archive.writestr(f"{layout}/lib/{first}", _business_jar([
+                ("demo/Service.class", b"service"), ("common/Unloaded.class", original)]))
+            archive.writestr(f"{layout}/lib/{second}", _business_jar([
+                ("demo/Other.class", b"other"), ("common/Unloaded.class", other)]))
+        else:
+            archive.writestr(f"{layout}/lib/business.jar", _business_jar([
+                ("demo/Service.class", b"service"),
+                ("common/Unloaded.class", original), ("common/Unloaded.class", other)]))
+
+    if not identical:
+        with pytest.raises(CoverageUnavailable) as failure:
+            CoverageArtifactReader._extract_business_classes(artifact, tmp_path / "classes", sources)
+        assert failure.value.reason_code == "ARTIFACT_DUPLICATE_CLASS"
+        return
+    selected = CoverageArtifactReader._extract_business_classes(artifact, tmp_path / "classes", sources)
+    libraries = [path for path in selected if path.is_file()]
+    assert len(libraries) == (2 if location in {"different_jars", "same_jar_name"} else 1)
+    if location != "direct_and_jar":
+        # 相同重复无需裁掉业务 JAR 的其他类，未加载类仍会交给 JaCoCo。
+        with ZipFile(libraries[0]) as archive:
+            assert "common/Unloaded.class" in archive.namelist()
+
+
+@pytest.mark.parametrize("layout", ["WEB-INF", "BOOT-INF"])
+def test_identical_direct_classes_across_layouts_are_allowed(tmp_path: Path, layout: str) -> None:
+    """同一类同时位于应用类目录与根目录时，相同字节只物化一次。"""
+
+    artifact = tmp_path / "application.jar"
+    # 两种物理路径归一到同一直接类路径，不应仅因布局重复就拒绝有效材料。
+    with ZipFile(artifact, "w") as archive:
+        archive.writestr(f"{layout}/classes/demo/Service.class", b"class-fixture")
+        archive.writestr("demo/Service.class", b"class-fixture")
+    selected = CoverageArtifactReader._extract_business_classes(artifact, tmp_path / "classes", {"demo/Service"})
+    assert len(selected) == 1
+    assert (selected[0] / "demo/Service.class").read_bytes() == b"class-fixture"
+
+
+def test_business_jar_members_cannot_escape_workspace(tmp_path: Path) -> None:
+    """完整业务 JAR 被选入分析后，其内部越界成员也不能绕过路径检查。"""
+
+    artifact = tmp_path / "application.war"
+    # 正常源码类使整个 JAR 入选，越界类没有源码匹配也必须被路径检查拦截。
+    with ZipFile(artifact, "w") as archive:
+        archive.writestr("WEB-INF/lib/business.jar", _business_jar([
+            ("demo/Service.class", b"class-fixture"), ("../outside.class", b"unsafe")]))
+    with pytest.raises(CoverageUnavailable) as failure:
+        CoverageArtifactReader._extract_business_classes(artifact, tmp_path / "classes", {"demo/Service"})
+    assert failure.value.reason_code == "ARTIFACT_PATH_INVALID"
+    assert not (tmp_path / "outside.class").exists()
+
+
+@pytest.mark.parametrize("descriptor", ["module-info.class", "META-INF/versions/9/module-info.class"])
+def test_distinct_business_modules_may_have_different_descriptors(tmp_path: Path, descriptor: str) -> None:
+    """两个已选业务模块的描述符允许不同，互不重名的业务类仍完整保留。"""
+
+    artifact = tmp_path / "application.jar"
+    # 每个 JAR 由本项目源码类入选，描述符只用于声明各自模块，不是覆盖冲突。
+    with ZipFile(artifact, "w") as archive:
+        for module in ("First", "Second"):
+            archive.writestr(f"BOOT-INF/lib/{module}.jar", _business_jar([
+                (f"demo/{module}.class", module.encode()),
+                (descriptor, f"module {module}".encode()),
+            ]))
+    selected = CoverageArtifactReader._extract_business_classes(
+        artifact, tmp_path / "classes", {"demo/First", "demo/Second"},
+    )
+    assert len(selected) == 2
+    # 描述符可以随完整 JAR 交给 JaCoCo 自行跳过，不裁掉其他尚未加载的类。
+    for path in selected:
+        with ZipFile(path) as archive:
+            assert descriptor in archive.namelist()
+
+
+def test_direct_module_descriptor_is_not_a_coverage_class(tmp_path: Path) -> None:
+    """混合布局中的不同模块描述符不覆盖同一个直接文件，也不阻断业务类分析。"""
+
+    artifact = tmp_path / "application.jar"
+    # 模拟归档中同时存在两种类布局；只保留真正需要计数的业务类。
+    with ZipFile(artifact, "w") as archive:
+        archive.writestr("WEB-INF/classes/module-info.class", b"module first")
+        archive.writestr("module-info.class", b"module second")
+        archive.writestr("demo/Service.class", b"service")
+    selected = CoverageArtifactReader._extract_business_classes(
+        artifact, tmp_path / "classes", {"demo/Service", "module-info"},
+    )
+    assert len(selected) == 1
+    assert sorted(path.name for path in selected[0].rglob("*.class")) == ["Service.class"]
 
 
 def test_frozen_ftp_reference_retains_only_environment_names() -> None:

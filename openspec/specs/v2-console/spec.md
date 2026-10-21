@@ -214,3 +214,11 @@ The console SHALL load configured environments when entering a visible workspace
 - **WHEN** the user starts on the workbench, knowledge or tasks page
 - **THEN** only that workspace's necessary queries run and environment loading is deferred
 
+### Requirement: Case执行结果条目文字必须清晰可读
+系统 SHALL 为浅色执行结果条目使用清晰的深色标题，普通、悬停及选中状态的正文文字与背景对比度均不低于 4.5:1，状态徽标和辅助文字保留各自语义颜色。
+
+#### Scenario: 用户浏览执行结果列表
+- **WHEN** 用户查看、悬停或选中已有执行结果的子用例
+- **THEN** 标题不得继承全局按钮白字，三种状态均可辨识
+- **AND** 样式更新同步资源 URL 和页面版本，已打开的旧页面由既有版本检查提示刷新
+

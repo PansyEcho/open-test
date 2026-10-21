@@ -1,11 +1,11 @@
-## 当前未完成任务交接（2026-09-30）
+## 当前实施任务（2026-10-21）
 
-- 用户已批准实施 Java 系统接入简化方案，随后要求保存现场，由另一台电脑上的 AI 继续。当前实现尚未验收完成，禁止把现场保存理解为功能完成。
-- 开工先读 [交接记录](openspec/changes/simplify-java-system-onboarding/handoff.md)，再读同 change 的 proposal、design、tasks 和 delta specs。它记录已验证结果、失败任务、测试缺口、本机配置与数据清理边界；继续时维护该记录和 tasks。
-- 唯一选定 OpenSpec change：`simplify-java-system-onboarding`；未归档。本轮实现尚未提交/推送，跨电脑先确认完整代码 diff 已带过去。
+- Java 系统接入简化 change 已于 2026-10-10 归档，不再作为当前实施 change；仅调查历史设计或迁移时读取其归档。
+- 当前用户已批准实施 [共享基准、Case 发布与覆盖增强开发计划](docs/discussions/shared-baselines-case-publication-development-plan.md)。选定 OpenSpec change 为 `share-code-baselines-and-publish-cases`，实施与验证进度以该 change 的 tasks.md 为准。
+- 开工时已有覆盖增强等未提交改动，必须保留并区分本次差异；跨电脑继续前确认完整工作区和本次 change 已带过去。
 - 已知扫描缺陷必须通过程序修复，禁用解析 AI 兜底验收，不加业务系统名/包名硬编码。MySQL-only 不能为迁就旧测试恢复文件回退。
 - 后续必须完成真实查询Case闭环、通用系统回归、页面验收、验证后清理、OCR delegation独立审查和严格OpenSpec校验；所有步骤通过后才能归档。
-- 本轮用户的注释、日志上下文、参数设计与独立审查规则在交接记录第8节；继续编码必须遵守。不得删除 `local_only` 归档及恢复所需内容，不整体删除运行目录。
+- 继续编码遵守本轮用户的注释、日志上下文、参数设计与独立审查规则。不得删除 `local_only` 归档及恢复所需内容，不整体删除运行目录。
 
 ## Offline testing and verified outcomes
 

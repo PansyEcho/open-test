@@ -3,6 +3,7 @@
 from contextlib import nullcontext
 from pathlib import Path
 import shutil
+from threading import RLock
 from types import SimpleNamespace
 from unittest.mock import Mock, patch
 
@@ -55,6 +56,13 @@ def assistance() -> CoverageAssistanceService:
 
     service = object.__new__(CoverageAssistanceService)
     service.app, service.records, service.tasks = Mock(), Mock(), Mock()
+    # 本组旧材料编排测试显式不配置S3；共享材料读取由专门的跨机器测试覆盖。
+    service.app.object_storage = None
+    service._analysis_lock, service._analysis_futures = RLock(), {}
+    service.tasks._owner_pid = 42
+    service.tasks._owner_instance_id = "test-instance"
+    service.tasks._owner_started_at = "test-start"
+    service.tasks.get.return_value = SimpleNamespace(owner_pid=42, owner_instance_id="test-instance", owner_started_at="test-start")
     service.discovery, service.artifacts = Mock(), Mock()
     record = workflow()
     service.records.for_execution.return_value = record
@@ -149,7 +157,7 @@ def test_unbound_manual_execution_never_discovers_or_resets() -> None:
 
     service = assistance()
     service.records.for_execution.return_value = None
-    assert service.execution_starting(SimpleNamespace(execution_id="manual")) is None
+    assert service.execution_starting(SimpleNamespace(execution_id="manual", system_id="refund")) is None
     service.discovery.discover.assert_not_called()
     service.records.measurement_lock.assert_not_called()
 
@@ -261,6 +269,8 @@ def test_html_download_uses_valid_baseline_when_verification_is_invalid(tmp_path
     record.baseline.analysis = CoverageAnalysisResult(raw_counts=counts, scope_counts=counts,
         matched_class_count=1, uncomparable_class_count=0, scope_reason="resolved", candidate_gap_count=0, deferred_gap_count=0)
     record.verification.status = "INVALID"
+    # 该测试只验证有效阶段选择，员工和当前Case可见性另有边界测试。
+    service._visible_workflow = Mock(return_value=record)
     active = active_window(tmp_path)
     from opentest.domain.coverage_workflow import CoverageRawCapture
     raw = CoverageRawCapture(exec_base64="Zml4dHVyZQ==", artifact=active.artifact)
