@@ -14,11 +14,15 @@ dump/report 与 VALID/ANALYZING 原子保存之后，分析提交失败不能走
 
 事务外取得退出证据，system_transaction 内重新核对完整 owner、增强 revision、精确 Case 绑定，收尾旧进程遗留 RUNNING Case 后原子写入当前 owner 和增强 revision。即使测量无变化，也必须留下接管事实。所有专属 owner 写入和 sync_task 全量保存走同一系统锁并重新读取，防止旧 owner 写回。只接管 coverage 协调任务，不改补充 child 的 Agent owner。
 
+通用 TaskManager 启动孤儿扫描跳过 coverage-enhancement：该循环依赖心跳且会整包保存旧快照，可能撤销覆盖恢复器的原子接管；专属任务统一由覆盖恢复器依据严格进程证据处理。普通任务恢复行为不变。
+
 活动 Agent、回执、web_run 或人工接续证据由原 web_generation 恢复/附着，覆盖层不能抢先结束。确认原 owner 退出且无可恢复派发证据、非明确 GATE_BUSY 时以 PARTIAL/派发结果未知结束，不重派。明确门禁拒绝保留同 child/request 的等待；坏候选逐条隔离。
 
 ## 源码与后继
 
 完成可靠性阶段验收后再修改源码入口。显式 commit/tag 只能使用该 commit 的 clean、目标可解析、同扫描契约可用的扫描；允许可靠 PARTIAL，缺缓存先物化共享工具，真正无材料时明确提示系统页扫描。留空优先 QA 最新可用扫描，无法获得则走原基础路径并记跳过辅助原因，冻结实际 scan/commit。内部 start 支持指定 scan，不改系统 pin/latest、不扫描、不占全局扫描门禁，HTTP/MCP 仍同步返回 handoff。
+
+历史扫描先枚举轻量 ID，再按时间倒序逐条读取；首个可用立即返回，单条损坏不阻塞其他候选。`continue` 的来源继承在原请求身份校验后、同任务锁内补入投影，不能把新字段放入初始请求身份导致升级前后继回执失效。
 
 从 Generation 沿 predecessor 链检查增强祖先，含循环/缺失保护；任意增强祖先不再次增强，未知只跳过辅助。普通无增强祖先 READY 后继可以作为基础。迟到发布保留既有 Generation 关联，不重开终态增强。页面投影后继并在点击时复核，唯一后继后端约束继续生效。
 
