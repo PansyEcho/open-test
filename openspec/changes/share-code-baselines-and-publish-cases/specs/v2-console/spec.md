@@ -86,6 +86,11 @@ The console SHALL allow generation for an eligible interface of the current base
 - **THEN** show a hierarchical entry directory with interface classes and methods, MQ consumers and scheduled jobs only where actual entries exist; select a concrete entry and show only that entry's Cases without an "全部入口" aggregate item
 - **AND** retain published/mine ownership semantics and separate Case library, generation tasks, execution records and coverage assistance into tabs; an empty directory clears the selection and its details
 
+#### Scenario: One scenario has multiple state sub-cases
+- **WHEN** visible Cases of the selected entry come from the same Generation and scenario template with multiple state variants
+- **THEN** the Case library first shows one scenario row with its sub-case count and varying parameters, collapsed by default
+- **AND** expanding it shows each state Case with its own publish, comparison and execution actions; identical titles are not flattened into repeated Case rows
+
 #### Scenario: An entry has been removed but retains authorized Cases
 - **WHEN** current authorized Cases belong to an entry that is absent from the visible interface knowledge directory
 - **THEN** preserve that concrete entry in the browsing directory, mark its knowledge unavailable, and allow its Cases and historical executions to be inspected

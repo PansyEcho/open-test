@@ -189,3 +189,12 @@ OCR delegation 使用本轮开始副本生成明确补丁：初审 17 文件无�
 现场 `task-747633b6813f18fd`（handoff `case-template-handoff-04dabe4b15284824a4e0`）的两个发布 request 均报“Case草稿引用与固定编译产物不一致”，`generation=null`。根因不在 Agent 草稿：MySQL 持久化通过 `portable_scope_payload` 清除 `SourceBaseline.source_path/snapshot_path`，`CaseTemplateGenerationStoreV4.write/get` 又按本机绑定回填；`publish` 把回填后的 Generation 传给 `save_case_drafts`，后者经 `PublicationStore.generation` 读取原始载荷并做严格相等比较，两者恒差本机路径。该路径自 2026-10-21 共享发布落地后每次生成都会失败，与草稿 revision 或重新编译无关；数据库中原任务无 Generation 行、本人草稿为 0 条。修复前用真实 handoff 的源码 scope 可稳定复现同一异常，修复后真实 revision 3 提交重放发布成功。
 
 P13 的隔离内存验证没有覆盖持久化清除机器目录后再按本机绑定投影的读取路径，因此未发现该差异；本次改为使用真实任务提交和真实读取路径重放。共享发布与 Case 生成相关后端聚焦回归 123 通过、2 跳过；Case 模板与网页生成 116 通过、1 跳过。P12.3 的真实重新生成与执行报告、P4/P5/P7 验收仍未完成，本 change 保持未归档；本轮未启动或停止 8788 服务，用户需正常重启加载后端修正。
+
+## 15 Case 场景分组显示（2026-10-23）
+
+- [x] P15.1 Case 库按固定 Generation 与场景模板归组同一标题的状态子用例，场景行显示子用例数和变化参数，默认收起；展开后每个状态 Case 保留查看、发布、对比及执行入口。
+- [x] P15.2 增加分组与折叠渲染的 Node 测试，更新 `styles.css`/`shared-workspace.js` 资源版本并在运行中的 HTTP 服务确认新索引、样式和脚本已下发。
+
+现场 `case-template-generation-ea00a0b5a2434502b6ce` 的 9 个草稿对应 4 个场景：`cancel_allowed_states` 4 个状态、`cancel_rejected_states` 3 个、`cancel_reshoping` 1 个、`cancel_idempotent` 1 个。四条同名 Case 的差异仅为 `state`（WAIT_REFUND/REFUND_FAIL/AUDITED/PENDING_APPLY），不是重复数据；旧版按场景分组，新 Case 库平铺后丢失了该维度。展开行仍使用独立 Case 身份，不合并发布或执行。
+
+前端 Node 专项 24 项通过；`http://127.0.0.1:8788/` 已返回 `20261023-07` 的 styles/shared-workspace 资源，新增分组函数与样式实际出现在响应中。未在未登录浏览器伪造登录，登录后的视觉确认仍需用户刷新页面完成；页面版本保持 `20261023-04`，本次纯展示改动不会强制拦截旧页。未提交 Git，真实 QA 执行仍未完成。

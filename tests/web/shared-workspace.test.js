@@ -424,7 +424,7 @@ test("有效知识目录移除入口后，授权历史 Case 仍可选择且不�
     },
   });
   // 运行实际目录合并、下拉渲染、具体入口选择和详情逻辑，而非单独断言补项算法。
-  for (const name of ["entryPlacement", "entrySummary", "entryGroup", "readSharedEntryCatalog", "sharedCaseBrowseEntries", "appendOperationOptions", "renderSharedCaseTree", "renderSharedCases", "selectSharedOperation", "loadSharedCaseWorkspace"]) loadFunction(context, name);
+  for (const name of ["sharedCaseValueLabel", "sharedCaseVariationNames", "sharedCaseGroups", "entryPlacement", "entrySummary", "entryGroup", "readSharedEntryCatalog", "sharedCaseBrowseEntries", "appendOperationOptions", "renderSharedCaseTree", "renderSharedCases", "selectSharedOperation", "loadSharedCaseWorkspace"]) loadFunction(context, name);
   await context.loadSharedCaseWorkspace("old-case");
   assert.equal(panels["shared-case-operation"].value, "facade:Retired#run");
   assert.match(panels["shared-case-operation"].options.find(option => option.value === "facade:Retired#run").text, /入口已移除/);
@@ -496,4 +496,59 @@ test("无效覆盖测量即使携带计数也不能显示为有效零覆盖", as
   await context.loadSharedCoverage({case_id: "case-a", generation_id: "generation-a", view: "published"}, context.sharedScope());
   assert.ok(children.some(item => /第一次测量：尚无有效计数/.test(item.text)));
   assert.ok(children.every(item => !/方法 0 已覆盖/.test(item.text)));
+});
+
+test("同一场景的状态子用例按模板归组并标出变化参数", () => {
+  const context = scopeHarness();
+  for (const name of ["sharedCaseValueLabel", "sharedCaseVariationNames", "sharedCaseGroups"]) loadFunction(context, name);
+  const cases = [
+    {generation_id: "generation-a", template_id: "cancel_allowed_states", title: "取消成功",
+      variant: {ordinal: 2, parameter_values: {state: {code: 2, name: "WAIT_REFUND"}}}},
+    {generation_id: "generation-a", template_id: "cancel_allowed_states", title: "取消成功",
+      variant: {ordinal: 5, parameter_values: {state: {code: 0, name: "PENDING_APPLY"}}}},
+    {generation_id: "generation-a", template_id: "cancel_rejected_states", title: "拒绝取消",
+      variant: {ordinal: 7, parameter_values: {state: {code: 7, name: "REFUND_DONE"}}}},
+  ];
+  const groups = context.sharedCaseGroups(cases);
+  assert.equal(groups.length, 2);
+  assert.equal(groups[0].items.length, 2);
+  assert.deepEqual([...context.sharedCaseVariationNames(groups[0].items)], ["state"]);
+  assert.equal(context.sharedCaseValueLabel({code: 2, name: "WAIT_REFUND"}), "WAIT_REFUND（2）");
+  assert.equal(groups[0].items[1].variant.ordinal, 5);
+});
+
+test("同场景多子用例先显示场景行，展开后才显示状态变体", () => {
+  const ids = ["shared-case-operation", "shared-case-search", "shared-case-list",
+    "shared-history-case", "shared-coverage-case", "shared-refresh-history", "shared-refresh-coverage"];
+  const panels = Object.fromEntries(ids.map(id => [id, caseNode()]));
+  panels["shared-case-operation"].value = "facade:Query#run";
+  panels["shared-case-search"].value = "";
+  const context = scopeHarness();
+  const cases = [
+    {case_id: "case-a", operation_id: "facade:Query#run", title: "取消成功", generation_id: "generation-a", template_id: "cancel_allowed_states",
+      variant: {ordinal: 2, parameter_values: {state: {code: 2, name: "WAIT_REFUND"}}}},
+    {case_id: "case-b", operation_id: "facade:Query#run", title: "取消成功", generation_id: "generation-a", template_id: "cancel_allowed_states",
+      variant: {ordinal: 5, parameter_values: {state: {code: 0, name: "PENDING_APPLY"}}}},
+  ];
+  Object.assign(context.sharedWorkspace, {caseView: "mine", caseTab: "cases", selectedCase: null, cases});
+  Object.assign(context, {
+    element: id => panels[id],
+    document: {getElementById: id => panels[id], createElement: caseNode},
+    textNode: caseNode,
+    sharedButton: (label, action) => ({tag: "button", text: label, action, children: [], appendChild(item) { this.children.push(item); }}),
+    addSharedDraftActions(container) { container.children.push({tag: "button", text: "发布"}); },
+    loadSharedCaseDetails: async () => {},
+    clearSharedCaseSelection: () => {},
+    Option: function (text) { return caseNode("option", text); },
+    sharedStatus: status => status,
+  });
+  for (const name of ["sharedCaseGroups", "sharedCaseVariationNames", "sharedCaseValueLabel", "renderSharedCases"]) loadFunction(context, name);
+  context.renderSharedCases();
+  const body = panels["shared-case-list"].children[0].children[1];
+  assert.equal(body.children.length, 3);
+  assert.equal(body.children[0].className, "shared-case-group-row");
+  assert.equal(body.children[0].children[0].children[0].text, "▸ 取消成功");
+  assert.equal(body.children[1].hidden, true);
+  assert.equal(body.children[2].hidden, true);
+  assert.match(body.children[1].children[0].children[0].text, /state：WAIT_REFUND（2）/);
 });
