@@ -1,0 +1,24 @@
+openspec/changes/share-code-baselines-and-publish-cases/specs/v2-console/spec.md
+  h_3484aac7699d62 89-93
+openspec/changes/share-code-baselines-and-publish-cases/tasks.md
+  h_3484aac7699d62 192-200
+opentest/web/index.html
+  h_3484aac7699d62 8,332-336
+opentest/web/shared-workspace.js
+  h_3484aac7699d62 921-968,979-991,996-999,1015-1021,1023-1024,1026-1086
+opentest/web/styles.css
+  h_3484aac7699d62 673-679
+tests/web/shared-workspace.test.js
+  h_3484aac7699d62 427,500-554
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.2",
+  "base_commit_sha": "f3d63798d0de9d9e3d50b82b6ecf54c4f0059f30",
+  "prompts": {},
+  "humans": {
+    "h_3484aac7699d62": {
+      "author": "shizhen <yuuu.shizhen@gmail.com>"
+    }
+  }
+}
