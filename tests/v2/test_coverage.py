@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import io
+import ftplib
 import socket
 import socketserver
 import subprocess
@@ -11,7 +12,7 @@ import time
 from contextlib import contextmanager, nullcontext
 from datetime import timedelta
 from pathlib import Path
-from threading import Event, Thread
+from threading import Barrier, Event, Lock, Thread
 from xml.etree import ElementTree as ET
 from zipfile import ZipFile
 from unittest.mock import Mock
@@ -179,6 +180,40 @@ def test_discovery_rejects_incomplete_page_window(monkeypatch: pytest.MonkeyPatc
     with pytest.raises(CoverageUnavailable) as failure:
         discovery.discover(SkyeyeDiscoverySettings(app_id="123", token="secret"), time.monotonic() + 10)
     assert failure.value.reason_code == "SKYEYE_PAGINATION_INCOMPLETE"
+
+
+@pytest.mark.parametrize("server_ip,legacy_ip,expected_ip", [
+    ("10.0.0.4", "container-demo-123", "10.0.0.4"),
+    ("10.0.0.4", "10.0.0.5", "10.0.0.4"),
+    (None, "10.0.0.5", "10.0.0.5"),
+    ("", "10.0.0.5", "10.0.0.5"),
+    ("not-an-address", "10.0.0.5", None),
+    (" ", "10.0.0.5", None),
+    (None, "container-demo-123", None),
+])
+def test_discovery_uses_instance_address_and_only_falls_back_for_missing_server_ip(
+    server_ip: str | None, legacy_ip: str, expected_ip: str | None,
+) -> None:
+    """验证容器地址与旧日志兼容边界，不连接实际采集服务。
+
+    server_ip 为待验证地址，None 模拟缺少字段；legacy_ip 是旧地址或容器名，
+    expected_ip 为允许采集的地址，None 表示整条候选必须被拒绝。
+    """
+
+    now = utc_now()
+    row = {"appId": "123", "appUk": "demo.app", "env": "uat", "ip": legacy_ip,
+           "id": "current", "timestamp": now.timestamp() * 1000}
+    # None 模拟旧日志根本没有 serverIp；空串与非法值分别验证兼容和拒绝边界。
+    if server_ip is not None:
+        row["serverIp"] = server_ip
+    config = SkyeyeDiscoverySettings(app_id="123", environment="uat", jacoco_port=6311)
+    candidate = SkyeyeInstanceDiscovery._candidate(row, config, (now - timedelta(minutes=1), now), "uat")
+    if expected_ip is None:
+        assert candidate is None
+    else:
+        assert candidate is not None
+        assert candidate.ip == expected_ip
+        assert candidate.port == 6311
 
 
 def test_expired_deadline_prevents_reset_start(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
@@ -393,6 +428,259 @@ def test_ftp_actual_layout_separates_war_and_source_and_lists_current_directory(
     assert ftp.voidcmd.call_count == 2
 
 
+def _archive_ftp(monkeypatch: pytest.MonkeyPatch, directories: dict, files: dict) -> Mock:
+    """以独立会话替代 FTP 传输，保留真实连接边界的错误分类。
+
+    directories 将绝对目录映射到直属条目或读取异常，files 将文件映射到大小或异常。
+    返回聚合调用记录和 connections 列表验证访问范围及关闭；不连接网络。
+    """
+
+    client = Mock()
+    client.connections = []
+
+    def file_size(path: str) -> int:
+        """读取文件清单中的大小；缺文件与预置故障均走真实错误分类。"""
+
+        if path not in files:
+            raise ftplib.error_perm("550 file unavailable")
+        size = files[path]
+        if isinstance(size, Exception):
+            raise size
+        return size
+
+    client.size.side_effect = file_size
+    client.sendcmd.return_value = "213 20261022030000"
+
+    def connect(**kwargs) -> Mock:
+        """模拟 ftplib.FTP 的构造契约，各连接的当前目录互不影响并集中记录调用。"""
+
+        connection = Mock()
+        connection.sock = None
+        current_directory = ""
+
+        def change_directory(path: str) -> None:
+            """切换当前会话目录，未知路径按真实 FTP 错误处理。"""
+
+            nonlocal current_directory
+            client.cwd(path)
+            if path not in directories:
+                raise ftplib.error_perm("550 directory unavailable")
+            current_directory = path
+
+        def list_directory() -> list[str]:
+            """返回会话当前目录或预置错误，不隐藏其他并发批次的不可读目录。"""
+
+            client.nlst()
+            entries = directories[current_directory]
+            if isinstance(entries, Exception):
+                raise entries
+            return entries
+
+        # 一个 FTP 对象只拥有一份 CWD 状态，避免用共享 Mock 掩盖并发目录串扰。
+        connection.cwd.side_effect = change_directory
+        connection.nlst.side_effect = list_directory
+        connection.size = client.size
+        connection.sendcmd = client.sendcmd
+        client.connections.append(connection)
+        return connection
+
+    # 仍通过 _ftp 进入，证明网络错误不会被自动发现误判为不存在的候选。
+    monkeypatch.setattr("opentest.adapters.coverage.ftplib.FTP", connect)
+    monkeypatch.setenv("OPENTEST_FTP_USER", "fixture-user")
+    monkeypatch.setenv("OPENTEST_FTP_PASSWORD", "fixture-password")
+    return client
+
+
+@pytest.mark.parametrize("environment", ["qa", "uat"])
+def test_ftp_auto_selection_is_unique_and_stays_in_selected_environment(
+    environment: str, monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """只读取所选环境的固定 commit，跳过不含该 commit 的版本并固定唯一完整构建。"""
+
+    base = f"/archive/demo.app/war/{environment}"
+    candidate = f"{base}/feature-current-2/{COMMIT}"
+    source = f"/archive/demo.app/{environment}/feature-current-2/{COMMIT}/out.tar.gz"
+    directories = {base: ["feature-older-1", "feature-current-2"],
+        base + "/feature-older-1": ["b" * 40], base + "/feature-current-2": [COMMIT],
+        candidate: ["actual.war", "notes.txt"]}
+    client = _archive_ftp(monkeypatch, directories, {candidate + "/actual.war": 42, source: 12})
+    selection = CoverageArtifactSelection(app_uk="demo.app", environment=environment,
+        archive_environment=environment, archive_host="fixture.invalid", archive_root="/archive",
+        archive_username_ref="${ENV:OPENTEST_FTP_USER}", archive_password_ref="${ENV:OPENTEST_FTP_PASSWORD}")
+    reader = CoverageArtifactReader()
+
+    def prepare_request(operation: str, payload: dict, deadline: float) -> dict:
+        """模拟只读子进程的序列化边界，检查公开入口允许省略版本并返回已固定材料。"""
+
+        assert operation == "artifact_prepare"
+        request = CoverageArtifactSelection.model_validate(payload["selection"])
+        prepared = reader._prepare_ftp_direct(request, payload["commit"], deadline)
+        return prepared.model_dump(mode="json")
+
+    monkeypatch.setattr("opentest.adapters.coverage._read_network", prepare_request)
+    frozen = reader.prepare(selection, COMMIT, time.monotonic() + 10)
+    assert frozen.selection.archive_version == "feature-current-2"
+    assert selection.archive_version == ""
+    assert frozen.artifact.path == candidate + "/actual.war"
+    assert frozen.source.path == source
+    # 不列应用根、其他环境或生产目录；后续下载只使用本次冻结的唯一文件。
+    assert all(call.args[0] == base or call.args[0].startswith(base + "/") for call in client.cwd.call_args_list)
+
+
+def test_ftp_large_directory_uses_bounded_independent_connections(monkeypatch: pytest.MonkeyPatch) -> None:
+    """190 个版本必须查全且最多八个连接并发，不能只找首批或共享 CWD 会话。"""
+
+    base = "/archive/demo.app/war/qa"
+    versions = [f"version-{index}" for index in range(190)]
+    candidate = f"{base}/{versions[-1]}/{COMMIT}"
+    source = f"/archive/demo.app/qa/{versions[-1]}/{COMMIT}/out.tar.gz"
+    directories = {base: versions, candidate: ["actual.war"]}
+    directories.update({f"{base}/{version}": [COMMIT] if version == versions[-1] else ["b" * 40]
+                        for version in versions})
+    client = _archive_ftp(monkeypatch, directories, {candidate + "/actual.war": 42, source: 12})
+    reader = CoverageArtifactReader()
+    list_directory = reader._list_ftp_directory
+    first_queries = Barrier(8, timeout=3)
+    state_lock = Lock()
+    seen_connections = set()
+
+    def synchronized_listing(ftp, directory: str, deadline: float) -> list[str]:
+        """让每批首次读取汇合，证明真实并发且连接数有界，不依赖耗时断言。"""
+
+        if directory in {f"{base}/{version}" for version in versions}:
+            with state_lock:
+                first = id(ftp) not in seen_connections
+                seen_connections.add(id(ftp))
+            # 顺序执行或不足八个 worker 会在屏障超时，避免用瞬时 Mock 假证明并发。
+            if first:
+                first_queries.wait()
+        return list_directory(ftp, directory, deadline)
+
+    monkeypatch.setattr(reader, "_list_ftp_directory", synchronized_listing)
+    selection = CoverageArtifactSelection(app_uk="demo.app", archive_host="fixture.invalid", archive_root="/archive",
+        archive_username_ref="${ENV:OPENTEST_FTP_USER}", archive_password_ref="${ENV:OPENTEST_FTP_PASSWORD}")
+    frozen = reader._prepare_ftp_direct(selection, COMMIT, time.monotonic() + 10)
+    assert frozen.selection.archive_version == versions[-1]
+    assert len(seen_connections) == 8
+    assert len(client.connections) == 10  # 父目录连接、八个查询连接、固定材料连接，三阶段不重叠。
+    visited = [call.args[0] for call in client.cwd.call_args_list]
+    assert sorted(visited) == sorted([base, candidate, *(f"{base}/{version}" for version in versions)])
+    for connection in client.connections:
+        connection.close.assert_called_once_with()
+
+
+def test_ftp_empty_environment_does_not_start_query_connections(monkeypatch: pytest.MonkeyPatch) -> None:
+    """环境没有版本时只读取父目录，明确缺失且不创建零工作者线程池。"""
+
+    client = _archive_ftp(monkeypatch, {"/archive/demo.app/war/qa": []}, {})
+    selection = CoverageArtifactSelection(app_uk="demo.app", archive_host="fixture.invalid", archive_root="/archive",
+        archive_username_ref="${ENV:OPENTEST_FTP_USER}", archive_password_ref="${ENV:OPENTEST_FTP_PASSWORD}")
+    with pytest.raises(CoverageUnavailable) as failure:
+        CoverageArtifactReader()._prepare_ftp_direct(selection, COMMIT, time.monotonic() + 10)
+    assert failure.value.reason_code == "DEPLOYED_ARTIFACT_UNAVAILABLE"
+    assert len(client.connections) == 1
+    client.connections[0].close.assert_called_once_with()
+
+
+def test_local_artifact_wrong_commit_cannot_fall_back_to_archive(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    """显式本地包版本不符时拒绝，不能因同时配置 FTP 而悄悄切换另一材料来源。"""
+
+    selection = _make_materials(tmp_path).model_copy(update={"archive_host": "fixture.invalid"})
+    network = Mock()
+    monkeypatch.setattr("opentest.adapters.coverage._read_network", network)
+    # 本地材料优先级保持兼容，自动归档仅适用于未选择本地实际包的配置。
+    with pytest.raises(CoverageUnavailable) as failure:
+        CoverageArtifactReader().prepare(selection, "b" * 40, time.monotonic() + 10)
+    assert failure.value.reason_code == "ARTIFACT_REVISION_MISMATCH"
+    network.assert_not_called()
+
+
+@pytest.mark.parametrize("matches,expected_reason", [(0, "DEPLOYED_ARTIFACT_UNAVAILABLE"), (2, "ARTIFACT_BUILD_AMBIGUOUS")])
+def test_ftp_auto_selection_rejects_absent_or_multiple_commit_builds(
+    matches: int, expected_reason: str, monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """没有匹配或同 commit 多构建都跳过，不读取时间后挑最新，也不下载其他 commit。"""
+
+    base = "/archive/demo.app/war/qa"
+    commits = [COMMIT] if matches else ["b" * 40]
+    client = _archive_ftp(monkeypatch, {base: ["version-1", "version-2"],
+        base + "/version-1": commits, base + "/version-2": commits}, {})
+    selection = CoverageArtifactSelection(app_uk="demo.app", archive_host="fixture.invalid", archive_root="/archive",
+        archive_username_ref="${ENV:OPENTEST_FTP_USER}", archive_password_ref="${ENV:OPENTEST_FTP_PASSWORD}")
+    with pytest.raises(CoverageUnavailable) as failure:
+        CoverageArtifactReader()._prepare_ftp_direct(selection, COMMIT, time.monotonic() + 10)
+    assert failure.value.reason_code == expected_reason
+    client.size.assert_not_called()
+    client.sendcmd.assert_not_called()
+
+
+@pytest.mark.parametrize("failure", [ftplib.error_perm("550 denied"), ftplib.error_temp("450 busy"), TimeoutError()])
+def test_ftp_auto_selection_does_not_hide_unreadable_other_versions(
+    failure: Exception, monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """已找到一个构建后另一目录不可读，不能把权限或超时当无匹配而宣布唯一。"""
+
+    base = "/archive/demo.app/war/qa"
+    client = _archive_ftp(monkeypatch, {base: ["version-1", "version-2"],
+        base + "/version-1": [COMMIT], base + "/version-2": failure}, {})
+    selection = CoverageArtifactSelection(app_uk="demo.app", archive_host="fixture.invalid", archive_root="/archive",
+        archive_username_ref="${ENV:OPENTEST_FTP_USER}", archive_password_ref="${ENV:OPENTEST_FTP_PASSWORD}")
+    with pytest.raises(CoverageUnavailable) as error:
+        CoverageArtifactReader()._prepare_ftp_direct(selection, COMMIT, time.monotonic() + 10)
+    expected_reason = "COVERAGE_PREFLIGHT_TIMEOUT" if isinstance(failure, TimeoutError) else "ARTIFACT_ARCHIVE_UNAVAILABLE"
+    assert error.value.reason_code == expected_reason
+    client.size.assert_not_called()
+
+
+@pytest.mark.parametrize("entry", ["../prod", "/prod", "version/../../prod", ".", "..", "version\\prod"])
+def test_ftp_auto_selection_rejects_unsafe_directory_names(entry: str, monkeypatch: pytest.MonkeyPatch) -> None:
+    """不安全版本名在进入目录前拒绝，不能借远端目录条目离开当前环境。"""
+
+    base = "/archive/demo.app/war/qa"
+    client = _archive_ftp(monkeypatch, {base: [entry]}, {})
+    selection = CoverageArtifactSelection(app_uk="demo.app", archive_host="fixture.invalid", archive_root="/archive",
+        archive_username_ref="${ENV:OPENTEST_FTP_USER}", archive_password_ref="${ENV:OPENTEST_FTP_PASSWORD}")
+    with pytest.raises(CoverageUnavailable) as failure:
+        CoverageArtifactReader()._prepare_ftp_direct(selection, COMMIT, time.monotonic() + 10)
+    assert failure.value.reason_code == "ARTIFACT_PATH_INVALID"
+    client.cwd.assert_called_once_with(base)
+
+
+@pytest.mark.parametrize("source_exists", [False, True])
+def test_ftp_auto_selection_requires_readable_matching_source(source_exists: bool, monkeypatch: pytest.MonkeyPatch) -> None:
+    """唯一 WAR 也不能省略配套源码；缺失或无权限时保留明确失败，不返回半份材料。"""
+
+    base = "/archive/demo.app/war/qa"
+    candidate = f"{base}/version-1/{COMMIT}"
+    files = {candidate + "/actual.war": 42}
+    if source_exists:
+        files[f"/archive/demo.app/qa/version-1/{COMMIT}/out.tar.gz"] = ftplib.error_perm("550 denied")
+    client = _archive_ftp(monkeypatch, {base: ["version-1"], base + "/version-1": [COMMIT],
+        candidate: ["actual.war"]}, files)
+    selection = CoverageArtifactSelection(app_uk="demo.app", archive_host="fixture.invalid", archive_root="/archive",
+        archive_username_ref="${ENV:OPENTEST_FTP_USER}", archive_password_ref="${ENV:OPENTEST_FTP_PASSWORD}")
+    with pytest.raises(CoverageUnavailable) as failure:
+        CoverageArtifactReader()._prepare_ftp_direct(selection, COMMIT, time.monotonic() + 10)
+    assert failure.value.reason_code == "ARTIFACT_ARCHIVE_UNAVAILABLE"
+    assert client.size.call_count == 2
+
+
+@pytest.mark.parametrize("changes", [
+    {"archive_environment": "prod"}, {"archive_environment": "uat"}, {"archive_root": "/archive/../prod"},
+    {"app_uk": "/"}, {"archive_version": "../prod"},
+])
+def test_ftp_prepare_rejects_cross_environment_or_escaping_configuration(changes: dict, monkeypatch: pytest.MonkeyPatch) -> None:
+    """错误环境及根目录、应用或固定版本逃逸均在启动网络子进程前拒绝。"""
+
+    network = Mock()
+    monkeypatch.setattr("opentest.adapters.coverage._read_network", network)
+    selection = CoverageArtifactSelection(app_uk="demo.app", archive_host="fixture.invalid", archive_root="/archive")
+    with pytest.raises(CoverageUnavailable) as failure:
+        CoverageArtifactReader().prepare(selection.model_copy(update=changes), COMMIT, time.monotonic() + 10)
+    assert failure.value.reason_code == "ARTIFACT_PATH_INVALID"
+    network.assert_not_called()
+
+
 @contextmanager
 def _slow_network_server(stage: str):
     """提供真实本地慢滴流或逐阶段延迟，退出时关闭全部监听和连接线程。
@@ -409,7 +697,7 @@ def _slow_network_server(stage: str):
         """实现采集所需的最小协议，故意让每次 socket 等待都短于总预算。"""
 
         def handle(self):
-            """按测试阶段滴流，连接关闭后退出；不保存请求正文或凭据。"""
+            """按测试阶段滴流，自动查找仅父目录正常返回，查询连接模拟超时。"""
 
             try:
                 if stage.startswith("http"):
@@ -437,9 +725,10 @@ def _slow_network_server(stage: str):
                     return
                 self.wfile.write(b"220 ready\r\n")
                 listener = None
+                directory = ""
                 try:
                     while not stop.is_set():
-                        command = self.rfile.readline().decode("ascii").split(" ", 1)[0].strip()
+                        command, _, argument = self.rfile.readline().decode("ascii").strip().partition(" ")
                         if not command:
                             return
                         if stage == "ftp_stages":
@@ -451,6 +740,7 @@ def _slow_network_server(stage: str):
                         elif command == "PASS":
                             self.wfile.write(b"230 logged in\r\n")
                         elif command == "CWD":
+                            directory = argument
                             self.wfile.write(b"250 directory\r\n")
                         elif command == "TYPE":
                             self.wfile.write(b"200 type\r\n")
@@ -465,10 +755,14 @@ def _slow_network_server(stage: str):
                             self.wfile.write(b"150 listing\r\n")
                             connection, _ = listener.accept()
                             with connection:
-                                reached.set()
-                                if stage == "ftp_success":
+                                # 自动查找先完成父目录清单，实际滴流发生在八个独立版本查询内。
+                                if stage == "ftp_auto_nlst" and directory.endswith("/war/qa"):
+                                    connection.sendall(b"".join(f"version-{index}\r\n".encode() for index in range(8)))
+                                elif stage == "ftp_success":
+                                    reached.set()
                                     connection.sendall(b"application.war\r\n")
                                 else:
+                                    reached.set()
                                     while not stop.wait(0.02):
                                         connection.sendall(b"x")
                                     return
@@ -497,9 +791,9 @@ def _slow_network_server(stage: str):
         assert not thread.is_alive()
 
 
-@pytest.mark.parametrize("stage", ["http_headers", "http_body", "ftp_welcome", "ftp_nlst", "ftp_stages"])
+@pytest.mark.parametrize("stage", ["http_headers", "http_body", "ftp_welcome", "ftp_nlst", "ftp_auto_nlst", "ftp_stages"])
 def test_network_total_deadline_kills_and_reaps_slow_collection(stage: str, monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
-    """短预算必须中止持续滴流与跨阶段累积等待，回收采集进程后不得执行迟到 reset。"""
+    """总预算中止串行或并发滴流并回收整个采集进程，不得执行迟到 reset。"""
 
     processes = []
     original_popen = subprocess.Popen
@@ -529,7 +823,8 @@ def test_network_total_deadline_kills_and_reaps_slow_collection(stage: str, monk
                 SkyeyeInstanceDiscovery(f"http://127.0.0.1:{port}/logs")._query({}, "test-token", deadline)
             else:
                 selection = CoverageArtifactSelection(app_uk="demo", archive_host="127.0.0.1", archive_port=port,
-                    archive_root="/archive", archive_version="version-1", archive_username_ref="${ENV:COVERAGE_TEST_FTP_USER}",
+                    archive_root="/archive", archive_version="" if stage == "ftp_auto_nlst" else "version-1",
+                    archive_username_ref="${ENV:COVERAGE_TEST_FTP_USER}",
                     archive_password_ref="${ENV:COVERAGE_TEST_FTP_PASSWORD}")
                 CoverageArtifactReader().prepare(selection, COMMIT, deadline)
             collector.reset(target, deadline)

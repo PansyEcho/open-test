@@ -520,7 +520,7 @@ def test_console_exposes_personal_baseline_and_explicit_creation() -> None:
         assert f'id="{element_id}"' in html
     assert "sharedWorkspace.baseline?.source_commit" in shared
     assert "sharedWorkspace.baseline?.selected_revision" in shared
-    assert 'sharedPreference(`baseline.${systemId()}`)' in shared
+    assert 'sharedPreference(`baseline.${scope.systemId}`)' in shared
     assert "revision:revision.value.trim()" in shared
     assert "inherited_from_baseline_id:scope.baselineId" in shared
     assert "environment_id:scope.environment" in shared

@@ -6,10 +6,15 @@ import threading
 import sqlite3
 import json
 import zlib
+import importlib.util
+import sys
 from concurrent.futures import ThreadPoolExecutor
+from contextlib import nullcontext
 from pathlib import Path
+from types import SimpleNamespace
 
 import pytest
+from fastapi.testclient import TestClient
 
 from opentest.adapters.knowledge_interview import KnowledgeInterviewStore
 from opentest.adapters.knowledge_store import GitKnowledgeStore
@@ -20,9 +25,11 @@ from opentest.adapters.mysql_migration import StandaloneAssetMigrator
 from opentest.adapters.mysql_metadata import MySqlMetadataStore, decode_json, encode_json, load_metadata_store, pack_json, portable_scope_payload, unpack_json
 from opentest.adapters.system_archive import SystemArchiveStore
 from opentest.adapters.published_capability_store import PublishedCapabilityStore
+from opentest.application.auth import bind_authenticated_identity
+from opentest.domain.auth import AuthenticatedIdentity, EmployeeIdentity
 from opentest.domain.case_template_v4 import CaseTemplateGenerationV4, CaseTemplateHandoffV4, CaseTemplateSourceScope, CaseTemplateSubmission, DslValueSource
 from opentest.domain.data_capabilities import DataCapabilityHandoff, DataCapabilityVersion, DataExecution
-from opentest.domain.errors import KnowledgeNotFoundError, KnowledgeValidationError, ScopeViolationError
+from opentest.domain.errors import KnowledgeNotFoundError, KnowledgeValidationError, MetadataConnectionError, ScopeViolationError
 from opentest.domain.models import (
     CandidateRef, KnowledgeInterview, KnowledgeNode, KnowledgeNodeKind, KnowledgeRevisionPlan, OperationInputKnowledgeContract, OperationMutability,
     ProviderOperationRef, PublishedOperationCapability, SourceBaseline, SystemDefinition,
@@ -60,6 +67,59 @@ def metadata_store() -> MySqlMetadataStore:
     """创建使用记录驱动的存储，所有连接参数都是测试字面值。"""
 
     return MySqlMetadataStore({"host": "unused", "user": "test", "database": "test"}, "workspace-test", RecordingConnection)
+
+
+def test_metadata_connection_error_maps_to_retryable_http_without_database(tmp_path, monkeypatch):
+    """实际API错误处理器将生产连接包装错误映射为503；注入应用避免模块导入连接真实数据库。"""
+
+    fixture_application = SimpleNamespace(store=SimpleNamespace(root=tmp_path, metadata=None),
+        auth=SimpleNamespace(settings=SimpleNamespace(origin="http://testserver")))
+
+    def fixture_factory(knowledge_root):
+        """替代模块级应用创建，只提供路由注册所需依赖，不运行真实初始化或生命周期。"""
+
+        return fixture_application
+
+    def fail_connection(**configuration):
+        """模拟驱动连接失败，原错误含私有信息以验证响应不会泄漏它。"""
+
+        raise OSError("PRIVATE-METADATA-CONNECTION")
+
+    # 独立模块名避免污染其他API测试；保留完整生产路由和异常映射，而非复制handler逻辑。
+    monkeypatch.setattr("opentest.application.foundation.OpenTestApplication", fixture_factory)
+    module_name = "opentest._metadata_http_test"
+    specification = importlib.util.spec_from_file_location(module_name, Path(__file__).parents[2] / "opentest" / "api.py")
+    api = importlib.util.module_from_spec(specification)
+    monkeypatch.setitem(sys.modules, module_name, api)
+    specification.loader.exec_module(api)
+    metadata = MySqlMetadataStore({"host": "unused", "user": "test", "database": "test"}, "workspace-test", fail_connection)
+
+    @api.app.get("/fixture-metadata-connection")
+    def connection_failure():
+        """触发生产连接错误供实际HTTP领域处理器转换；测试路由不读取业务材料。"""
+
+        metadata._connect()
+
+    client = TestClient(api.app)
+    try:
+        response = client.get("/fixture-metadata-connection")
+    finally:
+        client.close()
+        metadata.close()
+    assert response.status_code == 503
+    assert response.json()["error"]["code"] == "metadata_unavailable"
+    assert "PRIVATE" not in response.text
+
+
+@pytest.mark.parametrize("configuration", [{"connect_timeout": "invalid"}, {"port": "invalid"}])
+def test_invalid_connection_configuration_is_not_asset_validation(configuration):
+    """连接参数损坏与业务资产错误分型，不能被发布当作某个草稿的永久失败。"""
+
+    store = metadata_store()
+    store.configuration.update(configuration)
+    with pytest.raises(MetadataConnectionError):
+        store._connect()
+    store.close()
 
 
 def test_nested_transaction_commits_once_and_releases_connection():
@@ -391,6 +451,70 @@ def test_execution_summary_excludes_evidence_and_identity_remains_immutable(tmp_
     second_payload = {**payload, "execution_id": "data-execution-" + "b" * 20, "system_id": "another-core"}
     first.metadata.save_execution("data", second_payload)
     assert first.metadata.read_execution("data", execution.execution_id) == payload
+
+
+@pytest.mark.parametrize("record_kind", ["workflow", "execution"])
+@pytest.mark.parametrize("authenticated", [False, True])
+def test_legacy_owner_remains_null_during_local_recovery(tmp_path, record_kind, authenticated):
+    """历史任务和执行可由原工作台收尾，登录上下文不能认领NULL归属或放宽跨工作台限制。"""
+
+    first, second = shared_workspace_pair(tmp_path)
+    payload = {"system_id": "refund-core", "status": "RUNNING", "revision": 1}
+    if record_kind == "execution":
+        payload.update(execution_id="legacy-execution", environment_id="qa")
+    table = "ot_workflow_record" if record_kind == "workflow" else "ot_execution"
+
+    def save(metadata, changes):
+        """通过对应生产持久化入口保存同一历史聚合，返回值不参与归属判断。"""
+
+        if record_kind == "workflow":
+            metadata.put_workflow("task", "legacy-task", changes)
+        else:
+            metadata.save_execution("data", changes)
+
+    save(first.metadata, payload)
+    identity = AuthenticatedIdentity(EmployeeIdentity(user_id="employee-a", name="甲"), "cookie")
+    context = bind_authenticated_identity(identity) if authenticated else nullcontext()
+    with context:
+        # 只允许状态收尾；明确声明新owner与同ID跨工作台更新都继续拒绝。
+        with pytest.raises(ScopeViolationError, match="employee"):
+            save(first.metadata, {**payload, "owner_user_id": "employee-a"})
+        with pytest.raises(ScopeViolationError, match="workspace"):
+            save(second.metadata, {**payload, "status": "COMPLETED"})
+        save(first.metadata, {**payload, "status": "COMPLETED"})
+    row = first.metadata.fetch_one(f"SELECT owner_user_id,status FROM {table}")
+    assert row == {"owner_user_id": None, "status": "COMPLETED"}
+
+
+@pytest.mark.parametrize("record_kind", ["workflow", "execution"])
+def test_owned_updates_reject_foreign_employee_and_preserve_background_owner(tmp_path, record_kind):
+    """已有员工记录拒绝不同员工环境，即使载荷伪装原owner；后台收尾仍保持原索引。"""
+
+    first, _ = shared_workspace_pair(tmp_path)
+    payload = {"system_id": "refund-core", "status": "RUNNING", "revision": 1}
+    if record_kind == "execution":
+        payload.update(execution_id="owned-execution", environment_id="qa")
+    table = "ot_workflow_record" if record_kind == "workflow" else "ot_execution"
+
+    def save(changes):
+        """保存测试聚合的真实状态变更，保持同一工作台以单独验证员工限制。"""
+
+        if record_kind == "workflow":
+            first.metadata.put_workflow("task", "owned-task", changes)
+        else:
+            first.metadata.save_execution("data", changes)
+
+    identity = AuthenticatedIdentity(EmployeeIdentity(user_id="employee-a", name="甲"), "cookie")
+    with bind_authenticated_identity(identity):
+        save(payload)
+    foreign = AuthenticatedIdentity(EmployeeIdentity(user_id="employee-b", name="乙"), "cookie")
+    with bind_authenticated_identity(foreign):
+        with pytest.raises(ScopeViolationError, match="employee"):
+            save({**payload, "owner_user_id": "employee-a", "status": "COMPLETED"})
+    # 没有浏览器上下文的原工作台恢复线程可以收尾，但不可清空首次固定的员工索引。
+    save({**payload, "status": "COMPLETED"})
+    row = first.metadata.fetch_one(f"SELECT owner_user_id,status FROM {table}")
+    assert row == {"owner_user_id": "employee-a", "status": "COMPLETED"}
 
 
 def test_migration_preserves_repeated_historical_data_requests(tmp_path):

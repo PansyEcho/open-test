@@ -3,12 +3,16 @@
 from __future__ import annotations
 
 import importlib.util
+import asyncio
 import json
 import stat
 import time
+from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
+from threading import Event
 from urllib.parse import urlsplit
 
+import httpx
 import pytest
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
@@ -194,6 +198,96 @@ def test_task_grant_survives_logout_but_not_scope_exit_completion_or_restart(tmp
             restarted.authenticate("", bearer, ("GET", "/api/v2/private"))
         service.revoke_task_credentials("task-authorized")
         assert client.get("/api/v2/private", headers=headers).status_code == 401
+
+
+@pytest.mark.parametrize("query_boundary", ["task_active", "private_owner"])
+def test_slow_authorization_does_not_block_http_event_loop(tmp_path, monkeypatch, query_boundary):
+    """任务活动或私有归属查询阻塞时，同一ASGI事件循环仍能响应登录页面。
+
+    Args:
+        tmp_path: 隔离凭据目录。
+        monkeypatch: 仅替换同步数据库边界，不连接公司或MySQL。
+        query_boundary: 任务活动检查或私有对象归属检查。
+    Returns:
+        None；慢请求未释放时另一请求已成功，释放后身份仍正确时通过。
+    """
+
+    app, service, company = auth_app(tmp_path)
+    entered, release = Event(), Event()
+    path = "/api/v2/private" if query_boundary == "task_active" else "/api/v2/tasks/task-authorized"
+
+    @app.get("/api/v2/tasks/task-authorized")
+    def private_task_employee():
+        """返回真实认证上下文中的员工，证明线程池授权后仍正确传递身份。"""
+
+        return current_employee().model_dump()
+
+    def slow_query(identifier, parameters=()):
+        """模拟共享数据库等待；有限时保护避免故障实现使测试永久挂起。"""
+
+        entered.set()
+        if not release.wait(3):
+            raise AssertionError("同步授权阻塞了事件循环，未能及时释放测试查询")
+        return True if query_boundary == "task_active" else {"owner_user_id": company.employee.user_id}
+
+    if query_boundary == "task_active":
+        service.task_is_active = slow_query
+    else:
+        monkeypatch.setattr(service.metadata, "fetch_one", slow_query, raising=False)
+    grant = TaskAccessGrant(company.employee, "task-authorized", time.time() + 100, frozenset({("GET", path)}))
+    bearer = service.issue_task_credential(grant)
+
+    async def run_requests():
+        """同事件循环并行发起慢授权和登录页请求；无真实监听端口，最终必释放工作线程。"""
+
+        async with httpx.AsyncClient(transport=httpx.ASGITransport(app=app), base_url=service.settings.origin) as client:
+            pending = asyncio.create_task(client.get(path, headers={"Authorization": "Bearer " + bearer}))
+            try:
+                assert await asyncio.to_thread(entered.wait, 1)
+                session = await asyncio.wait_for(client.get("/api/v2/auth/session"), timeout=1)
+                assert session.status_code == 200
+                assert not pending.done()
+            finally:
+                release.set()
+                response = await asyncio.wait_for(pending, timeout=3)
+            assert response.status_code == 200
+            assert response.json()["user_id"] == company.employee.user_id
+
+    asyncio.run(run_requests())
+
+
+def test_task_active_query_releases_session_lock_and_honors_concurrent_revocation(tmp_path):
+    """慢任务检查不占会话锁；查询中途撤销凭据后，即使活动结果为真也不能重新授权。"""
+
+    _, service, company = auth_app(tmp_path)
+    entered, release = Event(), Event()
+
+    def slow_active(task_id):
+        """保持任务检查待完成，供另一个线程创建会话和撤销；返回原查询的活动结果。"""
+
+        assert task_id == "task-authorized"
+        entered.set()
+        if not release.wait(3):
+            raise AssertionError("任务检查不应阻塞其他会话操作")
+        return True
+
+    service.task_is_active = slow_active
+    grant = TaskAccessGrant(company.employee, "task-authorized", time.time() + 100,
+        frozenset({("GET", "/api/v2/private")}))
+    bearer = service.issue_task_credential(grant)
+    with ThreadPoolExecutor(max_workers=2) as executor:
+        pending = executor.submit(service.authenticate, "", bearer, ("GET", "/api/v2/private"))
+        try:
+            assert entered.wait(1)
+            # 两种会话锁调用都必须在慢数据库释放前完成；否则登录和终态撤销会被串行阻塞。
+            session_id, _ = executor.submit(service.create_browser_session).result(timeout=1)
+            assert session_id
+            executor.submit(service.revoke_task_credentials, grant.task_id).result(timeout=1)
+        finally:
+            release.set()
+        with pytest.raises(AuthenticationError) as denied:
+            pending.result(timeout=3)
+    assert denied.value.code == "TASK_CREDENTIAL_EXPIRED"
 
 
 @pytest.mark.parametrize("profile", [

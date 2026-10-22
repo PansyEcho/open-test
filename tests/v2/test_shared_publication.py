@@ -11,9 +11,10 @@ from threading import RLock
 
 import pytest
 
-from opentest.application.publication import PublicationService, contract_test_content
+from opentest.adapters.mysql_metadata import MySqlMetadataStore
+from opentest.application.publication import PublicationService, contract_test_content, equivalent_knowledge
 from opentest.domain.case_template_v4 import CaseTemplateGenerationV4
-from opentest.domain.errors import IdempotencyConflictError, KnowledgeNotFoundError
+from opentest.domain.errors import IdempotencyConflictError, KnowledgeNotFoundError, MetadataConnectionError, ScopeViolationError
 from opentest.domain.models import KnowledgeNode
 from opentest.domain.publication import DraftResolution, PublicationRequest, PublicationScope
 from opentest.domain.shared_workspace import InterfaceKnowledgeBundle
@@ -235,6 +236,179 @@ def test_missing_knowledge_blocks_publication_without_closing_draft(publication)
     result = service.publish(scope, "interfaces", PublicationRequest(request_id="request-partial1", scope="all"))
     assert [item.status for item in result.results] == ["PUBLISHED", "BLOCKED"]
     assert [item["baseline_interface_id"] for item in service.list_interfaces(scope, "mine")] == [2]
+
+
+@pytest.mark.parametrize("corruption", ["scope", "model", "json", "missing"])
+def test_invalid_case_asset_is_recorded_without_blocking_other_items(publication, corruption):
+    """坏Case产物在依赖范围探测时也须逐项阻断，不泄漏原文；有效同批项仍发布且回执可重放。"""
+
+    service, database, scope = publication
+    seed_interface(database, 1)
+    service.publish(scope, "interfaces", PublicationRequest(request_id="request-case-prerequisite", scope="all"))
+    for case_id, digit in (("case-bad", "a"), ("case-good", "b")):
+        payload = generation_payload()
+        payload["generation_id"] = "case-template-generation-" + digit * 20
+        payload["case_bindings"][0]["case_id"] = case_id
+        serialized = json.dumps(payload)
+        baseline_id = "baseline-one"
+        # 故障落在真实存储数据中，依赖发现必须经过生产投影与严格模型。
+        if case_id == "case-bad":
+            if corruption == "scope":
+                baseline_id = "baseline-other"
+            elif corruption == "model":
+                payload["status"] = "PRIVATE-INVALID-STATUS"
+                serialized = json.dumps(payload)
+            elif corruption == "json":
+                serialized = "PRIVATE-BROKEN-JSON"
+        if case_id != "case-bad" or corruption != "missing":
+            database.execute("INSERT INTO ot_case_generation VALUES(%s,'orders',%s,'employee-a',%s)",
+                (payload["generation_id"], baseline_id, serialized))
+        database.execute("INSERT INTO ot_case(case_id,baseline_interface_id) VALUES(%s,1)", (case_id,))
+        database.execute("INSERT INTO ot_case_draft VALUES(%s,'employee-a',%s,%s,0,1,'READY',NULL)",
+            (case_id, payload["generation_id"], payload["variants"][0]["variant_id"]))
+
+    request = PublicationRequest(request_id=f"request-invalid-{corruption}", scope="all")
+    receipt = service.publish(scope, "cases", request)
+    assert receipt.status == "COMPLETED"
+    assert [(item.item_id, item.status) for item in receipt.results] == [("case-bad", "BLOCKED"), ("case-good", "PUBLISHED")]
+    assert "PRIVATE" not in receipt.model_dump_json()
+    assert service.publish(scope, "cases", request) == receipt
+    assert database.fetch_one("SELECT current_generation_id FROM ot_case WHERE case_id='case-bad'")["current_generation_id"] is None
+    assert database.fetch_one("SELECT status FROM ot_case_draft WHERE case_id='case-bad'")["status"] == "READY"
+    assert database.fetch_one("SELECT publication_revision FROM ot_case WHERE case_id='case-good'")["publication_revision"] == 1
+
+
+def test_item_validation_failure_rolls_back_pointer_before_recording_blocked(publication, monkeypatch):
+    """接口指针更新后的关联校验失败也须回滚该项，不能将半发布内容与BLOCKED回执一起提交。"""
+
+    service, database, scope = publication
+    for identity in (1, 2, 3):
+        seed_interface(database, identity)
+    publish_interface = service.store.publish_interface
+
+    def reject_affected_case(publish_scope, row):
+        """真实推进第二接口后模拟关联Case范围校验失败，以验证外层事务回滚。"""
+
+        publish_interface(publish_scope, row)
+        if row["baseline_interface_id"] == 2:
+            raise ScopeViolationError("PRIVATE-BROKEN-DEPENDENCY")
+
+    monkeypatch.setattr(service.store, "publish_interface", reject_affected_case)
+    receipt = service.publish(scope, "interfaces", PublicationRequest(request_id="request-rollback-bad-item", scope="all"))
+    assert [item.status for item in receipt.results] == ["PUBLISHED", "BLOCKED", "PUBLISHED"]
+    row = database.fetch_one("SELECT current_interface_id,publication_revision,availability FROM ot_baseline_interface WHERE baseline_interface_id=2")
+    assert row == {"current_interface_id": None, "publication_revision": 0, "availability": "UNPUBLISHED"}
+    assert "PRIVATE" not in receipt.model_dump_json()
+
+
+def test_database_failure_is_not_persisted_as_terminal_item_failure(publication, monkeypatch):
+    """数据库中断保留已提交回执并抛错，恢复后原请求可继续；不能把未知提交包装成永久BLOCKED。"""
+
+    service, database, scope = publication
+    for identity in (1, 2, 3):
+        seed_interface(database, identity)
+    publish_interface = service.store.publish_interface
+
+    def interrupt_database(publish_scope, row):
+        """在真实写入第二接口后模拟驱动故障，强制验证该项事务与回执一起回滚。"""
+
+        publish_interface(publish_scope, row)
+        if row["baseline_interface_id"] == 2:
+            raise sqlite3.OperationalError("database interrupted")
+
+    request = PublicationRequest(request_id="request-infrastructure-retry", scope="all")
+    monkeypatch.setattr(service.store, "publish_interface", interrupt_database)
+    with pytest.raises(sqlite3.OperationalError, match="database interrupted"):
+        service.publish(scope, "interfaces", request)
+    receipt = service.store.lock_receipt(request.request_id)
+    assert receipt.status == "RUNNING" and [item.item_id for item in receipt.results] == ["1"]
+    assert database.fetch_one("SELECT publication_revision FROM ot_baseline_interface WHERE baseline_interface_id=2")["publication_revision"] == 0
+    monkeypatch.setattr(service.store, "publish_interface", publish_interface)
+    completed = service.publish(scope, "interfaces", request)
+    assert completed.status == "COMPLETED" and [item.status for item in completed.results] == ["PUBLISHED"] * 3
+    assert [row["publication_revision"] for row in database.fetch_all("SELECT publication_revision FROM ot_baseline_interface")] == [1, 1, 1]
+
+
+@pytest.mark.parametrize("phase", ["scope", "validation"])
+@pytest.mark.parametrize("failure", ["connection", "configuration"])
+def test_wrapped_metadata_connection_failure_keeps_publication_retriable(publication, monkeypatch, phase, failure):
+    """真实连接边界包装的驱动或凭据故障不能记为坏资产；恢复后同一冻结请求仍能发布。"""
+
+    service, database, scope = publication
+    seed_interface(database, 1)
+    seed_interface(database, 2)
+    unavailable = True
+
+    def connect(**configuration):
+        """只在本地制造连接工厂故障，恢复后返回隔离SQLite连接；不访问MySQL。"""
+
+        if unavailable:
+            raise OSError("PRIVATE-CONNECTION-DETAIL")
+        return sqlite3.connect(":memory:")
+
+    metadata = MySqlMetadataStore({"host": "unused", "user": "test", "database": "test"}, "test-workspace", connect)
+    if failure == "configuration":
+        metadata.configuration["password_env"] = "OPENTEST_REVIEW_TEST_MISSING_PASSWORD"
+        monkeypatch.delenv("OPENTEST_REVIEW_TEST_MISSING_PASSWORD", raising=False)
+    method_name = "get_item" if phase == "scope" else "contract"
+    original = getattr(service.store, method_name)
+
+    def read_after_connection(*arguments):
+        """让真实发布读取路径经过生产_connect错误包装，保留外围SQL事务与回执实现。"""
+
+        metadata._connect().close()
+        return original(*arguments)
+
+    monkeypatch.setattr(service.store, method_name, read_after_connection)
+    request = PublicationRequest(request_id=f"request-connect-{phase}-{failure}", scope="all")
+    with pytest.raises(MetadataConnectionError) as error:
+        service.publish(scope, "interfaces", request)
+    assert "PRIVATE" not in str(error.value)
+    receipt = service.store.lock_receipt(request.request_id)
+    assert receipt.status == "RUNNING" and receipt.results == []
+    assert all(row["publication_revision"] == 0 for row in database.fetch_all("SELECT publication_revision FROM ot_baseline_interface"))
+    # 配置或连接修复不需要新request_id，也不能因早期失败丢掉原冻结范围。
+    unavailable = False
+    metadata.configuration.pop("password_env", None)
+    completed = service.publish(scope, "interfaces", request)
+    assert completed.status == "COMPLETED"
+    assert [item.status for item in completed.results] == ["PUBLISHED", "PUBLISHED"]
+    metadata.close()
+
+
+@pytest.mark.parametrize("corrupted_revision", [1, 2])
+def test_invalid_knowledge_body_is_blocked_before_equivalence_normalization(publication, corrupted_revision):
+    """候选或已发布正文为整数时逐项阻断，旧指针保持不变且后续合法接口照常发布。"""
+
+    service, database, scope = publication
+    seed_interface(database, 1)
+    service.publish(scope, "interfaces", PublicationRequest(request_id="request-knowledge-original", scope="all"))
+    current = service.store.contract(1, 1)
+    database.execute("INSERT INTO ot_interface_contract_version VALUES(1,2,%s,%s,'employee-a')",
+        (json.dumps(current["contract"]), json.dumps(current["knowledge"])))
+    database.execute("UPDATE ot_interface_draft SET contract_revision=2,expected_publication_revision=1,draft_revision=3,status='READY' WHERE baseline_interface_id=1")
+    broken = deepcopy(current["knowledge"])
+    broken["bodies"]["node-order"] = 123
+    database.execute("UPDATE ot_interface_contract_version SET knowledge_json=%s WHERE interface_id=1 AND revision=%s",
+        (json.dumps(broken), corrupted_revision))
+    seed_interface(database, 2)
+    receipt = service.publish(scope, "interfaces", PublicationRequest(request_id="request-knowledge-corrupted", scope="all"))
+    assert [(item.item_id, item.status) for item in receipt.results] == [("1", "BLOCKED"), ("2", "PUBLISHED")]
+    assert receipt.results[0].reason_code == "DRAFT_INVALID"
+    row = database.fetch_one("SELECT current_contract_revision,publication_revision FROM ot_baseline_interface WHERE baseline_interface_id=1")
+    assert row == {"current_contract_revision": 1, "publication_revision": 1}
+
+
+def test_knowledge_comparison_preserves_missing_and_non_ready_semantics(publication):
+    """结构检查不补造缺失知识，也不把等价比较变成只允许READY材料的发布校验。"""
+
+    service, database, _ = publication
+    seed_interface(database, 1)
+    content = service.store.contract(1, 1)
+    content["contract"]["status"] = "BLOCKED"
+    content["contract"]["blocked_reason"] = "仍需补充测试语义"
+    assert equivalent_knowledge(content, deepcopy(content)) is True
+    assert equivalent_knowledge(content, {**content, "knowledge": None}) is False
 
 
 def generation_payload():

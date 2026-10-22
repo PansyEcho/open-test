@@ -59,6 +59,11 @@ The console SHALL show the selected shared baseline's full commit and original r
 #### Scenario: Selected catalog fails to load
 - **WHEN** the requested baseline catalog is unavailable
 - **THEN** preserve the previously confirmed selection and do not mislabel its contents with the failed baseline
+- **AND** show an actionable error and persist the preference only after successful loading; a late failure cannot roll back a later successful selection
+
+#### Scenario: Completed legacy knowledge task is opened
+- **WHEN** an employee opens an old completed knowledge task without a reliable baseline association
+- **THEN** direct the employee to choose the matching baseline and view current interface knowledge, without offering the retired system-level knowledge endpoint
 
 ### Requirement: Regression Case page exposes the V4 workflow and raw artifacts
 The console SHALL allow generation for an eligible interface of the current baseline, generation-only or generation-plus-verification in the selected QA/UAT environment, task polling and bound Agent access. The console SHALL show only current shared Cases and the employee's unpublished drafts through per-Case projections; replaced versions remain in storage without a history selector.

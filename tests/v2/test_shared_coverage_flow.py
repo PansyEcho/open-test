@@ -251,10 +251,59 @@ def retry_fixture() -> tuple[Mock, CoverageEnhancement, PublicationScope, Covera
     return app, previous, scope, request
 
 
+@pytest.mark.parametrize("eligibility", ["disabled", "unconfigured", "enhanced", "ancestor", "broken", "eligible"])
+def test_manual_new_root_enforces_policy_and_original_lineage(eligibility):
+    """手动新建也受自动增强资格约束；失败在登记或执行前拒绝，普通基础Case仍可新建。
+
+    Args:
+        eligibility: 系统策略或实际前驱链对应的资格场景。
+    Returns:
+        None；关闭策略、增强自身/祖先和不可核实链均无副作用，合法基础仅执行一次时通过。
+    """
+
+    app, previous, scope, request = retry_fixture()
+    request = request.model_copy(update={"retry_of": None, "generation_id": "generation-fixed",
+        "variant_id": "variant-fixed", "view": "published"})
+    app.store.get_system.return_value = SimpleNamespace(coverage_assistance=None if eligibility == "unconfigured"
+        else SimpleNamespace(enabled=eligibility != "disabled"))
+    generation = SimpleNamespace(generation_id="generation-fixed", system_id="refund",
+        predecessor_generation_id="generation-parent" if eligibility in {"ancestor", "broken"} else "")
+    parent = SimpleNamespace(generation_id="generation-parent", system_id="refund", predecessor_generation_id="")
+    generations = {generation.generation_id: generation, parent.generation_id: parent}
+    app.case_template_v4.generations.get.side_effect = lambda system_id, generation_id: generations.get(generation_id)
+    linked = previous.model_copy(update={"enhanced_generation_id": "generation-fixed" if eligibility == "enhanced" else "generation-parent"})
+    app.coverage_assistance.records.for_generation.side_effect = lambda system_id, generation_id: linked if (
+        eligibility == "enhanced" and generation_id == "generation-fixed") or (
+        eligibility == "ancestor" and generation_id == "generation-parent") else None
+    if eligibility == "broken":
+        generations.pop(parent.generation_id)
+    # 使用生产前驱链判定，确保没有把增强版和其普通后继误当成新的基础版本。
+    service = object.__new__(CoverageAssistanceService)
+    service.app, service.records = app, app.coverage_assistance.records
+    app.coverage_assistance._eligible_lineage.side_effect = service._eligible_lineage
+
+    if eligibility == "eligible":
+        created = retry_coverage(app, scope, "case-fixed", request)
+        assert created.retry_of == "" and created.root_enhancement_id == created.enhancement_id
+        assert created.environment_id == "uat" and created.case_selection == previous.case_selection[:1]
+        app.case_template_v4.prepare_execution.assert_called_once()
+        app.case_template_v4.dispatch_execution.assert_called_once()
+    else:
+        with pytest.raises(KnowledgeValidationError, match="未开启|不能递归"):
+            retry_coverage(app, scope, "case-fixed", request)
+        app.coverage_assistance.records.create.assert_not_called()
+        app.tasks.create_business_record.assert_not_called()
+        app.store.metadata.put_workflow.assert_not_called()
+        app.case_template_v4.prepare_execution.assert_not_called()
+        app.case_template_v4.dispatch_execution.assert_not_called()
+
+
 def test_retry_partial_verification_reuses_both_materials_without_model_or_business() -> None:
     """基线有效、复测已有原始材料时只补复测分析，保留单轮增强和原多Case测量范围。"""
 
     app, previous, scope, request = retry_fixture()
+    # 策略关闭不阻止原attempt补做只读分析，也不将已增强版本当成新根重新消耗模型轮次。
+    app.store.get_system.return_value = SimpleNamespace(coverage_assistance=SimpleNamespace(enabled=False))
     original = previous.model_dump(mode="json")
     resumed = retry_coverage(app, scope, "case-enhanced", request)
     assert resumed.stage == "VERIFICATION_ANALYZING"
@@ -265,6 +314,7 @@ def test_retry_partial_verification_reuses_both_materials_without_model_or_busin
     app.coverage_assistance.schedule_analysis.assert_called_once_with(resumed.enhancement_id, "verification")
     app.coverage_assistance.resume_verification.assert_not_called()
     app.case_template_v4.prepare_execution.assert_not_called()
+    app.coverage_assistance._eligible_lineage.assert_not_called()
     assert previous.model_dump(mode="json") == original
 
 

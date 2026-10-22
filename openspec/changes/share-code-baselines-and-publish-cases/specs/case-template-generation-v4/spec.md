@@ -10,6 +10,12 @@ The system SHALL resolve one visible Facade entry in the selected fixed code bas
 - **THEN** the result identifies a persisted task and frozen handoff, or its linked knowledge prerequisite
 - **AND** web mode starts execution while native mode remains in the calling Agent
 
+#### Scenario: Web prompt uses the persisted task environment
+
+- **WHEN** a web Case task starts or resumes analysis using a persisted TaskRecord
+- **THEN** prompt and coverage lookup use the environment frozen in task result without requiring an undeclared TaskRecord field
+- **AND** only legacy tasks lacking that field use the existing QA default
+
 #### Scenario: Target or required knowledge is unavailable
 
 - **WHEN** the target is valid but required knowledge is missing

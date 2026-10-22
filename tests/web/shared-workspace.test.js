@@ -139,3 +139,74 @@ test("工作台统计必须带基准环境和视图，无基准不读系统最�
   assert.equal(metrics["metric-entry"].textContent, "0");
   assert.equal(metrics["metric-resource"].textContent, "0");
 });
+
+/** 构造可切换三个基准的界面，记录真正落入个人偏好的选择和失败提示。 */
+function baselineSelectionHarness() {
+  const context = scopeHarness();
+  const choices = ["base-a", "base-b", "base-c"].map(baseline_id => ({baseline_id}));
+  const select = {value: "base-b"}, saved = [], messages = [];
+  Object.assign(context.sharedWorkspace, {baselines: choices, baseline: choices[0]});
+  Object.assign(context, {element: () => select,
+    document: {querySelector: () => ({id: "workspace-knowledge"})},
+    cancelSystemReads: () => {}, clearSystemWorkspaceState: () => {}, syncSharedEnvironment: () => {},
+    renderSharedBaselineHeader: () => {select.value = context.sharedWorkspace.baseline.baseline_id;},
+    sharedPreference: name => name, localStorage: {setItem: (key, value) => saved.push(value)},
+    showToast: message => messages.push(message)});
+  loadFunction(context, "handleSharedBaselineSelection");
+  return {context, select, saved, messages};
+}
+
+test("基准目录读取失败保留原选择，成功后才保存偏好", async () => {
+  const {context, select, saved, messages} = baselineSelectionHarness();
+  const reads = [];
+  context.loadWorkspaceData = async () => {
+    const baseline = context.sharedWorkspace.baseline.baseline_id;
+    reads.push(baseline);
+    if (baseline === "base-b") throw new Error("catalog unavailable");
+  };
+  await context.handleSharedBaselineSelection();
+  assert.equal(context.sharedWorkspace.baseline.baseline_id, "base-a");
+  assert.equal(select.value, "base-a");
+  assert.deepEqual(saved, []);
+  assert.deepEqual(reads, ["base-b", "base-a"]);
+  assert.match(messages[0], /切换失败.*恢复原选择/);
+  select.value = "base-c";
+  await context.handleSharedBaselineSelection();
+  assert.deepEqual(saved, ["base-c"]);
+});
+
+test("迟到的切换失败不能撤销后来已成功的基准", async () => {
+  const {context, select, saved, messages} = baselineSelectionHarness();
+  let fail;
+  context.loadWorkspaceData = () => context.sharedWorkspace.baseline.baseline_id === "base-b"
+    ? new Promise((resolve, reject) => {fail = reject;}) : Promise.resolve();
+  const pending = context.handleSharedBaselineSelection();
+  select.value = "base-c";
+  await context.handleSharedBaselineSelection();
+  fail(new Error("old request failed"));
+  await pending;
+  assert.equal(context.sharedWorkspace.baseline.baseline_id, "base-c");
+  assert.deepEqual(saved, ["base-c"]);
+  assert.deepEqual(messages, []);
+});
+
+test("旧知识任务详情不再提供已退役的知识读取按钮", async () => {
+  const children = [], requests = [];
+  /** 提供任务详情所需最小DOM，保存实际按钮标签而不执行页面初始化。 */
+  function node(tag, text) {
+    const item = {tag, text, children: [], dataset: {}, append(...values) {this.children.push(...values);},
+      appendChild(value) {this.children.push(value);}, addEventListener() {}, showModal() {}};
+    return item;
+  }
+  const context = vm.createContext({
+    captureSystemScope: () => ({systemId: "system-a"}), isCurrentSystemScope: () => true,
+    api: async path => {requests.push(path); return {task: {task_id: "legacy", status: "completed"}, context: {kind: "knowledge"}};},
+    document: {getElementById: () => null, body: {appendChild: item => children.push(item)}},
+    textNode: node, codexTaskStatusLabel: () => "已完成", appendResourceProbeResult: () => {}, appendTaskAgentDiagnostics: () => {},
+  });
+  loadFunction(context, "showBusinessTask", appSource);
+  await context.showBusinessTask({task_id: "legacy"});
+  assert.deepEqual(requests, ["/tasks/legacy/context"]);
+  assert.equal(children[0].children.some(item => item.tag === "button" && item.text === "查看正式知识"), false);
+  assert.ok(children[0].children.some(item => /顶部选择对应代码基准/.test(item.text)));
+});

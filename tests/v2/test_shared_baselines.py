@@ -8,8 +8,11 @@ import sqlite3
 import subprocess
 import tarfile
 from contextlib import contextmanager
+from copy import deepcopy
 from pathlib import Path
+from threading import RLock
 from types import SimpleNamespace
+from unittest.mock import Mock
 
 import pytest
 
@@ -21,8 +24,8 @@ from opentest.application.shared_baselines import SharedBaselineService
 from opentest.application.shared_interface_knowledge import SharedInterfaceKnowledgeService
 from opentest.application.publication import equivalent_knowledge
 from opentest.application.resources import ResourceInventoryService
-from opentest.domain.errors import IdempotencyConflictError, ScopeViolationError
-from opentest.domain.models import EntryPoint, KnowledgeContextProfile, OperationInputKnowledgeContract, ScanManifest, SourceBaseline, utc_now
+from opentest.domain.errors import IdempotencyConflictError, ScopeViolationError, TaskCancelledError, TaskPartialFailureError
+from opentest.domain.models import EntryPoint, KnowledgeContextProfile, KnowledgeInterview, KnowledgeQuestion, OperationInputKnowledgeContract, ScanManifest, SourceBaseline, TaskRecord, utc_now
 from opentest.domain.shared_workspace import BaselineContextUpdate, BaselineCreationRun, CreateCodeBaseline, StoredArtifact
 
 
@@ -86,6 +89,50 @@ def test_same_commit_reuses_first_source_and_other_employee_sees_only_shared_mat
     store.register_artifact(artifact)
     store.attach_source(baseline.baseline_id, artifact.artifact_id, "employee-a")
     assert store.list_baselines("refund-core", "employee-b")[0].baseline_id == baseline.baseline_id
+
+
+def test_large_baseline_history_lists_complete_content_without_database_filesort(monkeypatch):
+    """大历史正文避开MySQL宽行排序，完整保留内容及创建时间降序、同时间ID升序。"""
+
+    database = BaselineDatabase()
+    store = SharedWorkspaceStore(database)
+    history_body = "已确认的历史业务说明" * 40_000
+    context = KnowledgeContextProfile(system_id="refund-core", interview_answers={"history": history_body})
+    interview = KnowledgeInterview(system_id="refund-core", system_purpose=history_body)
+    question = KnowledgeQuestion(question_id="history-question", system_id="refund-core", title="历史问题",
+        detail="已核对业务边界", status="answered", answer=history_body)
+    # 插入顺序和ID顺序都不代表创建时间；同一时间下必须保持原来的ID升序。
+    for digit, baseline_id, created_at in (
+        ("a", "baseline-z-new", "2026-10-22 00:00:00.000001"),
+        ("b", "baseline-b-same", "2026-10-21 00:00:00.000000"),
+        ("c", "baseline-a-same", "2026-10-21 00:00:00.000000"),
+        ("d", "baseline-first-old", "2026-10-20 00:00:00.000000"),
+    ):
+        baseline = store.create_baseline(CreateCodeBaseline(system_id="refund-core", source_commit=digit * 40,
+            selected_revision="main", user_id="employee-a"))
+        database.execute("UPDATE ot_code_baseline SET baseline_id=%s,created_at=%s,context_json=%s,interview_json=%s,questions_json=%s WHERE baseline_id=%s",
+            (baseline_id, created_at, context.model_dump_json(), interview.model_dump_json(),
+             json.dumps([question.model_dump(mode="json")]), baseline.baseline_id))
+    fetch_all = database.fetch_all
+
+    def reject_large_json_filesort(sql, parameters=()):
+        """重现大JSON行参与filesort时的1038故障，其余查询仍由真实SQLite过滤。"""
+
+        # 限定已复现的宽行排序故障，允许轻量列排序等其他有效查询方案。
+        if "SELECT *" in sql and "ORDER BY" in sql:
+            from pymysql.err import OperationalError
+
+            raise OperationalError(1038, "Out of sort memory")
+        return fetch_all(sql, parameters)
+
+    monkeypatch.setattr(database, "fetch_all", reject_large_json_filesort)
+    listed = store.list_baselines("refund-core", "employee-a")
+    assert [item.baseline_id for item in listed] == [
+        "baseline-z-new", "baseline-a-same", "baseline-b-same", "baseline-first-old",
+    ]
+    assert all(item.context == context and item.interview == interview and item.questions == [question] for item in listed)
+    # 排序调整不能让其他员工读取尚未上传源码的新基准。
+    assert store.list_baselines("refund-core", "employee-b") == []
 
 
 def test_resource_probe_materializes_shared_source_before_resolving_uat(tmp_path, monkeypatch):
@@ -173,6 +220,186 @@ def test_inherited_background_is_independent_and_update_checks_revision():
     with pytest.raises(IdempotencyConflictError):
         store.update_context(BaselineContextUpdate(baseline_id=first.baseline_id, user_id="employee-b", expected_revision=1,
             context=KnowledgeContextProfile(system_id="refund-core", system_purpose="过期编辑")))
+
+
+def test_saving_background_preserves_existing_interview_and_questions():
+    """背景表单只传context时保留原访谈和已答问题；SQL不得以模型默认值清空其他列。"""
+
+    database = BaselineDatabase()
+    store = SharedWorkspaceStore(database)
+    baseline = store.create_baseline(CreateCodeBaseline(system_id="refund-core", source_commit="a" * 40,
+        selected_revision="main", user_id="employee-a"))
+    interview = KnowledgeInterview(system_id="refund-core", system_purpose="原访谈", business_terms={"退票": "旅客取消行程"})
+    question = KnowledgeQuestion(question_id="question-one", system_id="refund-core", source="interview",
+        title="退款边界", detail="是否允许部分退款", status="answered", answer="允许")
+    database.execute("UPDATE ot_code_baseline SET interview_json=%s,questions_json=%s WHERE baseline_id=%s",
+        (interview.model_dump_json(), json.dumps([question.model_dump(mode="json")]), baseline.baseline_id))
+    saved = store.update_context(BaselineContextUpdate(baseline_id=baseline.baseline_id, user_id="employee-a", expected_revision=0,
+        context=KnowledgeContextProfile(system_id="refund-core", system_purpose="编辑后的背景")))
+    assert saved.interview == interview and saved.questions == [question]
+    assert store.get_baseline(baseline.baseline_id).interview == interview
+    assert store.get_baseline(baseline.baseline_id).questions == [question]
+
+
+class CreationWorkflows:
+    """创建流程的内存持久边界，真实执行提交与阶段逻辑并验证revision，禁止外部服务访问。"""
+
+    workspace_id = "test-machine"
+
+    def __init__(self):
+        """初始化可跨Service实例复用的流程记录及串行系统事务锁。"""
+
+        self.records = {}
+        self.lock = RLock()
+
+    @contextmanager
+    def system_transaction(self, system_id):
+        """串行当前测试系统的提交和阶段写入，异常由测试直接检查，不模拟业务结论。"""
+
+        with self.lock:
+            yield
+
+    def put_workflow(self, kind, identity, payload, **options):
+        """保存独立载荷副本并检查乐观修订，防止服务重用内存对象掩盖过期写入。"""
+
+        previous = self.records.get((kind, identity))
+        if options.get("create_only"):
+            assert previous is None
+        if "expected_revision" in options:
+            assert previous["revision"] == options["expected_revision"]
+        self.records[kind, identity] = deepcopy(payload)
+
+    def get_workflow(self, kind, identity):
+        """读取持久副本，复用旧Service对象不能改变已保存的状态。"""
+
+        return deepcopy(self.records.get((kind, identity)))
+
+    def list_workflows(self, kind, system_id, workspace):
+        """按实际查询范围读取任务，防止恢复路径误取另一系统或工作台任务。"""
+
+        return [deepcopy(payload) for (record_kind, _), payload in self.records.items() if record_kind == kind
+            and payload.get("system_id") == system_id and payload.get("owner_workspace_id") == workspace]
+
+
+def creation_service():
+    """创建隔离服务和待提交流程；替换网络材料组件，保留原提交、续跑及checkpoint逻辑。"""
+
+    metadata = CreationWorkflows()
+    service = object.__new__(SharedBaselineService)
+    service.metadata = metadata
+    service.store = SimpleNamespace(get_baseline=Mock(return_value="baseline"), get_artifact=Mock(return_value="dependency"))
+    service.storage = SimpleNamespace(materialize_archive=Mock(return_value=Path("/unused-cache")))
+    service.artifacts = SimpleNamespace(materialize_shared_source=Mock(return_value=Path("/unused-source")))
+    tasks = SimpleNamespace(_owner_pid=912345, _owner_started_at="original-process", _process_start_marker=Mock(return_value="original-process"))
+    service.application = SimpleNamespace(store=metadata, tasks=tasks, knowledge_root=Path("/unused-knowledge"))
+    run = BaselineCreationRun(run_id="run-one", request_id="request-one", system_id="refund-core", baseline_id="baseline-one",
+        owner_user_id="employee-a", owner_workspace_id=metadata.workspace_id, environment_id="uat", source_commit="a" * 40)
+    return service, run
+
+
+@pytest.mark.parametrize("worker_ran", [False, True])
+def test_submitted_creation_persists_task_identity_without_overwriting_worker_progress(worker_ran):
+    """排队任务立即关联task_id；后台先保存阶段时提交方不得覆盖其最新revision或完成点。"""
+
+    service, run = creation_service()
+    task = TaskRecord(task_id="task-" + "a" * 16, operation="baseline-create", system_id=run.system_id, trace_id="trace")
+
+    def submit(operation, system_id, job, **options):
+        """模拟已保存但暂未执行任务，或worker已在submit返回前推进阶段这两种真实时序。"""
+
+        assert options["initial_progress"].current_item == run.run_id
+        if worker_ran:
+            current = service.get_run(run.run_id, run.owner_user_id)
+            current.task_id = task.task_id
+            current.scan_id = "completed-scan"
+            current.status = "RUNNING"
+            service._checkpoint(current)
+        return task
+
+    service.application.tasks.submit = submit
+    service._submit(run, {"request_id": run.request_id})
+    saved = service.get_run(run.run_id, run.owner_user_id)
+    assert saved.task_id == task.task_id
+    assert saved.scan_id == ("completed-scan" if worker_ran else "")
+    assert saved.revision == 1
+
+
+@pytest.mark.parametrize("submitted", [False, True])
+def test_creation_recovers_interrupted_submission_before_or_after_task_was_saved(submitted, monkeypatch):
+    """重启后能区分已提交任务与提交前崩溃，不因PENDING缺task_id永远锁死或重复运行。"""
+
+    service, run = creation_service()
+    service.metadata.put_workflow("baseline_creation", run.run_id, run.model_dump(mode="json"))
+    service.metadata.put_workflow("baseline_create_request", run.request_id, {"submission_owner": {"pid": 912345, "started_at": "old"}})
+    if submitted:
+        service.metadata.put_workflow("task", "task-old", {"task_id": "task-old", "operation": "baseline-create", "system_id": run.system_id,
+            "owner_user_id": run.owner_user_id, "owner_workspace_id": run.owner_workspace_id, "progress": {"current_item": run.run_id}})
+    service.application.tasks.get = Mock(return_value=SimpleNamespace(status="interrupted"))
+    service._submit = Mock(side_effect=lambda resumed, identity: resumed)
+    monkeypatch.setattr("opentest.application.shared_baselines.os.kill", Mock(side_effect=ProcessLookupError))
+    resumed = service.continue_creation(run.run_id, "request-resumed", run.owner_user_id)
+    assert resumed.predecessor_run_id == run.run_id and resumed.task_id == ""
+    saved = service.get_run(run.run_id, run.owner_user_id)
+    assert saved.task_id == ("task-old" if submitted else "")
+    assert saved.status == ("PENDING" if submitted else "FAILED")
+
+
+@pytest.mark.parametrize("other_workspace", [False, True])
+def test_creation_never_recovers_live_or_other_machine_submission(other_workspace, monkeypatch):
+    """提交仍可能发生或来自另一机器时拒绝续跑，不能仅凭无task_id断言旧任务已消失。"""
+
+    service, run = creation_service()
+    if other_workspace:
+        run.owner_workspace_id = "other-machine"
+    service.metadata.put_workflow("baseline_creation", run.run_id, run.model_dump(mode="json"))
+    service.metadata.put_workflow("baseline_create_request", run.request_id, {"submission_owner": {"pid": 912345, "started_at": "original-process"}})
+    monkeypatch.setattr("opentest.application.shared_baselines.os.kill", Mock(return_value=None))
+    with pytest.raises(IdempotencyConflictError):
+        service.continue_creation(run.run_id, "request-resumed", run.owner_user_id)
+
+
+def test_creation_refresh_exposes_resumable_state_after_submitter_exit(monkeypatch):
+    """刷新基准列表可恢复提交前崩溃的续跑按钮，不要求用户先知道隐藏的continue API。"""
+
+    service, run = creation_service()
+    service.metadata.put_workflow("baseline_creation", run.run_id, run.model_dump(mode="json"))
+    service.metadata.put_workflow("baseline_create_request", run.request_id,
+        {"submission_owner": {"pid": 912345, "started_at": "old"}})
+    monkeypatch.setattr("opentest.application.shared_baselines.os.kill", Mock(side_effect=ProcessLookupError))
+    progress = service._creation_progress(run, SimpleNamespace(source_artifact_id=None))
+    assert progress["status"] == "FAILED" and progress["run_id"] == run.run_id
+
+
+def test_resource_exception_keeps_knowledge_stage_and_partial_outcome(monkeypatch):
+    """资源连接异常保存失败结论仍继续知识生成；最终为PARTIAL而不是反复卡在资源阶段。"""
+
+    service, run = creation_service()
+    run.scan_id = "scan-one"
+    run.dependency_artifact_id = "dependency-one"
+    service.metadata.put_workflow("baseline_creation", run.run_id, run.model_dump(mode="json"))
+    service._prepare_source = Mock()
+    service._prepare_dependencies = Mock()
+    service._scan = Mock()
+    service._generate_knowledge = Mock()
+    service.application.probe_shared_baseline_resources = Mock(side_effect=ConnectionError("private endpoint secret"))
+    monkeypatch.setattr("opentest.application.shared_baselines.read_frozen_dependencies", Mock(return_value=([], [])))
+    with pytest.raises(TaskPartialFailureError):
+        service._execute(run.run_id, run.owner_user_id)
+    saved = service.get_run(run.run_id, run.owner_user_id)
+    assert saved.status == "PARTIAL" and saved.resource_result["failure_count"] == 1
+    assert saved.resource_result["error_type"] == "ConnectionError"
+    assert "private endpoint" not in json.dumps(saved.resource_result)
+    service._generate_knowledge.assert_called_once()
+
+
+def test_resource_probe_cancellation_is_not_treated_as_environment_failure():
+    """用户取消必须停止工作流，不能被资源异常容错吞掉后继续产生接口知识。"""
+
+    service, run = creation_service()
+    service.application.probe_shared_baseline_resources = Mock(side_effect=TaskCancelledError("cancelled"))
+    with pytest.raises(TaskCancelledError):
+        service._probe_resources(run)
+    assert run.resource_result is None
 
 
 def test_frozen_dependencies_are_used_without_local_maven_and_restored_after_failure(tmp_path, monkeypatch):
