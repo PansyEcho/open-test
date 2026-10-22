@@ -24,9 +24,12 @@ from opentest.application.shared_baselines import SharedBaselineService
 from opentest.application.shared_interface_knowledge import SharedInterfaceKnowledgeService
 from opentest.application.publication import equivalent_knowledge
 from opentest.application.resources import ResourceInventoryService
-from opentest.domain.errors import IdempotencyConflictError, ScopeViolationError, TaskCancelledError, TaskPartialFailureError
+from opentest.domain.errors import IdempotencyConflictError, KnowledgeNotFoundError, KnowledgeValidationError, ScopeViolationError, TaskCancelledError, TaskPartialFailureError
 from opentest.domain.models import EntryPoint, KnowledgeContextProfile, KnowledgeInterview, KnowledgeQuestion, OperationInputKnowledgeContract, ScanManifest, SourceBaseline, TaskRecord, utc_now
 from opentest.domain.shared_workspace import BaselineContextUpdate, BaselineCreationRun, CreateCodeBaseline, StoredArtifact
+from opentest.domain.publication import PublicationRequest
+from tests.v2.test_shared_publication import publication, seed_interface
+from tests.v2.test_mysql_metadata import mysql_compress
 
 
 class BaselineDatabase:
@@ -37,6 +40,8 @@ class BaselineDatabase:
 
         self.connection = sqlite3.connect(":memory:")
         self.connection.row_factory = sqlite3.Row
+        # 只模拟MySQL传输压缩，内容还原和严格模型校验继续走生产实现。
+        self.connection.create_function("COMPRESS", 1, mysql_compress)
         self.connection.executescript("""
         CREATE TABLE ot_system(system_id TEXT PRIMARY KEY);
         CREATE TABLE ot_scan(scan_id TEXT PRIMARY KEY,baseline_id TEXT,created_by_user_id TEXT);
@@ -114,6 +119,7 @@ def test_large_baseline_history_lists_complete_content_without_database_filesort
             (baseline_id, created_at, context.model_dump_json(), interview.model_dump_json(),
              json.dumps([question.model_dump(mode="json")]), baseline.baseline_id))
     fetch_all = database.fetch_all
+    read_queries = []
 
     def reject_large_json_filesort(sql, parameters=()):
         """重现大JSON行参与filesort时的1038故障，其余查询仍由真实SQLite过滤。"""
@@ -123,6 +129,7 @@ def test_large_baseline_history_lists_complete_content_without_database_filesort
             from pymysql.err import OperationalError
 
             raise OperationalError(1038, "Out of sort memory")
+        read_queries.append(sql)
         return fetch_all(sql, parameters)
 
     monkeypatch.setattr(database, "fetch_all", reject_large_json_filesort)
@@ -131,8 +138,42 @@ def test_large_baseline_history_lists_complete_content_without_database_filesort
         "baseline-z-new", "baseline-a-same", "baseline-b-same", "baseline-first-old",
     ]
     assert all(item.context == context and item.interview == interview and item.questions == [question] for item in listed)
+    # 数据库传输必须真正压缩三列大JSON，不能同时携带SELECT *的原文或削减详情字段。
+    assert all(f"COMPRESS({column})" in read_queries[0] for column in ("context_json", "interview_json", "questions_json"))
+    assert "SELECT *" not in read_queries[0]
+    assert store.get_baseline("baseline-z-new") == listed[0]
     # 排序调整不能让其他员工读取尚未上传源码的新基准。
     assert store.list_baselines("refund-core", "employee-b") == []
+    # 版本列表不读取三列大正文，其余身份字段和排序与完整列表一致。
+    read_queries.clear()
+    light = store.list_baselines("refund-core", "employee-a", include_context=False)
+    assert [item.model_dump(exclude={"context", "interview", "questions"}) for item in light] == [
+        item.model_dump(exclude={"context", "interview", "questions"}) for item in listed]
+    assert all(item.context is None and item.questions == [] for item in light)
+    assert not any(f"COMPRESS({column})" in read_queries[0] for column in ("context_json", "interview_json", "questions_json"))
+
+
+def test_compressed_baseline_reads_preserve_missing_and_invalid_content():
+    """压缩详情保留不存在异常；损坏正文明确失败，不能回退原文或假造空背景。"""
+
+    database = BaselineDatabase()
+    store = SharedWorkspaceStore(database)
+    with pytest.raises(KnowledgeNotFoundError):
+        store.get_baseline("missing-baseline")
+    baseline = store.create_baseline(CreateCodeBaseline(system_id="refund-core", source_commit="a" * 40,
+        selected_revision="main", user_id="employee-a"))
+
+    def corrupt_compression(payload):
+        """仅在本测试连接模拟损坏压缩包，生产解析应拒绝它。"""
+
+        return b"corrupt compressed JSON"
+
+    # get和list必须经过同一完整解析边界，任何损坏都不能被视为材料缺失。
+    database.connection.create_function("COMPRESS", 1, corrupt_compression)
+    with pytest.raises(KnowledgeValidationError, match="compressed metadata JSON is invalid"):
+        store.get_baseline(baseline.baseline_id)
+    with pytest.raises(KnowledgeValidationError, match="compressed metadata JSON is invalid"):
+        store.list_baselines("refund-core", "employee-a")
 
 
 def test_resource_probe_materializes_shared_source_before_resolving_uat(tmp_path, monkeypatch):
@@ -482,43 +523,57 @@ def test_historical_source_backfill_uses_original_commit_and_reuses_registered_o
     assert len(uploaded) == 1 and store.get_baseline(baseline.baseline_id).created_by_user_id is None
 
 
-def test_native_interface_bundle_contains_real_business_branch_and_rescan_stays_equivalent(tmp_path):
-    """Java真实方法的分支进入固定知识，同源码换scan身份时不误判为测试语义变化。"""
+@pytest.mark.parametrize("native_entry", [True, False])
+@pytest.mark.parametrize("contract_status", ["READY", "BLOCKED"])
+def test_interface_generation_saves_independent_contract_without_legacy_nodes(publication, native_entry, contract_status):
+    """无历史节点或实现长文时仍可固定原生/外部契约；真实字段受阻状态不会被正文缺省掩盖。"""
 
-    facade = tmp_path / "OrderFacade.java"
-    facade.write_text("package example; interface OrderFacade { String query(String orderId); }", encoding="utf-8")
-    implementation = tmp_path / "OrderFacadeImpl.java"
-    implementation.write_text('package example; class OrderFacadeImpl implements OrderFacade { public String query(String orderId) { if (orderId == null) { throw new IllegalArgumentException("missing order"); } return "order"; } }', encoding="utf-8")
-    target = "facade:example.OrderFacade#query"
-    manifest = ScanManifest(scan_id="scan-first", system_id="orders", baseline=SourceBaseline(source_path=str(tmp_path), commit="a" * 40),
-        entries=[EntryPoint(entry_id=target, system_id="orders", kind="facade", display_name="订单查询", source_id="example.OrderFacade#query", source_path=str(facade))])
-    contract = OperationInputKnowledgeContract(contract_version="operation-contract/v2", contract_revision=1, target_id=target,
-        source_scan_id=manifest.scan_id, source_commit="a" * 40, status="READY", request_schema={"type": "object", "properties": {}})
-    service = object.__new__(SharedInterfaceKnowledgeService)
-    first = service._build_bundle(manifest, contract, {}, None)
-    assert any("orderId == null" in body for body in first.bodies.values())
-    assert any(reference.path == "OrderFacadeImpl.java" for reference in first.source_evidence)
-    rescanned = manifest.model_copy(update={"scan_id": "scan-second"})
-    new_contract = contract.model_copy(update={"source_scan_id": rescanned.scan_id})
-    second = service._build_bundle(rescanned, new_contract, {}, None)
-    assert equivalent_knowledge({"contract": contract.model_dump(mode="json"), "knowledge": first.model_dump(mode="json")},
-        {"contract": new_contract.model_dump(mode="json"), "knowledge": second.model_dump(mode="json")})
+    publications, database, scope = publication
+    seed_interface(database, 1)
+    target = "facade:example.OrderFacade#query" if native_entry else "database:orders"
+    manifest = ScanManifest(scan_id="scan-1", system_id="orders", baseline=SourceBaseline(source_path="", commit="a" * 40),
+        entries=[EntryPoint(entry_id=target, system_id="orders", kind="facade", display_name="订单查询",
+            source_id="example.OrderFacade#query", source_path="OrderFacade.java")] if native_entry else [])
+    contract = OperationInputKnowledgeContract(contract_version="operation-contract/v2", contract_revision=0,
+        target_id=target, source_scan_id=manifest.scan_id, status=contract_status,
+        blocked_reason="订单字段类型仍未知" if contract_status == "BLOCKED" else "",
+        request_schema={"type": "object", "properties": {"id": {"type": "string"}}},
+        fields=[{"path": "id", "field_name": "id", "schema": {"type": "string"}, "description": "订单编号"}],
+        response_schema={"type": "object", "properties": {"status": {"type": "string"}}},
+        operation_summary="查询订单" if native_entry else "")
+    # 本人扫描只有独立零版，没有实现源码、legacy节点或可用于合成正文的定义；保存不能启动全量追踪。
+    database.execute("ALTER TABLE ot_interface ADD COLUMN latest_contract_revision INTEGER DEFAULT 0")
+    database.execute("UPDATE ot_interface SET operation_id=%s WHERE interface_id=1", (target,))
+    database.execute("UPDATE ot_scan SET created_by_user_id='employee-a' WHERE scan_id='scan-1'")
+    database.execute("UPDATE ot_baseline_interface SET operation_id=%s WHERE baseline_interface_id=1", (target,))
+    database.execute("UPDATE ot_interface_contract_version SET revision=0,contract_json=%s,knowledge_json=NULL WHERE interface_id=1", (contract.model_dump_json(),))
+    database.execute("DELETE FROM ot_interface_draft WHERE baseline_interface_id=1")
+    service = SharedInterfaceKnowledgeService(publications.knowledge_store, None)
+    saved = service.generate_interface(scope, manifest, target, {"draft_revision": 0, "publication_revision": 0})
+    assert saved["status"] == ("READY" if contract_status == "READY" else "INCOMPLETE")
+    assert saved["knowledge"] is None
+    assert saved["contract"] == contract.model_copy(update={"contract_revision": 1}).model_dump(mode="json")
+    assert database.fetch_one("SELECT latest_contract_revision FROM ot_interface WHERE interface_id=1")["latest_contract_revision"] == 1
+    assert publications.list_interfaces(scope) == []
+    # 显式发布仍只接受READY契约，受阻字段原样留在本人草稿，不由新流程补造Schema。
+    receipt = publications.publish(scope, "interfaces", PublicationRequest(request_id="publish-independent-contract", scope="all"))
+    assert receipt.results[0].status == ("PUBLISHED" if contract_status == "READY" else "BLOCKED")
+    view = "published" if contract_status == "READY" else "mine"
+    assert publications.operation_contract(scope, target, view)["operation_contract"]["response_schema"] == contract.response_schema
 
 
-def test_declared_interface_bundle_keeps_scope_limit_and_ignores_only_scan_provenance():
-    """外部接口明确声明只有契约证据；同样字段重扫兼容，真实契约用途变化仍触发影响。"""
+def test_contract_rescan_equivalence_ignores_legacy_narratives_but_keeps_business_fields():
+    """同字段重扫与历史叙述变化可兼容；独立用途、请求和响应变更仍影响Case。"""
 
-    manifest = ScanManifest(scan_id="scan-first", system_id="orders", baseline=SourceBaseline(source_path="", commit="a" * 40))
     contract = OperationInputKnowledgeContract(contract_version="operation-contract/v2", contract_revision=1, target_id="query-order",
-        source_scan_id=manifest.scan_id, status="READY", request_schema={"type": "object", "properties": {}})
-    definition = {"baseline_interface_id": 1, "operation": {"source_symbol_refs": [{"path": "Dependency.java"}]}}
-    service = object.__new__(SharedInterfaceKnowledgeService)
-    first = service._build_bundle(manifest, contract, definition, None)
-    second_contract = contract.model_copy(update={"source_scan_id": "scan-second"})
-    second = service._build_bundle(manifest.model_copy(update={"scan_id": "scan-second"}), second_contract, definition, None)
-    assert "未取得服务端内部实现" in first.nodes[0].metadata["limitation"]
-    assert equivalent_knowledge({"contract": contract.model_dump(mode="json"), "knowledge": first.model_dump(mode="json")},
-        {"contract": second_contract.model_dump(mode="json"), "knowledge": second.model_dump(mode="json")})
-    changed = second_contract.model_copy(update={"operation_summary": "不同业务用途"})
-    assert not equivalent_knowledge({"contract": contract.model_dump(mode="json"), "knowledge": first.model_dump(mode="json")},
-        {"contract": changed.model_dump(mode="json"), "knowledge": second.model_dump(mode="json")})
+        source_scan_id="scan-first", status="READY", request_schema={"type": "object", "properties": {}}, operation_summary="查询订单")
+    original = {"contract": contract.model_dump(mode="json"), "knowledge": None}
+    # 旧正文及迁移标记完全独立于契约等价；同commit重扫不靠重新编写叙述制造变化。
+    rescanned = {"contract": contract.model_copy(update={"source_scan_id": "scan-second", "contract_revision": 2}).model_dump(mode="json"),
+        "knowledge": {"nodes": [{"metadata": {"migration_requires_review": True}}], "bodies": {"old": "不同实现长文"}}}
+    assert equivalent_knowledge(original, rescanned)
+    for field, changed in [("operation_summary", "不同业务用途"), ("request_schema", {"type": "string"}),
+                           ("response_schema", {"type": "integer"})]:
+        candidate = deepcopy(rescanned)
+        candidate["contract"][field] = changed
+        assert not equivalent_knowledge(original, candidate)

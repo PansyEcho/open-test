@@ -15,6 +15,7 @@ from types import SimpleNamespace
 
 import pytest
 from fastapi.testclient import TestClient
+from sqlalchemy.exc import TimeoutError as PoolTimeoutError
 
 from opentest.adapters.knowledge_interview import KnowledgeInterviewStore
 from opentest.adapters.knowledge_store import GitKnowledgeStore
@@ -26,6 +27,7 @@ from opentest.adapters.mysql_metadata import MySqlMetadataStore, decode_json, en
 from opentest.adapters.system_archive import SystemArchiveStore
 from opentest.adapters.published_capability_store import PublishedCapabilityStore
 from opentest.application.auth import bind_authenticated_identity
+from opentest.application.http_timing import RequestTiming, request_timing
 from opentest.domain.auth import AuthenticatedIdentity, EmployeeIdentity
 from opentest.domain.case_template_v4 import CaseTemplateGenerationV4, CaseTemplateHandoffV4, CaseTemplateSourceScope, CaseTemplateSubmission, DslValueSource
 from opentest.domain.data_capabilities import DataCapabilityHandoff, DataCapabilityVersion, DataExecution
@@ -69,8 +71,9 @@ def metadata_store() -> MySqlMetadataStore:
     return MySqlMetadataStore({"host": "unused", "user": "test", "database": "test"}, "workspace-test", RecordingConnection)
 
 
-def test_metadata_connection_error_maps_to_retryable_http_without_database(tmp_path, monkeypatch):
-    """实际API错误处理器将生产连接包装错误映射为503；注入应用避免模块导入连接真实数据库。"""
+@pytest.mark.parametrize("failure", ["connection", "pool"])
+def test_metadata_connection_error_maps_to_retryable_http_without_database(tmp_path, monkeypatch, failure):
+    """实际API将连接失败与池耗尽映射为503；注入应用避免连接真实库，响应不得泄漏私有详情。"""
 
     fixture_application = SimpleNamespace(store=SimpleNamespace(root=tmp_path, metadata=None),
         auth=SimpleNamespace(settings=SimpleNamespace(origin="http://testserver")))
@@ -93,12 +96,19 @@ def test_metadata_connection_error_maps_to_retryable_http_without_database(tmp_p
     monkeypatch.setitem(sys.modules, module_name, api)
     specification.loader.exec_module(api)
     metadata = MySqlMetadataStore({"host": "unused", "user": "test", "database": "test"}, "workspace-test", fail_connection)
+    if failure == "pool":
+        def fail_checkout():
+            """模拟SQLAlchemy取连接超时；由生产查询边界分型而非直接抛领域错误。"""
+
+            raise PoolTimeoutError("PRIVATE-POOL-CONNECTION")
+
+        monkeypatch.setattr(metadata._read_pool, "connect", fail_checkout)
 
     @api.app.get("/fixture-metadata-connection")
     def connection_failure():
         """触发生产连接错误供实际HTTP领域处理器转换；测试路由不读取业务材料。"""
 
-        metadata._connect()
+        metadata.fetch_one("SELECT 1")
 
     client = TestClient(api.app)
     try:
@@ -109,6 +119,77 @@ def test_metadata_connection_error_maps_to_retryable_http_without_database(tmp_p
     assert response.status_code == 503
     assert response.json()["error"]["code"] == "metadata_unavailable"
     assert "PRIVATE" not in response.text
+
+
+def test_pool_exhaustion_keeps_limits_and_records_failed_wait(tmp_path):
+    """真实四连接池耗尽等待原2秒后明确失败；不增连接、不重试，释放后仍可正常读取。"""
+
+    connections = []
+
+    def connect(**configuration):
+        """建立隔离SQLite驱动连接并计数，不读取MySQL配置或访问网络。"""
+
+        connection = SqliteConnection(tmp_path / "pool.sqlite")
+        connections.append(connection)
+        return connection
+
+    metadata = MySqlMetadataStore({"host": "unused", "user": "test", "database": "test"}, "workspace-test", connect)
+    held = []
+    try:
+        # 占满生产原有4个名额，实际触发SQLAlchemy的checkout超时，而不是Mock领域异常。
+        for _ in range(4):
+            held.append(metadata._read_pool.connect())
+        timing = RequestTiming()
+        token = request_timing.set(timing)
+        try:
+            with pytest.raises(MetadataConnectionError, match="read pool is busy") as error:
+                metadata.fetch_one("SELECT 1 AS answer")
+        finally:
+            request_timing.reset(token)
+        assert isinstance(error.value.__cause__, PoolTimeoutError)
+        assert len(connections) == 4
+        assert metadata._read_pool.size() == 4 and metadata._read_pool.timeout() == 2
+        assert timing.pool_ms >= 1900 and timing.query_count == 0 and timing.query_ms == 0
+        # 超时不能关闭其他请求持有的连接；释放原租约后池无需重建或重试即可继续使用。
+        assert metadata._read_pool.checkedout() == 4
+        for connection in held:
+            connection.close()
+        held.clear()
+        assert metadata.fetch_one("SELECT 1 AS answer") == {"answer": 1}
+        assert len(connections) == 4
+    finally:
+        for connection in held:
+            connection.close()
+        metadata.close()
+
+
+@pytest.mark.parametrize("error", [sqlite3.OperationalError("invalid query"), PoolTimeoutError("query-phase-timeout")])
+def test_query_failure_keeps_original_error_and_is_not_retried(tmp_path, monkeypatch, error):
+    """连接取得后的驱动/查询异常保持原类型，不被checkout错误处理误映射或重放。"""
+
+    def connect(**configuration):
+        """只提供测试本机SQLite驱动连接，生产查询和连接池保持真实实现。"""
+
+        return SqliteConnection(tmp_path / "query.sqlite")
+
+    metadata = MySqlMetadataStore({"host": "unused", "user": "test", "database": "test"}, "workspace-test", connect)
+    metadata.fetch_one("SELECT 1")
+    calls = []
+
+    def fail_query(cursor, sql, parameters=()):
+        """仅在连接已建立后的查询阶段注入原异常，计数用于排除自动重试。"""
+
+        calls.append(sql)
+        raise error
+
+    monkeypatch.setattr(SqliteCursor, "execute", fail_query)
+    try:
+        with pytest.raises(type(error)) as raised:
+            metadata.fetch_one("SELECT invalid")
+        assert raised.value is error and calls == ["SELECT invalid"]
+        assert metadata._read_pool.checkedout() == 0
+    finally:
+        metadata.close()
 
 
 @pytest.mark.parametrize("configuration", [{"connect_timeout": "invalid"}, {"port": "invalid"}])

@@ -1,6 +1,7 @@
 """验证真实二进制依赖的Spring装配、Repository映射及泛型契约，不启动容器。"""
 
 from pathlib import Path
+import os
 import subprocess
 import zipfile
 
@@ -127,6 +128,70 @@ def test_maven_classpath_keeps_transitive_version_and_order(tmp_path, monkeypatc
     artifacts, gaps = JavaDependencyCatalog(repository).resolved_artifacts(root)
     assert [item.coordinate for item in artifacts] == ['demo:transitive:2', 'demo:direct:1']
     assert gaps == []
+
+
+@pytest.mark.parametrize("exit_code", [0, 1])
+@pytest.mark.parametrize("sources_only", [False, True])
+def test_partial_maven_keeps_unique_declared_dependency_without_overriding_versions(
+    tmp_path, monkeypatch, exit_code, sources_only,
+):
+    """部分模块失败不丢失已声明接口，同时保留Maven调解顺序及未知版本缺口。
+
+    Args:
+        tmp_path: 隔离POM和依赖仓库目录。
+        monkeypatch: 替换离线Maven进程，不读取本机或远端依赖。
+        exit_code: Maven完整成功或仅部分模块成功。
+        sources_only: 待补依赖是否只有源码包，检索不应要求运行其字节码。
+    Returns:
+        None；精确依赖集合、顺序、版本与缺口满足断言时通过。
+    """
+
+    root = tmp_path / "project"
+    root.mkdir()
+    (root / "pom.xml").write_text('''<project><modelVersion>4.0.0</modelVersion>
+<dependencies>
+<dependency><groupId>demo</groupId><artifactId>direct</artifactId><version>9</version></dependency>
+<dependency><groupId>demo</groupId><artifactId>observer</artifactId><version>1</version></dependency>
+<dependency><groupId>demo</groupId><artifactId>ambiguous</artifactId><version>1</version></dependency>
+<dependency><groupId>demo</groupId><artifactId>unknown</artifactId><version>${missing}</version></dependency>
+<dependency><groupId>demo</groupId><artifactId>test-only</artifactId><version>1</version><scope>test</scope></dependency>
+</dependencies></project>''')
+    module = root / "module"
+    module.mkdir()
+    (module / "pom.xml").write_text('''<project><dependencies>
+<dependency><groupId>demo</groupId><artifactId>ambiguous</artifactId><version>2</version></dependency>
+</dependencies></project>''')
+    repository = tmp_path / "maven"
+    classpath = [repository / "demo/transitive/2/transitive-2.jar", repository / "demo/direct/1/direct-1.jar"]
+    suffix = "-sources" if sources_only else ""
+    observer = repository / f"demo/observer/1/observer-1{suffix}.jar"
+    # 只让歧义版本1存在，证明程序不会根据本机可用性猜选；无关及test依赖也不能混入。
+    extras = [repository / "demo/direct/9/direct-9.jar", repository / "demo/ambiguous/1/ambiguous-1.jar",
+              repository / "demo/test-only/1/test-only-1.jar", repository / "demo/unrelated/1/unrelated-1.jar"]
+    for jar in [*classpath, observer, *extras]:
+        jar.parent.mkdir(parents=True)
+        with zipfile.ZipFile(jar, "w") as archive:
+            archive.writestr("marker", "fixture")
+
+    def maven(command, **kwargs):
+        """只输出成功模块的classpath，模拟Reactor中止前已写文件且始终离线。"""
+
+        assert "-o" in command
+        output = next(argument.split("=", 1)[1] for argument in command if argument.startswith("-Dmdep.outputFile="))
+        Path(output).write_text(os.pathsep.join(str(path) for path in classpath))
+        return subprocess.CompletedProcess(command, exit_code, "", "")
+
+    monkeypatch.setattr(subprocess, "run", maven)
+    artifacts, gaps = JavaDependencyCatalog(repository).resolved_artifacts(root)
+    # 完整解析继续只信Maven；部分解析在原顺序末尾补入唯一声明，已调解版本1仍优先于声明9。
+    assert [item.coordinate for item in artifacts] == ["demo:transitive:2", "demo:direct:1"] + (
+        ["demo:observer:1"] if exit_code else [])
+    if exit_code:
+        assert any("部分模块" in gap for gap in gaps)
+        assert any("demo:ambiguous" in gap and "多个版本" in gap for gap in gaps)
+        assert any("demo:unknown" in gap for gap in gaps)
+    else:
+        assert gaps == []
 
 
 def test_web_bootstrap_does_not_activate_unused_project_xml(dependency_project):

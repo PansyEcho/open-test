@@ -213,7 +213,7 @@ def test_real_two_workspaces_keep_private_interface_until_explicit_publication(i
 
 
 def test_real_knowledge_generation_creates_only_owner_draft_and_progress_survives_reload(isolated_mysql):
-    """实际知识服务保存完整bundle及草稿，旧共享指针不变；刷新只恢复本人员工最近创建尝试。"""
+    """实际知识服务独立保存契约草稿，旧共享指针不变；刷新只恢复本人员工最近创建尝试。"""
 
     metadata, other_workspace, root = isolated_mysql
     _seed_history(metadata)
@@ -236,7 +236,10 @@ def test_real_knowledge_generation_creates_only_owner_draft_and_progress_survive
     draft = service.generate_interface(scope, manifest, "query-order", frozen["query-order"])
     assert draft["status"] == "READY"
     publications = PublicationService(MySqlKnowledgeStore(root / "second", other_workspace))
-    assert publications.list_interfaces(scope, "mine")[0]["knowledge"]["bodies"]
+    # 新草稿保存独立契约，不为兼容旧长文流程合成bundle。
+    draft_contract = publications.list_interfaces(scope, "mine")[0]
+    assert draft_contract["knowledge"] is None
+    assert draft_contract["contract"]["operation_summary"] == "新扫描固定契约"
     assert publications.list_interfaces(scope)[0]["contract"]["operation_summary"] == "查询订单"
     assert metadata.fetch_one("SELECT latest_scan_id FROM ot_system WHERE system_id='orders'")["latest_scan_id"] == "scan-one"
     assert metadata.fetch_one("SELECT COUNT(*) AS amount FROM ot_knowledge_node")["amount"] == 0

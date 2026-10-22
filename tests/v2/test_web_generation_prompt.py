@@ -35,6 +35,9 @@ def test_case_prompt_reads_frozen_environment_from_real_task(environment_id, sup
 
     coverage.projection.assert_called_once_with("refund", "generation-fixed", environment_id or "qa")
     assert task.task_id in prompt and "search_data_capabilities" in prompt
+    # 普通生成和覆盖补充均不能因无法自动解决的业务/环境缺口转向用户问答。
+    assert "Case生成和覆盖补充不得要求用户回答" in prompt
+    assert "并在最终消息逐项向用户提问后结束本轮" not in prompt
     if supplement:
         assert prompt.startswith("本轮是覆盖缺口补充任务")
         assert "gap-query" in prompt and "coverage_dispositions" in prompt

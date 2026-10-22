@@ -523,7 +523,8 @@ prefix: opentest
 | `POST /api/v2/baselines/{baseline_id}/scans` | 同基准重扫，显式环境；生成本人接口草稿 |
 | `POST /api/v2/baselines/{baseline_id}/creation-continuations` | 原创建工作流 ID 与 request_id；仅本人继续已终止流程的未完成阶段 |
 | `POST /api/v2/systems/{system_id}/resource-probes` | 复用现有入口，增加 baseline_id、scan 引用和显式环境，独立重跑资源校验 |
-| `GET /api/v2/baselines/{baseline_id}/interfaces?view=published` 或 `view=mine` | 当前共享或本人草稿，分别查询 |
+| `GET /api/v2/baselines/{baseline_id}/interfaces?view=published` 或 `view=mine` | 当前共享或本人草稿，分别查询；只返回摘要（身份、状态、修订、用途、是否有知识） |
+| `GET /api/v2/baselines/{baseline_id}/interfaces/{baseline_interface_id}?view=` | 单个接口的契约与知识正文，可见条件同列表，不重复携带业务背景 |
 | `POST /api/v2/baselines/{baseline_id}/interfaces/publications` | all/selected 加 request_id；同步返回逐项结果和原请求回执 |
 | `GET /api/v2/baselines/{baseline_id}/cases?view=published` 或 `view=mine` | 按稳定 Case 返回安全投影，支持接口筛选和分页 |
 | `GET /api/v2/cases/{case_id}` | 只返回当前可见单项内容；mine 视图必须本人 |

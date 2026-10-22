@@ -175,7 +175,7 @@ class ControlledAgent:
 
 
 def test_web_question_unknown_answer_and_revisioned_publication(tmp_path):
-    """HTTP提问与答案推进同一草稿，unknown不关闭且重复点击不重复运行。
+    """旧HTTP答案仍可推进同一草稿，Case缺口失败保存且重复点击不重复运行。
 
     Args:
         tmp_path: 隔离状态根。
@@ -190,7 +190,9 @@ def test_web_question_unknown_answer_and_revisioned_publication(tmp_path):
         start = {"request_id": "web-start-001", "expected_revision": 0}
         assert client.post(f"/api/v2/tasks/{TASK_ID}/runs", json=start).status_code == 202
         task = _wait_settled(application)
-        assert task.status == TaskStatus.WAITING_FOR_INPUT
+        # Case已退出但没有成果，开放问题作为诊断保留，不挂起等待人工答案。
+        assert task.status == TaskStatus.FAILED
+        assert "需要业务确认" in task.error
         assert client.post(f"/api/v2/tasks/{TASK_ID}/runs", json=start).status_code == 202
         assert runner.calls == 1
         assert client.post(f"/api/v2/tasks/{TASK_ID}/runs", json={**start, "expected_revision": 1}).status_code == 409

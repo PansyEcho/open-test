@@ -9,8 +9,37 @@ from opentest.adapters.knowledge_store import GitKnowledgeStore
 from opentest.adapters.source_analysis import GitSourceRepository, SourceScanArtifactStore
 from opentest.application.downstream_interfaces import DownstreamInterfaceSearchService
 from opentest.domain.case_template_v4 import CaseTemplateSourceScope
-from opentest.domain.errors import ScopeViolationError
+from opentest.domain.errors import KnowledgeValidationError, ScopeViolationError
 from opentest.domain.models import DsfOperationDefinition, ScanManifest, SourceReference, SystemDefinition
+from opentest.domain.system_relations import DownstreamOperationResolveRequest
+
+
+@pytest.mark.parametrize("candidate_count,gaps,expected", [
+    (0, ["固定POM的本地依赖缺失"], "固定POM的本地依赖缺失"),
+    (0, [], "核对当前固定依赖"),
+    (2, ["其他模块缺少sources.jar"], "存在重载"),
+])
+def test_resolution_distinguishes_missing_materials_from_overloads(tmp_path, monkeypatch, candidate_count, gaps, expected):
+    """依赖解析按候选数量报告可处理原因，不让缺失材料误导Agent去猜签名。
+
+    Args:
+        tmp_path: 隔离源码和元数据目录。
+        monkeypatch: 替换本地依赖索引，防止查询真实Maven或业务服务。
+        candidate_count: 当前精确方法的候选数量。
+        gaps: 依赖检索器已发现的材料缺口。
+        expected: 应向调用者展示的原因片段。
+    """
+
+    service, scope, _ = _search_fixture(tmp_path)
+    candidate = {"interface_name": "demo.api.TradeFacade", "method_name": "query", "signature": "query(String)"}
+    # 只隔离依赖检索；真实resolve仍执行任务固定来源及操作选择校验。
+    monkeypatch.setattr(service, "_maven_interfaces", lambda *args: ([candidate] * candidate_count, gaps))
+    with pytest.raises(KnowledgeValidationError, match=expected) as failure:
+        service.resolve("caller", [scope], DownstreamOperationResolveRequest(
+            downstream_system="remote", interface_name="demo.api.TradeFacade", method_name="query"))
+    if not candidate_count:
+        assert "demo.api.TradeFacade#query" in str(failure.value)
+        assert "重载" not in str(failure.value)
 
 
 def _search_fixture(tmp_path: Path) -> tuple[DownstreamInterfaceSearchService, CaseTemplateSourceScope, Path]:

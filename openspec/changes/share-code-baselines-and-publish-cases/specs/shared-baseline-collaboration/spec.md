@@ -1,5 +1,23 @@
 ## ADDED Requirements
 
+### Requirement: Case generation uses independent fixed operation contracts
+OpenTest SHALL use the entry purpose and independent request/response contract for Case generation and dependency selection. A missing legacy knowledge bundle, internal-flow narrative or migration review marker SHALL NOT block a READY contract. Case agents SHALL inspect the fixed source on demand, while source identity, employee visibility, actual input/output validation and execution authorization remain enforced.
+
+#### Scenario: Ready target has no legacy narrative
+- **WHEN** an employee generates or explicitly retries a Case whose fixed READY contract matches the selected entry and scan, with absent, empty or migration-marked legacy knowledge
+- **THEN** allow both generate-only and generate-and-verify preparation without requiring a knowledge interview, full narrative or shared publication of the employee's own contract draft
+- **AND** keep the same fixed contract references and use source analysis for business branches and expectations
+
+#### Scenario: Preparation dependency has only an independent contract
+- **WHEN** the Case agent selects a visible preparation or result-check operation with a fixed READY contract and no legacy knowledge body
+- **THEN** return its contract and authorized runtime functions; optional historical narratives do not determine availability
+- **AND** missing or mismatched contracts, unavailable routes and unauthorized operations remain explicit errors without changing the selected baseline
+
+#### Scenario: Interface draft contains purpose and field descriptions only
+- **WHEN** a source-validated independent interface contract is saved or explicitly published
+- **THEN** persist its purpose and request/response fields without requiring or synthesizing a legacy business-logic knowledge bundle
+- **AND** Case dependency compatibility compares the independent contract; historical narrative edits do not alone invalidate a Case
+
 ### Requirement: 所有产品入口使用公司员工身份
 OpenTest SHALL 在页面、业务 API 和 Agent 工具使用前完成公司登录，以经过服务端核验的 newWorkId 保存员工归属，以 name-newWorkId 展示；不得信任请求自报员工或将机器身份视为员工身份。
 
@@ -62,6 +80,7 @@ OpenTest SHALL 按系统和完整 commit 唯一保存共享基准。当前查看
 - **WHEN** 员工读取包含大量历史背景、访谈或问题正文的基准列表
 - **THEN** 列表按创建时间降序、相同时间基准ID升序返回完整可见内容，不因数据库对大JSON排序耗尽缓冲区而不可用
 - **AND** 本人的未完成基准和历史共享基准继续遵守原可见性规则，不暴露其他员工尚未共享的基准
+- **AND** 基准列表及详情复用既有压缩传输读取完整 JSON，避免大正文长期占用数据库读连接，不改变业务返回字段
 
 ### Requirement: 对象存储保存可跨机器读取的实际材料
 OpenTest SHALL 使用标准 S3 SDK 和可配置 endpoint、region、bucket、path-style 保存源码、扫描依赖及覆盖材料；MySQL 保存业务记录和对象引用。材料默认永久保留，私密配置不得进入共享记录、模型或日志。
@@ -87,9 +106,31 @@ OpenTest SHALL 在共享数据库保存按员工隔离的接口和 Case 草稿�
 - **WHEN** 员工甲完成接口扫描或 Case 生成
 - **THEN** 员工乙不能读取甲的未发布内容，同一员工换电脑仍能读取自身草稿
 
+#### Scenario: 换机器保存本人固定 Generation
+- **WHEN** 员工在另一台机器继续本人的 Case 草稿并保存
+- **THEN** 按持久化载荷比较同一不可变 Generation，不因本机源码目录投影不同拒绝草稿
+- **AND** 固定内容、绑定或依赖实际变化时仍拒绝保存
+
 #### Scenario: 同 Generation 只发布一个 Case
 - **WHEN** 一份 Generation 包含多个 Variant 而仅一个 Case 已发布
 - **THEN** 其他员工只能取得该 Case 的精确 Variant 和必要模板、数据函数及执行投影，不得到整份 Generation DSL
+
+#### Scenario: 完整共享列表包含大量知识及重复 Generation
+- **WHEN** 员工读取 published 或 mine 接口和 Case 列表
+- **THEN** 根据已授权的固定指针批量读取精确版本，单 Case 投影保持不变，不逐条重复查询
+- **AND** 同一请求中的每份 Generation 只读取、解压和严格解析一次，不建立跨请求内容缓存，也不暴露其他员工草稿或私有兄弟 Case
+
+#### Scenario: 页面读取接口目录与基准列表
+- **WHEN** 页面读取当前基准的接口列表或系统基准列表
+- **THEN** 接口列表只返回身份、状态、修订、用途摘要和是否已有知识，不传输契约、知识正文及每份知识冻结的业务背景；基准列表不携带背景、访谈和问题正文
+- **AND** 单个接口的契约与知识正文通过单项读取按需取得，可见条件与列表相同；他人草稿、未发布或跨基准身份返回不存在，单项响应不重复携带业务背景
+- **AND** 业务背景与术语只通过基准背景入口读取和保存
+
+#### Scenario: 读取连接池耗尽
+- **WHEN** 请求在既有读连接池等待上限内未取得连接
+- **THEN** 返回 HTTP 503 和 metadata_unavailable，保留等待耗时，不作为未分类的 HTTP 500
+- **AND** 不扩大连接池、不自动重试，不把 SQL 执行中其他驱动错误改记为连接池等待错误
+- **AND** 私有路由归属校验和任务凭据活动检查阶段同样返回该错误；不能绕过身份校验，也不能在下游响应开始后再发送第二份错误响应
 
 #### Scenario: 共享内容被替换
 - **WHEN** 同接口或 Case 发布新内容
@@ -113,7 +154,7 @@ OpenTest SHALL 同步逐项短事务发布，使用既有工作流回执固定�
 #### Scenario: 单项草稿材料损坏或范围不一致
 - **WHEN** 某项草稿存在可识别的范围、缺失材料或结构解析错误
 - **THEN** 回滚该项写入并保存脱敏的 BLOCKED 回执，继续处理批次其他条目
-- **AND** 等价比较前校验当前与候选契约、知识正文结构，坏正文不能以未分类的程序异常中断整批
+- **AND** 等价比较前校验当前与候选独立契约及固定身份，旧知识正文不参与可执行性或等价判定
 - **AND** 数据库故障或未知程序异常仍明确失败，不能伪装成已确定的草稿错误或吞掉未知提交结果
 
 #### Scenario: 发布中元数据库暂时无法连接
@@ -132,6 +173,12 @@ OpenTest SHALL 将发布状态与影响状态分离，使用当前共享指针�
 - **WHEN** 员工对待更新 Case 创建新的单项修订
 - **THEN** 创建时解析实际使用依赖在当前选定视图中的知识及扫描，再冻结到新任务
 - **AND** 不把旧目标扫描重复选为新任务目标，不改写仍在运行任务的已冻结引用
+
+#### Scenario: 复核确认 Case 无需修改
+- **WHEN** 员工为待更新 Case 建立个人草稿，明确发布与当前共享内容等价的 Case，且全部固定依赖及当前接口可执行性校验通过
+- **THEN** 在同一发布事务内清除影响状态和复核原因，恢复 CURRENT，不要求人为改动 DSL，不推进等价内容的共享修订或更换指针
+- **AND** 缺失或非 READY 的独立契约、契约不匹配和已移除接口不能借等价发布解除阻断；仅缺旧正文或带旧迁移标记不阻止有效契约通过显式复核
+- **AND** 回执重放不消除之后新产生的影响状态，后续写入失败时复核状态清除也一并回滚
 
 #### Scenario: 接口移除
 - **WHEN** 已明确确认移除接口并发布
@@ -152,6 +199,17 @@ OpenTest SHALL 使页面和 Agent 知识读取使用固定基准及 published/mi
 - **WHEN** 工具提供不属于当前员工或任务冻结范围的知识引用
 - **THEN** 拒绝读取，不能绕过 UI 视图限制
 
+#### Scenario: 生成时依赖接口无法解析
+- **WHEN** 固定源码的已声明下游接口无法从当前固定契约和依赖材料中解析
+- **THEN** 无候选时明确报告缺失接口及已知依赖材料缺口，不把缺失材料误报为方法重载
+- **AND** 只有多个匹配候选时才要求精确签名；不下载或猜测其他版本，不以接口用途描述替代可执行输入输出契约
+
+#### Scenario: Maven 仅完成部分模块的依赖解析
+- **WHEN** 固定源码的离线 Maven 解析只输出部分模块的实际 classpath，其他模块的精确直接依赖已有本地 JAR 或源码包
+- **THEN** 保留成功模块的 classpath 顺序，并补入固定 POM 已证明且版本唯一的直接依赖，不因部分成功丢弃已有接口材料
+- **AND** Maven 已解析的依赖版本优先；未被 Maven 解析且存在多版本声明的依赖保留歧义缺口，不按本地文件可用性猜选版本
+- **AND** 完整 Maven 解析及已冻结的扫描依赖仍使用原结果，不扩大为其他版本或任意本机 JAR 搜索
+
 ### Requirement: 历史共享资产迁移可核对且不静默丢失
 OpenTest SHALL 提供显式 dry-run/apply 升级和可重复回填；历史接口与 Case 按基准、接口和明确替代链建立初始共享集合，无法证明作者的记录保留空归属。独立 Case 集 SHALL 保留，不用每接口最新一份猜测替代关系。
 
@@ -163,15 +221,16 @@ OpenTest SHALL 提供显式 dry-run/apply 升级和可重复回填；历史接�
 - **WHEN** 从现有系统 context_json 建立首批基准
 - **THEN** 复制迁移时的背景和术语并标记共同来源，不伪造各历史时间点内容
 
-#### Scenario: 仅有历史契约而无可靠知识正文
-- **WHEN** 迁移只能根据旧契约生成有限说明，无法找到原扫描对应的可靠旧正文
-- **THEN** Case 标为 NEEDS_UPDATE 并显示 MIGRATED_KNOWLEDGE_REVIEW，不能因为版本号相同而标为 CURRENT
-- **AND** 重复迁移不能把首次合成的说明误当作原正文
+#### Scenario: 历史入口只有独立契约
+- **WHEN** 迁移入口有与固定身份及扫描匹配的 READY 独立契约，但没有旧知识正文
+- **THEN** 不补造完整知识正文，不仅因缺正文新增 Case 复核阻断；是否兼容依据实际 Case 契约和已保存依赖判定
+- **AND** 缺少、非 READY 或身份不匹配的契约仍保留复核，已存复核状态不因读取或迁移重跑自动消除
 
-#### Scenario: 历史同 commit 扫描范围不明
-- **WHEN** 旧接口存在于组内其他扫描但不在首选扫描中，旧记录又不能证明最新扫描覆盖范围
-- **THEN** 保留接口的最近已知材料，相关 Case 标为 NEEDS_UPDATE 并提示扫描范围需复核，不推断接口已移除或可执行
-- **AND** 不覆盖新模型已明确发布的 REMOVED 结论
+#### Scenario: 历史同 commit 扫描范围不同
+- **WHEN** 同系统、同干净 commit 的扫描范围不同，旧接口只存在于组内较早扫描
+- **THEN** 使用组内接口并集及最近已知材料，不仅因首选扫描缺项而新增复核原因或推断接口已移除
+- **AND** 脏扫描、缺少 commit 或不同系统的扫描不得合并，独立契约缺失或实际依赖不一致仍需复核，不覆盖新模型已明确发布的 REMOVED 结论
+- **AND** 已保存的旧复核状态不因迁移重跑自动放行，仍经显式复核发布解除
 
 #### Scenario: 旧记录没有员工归属
 - **WHEN** 原执行工作台恢复或收尾 owner 为 NULL 的旧工作流或执行记录

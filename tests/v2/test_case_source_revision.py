@@ -85,7 +85,7 @@ def _application(tmp_path: Path) -> OpenTestApplication:
         return create_record(record.model_copy(update={"owner_user_id": current_employee().user_id}))
 
     application.tasks.create_business_record = create_owned_record
-    application.publications = SimpleNamespace(list_interfaces=Mock(return_value=[]))
+    application.publications = SimpleNamespace(list_interface_summaries=Mock(return_value=[]))
     application.store.metadata = SimpleNamespace(fetch_one=Mock())
     application.source_analysis = SimpleNamespace(git_repository=GitSourceRepository(), artifacts=Mock())
     application.case_template_v4 = SimpleNamespace(handoffs=CaseTemplateHandoffStoreV4(tmp_path / "handoffs"), select_source_scan=Mock(return_value=None))
@@ -175,7 +175,7 @@ def _install_start(application, tmp_path, manifests, latest):
 
     manifest = next(iter(manifests.values()))
     application.store.metadata.fetch_one.return_value = {"scan_id": manifest.scan_id, "source_commit": manifest.baseline.commit}
-    application.publications.list_interfaces.return_value = [{"operation_id": OPERATION_ID, "status": "AVAILABLE",
+    application.publications.list_interface_summaries.return_value = [{"operation_id": OPERATION_ID, "status": "AVAILABLE",
         "baseline_interface_id": 1, "interface_id": 1, "contract_revision": 1}]
     application.case_template_v4.start = Mock(side_effect=start)
 
@@ -193,7 +193,7 @@ def test_case_retries_keep_selected_commit_and_knowledge_when_shared_pointer_mov
             baseline_id="baseline-one", environment_id="uat", deployment_confirmed=True)
         first_result = application.start_case_template_generation_v4(SYSTEM_ID, request)
         _commit(source, "new-qa-head")
-        application.publications.list_interfaces.return_value = []
+        application.publications.list_interface_summaries.return_value = []
         application.store.metadata.fetch_one.return_value = None
         restored = application.start_case_template_generation_v4(SYSTEM_ID, request)
         assert restored["handoff"].handoff_id == first_result["handoff"].handoff_id
@@ -201,7 +201,7 @@ def test_case_retries_keep_selected_commit_and_knowledge_when_shared_pointer_mov
         assert restored["task"].result["case_source_scan_id"] == manifest.scan_id
         assert restored["task"].result["case_knowledge_ref"]["contract_revision"] == 1
         assert restored["handoff"].environment_id == "uat"
-        application.publications.list_interfaces.assert_called_once()
+        application.publications.list_interface_summaries.assert_called_once()
         application.case_template_v4.select_source_scan.assert_not_called()
         assert application.store.get_system(SYSTEM_ID).source_version is None
         application.analyze_source.assert_not_called()
@@ -221,7 +221,7 @@ def test_case_rejects_separate_source_version_before_creating_task(tmp_path):
             request_id="case-source-missing-001", source_revision=first[:8])
         with pytest.raises(KnowledgeValidationError, match="不再支持单独指定源码"):
             application.start_case_template_generation_v4(SYSTEM_ID, request)
-        application.publications.list_interfaces.assert_not_called()
+        application.publications.list_interface_summaries.assert_not_called()
         application.analyze_source.assert_not_called()
     finally:
         application.tasks.close()
@@ -255,7 +255,7 @@ def test_current_baseline_generation_never_resolves_qa_branch(tmp_path, qa_unava
 
 @pytest.mark.parametrize("missing", ["knowledge", "source"])
 def test_current_baseline_missing_material_fails_without_fallback(tmp_path, missing):
-    """当前接口知识或固定Git源码缺失时明确失败，不能静默替换系统latest或另一员工版本。"""
+    """当前可见接口契约或固定Git源码缺失时失败，不用latest或其他员工版本替代。"""
 
     source, commit = _repository(tmp_path)
     manifest = _scan(source, commit)
@@ -263,13 +263,14 @@ def test_current_baseline_missing_material_fails_without_fallback(tmp_path, miss
     try:
         application.store.register_system(_system(source))
         _install_start(application, tmp_path, {manifest.scan_id: manifest}, lambda: manifest)
+        # 分别缺失可见契约和固定源码，确认取消长文门禁没有放宽真实材料边界。
         if missing == "knowledge":
-            application.publications.list_interfaces.return_value = []
+            application.publications.list_interface_summaries.return_value = []
         else:
             application.store.metadata.fetch_one.return_value = None
         request = CaseTemplateGenerationStartRequest(operation_id=OPERATION_ID, request_id="case-material-missing-" + missing,
             baseline_id="baseline-one", deployment_confirmed=True)
-        with pytest.raises(KnowledgeValidationError, match="知识|固定Git源码"):
+        with pytest.raises(KnowledgeValidationError, match="接口契约|固定Git源码"):
             application.start_case_template_generation_v4(SYSTEM_ID, request)
         application.case_template_v4.start.assert_not_called()
         application.case_template_v4.select_source_scan.assert_not_called()
@@ -307,7 +308,7 @@ def test_active_coverage_requires_confirmation_before_any_task(tmp_path):
         request = CaseTemplateGenerationStartRequest(operation_id=OPERATION_ID, baseline_id="baseline-one", request_id="case-confirm-001")
         with pytest.raises(KnowledgeValidationError, match="确认所选测试环境部署版本"):
             application.start_case_template_generation_v4(SYSTEM_ID, request)
-        application.publications.list_interfaces.assert_not_called()
+        application.publications.list_interface_summaries.assert_not_called()
     finally:
         application.tasks.close()
 

@@ -5,6 +5,7 @@ from __future__ import annotations
 import importlib.util
 import asyncio
 import json
+import sqlite3
 import stat
 import time
 from concurrent.futures import ThreadPoolExecutor
@@ -16,11 +17,15 @@ import httpx
 import pytest
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
+from sqlalchemy.exc import TimeoutError as PoolTimeoutError
 
 from opentest.adapters import company_auth
+from opentest.adapters.mysql_metadata import MySqlMetadataStore
 from opentest.application.auth import AuthSettings, CompanyAuthService, current_employee
-from opentest.application.auth_http import COOKIE_NAME, install_auth_routes
+from opentest.application.auth_http import COOKIE_NAME, CompanyAuthMiddleware, install_auth_routes
 from opentest.domain.auth import AuthenticationError, EmployeeIdentity, TaskAccessGrant
+from opentest.domain.errors import MetadataConnectionError
+from tests.v2.test_mysql_metadata import SqliteConnection
 
 
 class EmployeeDatabase:
@@ -254,6 +259,105 @@ def test_slow_authorization_does_not_block_http_event_loop(tmp_path, monkeypatch
             assert response.json()["user_id"] == company.employee.user_id
 
     asyncio.run(run_requests())
+
+
+@pytest.mark.parametrize("query_boundary", ["task_active", "private_owner"])
+@pytest.mark.parametrize("failure", ["pool", "query"])
+def test_authorization_metadata_failure_uses_http_boundary_without_dispatch(tmp_path, monkeypatch, query_boundary, failure):
+    """两处真实HTTP鉴权查询的池超时返回503；查询驱动错误保持原异常，均不能执行受保护业务。"""
+
+    app, service, company = auth_app(tmp_path)
+    path = "/api/v2/auth-test-task" if query_boundary == "task_active" else "/api/v2/tasks/task-authorized"
+    dispatched, checkouts = [], []
+
+    @app.get(path)
+    def protected_business():
+        """记录业务是否被调用；鉴权基础设施失败时此处理器必须保持未执行。"""
+
+        dispatched.append(True)
+        return current_employee().model_dump()
+
+    def connect(**configuration):
+        """为生产元数据查询提供本机SQLite，缺表触发真实驱动异常，不访问公司或MySQL。"""
+
+        return SqliteConnection(tmp_path / "auth-read.sqlite")
+
+    def fail_checkout():
+        """在池checkout边界抛SQLAlchemy超时，交由生产_query转换，不直接制造503。"""
+
+        checkouts.append(True)
+        raise PoolTimeoutError("PRIVATE-POOL-DETAILS")
+
+    metadata = MySqlMetadataStore({"host": "unused", "user": "test", "database": "test"}, "auth-test", connect)
+    if failure == "pool":
+        monkeypatch.setattr(metadata._read_pool, "connect", fail_checkout)
+
+    def task_active(task_id):
+        """任务bearer实际通过生产元数据查询检查活动状态，保留数据库异常。"""
+
+        return bool(metadata.fetch_one("SELECT status FROM ot_workflow_record WHERE record_id=%s", (task_id,)))
+
+    try:
+        with TestClient(app, base_url=service.settings.origin) as client:
+            login(client, company)
+            # 登录本身使用测试员工写入边界；仅后续鉴权读取换为真实查询/连接池实现。
+            service.metadata = metadata
+            headers = {}
+            if query_boundary == "task_active":
+                service.task_is_active = task_active
+                grant = TaskAccessGrant(company.employee, "task-authorized", time.time() + 100, frozenset({("GET", path)}))
+                headers["Authorization"] = "Bearer " + service.issue_task_credential(grant)
+            if failure == "pool":
+                response = client.get(path, headers=headers)
+                assert response.status_code == 503
+                assert response.json() == {"error": {"code": "metadata_unavailable", "message": "共享数据库暂时不可用，请稍后重试。"}}
+                assert response.headers["cache-control"] == "no-store"
+                assert "PRIVATE" not in response.text and checkouts == [True]
+            else:
+                with pytest.raises(sqlite3.OperationalError, match="no such table"):
+                    client.get(path, headers=headers)
+            assert dispatched == []
+    finally:
+        metadata.close()
+    with pytest.raises(AuthenticationError):
+        current_employee()
+
+
+def test_authorization_handler_does_not_replace_started_downstream_response(tmp_path):
+    """业务响应已经开始后发生元数据错误时原异常继续传播；认证中间件不得发送第二个503响应。"""
+
+    _, service, company = auth_app(tmp_path)
+    path = "/api/v2/auth-test-stream"
+    grant = TaskAccessGrant(company.employee, "task-stream", time.time() + 100, frozenset({("GET", path)}))
+    bearer = service.issue_task_credential(grant)
+    sent = []
+    failure = MetadataConnectionError("PRIVATE-DOWNSTREAM-ERROR")
+
+    async def downstream(scope, receive, send):
+        """先发送合法响应头和部分正文，再模拟业务读取失败以验证异常捕获范围。"""
+
+        await send({"type": "http.response.start", "status": 200, "headers": []})
+        await send({"type": "http.response.body", "body": b"partial", "more_body": True})
+        raise failure
+
+    async def receive():
+        """提供无正文请求，避免依赖真实网络或服务进程。"""
+
+        return {"type": "http.request", "body": b"", "more_body": False}
+
+    async def send(message):
+        """记录实际ASGI消息，用于核对中间件未重复发送响应头。"""
+
+        sent.append(message)
+
+    scope = {"type": "http", "method": "GET", "path": path, "query_string": b"", "headers": [
+        (b"host", b"127.0.0.1:8788"), (b"authorization", ("Bearer " + bearer).encode())]}
+    middleware = CompanyAuthMiddleware(downstream, service)
+    # 只在鉴权前置查询处理MetadataConnectionError，进入业务后仍交由原有响应生命周期处理。
+    with pytest.raises(MetadataConnectionError) as raised:
+        asyncio.run(middleware(scope, receive, send))
+    assert raised.value is failure
+    assert [message["status"] for message in sent if message["type"] == "http.response.start"] == [200]
 
 
 def test_task_active_query_releases_session_lock_and_honors_concurrent_revocation(tmp_path):

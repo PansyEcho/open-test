@@ -5,19 +5,30 @@ from __future__ import annotations
 import json
 import re
 import sqlite3
+import zlib
 from contextlib import contextmanager
 from copy import deepcopy
 from threading import RLock
 
 import pytest
 
-from opentest.adapters.mysql_metadata import MySqlMetadataStore
+from opentest.adapters.mysql_metadata import MySqlMetadataStore, hydrate_scope_record, portable_scope_payload
 from opentest.application.publication import PublicationService, contract_test_content, equivalent_knowledge
 from opentest.domain.case_template_v4 import CaseTemplateGenerationV4
-from opentest.domain.errors import IdempotencyConflictError, KnowledgeNotFoundError, MetadataConnectionError, ScopeViolationError
+from opentest.domain.errors import IdempotencyConflictError, KnowledgeNotFoundError, KnowledgeValidationError, MetadataConnectionError, ScopeViolationError
 from opentest.domain.models import KnowledgeNode
-from opentest.domain.publication import DraftResolution, PublicationRequest, PublicationScope
+from opentest.domain.publication import CaseDraftUpdate, DraftResolution, InterfaceDraftUpdate, PublicationRequest, PublicationScope
 from opentest.domain.shared_workspace import InterfaceKnowledgeBundle
+
+
+def mysql_compress(payload):
+    """为离线SQLite夹具实现MySQL COMPRESS的传输格式；NULL保持为空，不改变业务JSON。"""
+
+    if payload is None:
+        return None
+    # 生产解码器要求四字节原长度及zlib正文，测试不能绕过实际压缩解析路径。
+    raw = payload.encode("utf-8") if isinstance(payload, str) else payload
+    return len(raw).to_bytes(4, "little") + zlib.compress(raw)
 
 
 class PublicationDatabase:
@@ -31,19 +42,23 @@ class PublicationDatabase:
         # 测试适配器保留真实存储与事务行为，不能由业务Mock代替可见性及CAS判定。
         self.connection = sqlite3.connect(":memory:", isolation_level=None)
         self.connection.row_factory = sqlite3.Row
+        self.connection.create_function("COMPRESS", 1, mysql_compress)
         self.lock = RLock()
         self.connection.executescript("""
         CREATE TABLE ot_system(system_id TEXT PRIMARY KEY,workspace_revision INTEGER DEFAULT 0);
         CREATE TABLE ot_code_baseline(baseline_id TEXT PRIMARY KEY,system_id TEXT,source_kind TEXT DEFAULT 'LEGACY',
           source_commit TEXT,selected_revision TEXT DEFAULT '',source_artifact_id TEXT,created_by_user_id TEXT,
-          context_json TEXT,interview_json TEXT,questions_json TEXT);
+          context_json TEXT,interview_json TEXT,questions_json TEXT,inherited_from_baseline_id TEXT,
+          context_revision INTEGER DEFAULT 0,updated_by_user_id TEXT,
+          created_at TEXT DEFAULT '2026-10-22T00:00:00Z',updated_at TEXT DEFAULT '2026-10-22T00:00:00Z');
         CREATE TABLE ot_scan(scan_id TEXT PRIMARY KEY,baseline_id TEXT,created_by_user_id TEXT,system_id TEXT DEFAULT 'orders');
         CREATE TABLE ot_interface(interface_id INTEGER PRIMARY KEY,system_id TEXT,scan_id TEXT,operation_id TEXT);
         CREATE TABLE ot_interface_contract_version(interface_id INTEGER,revision INTEGER,contract_json TEXT,knowledge_json TEXT,author_user_id TEXT);
         CREATE TABLE ot_baseline_interface(baseline_interface_id INTEGER PRIMARY KEY,baseline_id TEXT,operation_id TEXT,current_interface_id INTEGER,
           current_contract_revision INTEGER,publication_revision INTEGER DEFAULT 0,availability TEXT,published_by_user_id TEXT,published_at TEXT,created_at TEXT,updated_at TEXT);
         CREATE TABLE ot_interface_draft(baseline_interface_id INTEGER,owner_user_id TEXT,interface_id INTEGER,contract_revision INTEGER,
-          change_kind TEXT,expected_publication_revision INTEGER,draft_revision INTEGER,status TEXT,updated_at TEXT);
+          change_kind TEXT,expected_publication_revision INTEGER,draft_revision INTEGER,status TEXT,updated_at TEXT,
+          PRIMARY KEY(baseline_interface_id,owner_user_id));
         CREATE TABLE ot_case(case_id TEXT PRIMARY KEY,baseline_interface_id INTEGER,current_generation_id TEXT,current_variant_id TEXT,
           publication_revision INTEGER DEFAULT 0,knowledge_dependencies_json TEXT,impact_status TEXT,impact_details_json TEXT,
           published_by_user_id TEXT,published_at TEXT,updated_at TEXT,created_by_user_id TEXT,created_at TEXT);
@@ -94,6 +109,10 @@ class PublicationDatabase:
         """串行持有本测试数据库事务，异常回滚；业务仍按每项提交验收。"""
 
         with self.lock:
+            # 同系统工作流可以嵌套调用草稿服务，复用外层事务以保持版本和草稿原子提交。
+            if self.connection.in_transaction:
+                yield
+                return
             self.connection.execute("BEGIN")
             try:
                 yield
@@ -133,23 +152,24 @@ class KnowledgeTransactions:
 
 
 def contract_payload(summary="订单查询"):
-    """构造最小合法空入参契约；summary可用于模拟真实业务知识变化。"""
+    """构造首个入口的固定独立契约；summary可模拟真实业务用途变化。"""
 
-    return {"contract_version": "operation-contract/v2", "contract_revision": 1, "target_id": "query-order",
-            "source_scan_id": "scan-one", "status": "READY", "request_schema": {"type": "object", "properties": {}},
+    return {"contract_version": "operation-contract/v2", "contract_revision": 1, "target_id": "query-1",
+            "source_scan_id": "scan-1", "status": "READY", "request_schema": {"type": "object", "properties": {}},
             "fields": [], "response_schema": {}, "operation_summary": summary}
 
 
 def seed_interface(database, identity, owner="employee-a", summary="订单查询"):
-    """插入完整固定知识和一个未发布草稿，模拟扫描完成但尚未共享。"""
+    """插入与入口/扫描身份一致的独立契约及可选正文，模拟扫描完成但尚未共享。"""
 
     # 固定知识与本人草稿分开插入，验证发布前共享指针始终为空。
     node = KnowledgeNode(node_id="node-order", system_id="orders", kind="facade", title="订单查询")
     bundle = InterfaceKnowledgeBundle(nodes=[node], bodies={"node-order": summary})
     database.execute("INSERT INTO ot_scan(scan_id,baseline_id) VALUES(%s,%s)", (f"scan-{identity}", "baseline-one"))
     database.execute("INSERT INTO ot_interface VALUES(%s,%s,%s,%s)", (identity, "orders", f"scan-{identity}", f"query-{identity}"))
+    contract = {**contract_payload(summary), "target_id": f"query-{identity}", "source_scan_id": f"scan-{identity}"}
     database.execute("INSERT INTO ot_interface_contract_version VALUES(%s,1,%s,%s,%s)",
-                     (identity, json.dumps(contract_payload(summary)), bundle.model_dump_json(), owner))
+                     (identity, json.dumps(contract), bundle.model_dump_json(), owner))
     database.execute("INSERT INTO ot_baseline_interface(baseline_interface_id,baseline_id,operation_id,availability) VALUES(%s,%s,%s,'UNPUBLISHED')",
                      (identity, "baseline-one", f"query-{identity}"))
     database.execute("INSERT INTO ot_interface_draft VALUES(%s,%s,%s,1,'UPSERT',0,1,'READY',NULL)", (identity, owner, identity))
@@ -225,14 +245,14 @@ def test_old_task_cannot_publish_edited_draft(publication):
     assert service.list_interfaces(scope) == []
 
 
-def test_missing_knowledge_blocks_publication_without_closing_draft(publication):
-    """只有节点索引或缺正文不能作为完整接口发布，失败项不撤销其他成功结果。"""
+def test_missing_contract_blocks_publication_without_closing_draft(publication):
+    """没有固定独立契约仍不能发布，失败项不撤销其他成功结果。"""
 
     # 合法接口与缺材料接口同时发布，要求逐项成功而非全批吞错。
     service, database, scope = publication
     seed_interface(database, 1)
     seed_interface(database, 2)
-    database.execute("UPDATE ot_interface_contract_version SET knowledge_json=NULL WHERE interface_id=2")
+    database.execute("UPDATE ot_interface_contract_version SET contract_json=NULL WHERE interface_id=2")
     result = service.publish(scope, "interfaces", PublicationRequest(request_id="request-partial1", scope="all"))
     assert [item.status for item in result.results] == ["PUBLISHED", "BLOCKED"]
     assert [item["baseline_interface_id"] for item in service.list_interfaces(scope, "mine")] == [2]
@@ -377,8 +397,8 @@ def test_wrapped_metadata_connection_failure_keeps_publication_retriable(publica
 
 
 @pytest.mark.parametrize("corrupted_revision", [1, 2])
-def test_invalid_knowledge_body_is_blocked_before_equivalence_normalization(publication, corrupted_revision):
-    """候选或已发布正文为整数时逐项阻断，旧指针保持不变且后续合法接口照常发布。"""
+def test_legacy_body_shape_does_not_block_contract_publication(publication, corrupted_revision):
+    """候选或旧版本的legacy正文结构损坏不影响合法独立契约发布，等价内容保留旧版本。"""
 
     service, database, scope = publication
     seed_interface(database, 1)
@@ -387,28 +407,32 @@ def test_invalid_knowledge_body_is_blocked_before_equivalence_normalization(publ
     database.execute("INSERT INTO ot_interface_contract_version VALUES(1,2,%s,%s,'employee-a')",
         (json.dumps(current["contract"]), json.dumps(current["knowledge"])))
     database.execute("UPDATE ot_interface_draft SET contract_revision=2,expected_publication_revision=1,draft_revision=3,status='READY' WHERE baseline_interface_id=1")
+    # 正文只属于可选历史展示；独立契约的身份、Schema和状态均未改变。
     broken = deepcopy(current["knowledge"])
     broken["bodies"]["node-order"] = 123
     database.execute("UPDATE ot_interface_contract_version SET knowledge_json=%s WHERE interface_id=1 AND revision=%s",
         (json.dumps(broken), corrupted_revision))
     seed_interface(database, 2)
     receipt = service.publish(scope, "interfaces", PublicationRequest(request_id="request-knowledge-corrupted", scope="all"))
-    assert [(item.item_id, item.status) for item in receipt.results] == [("1", "BLOCKED"), ("2", "PUBLISHED")]
-    assert receipt.results[0].reason_code == "DRAFT_INVALID"
+    assert [(item.item_id, item.status) for item in receipt.results] == [("1", "UNCHANGED"), ("2", "PUBLISHED")]
+    assert receipt.results[0].reason_code == "CONTENT_EQUAL"
     row = database.fetch_one("SELECT current_contract_revision,publication_revision FROM ot_baseline_interface WHERE baseline_interface_id=1")
     assert row == {"current_contract_revision": 1, "publication_revision": 1}
 
 
-def test_knowledge_comparison_preserves_missing_and_non_ready_semantics(publication):
-    """结构检查不补造缺失知识，也不把等价比较变成只允许READY材料的发布校验。"""
+def test_contract_comparison_ignores_optional_body_and_preserves_status_semantics(publication):
+    """等价判断独立于旧正文；契约存在性和状态仍参与语义比较，READY门禁由发布控制。"""
 
     service, database, _ = publication
     seed_interface(database, 1)
     content = service.store.contract(1, 1)
+    # 相同受阻契约可以语义等价，但不能据此绕过独立的执行准入。
     content["contract"]["status"] = "BLOCKED"
     content["contract"]["blocked_reason"] = "仍需补充测试语义"
     assert equivalent_knowledge(content, deepcopy(content)) is True
-    assert equivalent_knowledge(content, {**content, "knowledge": None}) is False
+    assert equivalent_knowledge(content, {**content, "knowledge": None}) is True
+    assert equivalent_knowledge(content, {**content, "contract": None}) is False
+    assert equivalent_knowledge(content, {**content, "contract": {**content["contract"], "status": "READY", "blocked_reason": ""}}) is False
 
 
 def generation_payload():
@@ -424,7 +448,7 @@ def generation_payload():
                 "request_bindings": [{"field": "id", "source": {"kind": "literal", "value": "private-template-values"}}],
                 "combination": "each", "oracles": [oracle], "evidence": [evidence]}
     return {"generation_id": "case-template-generation-" + "a" * 20, "system_id": "orders", "operation_id": "query-1",
-            "source_scan_id": "scan-one", "coverage_id": "coverage:query", "runtime_registry_version": "runtime-functions/v1",
+            "source_scan_id": "scan-1", "coverage_id": "coverage:query", "runtime_registry_version": "runtime-functions/v1",
             "value_registry_version": "value-functions/v1", "status": "READY", "input_contract": contract_payload(),
             "submission": {"data_functions": [], "case_templates": [template], "unresolved": []}, "variants": variants,
             "baseline_id": "baseline-one", "owner_user_id": "employee-a",
@@ -474,6 +498,35 @@ def test_contract_metadata_normalization_never_removes_business_schema_fields():
     assert contract_test_content(original) != contract_test_content(revised)
 
 
+def test_case_draft_accepts_generation_with_workstation_source_paths(publication, tmp_path):
+    """共享存储清除源码机器目录后，保存草稿仍须识别同一固定Generation，不能把本机投影当内容变化。"""
+
+    service, database, scope = publication
+    seed_interface(database, 1)
+    payload = generation_payload()
+    payload["source_scopes"] = [{
+        "source_system_id": "orders", "source_scan_id": "scan-1",
+        "source_baseline": {"source_path": "", "commit": "a" * 40, "branch": "main",
+                            "revision": "opentest/baseline/" + "a" * 40},
+        "selected_operation_ids": ["query-1"],
+    }]
+    original = CaseTemplateGenerationV4.model_validate(payload)
+    # 持久化载荷不含机器目录；读取端按本机source-bindings重新投影，两者只差路径。
+    database.execute("INSERT INTO ot_case_generation VALUES(%s,'orders','baseline-one','employee-a',%s)",
+                     (original.generation_id, json.dumps(portable_scope_payload(original))))
+    (tmp_path / ".opentest").mkdir()
+    (tmp_path / ".opentest" / "source-bindings.json").write_text(json.dumps({"orders": "/work/orders"}), encoding="utf-8")
+    hydrated = hydrate_scope_record(original, tmp_path)
+    assert hydrated != original and hydrated.source_scopes[0].source_baseline.source_path == "/work/orders"
+    update = CaseDraftUpdate(binding=original.case_bindings[0], baseline_interface_id=1,
+                             expected_draft_revision=0, expected_publication_revision=0)
+    assert service.save_case_drafts(scope, hydrated, [update]) == ["case-public"]
+    # 本机路径不参与身份，实际业务字段变化仍必须拒绝。
+    changed = hydrated.model_copy(update={"coverage_id": "coverage:other"})
+    with pytest.raises(KnowledgeValidationError, match="固定编译产物"):
+        service.save_case_drafts(scope, changed, [update])
+
+
 def seed_published_case(service, database, scope):
     """建立一份只公开首项的合法Generation，返回固定内容便于验收执行选择和编辑隔离。"""
 
@@ -488,6 +541,136 @@ def seed_published_case(service, database, scope):
                      (generation.generation_id, generation.variants[0].variant_id))
     service.publish(scope, "cases", PublicationRequest(request_id="request-case-setup", scope="all"))
     return generation
+
+
+def seed_equivalent_review_draft(service, database, scope):
+    """为已发布Case建立内容相同的新员工草稿并标历史需复核，返回原共享Generation。"""
+
+    original = seed_published_case(service, database, scope)
+    candidate = original.model_copy(update={"generation_id": "case-template-generation-" + "c" * 20})
+    database.execute("INSERT INTO ot_case_generation VALUES(%s,'orders','baseline-one','employee-a',%s)",
+        (candidate.generation_id, candidate.model_dump_json()))
+    # 复核必须走真实的草稿CAS和显式发布入口，不能靠直接推进共享指针消除影响。
+    current = service.store.get_item(scope, "cases", "case-public")
+    service.save_case_drafts(scope, candidate, [CaseDraftUpdate(binding=candidate.case_bindings[0],
+        baseline_interface_id=1, expected_draft_revision=current["draft_revision"], expected_publication_revision=1)])
+    service.store.mark_impact("case-public", "NEEDS_UPDATE", {"reason_code": "MIGRATED_KNOWLEDGE_REVIEW"})
+    return original
+
+
+@pytest.mark.parametrize("reason", ["MIGRATED_KNOWLEDGE_REVIEW", "MIGRATED_SCAN_SCOPE_REVIEW", "REVIEW_REQUIRED"])
+def test_equal_case_explicit_publication_clears_review_without_advancing_shared_version(publication, reason):
+    """等价草稿完整复核后可执行；保留共享身份版本，旧发布回执重放不能解除后来的新影响。"""
+
+    service, database, scope = publication
+    original = seed_equivalent_review_draft(service, database, scope)
+    service.store.mark_impact("case-public", "NEEDS_UPDATE", {"reason_code": reason})
+    before = database.fetch_one("SELECT * FROM ot_case WHERE case_id='case-public'")
+    request = PublicationRequest(request_id="request-equal-review", scope="all")
+    receipt = service.publish(scope, "cases", request)
+    assert receipt.results[0].status == "UNCHANGED" and receipt.results[0].publication_revision == 1
+    after = database.fetch_one("SELECT * FROM ot_case WHERE case_id='case-public'")
+    for field in ("current_generation_id", "current_variant_id", "publication_revision", "knowledge_dependencies_json",
+                  "published_by_user_id", "published_at"):
+        assert after[field] == before[field]
+    assert after["impact_status"] == "CURRENT" and not json.loads(after["impact_details_json"])
+    assert service.require_executable(scope, "case-public", "published").generation_id == original.generation_id
+    assert service.list_cases(scope, "mine") == []
+    assert service.publish(scope, "cases", request) == receipt
+    # 同request_id仅重放当时的回执；后续影响必须由另一次明确复核解决。
+    service.store.mark_impact("case-public", "NEEDS_UPDATE", {"reason_code": "LATER_KNOWLEDGE_CHANGE"})
+    assert service.publish(scope, "cases", request) == receipt
+    assert service.get_case(scope, "case-public").impact_status == "NEEDS_UPDATE"
+
+
+@pytest.mark.parametrize("legacy_body", ["missing", "blank", "migration_marker", "legacy_marker", "changed"])
+def test_ready_contract_without_legacy_body_can_be_saved_published_and_used(publication, legacy_body):
+    """本人READY契约无需历史正文即可存草稿、发布及显式复核Case，迁移标记本身保持原样。"""
+
+    service, database, scope = publication
+    original = seed_equivalent_review_draft(service, database, scope)
+    stored = database.fetch_one("SELECT knowledge_json FROM ot_interface_contract_version WHERE interface_id=1")
+    bundle = json.loads(stored["knowledge_json"])
+    # 模拟真实迁移记录的各种旧正文；仅明确发布行为解除Case复核，不后台清除历史标记。
+    if legacy_body == "missing":
+        bundle = None
+    elif legacy_body == "blank":
+        bundle["bodies"]["node-order"] = "  \n"
+    elif legacy_body == "changed":
+        bundle["bodies"]["node-order"] = "不同的历史实现叙述，不属于独立契约"
+    else:
+        bundle["nodes"][0]["metadata"] = ({"migration_requires_review": True} if legacy_body == "migration_marker" else
+            {"limitation": "历史迁移仅冻结已有接口契约，未重新分析实现。"})
+    raw_bundle = json.dumps(bundle) if bundle is not None else None
+    database.execute("UPDATE ot_interface_contract_version SET knowledge_json=%s WHERE interface_id=1", (raw_bundle,))
+    row = service.store.get_item(scope, "interfaces", "1")
+    saved = service.save_interface_draft(scope, InterfaceDraftUpdate(operation_id="query-1", interface_id=1,
+        contract_revision=1, status="READY", expected_draft_revision=row["draft_revision"], expected_publication_revision=1))
+    assert saved["status"] == "READY"
+    interface_receipt = service.publish(scope, "interfaces", PublicationRequest(request_id="request-contract-only", scope="all"))
+    assert interface_receipt.results[0].status == "UNCHANGED"
+    assert service.get_case(scope, "case-public").impact_status == "NEEDS_UPDATE"
+    receipt = service.publish(scope, "cases", PublicationRequest(request_id="request-review-contract-only", scope="all"))
+    assert receipt.results[0].status == "UNCHANGED"
+    assert service.require_executable(scope, "case-public", "published").generation_id == original.generation_id
+    assert database.fetch_one("SELECT knowledge_json FROM ot_interface_contract_version WHERE interface_id=1")["knowledge_json"] == raw_bundle
+
+
+@pytest.mark.parametrize("problem", ["missing_contract", "blocked", "wrong_entry", "wrong_scan", "removed", "changed"])
+def test_equal_case_review_cannot_bypass_invalid_or_incompatible_contract(publication, problem):
+    """取消正文门禁后仍拒绝缺契约、受阻状态、错入口/扫描、移除和真实Schema变化。"""
+
+    service, database, scope = publication
+    original = seed_equivalent_review_draft(service, database, scope)
+    current = service.store.contract(1, 1)
+    # 在真实固定契约记录注入业务失败，验证显式发布也不能绕过契约和来源边界。
+    contract = deepcopy(current["contract"])
+    if problem == "removed":
+        database.execute("UPDATE ot_baseline_interface SET availability='REMOVED' WHERE baseline_interface_id=1")
+    elif problem == "changed":
+        contract["contract_revision"] = 2
+        contract["response_schema"] = {"type": "object", "properties": {"id": {"type": "integer"}}}
+        database.execute("INSERT INTO ot_interface_contract_version VALUES(1,2,%s,NULL,'employee-a')", (json.dumps(contract),))
+        database.execute("UPDATE ot_baseline_interface SET current_contract_revision=2 WHERE baseline_interface_id=1")
+    else:
+        if problem == "missing_contract":
+            contract = None
+        elif problem == "blocked":
+            contract.update(status="BLOCKED", blocked_reason="请求字段类型尚未解析")
+        elif problem == "wrong_entry":
+            contract["target_id"] = "query-other"
+        else:
+            contract["source_scan_id"] = "scan-other"
+        database.execute("UPDATE ot_interface_contract_version SET contract_json=%s WHERE interface_id=1",
+            (json.dumps(contract) if contract is not None else None,))
+    receipt = service.publish(scope, "cases", PublicationRequest(request_id="request-review-blocked", scope="all"))
+    assert receipt.results[0].status == "BLOCKED"
+    case = service.get_case(scope, "case-public")
+    assert case.impact_status == "NEEDS_UPDATE" and case.publication_revision == 1
+    assert case.generation_id == original.generation_id
+    assert len(service.list_cases(scope, "mine")) == 1
+    with pytest.raises(KnowledgeValidationError):
+        service.require_executable(scope, "case-public", "published")
+
+
+def test_equal_case_review_impact_rolls_back_with_failed_publication(publication, monkeypatch):
+    """复核清理与草稿关闭、回执使用同一事务，后续写入失败不能留下可执行的半次发布。"""
+
+    service, database, scope = publication
+    seed_equivalent_review_draft(service, database, scope)
+
+    def fail_mark_published(current_scope, kind, item_id):
+        """验证影响已在当前事务清理后制造保存故障，供外层逐项回滚。"""
+
+        assert service.get_case(current_scope, item_id).impact_status == "CURRENT"
+        raise KnowledgeValidationError("模拟草稿收尾失败")
+
+    # 故障发生在影响状态更新之后，确保正常BLOCKED回执不遗留半次发布。
+    monkeypatch.setattr(service.store, "mark_published", fail_mark_published)
+    receipt = service.publish(scope, "cases", PublicationRequest(request_id="request-review-rollback", scope="all"))
+    assert receipt.results[0].status == "BLOCKED"
+    assert service.get_case(scope, "case-public").impact_status == "NEEDS_UPDATE"
+    assert len(service.list_cases(scope, "mine")) == 1
 
 
 def test_execution_history_requires_exact_selection_and_preserves_single_case_status(publication):
@@ -774,7 +957,7 @@ def test_active_shared_draft_resumes_same_uat_task_without_successor(tmp_path):
 
 @pytest.mark.parametrize("dependency_kind", ["oracle", "query", "data", "cleanup"])
 def test_single_case_revision_refreshes_used_dependency_and_drops_old_target_scan(publication, tmp_path, dependency_kind):
-    """单项修订映射数据库Runtime别名与仅清理依赖后可发布；同commit重扫不保留旧目标扫描。"""
+    """单项修订映射Runtime别名及仅清理依赖；同commit补充目标契约后使用新扫描。"""
 
     from types import SimpleNamespace
     from unittest.mock import Mock
@@ -782,7 +965,6 @@ def test_single_case_revision_refreshes_used_dependency_and_drops_old_target_sca
     from opentest.application.case_template_registries import CaseTemplateRegistryLoader
     from opentest.domain.case_template_v4 import CaseTemplateGenerationStartRequest
     from opentest.domain.models import OperationCapability, SourceBaseline
-    from opentest.domain.publication import CaseDraftUpdate
     from opentest.domain.shared_workspace import CaseSelection, InterfaceKnowledgeRef
     from test_case_template_v4_revision import _handoff
 
@@ -822,7 +1004,7 @@ def test_single_case_revision_refreshes_used_dependency_and_drops_old_target_sca
     database.execute("UPDATE ot_case SET knowledge_dependencies_json=%s WHERE case_id='case-public'",
                      (json.dumps(original["case_bindings"][0]["knowledge_dependencies"]),))
 
-    # 发布B的新知识和同commit重扫后的A；旧Case必须先成为待更新，不能直接重发旧引用。
+    # B约束改变，A在同commit重扫后补充用途说明；两者均为独立契约变化，不能只改正文制造新版本。
     stored_bundle = database.fetch_one("SELECT knowledge_json FROM ot_interface_contract_version WHERE interface_id=2")["knowledge_json"]
     new_contract = {**contract_payload("新的依赖约束"), "contract_revision": 2, "source_scan_id": "scan-2", "target_id": "query-2"}
     database.execute("INSERT INTO ot_interface_contract_version VALUES(2,2,%s,%s,'employee-a')",
@@ -830,7 +1012,7 @@ def test_single_case_revision_refreshes_used_dependency_and_drops_old_target_sca
     database.execute("UPDATE ot_interface_draft SET contract_revision=2,status='READY',draft_revision=2,expected_publication_revision=1 WHERE baseline_interface_id=2")
     database.execute("INSERT INTO ot_scan(scan_id,baseline_id) VALUES('scan-3','baseline-one')")
     database.execute("INSERT INTO ot_interface VALUES(3,'orders','scan-3','query-1')")
-    target_contract = {**contract_payload(), "source_scan_id": "scan-3", "target_id": "query-1"}
+    target_contract = {**contract_payload("补充目标入口用途"), "source_scan_id": "scan-3", "target_id": "query-1"}
     database.execute("INSERT INTO ot_interface_contract_version VALUES(3,1,%s,%s,'employee-a')",
                      (json.dumps(target_contract), stored_bundle))
     database.execute("UPDATE ot_interface_draft SET interface_id=3,status='READY',draft_revision=2,expected_publication_revision=1 WHERE baseline_interface_id=1")

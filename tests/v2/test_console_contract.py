@@ -82,7 +82,7 @@ def test_console_static_client_uses_single_case_workflow_and_safe_rendering() ->
     ):
         assert f'data-workspace="{retired_workspace}"' not in html
 
-    # 新生成固定当前基准和环境；覆盖开启时必须先有部署确认。
+    # 新生成固定当前基准和环境；只有生成并验证且覆盖开启才需要部署确认。
     assert 'id="start-case-generation"' in html
     assert 'id="execute-case-generation"' in html
     assert "执行本版本用例" in html
@@ -96,7 +96,8 @@ def test_console_static_client_uses_single_case_workflow_and_safe_rendering() ->
     assert 'baseline_id: baselineScope.baselineId' in start_generation
     assert 'environment_id: baselineScope.environment' in start_generation
     assert 'confirmSharedDeployment(baselineScope)' in start_generation
-    assert "execution_mode" not in start_generation
+    assert "execution_mode: executionMode" in start_generation
+    assert 'executionMode === "generate_and_verify"' in start_generation
     assert "/case-generations" in start_generation
     assert 'interaction_mode: "web"' in start_generation
     assert "task_id" in start_generation
@@ -518,8 +519,11 @@ def test_console_exposes_personal_baseline_and_explicit_creation() -> None:
     # 当前基准、环境与显式创建是三个独立动作，旧源码生成输入不再参与请求。
     for element_id in ("current-baseline-select", "current-environment-select", "create-shared-baseline"):
         assert f'id="{element_id}"' in html
-    assert "sharedWorkspace.baseline?.source_commit" in shared
-    assert "sharedWorkspace.baseline?.selected_revision" in shared
+    # 顶部只展示可读版本名与 8 位短 commit，完整 commit 通过复制取得。
+    assert "baseline?.selected_revision" in shared
+    assert "(baseline?.source_commit || \"\").slice(0, 8)" in shared
+    assert "navigator.clipboard.writeText(commit)" in shared
+    assert 'revision.startsWith("opentest/baseline/")' in shared
     assert 'sharedPreference(`baseline.${scope.systemId}`)' in shared
     assert "revision:revision.value.trim()" in shared
     assert "inherited_from_baseline_id:scope.baselineId" in shared
@@ -550,8 +554,8 @@ def test_case_list_is_scoped_and_active_handoff_polling_rejects_stale_responses(
     shared = (web_root / "shared-workspace.js").read_text(encoding="utf-8")
     loader = shared[shared.index("async function loadSharedCaseWorkspace"):shared.index("function selectSharedOperation")]
     handoff = script[script.index("async function loadCaseHandoff"):script.index("async function startCaseGeneration")]
-    # Case列表写入必须在基准及视图两项检查之后，不读取退役整份Generation接口。
-    assert loader.index("if (!sharedScopeCurrent(scope)") < loader.index("sharedWorkspace.cases =")
+    # 无基准时先清空旧数据；远端Case结果写入必须在范围和读取代次检查之后。
+    assert loader.index("if (!sharedScopeCurrent(scope)") < loader.index("sharedWorkspace.cases = cases.items")
     assert "view !== sharedWorkspace.caseView" in loader
     assert "/cases?view=${view}" in loader and "/case-generations" not in loader
     assert handoff.count("requestGeneration !== caseRequestGeneration") >= 2

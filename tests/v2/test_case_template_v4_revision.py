@@ -6,6 +6,7 @@ import json
 from concurrent.futures import ThreadPoolExecutor
 from contextlib import nullcontext
 from pathlib import Path
+from types import SimpleNamespace
 from unittest.mock import Mock
 
 import pytest
@@ -612,7 +613,7 @@ def test_request_receipt_returns_first_result_and_rejects_parameter_reuse(
 def test_case_unknown_answer_stays_open_and_confirmation_keeps_target_scope(
     tmp_path: Path,
 ) -> None:
-    """Case回答跨重启持久化，未知不关闭且确认不冒充知识节点。
+    """兼容旧Case答案持久化，未知保留诊断并标为受阻，确认不冒充知识节点。
 
     Args:
         tmp_path: pytest临时目录。
@@ -656,7 +657,8 @@ def test_case_unknown_answer_stays_open_and_confirmation_keeps_target_scope(
 
     reloaded = CaseTemplateHandoffStoreV4(tmp_path).get(handoff.handoff_id)
     assert unknown.question.status == "open"
-    assert reloaded.status == "WAITING_FOR_INPUT"
+    # 未知答案不解除发布约束，但Case不再持久等待用户回答。
+    assert reloaded.status == "FAILED"
     assert reloaded.questions[0].answer == "不知道，需要业务方继续确认"
     assert reloaded.confirmations[0].confirmed_node_ids == []
     assert reloaded.confirmations[0].affected_target_ids == ["case.ready"]
@@ -909,6 +911,56 @@ def test_available_publication_requires_question_independent_data_functions(tmp_
     assert service._question_affects_variant(unknown_scope_question, independent_variant) is True
 
 
+@pytest.mark.parametrize("unknown_target", ["case.unknown", "case_template:case.unknown", "data_function:unknown"])
+def test_bare_draft_owner_targets_only_block_their_own_variants(tmp_path: Path, unknown_target: str) -> None:
+    """unresolved按owner_name生成的不带前缀目标，只阻塞同名template或data function的Variant。
+
+    Args:
+        tmp_path: pytest临时目录。
+        unknown_target: 不存在的裸名称或带类型前缀的owner，均不能证明问题独立。
+
+    Returns:
+        None；其他template的Variant保留available资格且未知目标仍保守阻塞时通过。
+    """
+
+    blocked_variant = _variant().model_copy(update={"template_id": "case.blocked"})
+    independent_variant = _variant("d").model_copy(
+        update={
+            "template_id": "case.independent",
+            "data_calls": [DataFunctionCall(call_id="load_user", function_name="load_user")],
+        }
+    )
+    service, _handoffs, _generations = _service(tmp_path, _compiled([blocked_variant, independent_variant]))
+    # 只需要草稿声明的名称集合，绕过完整DSL校验构造最小草稿。
+    submission = CaseTemplateSubmission.model_construct(
+        data_functions=[SimpleNamespace(name="load_user")],
+        case_templates=[SimpleNamespace(template_id="case.blocked"), SimpleNamespace(template_id="case.independent")],
+        unresolved=[],
+    )
+    template_question = KnowledgeQuestion(
+        question_id="case-question-blocked",
+        system_id=SYSTEM_ID,
+        source="case_template",
+        title="Case生成受阻：case.blocked",
+        detail="上游结果缺少可执行观测契约",
+        affected_target_ids=["case.blocked"],
+    )
+
+    assert service._question_affects_variant(template_question, blocked_variant, submission) is True
+    assert service._question_affects_variant(template_question, independent_variant, submission) is False
+
+    function_question = template_question.model_copy(
+        update={"question_id": "case-question-load-user", "affected_target_ids": ["load_user"]}
+    )
+    assert service._question_affects_variant(function_question, independent_variant, submission) is True
+    assert service._question_affects_variant(function_question, blocked_variant, submission) is False
+
+    unknown_question = template_question.model_copy(
+        update={"question_id": "case-question-unknown", "affected_target_ids": [unknown_target]}
+    )
+    assert service._question_affects_variant(unknown_question, independent_variant, submission) is True
+
+
 def test_complete_publication_is_separate_and_retry_reuses_generation(tmp_path: Path) -> None:
     """READY草稿需显式发布，成功请求重试返回同一Generation。
 
@@ -1046,7 +1098,7 @@ def test_generation_write_interruption_is_recovered_without_duplicate_publish(
 
 
 def test_final_blocked_requires_revised_draft_after_answer(tmp_path: Path) -> None:
-    """回答只关闭问题，Agent移除unresolved后才能显式发布final_blocked。
+    """保留旧答案兼容边界；缺口先失败保存，移除unresolved后才能显式发布final_blocked。
 
     Args:
         tmp_path: pytest临时目录。
@@ -1072,7 +1124,8 @@ def test_final_blocked_requires_revised_draft_after_answer(tmp_path: Path) -> No
             submission=_submission(True),
         ),
     )
-    assert draft.status == "WAITING_FOR_INPUT"
+    # 保存受阻草稿不等于产生正式BLOCKED产物，更不要求批量任务等用户回答。
+    assert draft.status == "FAILED"
     assert generations.write.call_count == 0
     question_id = draft.questions[0].question_id
     service.answer_question(
