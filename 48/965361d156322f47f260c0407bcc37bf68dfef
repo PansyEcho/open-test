@@ -1,0 +1,21 @@
+tests/v2/test_web_generation_prompt.py
+  s_ea0b842423ed50::t_cdfc9d95ba80b2 1-42
+tests/v2/test_shared_history_review.py
+  s_ea0b842423ed50::t_be8a21fbc740d7 1-111
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.2",
+  "base_commit_sha": "48965361d156322f47f260c0407bcc37bf68dfef",
+  "prompts": {},
+  "sessions": {
+    "s_ea0b842423ed50": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a15c8c-f089-7052-9db0-353822baa4b5",
+        "model": "gpt-6-astra"
+      },
+      "human_author": "shizhen <yuuu.shizhen@gmail.com>"
+    }
+  }
+}
