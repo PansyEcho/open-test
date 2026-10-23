@@ -1,0 +1,14 @@
+openspec/changes/share-code-baselines-and-publish-cases/specs/unified-qa-operations/spec.md
+  h_3484aac7699d62 1-18
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.2",
+  "base_commit_sha": "68be832594d97786b719a77e1278e65bd06edad2",
+  "prompts": {},
+  "humans": {
+    "h_3484aac7699d62": {
+      "author": "shizhen <yuuu.shizhen@gmail.com>"
+    }
+  }
+}
