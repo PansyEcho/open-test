@@ -57,6 +57,23 @@ The system SHALL reject whole-Generation continuation of terminal shared-baselin
 #### Scenario: Shared Case executes on a computer without the author's source repository
 
 - **WHEN** an employee executes selected shared Cases in QA or UAT on another computer
-- **THEN** target and actual external provider configuration is read from materialized source for their frozen scans
-- **AND** missing or unrelated local repository bindings cannot change the execution profile
-- **AND** missing frozen provider source produces an explicit error before business execution, without mutating global source bindings or another execution's profiles
+- **THEN** the target and any explicitly selected provider Facade read their configuration from materialized source for their frozen scans
+- **AND** an external DSF reference from a frozen scan executes with the declaring caller's frozen DSF profile, without requiring the provider's source material
+- **AND** missing or unrelated local repository bindings cannot change either execution profile
+- **AND** missing frozen caller source, or missing frozen source for an explicitly selected provider Facade, produces an explicit error before business execution without mutating global source bindings or another execution's profiles
+
+#### Scenario: External dependency executes with the caller profile
+
+- **WHEN** a shared Case data or observation step calls an external DSF reference declared by a frozen caller scan
+- **THEN** execution uses that caller's frozen DSF client profile and the caller's selected QA or UAT environment
+- **AND** the provider's registration state, latest scan or missing source material does not block the call
+- **AND** no provider source scope is added solely to resolve the external reference's execution profile
+
+### Requirement: Explicit step schemas close incomplete fixed response contracts
+The system SHALL merge an explicitly declared step or observer output schema into branches that the fixed dependency response contract leaves open (for example `list={}` or `saasOrderVO={}`), while scanned types and constraints remain authoritative. A complete scanned schema SHALL NOT be widened by an agent declaration, and repeated resolution SHALL NOT replace an existing closed response contract with an open one.
+
+#### Scenario: Fixed dependency exposes an empty nested response field
+- **WHEN** a DATA step calls a fixed operation whose response schema only registers `list={}` or `saasOrderVO={}`, and the agent declares a complete `output_schema` from the fixed source
+- **THEN** compilation merges the missing branches and resolves downstream step outputs, arguments and assertions without UNKNOWN_STEP_OUTPUT
+- **AND** scanned types and constraints remain authoritative; a complete scanned schema cannot gain assertion paths from the declaration
+- **AND** resolving the same interface again with only empty branches keeps the last closed response contract and does not downgrade fixed knowledge

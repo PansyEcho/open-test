@@ -198,3 +198,29 @@ P13 的隔离内存验证没有覆盖持久化清除机器目录后再按本机�
 现场 `case-template-generation-ea00a0b5a2434502b6ce` 的 9 个草稿对应 4 个场景：`cancel_allowed_states` 4 个状态、`cancel_rejected_states` 3 个、`cancel_reshoping` 1 个、`cancel_idempotent` 1 个。四条同名 Case 的差异仅为 `state`（WAIT_REFUND/REFUND_FAIL/AUDITED/PENDING_APPLY），不是重复数据；旧版按场景分组，新 Case 库平铺后丢失了该维度。展开行仍使用独立 Case 身份，不合并发布或执行。
 
 前端 Node 专项 24 项通过；`http://127.0.0.1:8788/` 已返回 `20261023-07` 的 styles/shared-workspace 资源，新增分组函数与样式实际出现在响应中。未在未登录浏览器伪造登录，登录后的视觉确认仍需用户刷新页面完成；页面版本保持 `20261023-04`，本次纯展示改动不会强制拦截旧页。未提交 Git，真实 QA 执行仍未完成。
+
+## 16 未闭合固定响应契约与显式步骤 Schema（2026-10-23）
+
+- [x] P16.1 编译时仅当固定依赖响应 Schema 存在空对象/空数组等未闭合分支，才用步骤或观察显式声明的输出 Schema 补齐；扫描已证明的类型和约束优先，完整 Schema 不允许被声明放宽。
+- [x] P16.2 再次解析同一接口只得到空嵌套响应时保留最近闭合的响应契约，避免把已闭合的固定知识降级为空 schema。
+- [x] P16.3 增加编译器与下游解析回归，并用原 createOrder 草稿验证真实编译缺口。
+
+现场 `task-3c95555eb9998b16`（handoff `case-template-handoff-e2ef5dc190d6419997d8`）在 revision 11 报 37 项问题：`INVALID_DATA_OUTPUT` 23、`UNKNOWN_STEP_OUTPUT` 4、`RUNTIME_ARGUMENT_TYPE_MISMATCH` 3、`DATETIME_FORMAT_INPUT` 3 等。根因不是发布一致性：固定下游 `booking.queryList` 的 `list`、`booking.queryDetail` 的 `saasOrderVO`、`change.queryList` 的 `list` 只登记 `{}`，编译器在 descriptor Schema 非空时完全忽略步骤显式 `output_schema`，导致 `list.pageList` 等路径全部不闭合。用真实 handoff 重编译：修复前 37 项、0 Variant；修复后仅剩 Agent 自己写入的 `booking_fixed_response_schema_incomplete` 阻塞项；在内存中移除该已失效诊断后得到 1 个 Variant、0 issue，说明剩余阻断是历史草稿状态而非编译缺口。
+
+契约降级链也一并修复：同一扫描的 `booking/change queryList` revision 0 有完整 `list`，revision 1 被新的空解析覆盖。现在解析前先取最近闭合响应契约，空解析不会覆盖已闭合版本；新增下游回归验证该优先级。相关回归 161 通过、2 跳过。
+
+该任务当前 handoff 仍保留旧诊断问题，重试同一 handoff 不会自动移除；用户重启后端后应从「回归 Case」新建一次生成，而不是继续重试这个失败任务。实际 QA 订单创建与断言仍未试跑，不能把编译通过当作业务通过；change 保持未归档。
+
+## 17 外部 DSF 使用调用方 Profile（2026-10-23）
+
+- [x] P17.1 执行侧统一按 `capability.system_id` 使用调用方 Profile，外部引用不再解析 provider 注册身份。
+- [x] P17.2 删除 provider 归属全量扫描路径，保留显式 provider Facade 的 Profile 与固定源码规则。
+- [x] P17.3 补齐执行 Profile、跨项目引用、共享源码和 provider 边界回归。
+- [x] P17.4 完成真实 refund→booking 只读查询、createOrder Case 执行、回查、性能测量及测试数据处置。
+- [x] P17.5 完成 OCR delegation 独立审查、严格 OpenSpec 校验及服务清理。
+
+独立只读审查首轮提出 definition 来源边界、两处测试断言过弱和 unified spec 的 current/frozen 与 routing/target 表述矛盾；已补充冻结定义信任边界说明、改为 `execution_system_ids` 集成断言、增加两个实际派发 operation ID 断言并收紧 provider 错误匹配，同时修正 delta spec。复审确认无 High/Medium，剩余 Low（版本归属表述）已改为“frozen resolved definition 的 provider-resolved version 优先”。本次未启动新服务，用户现有 8788 进程未终止；代码需重启该服务后才会在页面生效。
+
+执行 Profile、跨系统、共享数据、Case 模板及下游契约回归共 203 项通过、7 项跳过。全量 `tests/v2` 为 1075 通过、178 跳过、2 失败：控制台静态资源版本 `20261023-04` 与已发布 `20261023-07` 不一致（既有、未改动），以及 `test_network_total_deadline_kills_and_reaps_slow_collection[http_headers]` 在全量并发下超时；该 coverage 文件单独运行 6 项全通过，与本次执行链路无关。严格 OpenSpec 校验：change 通过，44 份现行规范全部通过。
+
+真实链路：refund QA Profile 调用 booking `trade:queryList`（只读 `page=1,pageSize=1`）返回 success，8.5 秒；使用原 Generation 执行精确 Case `case-cfce01b77d614a8cbcb314c200463ec9` 得到 `case-generation-execution-17cf1438a66e4f349b3a`，状态 `PASSED`、耗时 38.8 秒、6 个 Operation，创建退票单 `RF1563239397393629184`（原订单 `BJ1550099940918657024`，`PENDING_APPLY`/`VOLUNTARY`），7 项断言全部通过。随后用 `cancelReasonId=OPENTEST_TEST_CLEANUP` 调用 `RefundFacade#cancel` 并回查，退票单状态为 `REFUND_CANCEL`，测试数据已处置；未重复发起 createOrder 写请求。清理取消首次因缺少 `cancelReasonId` 被业务拒绝，补正后成功取消一次并回查。先前两次失败执行各 27.8/34.7 秒且 0 Operation，本次包含完整数据准备、目标调用和回查共 38.8 秒。preflight 单独实测只读取 refund scan manifest 1 次，未读取任何 booking/endorse provider manifest；回归以调用路径断言，不以易波动的秒数断言。

@@ -649,9 +649,11 @@ def test_selecting_own_database_returns_its_data_phase_functions(tmp_path: Path)
     assert handoffs.get(handoff_id).source_scopes[0].selected_operation_ids == [database_id]
 
 
-def _compile_golden() -> tuple[list, list]:
+def _compile_golden(runtime_registry: RuntimeFunctionRegistry | None = None) -> tuple[list, list]:
     """使用固定目录编译cancel Golden。
 
+    Args:
+        runtime_registry: 可选运行函数目录；缺省使用Golden的完整目录。
     Returns:
         五个Variant和问题列表。
     """
@@ -664,7 +666,7 @@ def _compile_golden() -> tuple[list, list]:
             "properties": {"success": {"type": "boolean"}, "orderSerialNo": {"type": "string"}},
             "required": ["success", "orderSerialNo"],
         },
-        runtime_registry=_runtime_registry(),
+        runtime_registry=runtime_registry or _runtime_registry(),
         value_registry=CaseTemplateRegistryLoader().value_registry(),
         allowed_system_ids={SYSTEM_ID, BOOKING_SYSTEM_ID},
     )
@@ -840,6 +842,52 @@ def test_cancel_golden_compiles_exactly_five_code_name_variants() -> None:
         {"code": 8, "name": "RESHOPING"},
     ]
     assert all(item.request_values["refundSerialNo"]["kind"] == "data_output" for item in variants)
+
+
+def test_incomplete_scanned_output_schema_is_closed_by_declared_step_schema() -> None:
+    """固定依赖只登记空list时，步骤显式Schema补齐嵌套路径并恢复可编译Variant。"""
+
+    incomplete = {"type": "object", "properties": {"success": {"type": "boolean"}, "list": {}}, "additionalProperties": False}
+    registry = _runtime_registry()
+    functions = [item.model_copy(update={"output_schema": incomplete}) if item.function_id == TRADE_QUERY_LIST_ID else item
+                 for item in registry.functions]
+    variants, issues = _compile_golden(RuntimeFunctionRegistry(functions=functions))
+
+    assert issues == []
+    assert len(variants) == 5
+
+
+def test_declared_step_schema_cannot_relax_scanned_output_constraints() -> None:
+    """显式Schema只能补齐扫描未闭合分支，不能覆盖已扫描的字段类型和约束。"""
+
+    scanned = {"type": "object", "properties": {"success": {"type": "boolean"}, "list": {}}, "additionalProperties": False}
+    declared = {"type": "object", "properties": {
+        "success": {"type": "string"},
+        "list": {"type": "object", "properties": {"pageList": {"type": "array", "items": {"type": "object", "properties": {"ownerId": {"type": "string"}}}}}},
+    }}
+    merged = CaseTemplateValidatorV4()._merge_output_schema(scanned, declared)
+
+    assert merged["properties"]["success"] == {"type": "boolean"}
+    assert merged["properties"]["list"] == declared["properties"]["list"]
+    assert CaseTemplateValidatorV4()._schema_at(merged, "list.pageList.0.ownerId") == {"type": "string"}
+
+
+def test_complete_scanned_output_schema_is_not_relaxed_by_declaration() -> None:
+    """扫描契约没有空分支时保持原Schema，声明不能新增断言路径。"""
+
+    scanned = {"type": "object", "properties": {
+        "success": {"type": "boolean"},
+        "list": {"type": "object", "properties": {"pageList": {"type": "array", "items": {"type": "object", "properties": {"ownerId": {"type": "string"}}}}}},
+    }}
+    declared = {"type": "object", "properties": {
+        "success": {"type": "boolean"},
+        "list": {"type": "object", "properties": {"pageList": {"type": "array", "items": {"type": "object", "properties": {"ownerId": {"type": "string"}}}}}},
+        "unscanned": {"type": "string"},
+    }}
+    merged = CaseTemplateValidatorV4()._merge_output_schema(scanned, declared)
+
+    assert merged == scanned
+    assert CaseTemplateValidatorV4()._schema_at(merged, "unscanned") is None
 
 
 def test_business_identity_requires_dynamic_data_output() -> None:

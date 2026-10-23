@@ -1,6 +1,7 @@
 """验证逻辑QA/UAT、项目实际filter和一次运行固定的环境配置。"""
 
 import json
+import shutil
 import subprocess
 from pathlib import Path
 from types import SimpleNamespace
@@ -15,6 +16,7 @@ from opentest.adapters.knowledge_store import GitKnowledgeStore
 from opentest.adapters.dsf_proxy_worker import DsfProxyWorkerLauncher
 from opentest.adapters.qa_active_worker import QaActiveWorkerLauncher
 from opentest.application.dsf_operations import DsfOperationService
+from opentest.application.operations import LocalQaOperationProvider, OperationExecutionService
 from opentest.domain.errors import KnowledgeNotFoundError, KnowledgeValidationError, ScopeViolationError
 from opentest.domain.models import (
     DiscoveredResource,
@@ -23,8 +25,10 @@ from opentest.domain.models import (
     DsfExecutionResponse,
     DsfOperationDefinition,
     DsfOperationMutability,
+    OperationCapability,
     OperationExecutionRequest,
     OperationKind,
+    OperationMutability,
     ResourceKind,
     ResourceRole,
     SourceReference,
@@ -341,22 +345,34 @@ def test_dsf_runtime_profile_preserves_fixed_operation_contract(tmp_path: Path) 
 
 
 @pytest.mark.parametrize("pass_bound_profile", [False, True])
-def test_external_dsf_uses_registered_target_project_profile(tmp_path: Path, pass_bound_profile: bool) -> None:
-    """外部调用使用目标项目UAT的实际dev配置，来源扫描只固定操作坐标。
+def test_external_dsf_uses_caller_profile_even_when_provider_registered(
+    tmp_path: Path, pass_bound_profile: bool,
+) -> None:
+    """外部调用始终使用声明引用的调用方配置，provider 注册不改变执行身份。
 
     Args:
         tmp_path: pytest隔离项目、配置与扫描目录。
         pass_bound_profile: 覆盖运行预绑定与兼容直接调用两条入口。
     Returns:
-        None；两条入口均使用目标项目真实Profile且拒绝来源项目Profile时通过。
+        None；两条入口均使用调用方真实Profile且拒绝provider Profile时通过。
     """
 
     loader, source = _write_profile(tmp_path, "uat", "dev")
+    # 每个注册项目必须拥有独立源码路径；provider 目录只用于证明注册身份不影响调用方 Profile。
+    provider_source = tmp_path / "provider-source"
+    shutil.copytree(source, provider_source)
     store = GitKnowledgeStore(tmp_path / "knowledge")
     store.initialize()
-    store.register_system(SystemDefinition(system_id="provider", name="目标项目", source_path=str(source)))
-    settings = LocalSystemSettingsStore(store.root / ".opentest/environments")
-    settings.write("provider", "", resource_config_environment="dev", environment="uat")
+    store.register_system(SystemDefinition(system_id="caller", name="调用方项目", source_path=str(source)))
+    store.register_system(SystemDefinition(system_id="provider", name="提供方项目", source_path=str(provider_source)))
+    # 调用方Profile同时写入运行加载器和旧直接调用使用的库内环境目录。
+    for settings_root in (loader.environment_root, store.root / ".opentest/environments"):
+        LocalSystemSettingsStore(settings_root).write(
+            "caller", "", resource_config_environment="dev", environment="uat",
+        )
+    LocalSystemSettingsStore(store.root / ".opentest/environments").write(
+        "provider", "", resource_config_environment="qa", environment="uat",
+    )
     # 外部DSF必须带已解析的请求和响应结构才允许执行。
     operation = _operation().model_copy(update={
         "request_schema": {"type": "object"}, "response_schema": {"type": "object"},
@@ -366,35 +382,44 @@ def test_external_dsf_uses_registered_target_project_profile(tmp_path: Path, pas
     launcher = Mock()
     launcher.execute.return_value = DsfExecutionResponse(request_id="fake", operation_id=operation.operation_id, status="success")
     service = DsfOperationService(store, artifacts, Mock(), Mock(), launcher)
-    bound = loader.resolve_execution_profile("provider", "uat", source)
+    caller_profile = loader.resolve_execution_profile("caller", "uat", source).dsf_profile
     request = DsfExecutionRequest(operation_id=operation.operation_id, environment="uat")
-    # 原调用方扫描A的坐标不替换，但最终Worker的身份和路由均属于目标项目。
-    service.execute_external_indexed("caller", "scan-caller-a", request,
-                                     profile=bound.dsf_profile if pass_bound_profile else None)
+    # 即使provider已注册且有自己的配置，外部引用仍只使用调用方身份和路由。
+    service.execute_external_indexed(
+        "caller", "scan-caller-a", request,
+        profile=caller_profile if pass_bound_profile else None,
+    )
     artifacts.read.assert_called_once_with("caller", "scan-caller-a")
     actual_system, actual_profile, actual_operation, _ = launcher.execute.call_args.args
-    assert actual_system == "provider"
-    assert actual_profile.system_id == "provider"
+    assert actual_system == "caller"
+    assert actual_profile.system_id == "caller"
     assert actual_profile.environment == "uat" and actual_profile.target_environment == "dev"
     assert actual_operation.version == "version-a"
-    caller_profile = bound.dsf_profile.model_copy(update={"system_id": "caller"})
-    with pytest.raises(ScopeViolationError, match="target project"):
-        service.execute_external_indexed("caller", "scan-caller-a", request, profile=caller_profile)
+    provider_profile = caller_profile.model_copy(update={"system_id": "provider"})
+    with pytest.raises(ScopeViolationError, match="execution project"):
+        service.execute_external_indexed(
+            "caller", "scan-caller-a", request, profile=provider_profile,
+        )
     assert launcher.execute.call_count == 1
 
 
-def test_external_dsf_unregistered_provider_rejects_forged_provider_profile(tmp_path: Path) -> None:
-    """提供方未接入时由调用方客户端执行，伪造的提供方Profile不能冒充该归属。
+def test_external_dsf_rejects_provider_profile_when_provider_unregistered(tmp_path: Path) -> None:
+    """提供方未接入时也不能用provider Profile冒充外部引用的调用方身份。
 
     Args:
         tmp_path: pytest隔离知识目录。
     Returns:
-        None；归属回落到调用方且伪造Profile在启动Worker前被拒绝时通过。
+        None；传入provider Profile在启动Worker前被拒绝时通过。
     """
 
+    loader, source = _write_profile(tmp_path, "qa", "test")
     store = GitKnowledgeStore(tmp_path / "knowledge")
     store.initialize()
-    store.register_system(SystemDefinition(system_id="caller", name="调用方项目", source_path=str(tmp_path)))
+    store.register_system(SystemDefinition(system_id="caller", name="调用方项目", source_path=str(source)))
+    for settings_root in (loader.environment_root, store.root / ".opentest/environments"):
+        LocalSystemSettingsStore(settings_root).write(
+            "caller", "", resource_config_environment="test", environment="qa",
+        )
     operation = _operation().model_copy(update={
         "request_schema": {"type": "object"}, "response_schema": {"type": "object"},
     })
@@ -402,12 +427,39 @@ def test_external_dsf_unregistered_provider_rejects_forged_provider_profile(tmp_
     artifacts.read.return_value = SimpleNamespace(dsf_operations=[operation])
     launcher = Mock()
     service = DsfOperationService(store, artifacts, Mock(), Mock(), launcher)
-    assert service.execution_owner("caller", operation).system_id == "caller"
-    # 即使传入看似完整的远端Profile，也必须属于实际执行归属的调用方项目。
-    profile = DsfClientProfile(system_id="provider", routing_environment="qa", target_environment="test")
-    with pytest.raises(ScopeViolationError, match="target project"):
-        service.execute_external_indexed("caller", "scan-caller-a", DsfExecutionRequest(operation_id=operation.operation_id, environment="qa"), profile=profile)
+    caller_profile = loader.resolve_execution_profile("caller", "qa", source).dsf_profile
+    provider_profile = caller_profile.model_copy(update={"system_id": "provider"})
+    with pytest.raises(ScopeViolationError, match="execution project"):
+        service.execute_external_indexed(
+            "caller", "scan-caller-a",
+            DsfExecutionRequest(operation_id=operation.operation_id, environment="qa"),
+            profile=provider_profile,
+        )
     launcher.execute.assert_not_called()
+
+
+def test_external_capability_uses_declaring_caller_not_case_target(tmp_path: Path) -> None:
+    """跨项目计划中的外部引用只补入其声明系统B，不补入Case主项目或provider。
+
+    Args:
+        tmp_path: pytest隔离目录。
+    Returns:
+        None；执行项目集合同时包含目标A和外部调用方B时通过。
+    """
+
+    provider = LocalQaOperationProvider(Mock(), Mock(), LocalEnvironmentLoader(tmp_path / "environments"))
+    service = OperationExecutionService(Mock(), Mock(), Mock(), Mock(), provider)
+    target = OperationCapability(
+        operation_id="facade:case-a#query", system_id="case-a", business_name="Case目标",
+        kind=OperationKind.FACADE, mutability=OperationMutability.READ_ONLY,
+        source_scan_id="scan-case-a", executable=True,
+    )
+    external = OperationCapability(
+        operation_id="dsf:provider-c:report:query", system_id="caller-b", business_name="外部查询",
+        kind=OperationKind.EXTERNAL_DSF, mutability=OperationMutability.READ_ONLY,
+        source_scan_id="scan-caller-b", executable=True,
+    )
+    assert service.execution_system_ids([target, external]) == ["caller-b", "case-a"]
 
 
 def test_dsf_launcher_accepts_logical_qa_with_actual_test(tmp_path: Path) -> None:

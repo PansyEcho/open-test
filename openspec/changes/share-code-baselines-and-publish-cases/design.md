@@ -75,3 +75,14 @@
 - 下游解析保留已有依赖缺口：零候选说明接口或材料缺失，多候选说明重载歧义，不让 Agent 在缺失 JAR 时反复修改签名。
 - 原固定 POM 和本地 JAR 只读复现确认：日志接口不是本机缺包，而是离线 Maven 部分成功的 classpath 覆盖了已声明直接依赖。仅在该部分失败分支合并已有精确直接依赖，保留 Maven 顺序与调解版本；未解析的多版本声明保留缺口。此修复不下载包、不执行 Java 业务类、不改变完整解析或冻结依赖的路径。
 - 原任务的发布拒绝已复现为读取投影差异，不是 Agent 草稿内容差异：MySQL 持久化清除 `SourceBaseline` 的机器目录，读取端按本机 `source-bindings` 回填；保存个人草稿却用回填后的 Generation 与原始载荷做严格模型相等比较。固定 Generation 的身份比较改用既有可移植载荷，源码目录仍由本机读取投影，实际内容、绑定或依赖变化继续拒绝。P13 的隔离内存重放没有覆盖该读取投影，不能作为跨机器保存已通过的证据；本轮以原任务 revision 3 提交在回滚事务中重放真实读取、保存和发布路径。
+- createOrder 的编译缺口不是发布一致性：固定下游响应契约只登记 `list={}` / `saasOrderVO={}`，编译器却因 descriptor Schema 非空而完全忽略步骤显式 `output_schema`，导致 `list.pageList` 等路径批量不闭合。只在扫描 Schema 确实存在空对象/空数组分支时，用声明补齐缺失分支；完整扫描 Schema 仍是服务端真相，冲突类型和已有约束优先。同一接口再次解析只得到空分支时保留最近闭合响应契约，避免把 revision 0 的完整 `list` 降级成 revision 1 的 `{}`。
+
+## 外部 DSF 调用方 Profile（2026-10-23）
+
+- 外部 DSF 引用由声明该引用的项目发起。执行 Profile 固定取 `capability.system_id`，即使引用来自 Case 主项目之外的依赖项目，也不解析 provider 注册身份。
+- gs、service、version、action 及契约仍来自调用方固定扫描或已冻结的外部定义。provider 自己源码里的配置、注册状态和最新扫描只影响显式选择的 provider Facade，不影响外部引用。
+- 删除按 provider 名称回退并遍历全部系统最新 manifest 的归属解析，避免为一次外部调用重复解析 100MB 级扫描文件。
+- 共享 Case 从调用方固定源码和本次 QA/UAT 配置解析 Profile；共享执行不允许退回本机工作树。缺少调用方固定材料时仍在业务调用前失败。
+- 实测前置：使用 refund QA Profile 实际调用 booking `trade:queryList`（只读、page=1、pageSize=1）成功，说明 QA client 权限可用；最终仍以改造后正常链路和 createOrder Case 实测为准。
+- 显式 provider Facade 保留原有规则：使用 provider Profile，并需要其固定源码范围。历史已固定为 provider Facade 的 Case 不改写；需要改为外部引用时走正常 Case 修订。
+- `execute_external_indexed` 只接受服务端冻结 scope 已解析的 `definition`（可能带 provider 解析版本）；外部请求不能提供该定义。执行仍校验 operation_id、外部归属、Profile 归属、契约完整和非生产环境，不重新读取 provider scan 替换固定定义。

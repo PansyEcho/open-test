@@ -6,6 +6,7 @@ import zipfile
 import pytest
 
 from opentest.adapters.knowledge_store import GitKnowledgeStore
+from opentest.adapters.operation_contract_store import OperationContractStore
 from opentest.adapters.source_analysis import GitSourceRepository, SourceScanArtifactStore
 from opentest.application.downstream_interfaces import DownstreamInterfaceSearchService
 from opentest.domain.case_template_v4 import CaseTemplateSourceScope
@@ -73,6 +74,35 @@ def _search_fixture(tmp_path: Path) -> tuple[DownstreamInterfaceSearchService, C
     jar_root.mkdir(parents=True)
     scope = CaseTemplateSourceScope(source_system_id="caller", source_scan_id=manifest.scan_id, source_baseline=baseline)
     return DownstreamInterfaceSearchService(store, artifacts, tmp_path / "maven"), scope, jar_root
+
+
+def test_open_resolution_does_not_replace_closed_response_contract(tmp_path: Path) -> None:
+    """最新契约是空响应时仍保留更早的闭合响应，避免固定依赖降级。"""
+
+    service, scope, _ = _search_fixture(tmp_path)
+    closed = {"type": "object", "properties": {
+        "list": {"type": "object", "properties": {"pageList": {"type": "array", "items": {"type": "object", "properties": {"id": {"type": "integer"}}}}}},
+        "success": {"type": "boolean"},
+    }}
+    opened = {"type": "object", "properties": {"list": {}}}
+    definition = DsfOperationDefinition(
+        operation_id="dsf:remote:trade:query", provider_system_id="remote", gs_name="dsf.remote",
+        service_name="trade", version="1", action="query", request_type="demo.api.QueryRequest",
+        response_type="demo.api.QueryResponse",
+        request_schema={"type": "object", "properties": {"page": {"type": "integer"}}},
+        response_schema=opened,
+        source_refs=[SourceReference(path="rpc.xml", symbol="demo.api.TradeFacade#query", line=1)],
+    )
+    service._register_resolved("caller", scope.source_scan_id, definition)
+    contracts = OperationContractStore(service.store.root / "contracts", service.artifacts.metadata)
+    latest = contracts.get_latest("caller", scope.source_scan_id, definition.operation_id)
+    contracts.save("caller", latest.model_copy(update={"contract_revision": 1, "response_schema": closed}))
+    contracts.save("caller", latest.model_copy(update={"contract_revision": 2, "response_schema": opened}))
+    service._register_resolved("caller", scope.source_scan_id, definition)
+
+    latest = contracts.get_latest("caller", scope.source_scan_id, definition.operation_id)
+    assert latest.contract_revision == 3
+    assert latest.response_schema["properties"]["list"]["properties"]["pageList"]["items"]["properties"]["id"] == {"type": "integer"}
 
 
 def test_unregistered_source_dependency_exposes_extra_method_without_execution(tmp_path: Path) -> None:
