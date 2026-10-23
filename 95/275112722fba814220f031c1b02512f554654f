@@ -1,0 +1,36 @@
+openspec/changes/share-code-baselines-and-publish-cases/design.md
+  h_3484aac7699d62 78-88
+openspec/changes/share-code-baselines-and-publish-cases/proposal.md
+  h_3484aac7699d62 16
+openspec/changes/share-code-baselines-and-publish-cases/specs/case-template-generation-v4/spec.md
+  h_3484aac7699d62 60-79
+openspec/changes/share-code-baselines-and-publish-cases/tasks.md
+  h_3484aac7699d62 201-226
+opentest/application/case_template_compiler_v4.py
+  h_3484aac7699d62 113-120,254,956-957,1289,1509-1573
+opentest/application/downstream_interfaces.py
+  h_3484aac7699d62 313-320,328-345
+opentest/application/dsf_operations.py
+  h_3484aac7699d62 415,418,421,429,433,438-439,451-452,455,458,466,488,496,500
+opentest/application/operations.py
+  h_3484aac7699d62 278,1609,1612,1614,1617-1618,1683,2026
+tests/v2/test_case_template_v4.py
+  h_3484aac7699d62 652,655-656,669,847-892
+tests/v2/test_downstream_interfaces.py
+  h_3484aac7699d62 9,79-107
+tests/v2/test_execution_profile_workflows.py
+  h_3484aac7699d62 422-425,449-473,483,485,494,509,540-550,555-556,558,560-562
+tests/v2/test_execution_profiles.py
+  h_3484aac7699d62 4,19,28,31,348-351,357,361-363,366-375,385,387-391,394-395,398-402,406-407,412,415,418-422,430-437,441-464
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.2",
+  "base_commit_sha": "95275112722fba814220f031c1b02512f554654f",
+  "prompts": {},
+  "humans": {
+    "h_3484aac7699d62": {
+      "author": "shizhen <yuuu.shizhen@gmail.com>"
+    }
+  }
+}
