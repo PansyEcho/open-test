@@ -1,5 +1,14 @@
 # 实施设计
 
+## 接口分类与执行资格（2026-10-24）
+
+- 选用本 change 实施接口分类详设。UNKNOWN 在授权 QA/UAT 目标和创建/调整步骤中按潜在写操作处理，查询与 Oracle 仍仅允许 READ_ONLY。
+- 旧扫描的 UNKNOWN 阻塞从原 manifest 重新核验唯一 provider、真实契约缺口和请求模板，仅更改运行投影的 executable/blocked_reason；复用既有本地接口缓存，不新增 operation_current 或修改数据库原始事实，不整体重建 Schema、摘要和工作区版本。
+- contract_json 增加分类、是否分析、原因和证据；已分析 UNKNOWN 撤销只读，未分析沿用扫描。WRITE 引用可达方法；READ_ONLY 覆盖全部已解析可达方法且不得冲突于扫描 WRITE。没有方法证据时允许 UNKNOWN 加原因。
+- 契约补充任务固定员工、基准、scan、可见起始契约和草稿/共享修订；新版本保存作者，并在同一事务按既有 CAS 推进本人接口草稿。存储版本分配可追加到最新序号，内容起点不能取别人的 latest。共享发布仍显式进行。
+- Case 和独立数据任务按每个 scope 的冻结契约叠加分类；候选发现保留完整可见范围，返回描述时应用该候选的精确契约。无冻结修订的历史范围只使用扫描事实；显式版本缺失必须报错。
+- 页面四态与显式分析入口复用 contract-completion，不自动创建或运行模型。更新资源和页面版本，并经 HTTP 验证旧页写入拦截。
+
 以 [定稿开发计划](../../../docs/discussions/shared-baselines-case-publication-development-plan.md) 的第 3 至 13 节为数据结构、表字段、事务、迁移及验收设计。
 
 ## 关键决定
@@ -86,3 +95,33 @@
 - 实测前置：使用 refund QA Profile 实际调用 booking `trade:queryList`（只读、page=1、pageSize=1）成功，说明 QA client 权限可用；最终仍以改造后正常链路和 createOrder Case 实测为准。
 - 显式 provider Facade 保留原有规则：使用 provider Profile，并需要其固定源码范围。历史已固定为 provider Facade 的 Case 不改写；需要改为外部引用时走正常 Case 修订。
 - `execute_external_indexed` 只接受服务端冻结 scope 已解析的 `definition`（可能带 provider 解析版本）；外部请求不能提供该定义。执行仍校验 operation_id、外部归属、Profile 归属、契约完整和非生产环境，不重新读取 provider scan 替换固定定义。
+
+
+## 分类评审收尾（2026-10-25）
+
+生产 MySQL 系统事务已覆盖契约追加与本人草稿 CAS；保持实现，通过实际任务入口和生产事务适配器验证整体回滚。未选候选缺契约只在展示层返回 `mutability=null`、`contract_available=false` 和恢复原因；冻结契约仍严格拒绝缺失。依赖诊断提供已知身份和下一步，不扩大源码、可见性或执行授权。需要但不可证明的枚举映射保存为 unresolved 并进入摘要，不因 sources.jar 缺失整体阻塞。单次目录复用已派生冻结能力，单次草稿保存按 scope 复用可见修订索引，无跨请求缓存。旧资格本地缓存写失败只记简要日志，继续使用已核验结果。
+
+## 任务内调用方外部依赖生命周期（2026-10-25）
+
+- 解析与选择保持分离：`resolve_downstream_operation` 只登记定义并返回精确契约修订；`read_outer_api_info`/数据 `read_contract` 仍由员工显式选择。
+- 调用方自有外部 DSF 的权威证据是调用方固定 `sof:reference`、精确依赖坐标及本次登记的请求/响应契约。选择时在调用方基准建立 `ot_baseline_interface` 容器、带作者契约和本人 READY 草稿，冻结 `InterfaceKnowledgeRef`，不要求 provider 先发布。
+- 调用方版本优先；已冻结定义不被选择阶段改写。provider Facade 仍是独立路径，保留共享发布、可见性和路由匹配检查。
+- Case 绑定必须包含实际使用的任务内引用；mine 视图允许本人草稿执行，共享发布在 `_require_case_dependencies` 以 `DEPENDENCY_INCOMPLETE` 明确阻塞并给出 operation、baseline、revision。不能以返回空引用或省略依赖来绕过共享检查。
+- 契约若由旧解析产生且作者为空，复制为新的带作者修订后冻结，不改写历史契约行；精确修订必须来自解析结果而不是 latest。
+- 响应开放分支不阻止只读查询；先执行取得真实响应，再由显式 Schema 补齐实际使用字段。
+- 本轮不实现开工前就绪评估、字节码枚举证据进入编译器和场景级 owner 归属；这些保持 P20.6 未完成。
+
+### 精确依赖类型证据（2026-10-25）
+
+- 新增任务级 `read_dependency_type(coordinate, class_name)`：只在任务固定源码 classpath 和该精确坐标 POM 的本地直接依赖内定位类型，不下载、不执行依赖。
+- 枚举解码只接受可静态对齐的构造器、字段赋值和 `getCode()` getter；返回具体常量的名称/code，不把常量名、QA展示值或同名 code 推广为完整映射，也不伪造 `.java` 行号。
+- 证据写入 handoff 的 `dependency_enum_values`，编译输入显式消费；无法证明时工具失败，相关模板保持未完成，其他场景不受影响。
+- 真实只读查询返回的响应可作为具体场景的字段观察，用于填写步骤 `output_schema`；不宣称响应所有字段必填或枚举已穷尽。
+
+### 第三方评审修复（2026-10-25）
+
+- 任务内依赖遇到其他员工未发布契约时，不得复制其内容；使用本任务已冻结的解析定义重新构造带作者契约，避免私有补充泄漏。
+- `read_dependency_type` 必须在 `operation_id` 选择门禁之前处理，因为它是任务级类型证据工具，不针对某个已选Operation。
+- 枚举只接受直接 `aload_0; getfield; areturn` 的 `getCode()`；字段拼接、常量替换或调用后的返回值不能当作字段原值。
+- 类型读取优先实际 Maven classpath 的调解版本；精确 POM 的直接依赖只在 classpath 缺失该类型时兜底。
+- typed evidence 只能作为新增正证据；已有合法源码证据不能因 typed evidence 存在但未包含该值而失效。

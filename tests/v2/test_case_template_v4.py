@@ -3167,12 +3167,13 @@ def test_case_handoff_catalog_allows_preallocated_generation_before_artifact() -
     assert catalog["handoff"]["generation_id"] == generation_id
     assert catalog["handoff"]["turn_status"] == "failed"
     assert catalog["generation"] is None
-    assert catalog["allowed_tools"][:8] == [
+    assert catalog["allowed_tools"][:9] == [
         "get_case_handoff",
         "list_case_source",
         "search_case_source",
         "read_case_source",
         "read_case_outer_api",
+        "read_dependency_type",
         "revise_case_draft",
         "answer_task_question",
         "publish_case_generation",

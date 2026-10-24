@@ -610,3 +610,20 @@ def test_coverage_goal_precedes_generic_case_prompt_and_large_context(tmp_path):
     assert next(iter(application.web_generation.call_tool(TASK_ID, "get_handoff", {}))) == "coverage_assistance"
     application.coverage_assistance.records.for_generation.return_value = None
     assert not application.web_generation._analysis_prompt(task).startswith("本轮是覆盖缺口补充任务")
+
+
+def test_dependency_type_tool_does_not_require_an_operation_id(tmp_path):
+    """枚举类型证据读取是任务级工具，不能先被operation_id门禁拒绝。"""
+
+    application, _ = _application(tmp_path)
+    application.case_template_v4.read_dependency_type = Mock(return_value={
+        "coordinate": "demo:facade:1", "class_name": "demo.SourceEnum",
+        "enum_values": [{"name": "ARC", "code": "ARC"}], "revision": 3,
+    })
+
+    result = application.web_generation.call_tool(TASK_ID, "read_dependency_type", {
+        "coordinate": "demo:facade:1", "class_name": "demo.SourceEnum"})
+
+    assert result["enum_values"][0]["code"] == "ARC"
+    application.case_template_v4.read_dependency_type.assert_called_once_with(
+        "demo:facade:1", "demo.SourceEnum")

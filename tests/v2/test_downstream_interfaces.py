@@ -308,3 +308,28 @@ def test_exact_operation_version_is_independent_of_other_services(tmp_path):
     resolved = service.resolve('caller', [scope], DownstreamOperationResolveRequest(
         downstream_system='remote', interface_name='demo.api.TradeFacade', method_name='query'))
     assert resolved.version == '1' and resolved.service_name == 'trade'
+
+
+def test_resolve_with_contract_returns_the_exact_registered_revision(tmp_path):
+    """任务选择必须拿到解析时登记的具体契约版本，而不是以后再读latest。"""
+
+    from opentest.domain.system_relations import DownstreamOperationResolveRequest
+
+    service, scope, _ = _search_fixture(tmp_path)
+    manifest = service.artifacts.read("caller", scope.source_scan_id)
+    manifest.dsf_operations.append(DsfOperationDefinition(
+        operation_id="dsf:remote:trade:cancel", provider_system_id="remote", gs_name="dsf.remote",
+        service_name="trade", version="1", action="cancel",
+        request_schema={"type": "object", "properties": {"orderNo": {"type": "string"}}},
+        response_schema={"type": "object", "properties": {"success": {"type": "boolean"}}},
+        source_refs=[SourceReference(path="rpc.xml", symbol="demo.api.TradeFacade#cancel", line=1)]))
+    service.artifacts.write_manifest(manifest)
+    request = DownstreamOperationResolveRequest(
+        downstream_system="remote", interface_name="demo.api.TradeFacade", method_name="cancel")
+    definition, contract = service.resolve_with_contract("caller", [scope], request)
+    again, same_contract = service.resolve_with_contract("caller", [scope], request)
+
+    assert again.operation_id == definition.operation_id
+    assert contract.contract_revision == same_contract.contract_revision
+    assert contract.target_id == definition.operation_id
+    assert contract.source_scan_id == scope.source_scan_id

@@ -224,3 +224,45 @@ P13 的隔离内存验证没有覆盖持久化清除机器目录后再按本机�
 执行 Profile、跨系统、共享数据、Case 模板及下游契约回归共 203 项通过、7 项跳过。全量 `tests/v2` 为 1075 通过、178 跳过、2 失败：控制台静态资源版本 `20261023-04` 与已发布 `20261023-07` 不一致（既有、未改动），以及 `test_network_total_deadline_kills_and_reaps_slow_collection[http_headers]` 在全量并发下超时；该 coverage 文件单独运行 6 项全通过，与本次执行链路无关。严格 OpenSpec 校验：change 通过，44 份现行规范全部通过。
 
 真实链路：refund QA Profile 调用 booking `trade:queryList`（只读 `page=1,pageSize=1`）返回 success，8.5 秒；使用原 Generation 执行精确 Case `case-cfce01b77d614a8cbcb314c200463ec9` 得到 `case-generation-execution-17cf1438a66e4f349b3a`，状态 `PASSED`、耗时 38.8 秒、6 个 Operation，创建退票单 `RF1563239397393629184`（原订单 `BJ1550099940918657024`，`PENDING_APPLY`/`VOLUNTARY`），7 项断言全部通过。随后用 `cancelReasonId=OPENTEST_TEST_CLEANUP` 调用 `RefundFacade#cancel` 并回查，退票单状态为 `REFUND_CANCEL`，测试数据已处置；未重复发起 createOrder 写请求。清理取消首次因缺少 `cancelReasonId` 被业务拒绝，补正后成功取消一次并回查。先前两次失败执行各 27.8/34.7 秒且 0 Operation，本次包含完整数据准备、目标调用和回查共 38.8 秒。preflight 单独实测只读取 refund scan manifest 1 次，未读取任何 booking/endorse provider manifest；回归以调用路径断言，不以易波动的秒数断言。
+
+## 18 接口读写分类与执行资格（2026-10-24）
+
+- [x] P18.1 UNKNOWN 执行资格修复；原固定扫描仅刷新资格，本地冷热缓存一致，保留真实契约/绑定阻塞及数据库原始事实。
+- [x] P18.2 分类契约、证据校验、分析后 UNKNOWN、精确起始版本与本人草稿 CAS 保存闭环。
+- [x] P18.3 Case/数据任务冻结分类、可见候选发现及函数描述一致，未发布分类不影响他人。
+- [x] P18.4 四态页面及显式契约分析入口，资源/页面版本更新并通过运行中 HTTP 验收。
+- [ ] P18.5 原 billSupplement 固定草稿编译、针对性回归、OCR delegation、严格规范校验与服务清理。
+
+2026-10-25 验证：专项及关联 Python 回归 258 通过、8 跳过（未配置测试专用 MySQL 的集成项）；前端 26 通过；Python 编译与 diff 检查通过。OCR delegation 对本次完整改动初审发现 1 High（历史已选无修订映射读取与执行分类不一致）和 1 Medium（本人其他扫描草稿遮住匹配扫描的已发布版本），均已修复并增加回归；同一只读代理复审确认无未解决 High/Medium，未拒绝任何发现。严格 change 校验及 44 份现行 spec 校验通过。
+
+真实原任务 `task-fb319ea734a9fbb8` 的最后一次实际提交，在原扫描 `scan-20261020062539-c796af848b-6894bbf5` 上分别通过旧缓存、数据库冷读、刷新缓存回放，目标均为 `UNKNOWN / executable=true`，共享扫描记录逐项未变。但该提交自身没有 Case 模板，只有原先记录的执行误拦截、下游接口可见性及枚举源码缺口；回放正确保留这些 unresolved，因此没有可验收的业务 Case。本次没有伪造数据、改写失败任务或将此结果宣称为业务闭环，P18.5 的真实 Case 验收保持未完成。
+
+页面在本机 8791 的隔离 HTTP 服务上用新资产版本 `20261024-01` 验证：生产详情脚本显示“未分析”，点击后真实 prepare 路由创建 `contract-completion / native / generate_only` 任务；回读确认本人、基准、扫描和 r0 均固定，未启动模型。该验收服务已关闭；8788 仍为开工前用户进程 PID 33933，本次未停止或重启。新后端行为需用户重启既有服务。选定 change 仍有原有实际环境验收及本节真实 Case 验收未完成，不归档。
+
+
+## 19 分类评审收尾（2026-10-25）
+
+- [x] P19.1 用生产系统/元数据事务和真实工具入口验证契约、latest、草稿 CAS 原子回滚，并说明组合事务责任。
+- [x] P19.2 缺契约候选展示隔离、页面不可用提示及资源版本；冻结接口仍严格校验。
+- [x] P19.3 依赖选择、提供方、契约和旧源码诊断给出恢复步骤，必要枚举缺口进入已有摘要。
+- [x] P19.4 当前请求内复用冻结能力/可见修订，资格缓存写失败保留核验结果。
+- [x] P19.5 针对性测试、运行中 HTTP 页面验收、OCR delegation、严格 OpenSpec 校验与服务清理。
+
+本轮验收：修复后关联 Python 回归 315 通过、7 跳过（未配置专用 MySQL 的集成项），前端 Node 26 通过。事务回归从真实 call_agent_tool 入口进入生产 MySqlKnowledgeStore/MySqlMetadataStore，以隔离 SQL 驱动验证 CAS 冲突后契约版本、latest 和草稿指针整体回滚。显式冻结 r0/r99 缺失均拒绝，普通基础契约构建和历史未映射语义保留。
+
+OCR delegation 对本轮显式增量初审发现 1 High（冻结 r0 丢失仍重建）、2 Medium（不可用字段未进入真实页面摘要、快照材料缺失异常未加恢复提示），全部接受并修复；同一只读代理对最终 18 文件增量复审确认无未解决 High/Medium，未拒绝发现，复审没有产生新代码修改。后续仅补充测试内部注释及本验收记录。
+
+页面验收使用本机 8791 隔离数据服务，由生产 loadSharedInterfaces 调用真实接口列表/详情路由；两处均显示“契约不可用”及丢失的固定修订，已确认实际加载 shared-workspace.js?v=20261025-02。先前直接测试候选投影与标签的组件验收不能代替该真实链路证据。截图保存在 /tmp/opentest-review-followup/unavailable-contract.png。临时服务均已停止，8791 无监听；8788 仍为开工前用户 PID 46540，未重启或终止。
+
+本轮 P19 收尾完成；P18.5 的原 billSupplement 真实业务 Case 验收及其他既有未完成项不在此次诊断修复中宣称通过，change 保持未归档。
+
+## 20 任务内调用方外部依赖生命周期（2026-10-25）
+
+- [x] P20.1 `resolve_downstream_operation` 返回本次登记或沿用的精确契约修订；Case/数据任务 scope 在解析时冻结该修订，选择不再读取 latest。
+- [x] P20.2 调用方外部 DSF 选择在调用方基准建立稳定容器、带作者契约和本人 READY 草稿，并记录 `InterfaceKnowledgeRef`；`published` 视图任务也可使用该任务内引用。
+- [x] P20.3 Case 实际绑定保留该引用；本人 mine 视图可执行，共享发布明确阻塞未共享依赖；提供方 Facade 仍保持发布门禁；数据任务复用同一精确契约读取。
+- [x] P20.4 增加精确版本、作者契约/本人草稿、Case 绑定保留和选择回归；关联 Python 187 通过、1 跳过。
+- [x] P20.5 真实验收：借用原任务固定 handoff 建立隔离副本，选中并执行真实 `reportQueryList` 只读查询（`operation-execution-1a29f676801a4b979cd3`）；生成并执行两个正式 `billSupplement` Case：缺少 ID 校验 `case-template-generation-fe464f247a034c87a9e6` / `case-generation-execution-f96e5cb2fc7145aaa0a9`，真实 ARC 无出票单 `case-template-generation-653a6668e3884ab1827d` / `case-generation-execution-4fc70046f5b14143850b`，均 PASSED；共享发布请求 `task-e61d739384b92f81-share-block-02` 以 `DEPENDENCY_INCOMPLETE` 明确阻塞并给出 operation/baseline/revision。
+- [x] P20.6 精确依赖类型读取：新增 `read_dependency_type`，从任务精确classpath或精确POM本地依赖中定位枚举，用字节码证明名称/code；只返回可证明常量，不伪造源码行。编译器消费该 typed evidence，专项回归 201 通过、1 跳过并覆盖无源码/无法证明两种情形；任务指令同时允许用真实只读查询响应补齐具体场景的开放Schema。
+- [x] P20.7 第三方评审 5 项修复：他人未发布契约不再复制成本人草稿（按本任务解析定义重建）；`read_dependency_type` 在 `operation_id` 门禁前处理；枚举只接受直接返回字段的 `getCode()`；实际 classpath 版本优先于 POM 兜底；typed evidence 存在时仍保留合法源码证据。关联回归 206 通过、1 跳过。
+- [ ] P20.8 后续：开工前就绪评估、场景级缺口归属与既有 `available` 发布路径。P18.5 的正常成功/处理中/钱包失败补单场景仍未完成，不由本节宣称闭环。

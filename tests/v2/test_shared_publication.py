@@ -1040,6 +1040,7 @@ def test_single_case_revision_refreshes_used_dependency_and_drops_old_target_sca
     engine.store.get_system = Mock()
     engine.generations = SimpleNamespace(get=Mock(return_value=generation))
     engine.runtime = SimpleNamespace(operation_catalog=SimpleNamespace(derive=derive))
+    engine.operation_contracts = None  # 本测试隔离依赖绑定，分类叠加由专门的版本回归覆盖。
     engine.registries = CaseTemplateRegistryLoader()
     engine.handoffs = Mock()
     engine.artifacts = SimpleNamespace(read=Mock(return_value=SimpleNamespace(baseline=SourceBaseline(source_path=str(tmp_path), commit="a" * 40))))

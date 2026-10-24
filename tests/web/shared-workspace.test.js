@@ -21,6 +21,40 @@ function scopeHarness() {
   return context;
 }
 
+/** 验证不可用提示优先，正常契约仍保留未分析及三个分析结论。 */
+test("接口分类保留未分析和已分析UNKNOWN四态", () => {
+  const context = scopeHarness();
+  loadFunction(context, "interfaceMutabilityLabel");
+  // 扫描提示只读不能假装完成语义分析；分析后UNKNOWN必须展示原因。
+  assert.equal(context.interfaceMutabilityLabel({mutability: "READ_ONLY"}), "未分析");
+  for (const [mutability, label] of [["READ_ONLY", "只读"], ["WRITE", "写入"], ["UNKNOWN", "无法确定"]]) {
+    assert.equal(context.interfaceMutabilityLabel({mutability, mutability_analyzed: true}), `已分析·${label}`);
+  }
+  assert.match(context.interfaceMutabilityLabel({mutability: "UNKNOWN", mutability_analyzed: true, mutability_reason: "调用不可见"}), /调用不可见/);
+  // 缺失契约不能显示为未分析或沿用残留只读值；原因供用户恢复原可见版本。
+  assert.equal(context.interfaceMutabilityLabel({mutability: null, contract_available: false}), "契约不可用");
+  assert.equal(context.interfaceMutabilityLabel({mutability: "READ_ONLY", mutability_analyzed: true,
+    contract_available: false, contract_unavailable_reason: "固定修订缺失"}), "契约不可用：固定修订缺失");
+});
+
+test("分析按钮固定Case契约且网络结果未知时复用请求身份", async () => {
+  const context = scopeHarness(), requests = [];
+  loadFunction(context, "prepareInterfaceClassification");
+  context.api = async (path, options) => { requests.push({path, ...JSON.parse(options.body)}); throw new Error("network result unknown"); };
+  const item = {operation_id: "facade:Query#run", case_id: "case-old", input_contract: {source_scan_id: "scan-old", contract_revision: 3}};
+  // 只创建原生分析任务，不提交目标执行；同一次未知结果的重试不重复创建任务。
+  await assert.rejects(context.prepareInterfaceClassification(context.sharedScope(), item, "published"));
+  await assert.rejects(context.prepareInterfaceClassification(context.sharedScope(), item, "published"));
+  assert.equal(requests[0].path, "/systems/system-a/data-capabilities/prepare");
+  assert.equal(requests[0].scan_id, "scan-old");
+  assert.equal(requests[0].contract_revision, 3);
+  assert.equal(requests[0].baseline_id, "base-a");
+  assert.equal(requests[0].case_id, "case-old");
+  assert.equal(requests[0].request_id, requests[1].request_id);
+  assert.equal(requests[0].execution_mode, "generate_only");
+  assert.equal(requests[0].interaction_mode, "native");
+});
+
 test("迟到响应必须匹配原基准、环境和页面代次",()=>{
   // 同一系统切换环境或基准也必须让旧响应失效。
   const context=scopeHarness();const scope=context.sharedScope();
@@ -250,7 +284,7 @@ function caseDetailHarness() {
   // API 由各测试控制；这里仅提供渲染必需的节点，避免假执行掩盖请求身份问题。
   Object.assign(context, {element: id => panels[id], document: {getElementById: id => panels[id], createElement: caseNode},
     window: {clearTimeout() {}}, textNode: caseNode, sharedButton: (label, action) => ({label, action, dataset: {}})});
-  for (const name of ["clearSharedCaseSelection", "sharedCaseSelectionCurrent", "sharedStatus", "loadSharedCaseDetails"]) loadFunction(context, name);
+  for (const name of ["clearSharedCaseSelection", "sharedCaseSelectionCurrent", "sharedStatus", "interfaceMutabilityLabel", "loadSharedCaseDetails"]) loadFunction(context, name);
   return {context, panels};
 }
 

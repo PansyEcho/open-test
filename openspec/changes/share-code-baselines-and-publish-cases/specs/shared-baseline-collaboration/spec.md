@@ -265,3 +265,24 @@ OpenTest SHALL 先迁移页面、插件和基准脚本使用安全 Case 接口�
 #### Scenario: 已经打开的旧页面执行写入
 - **WHEN** 页面资源版本与服务版本不符
 - **THEN** 阻止写操作并提示刷新，保留尚未提交的输入；更新后通过真实 HTTP 页面验证新的资源版本
+
+### Requirement: Contract revisions carry evidenced mutability under personal publication scope
+The system SHALL store mutability, analyzed state, reason and source evidence in existing contract JSON. An analyzed UNKNOWN SHALL override scanning READ_ONLY. WRITE requires reachable method evidence; READ_ONLY requires all parsed reachable methods and no scanning WRITE conflict. Unanalyzed contracts retain the scan hint.
+
+#### Scenario: Analysis cannot establish read-only semantics
+- **WHEN** analysis submits UNKNOWN with a reason, including when semantic analysis is unavailable
+- **THEN** the result is saved as analyzed and cannot authorize query or Oracle use
+
+#### Scenario: Employee supplements a visible fixed interface
+- **WHEN** the employee explicitly requests classification for a selected baseline, scan and visible contract revision
+- **THEN** the task freezes that version and employee scope, validates evidence against that scan, and saves a new authored revision plus the employee draft pointer atomically using existing draft/publication CAS
+- **AND** another employee's later draft cannot become the content base or appear in the published view without explicit publication
+
+#### Scenario: Unrelated contract revision advances during analysis
+- **WHEN** a different revision is saved after task creation
+- **THEN** the task retains its original content base and conflicts with changed personal/publication pointers instead of silently rebasing
+
+#### Scenario: Personal draft CAS fails after contract supplementation
+- **WHEN** the native contract tool appends a revision but its personal draft CAS conflicts
+- **THEN** the enclosing system transaction rolls back the appended contract and latest revision together, preserving the preexisting draft pointer
+- **AND** standalone contract supplementation continues to own its own transaction; combined writes require a caller-owned system transaction

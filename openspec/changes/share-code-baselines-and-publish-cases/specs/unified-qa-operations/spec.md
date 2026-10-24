@@ -16,3 +16,17 @@ The operation catalog SHALL expose only external DSF methods proven by a caller 
 - **WHEN** an external DSF reference's provider is a registered project with its own source and profile
 - **THEN** the call still uses the declaring caller's fixed profile and never resolves the provider as the execution profile owner
 - **AND** a provider profile or missing provider source cannot block or redirect that external reference
+
+## ADDED Requirements
+
+### Requirement: Persisted eligibility follows current rules without rewriting scan facts
+The system SHALL revalidate legacy UNKNOWN-only Facade blockers against their original manifest and update only executable and blocked_reason in the runtime projection. Stored scan facts, schemas, sources and knowledge revisions SHALL remain unchanged. The existing local interface cache MAY retain the corrected projection.
+
+#### Scenario: Original scan is read with or without its local cache
+- **WHEN** a scan persisted an UNKNOWN-only blocker under the old rule
+- **THEN** both cold and warm reads use the current eligibility rule without a rescan or database fact rewrite
+- **AND** a real contract gap or ambiguous binding still blocks the operation with its precise reason
+
+#### Scenario: Original scan facts are replayed after a runtime eligibility repair
+- **WHEN** the original scan publication is replayed
+- **THEN** eligibility repair has not modified its original facts and does not cause a fact conflict

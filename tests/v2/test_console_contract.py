@@ -635,13 +635,15 @@ def test_contract_preparation_uses_server_baseline_and_persisted_task() -> None:
         : script.index("function backgroundKnowledgeReady")
     ]
 
-    # 浏览目录的partial或历史scan不进入准备请求，方法也不启动数据或Case执行。
+    # 固定当前可见契约的扫描及修订，不能以系统latest或浏览目录的partial代替。
     assert "/data-capabilities/prepare" in generate_current
     assert 'kind:"contract"' in generate_current
     assert 'operation_id:operationId' in generate_current
     assert 'interaction_mode:"web"' in generate_current
     assert 'getOrCreateCaseRequestId("contract-prepare", operationId)' in generate_current
-    assert "scan_id" not in generate_current
+    assert "scan_id:detail.contract.source_scan_id" in generate_current
+    assert "contract_revision:detail.contract.contract_revision" in generate_current
+    assert "baseline_id:publicationScope.baselineId" in generate_current
     assert "showBusinessTask(selectedAttempt)" in generate_current
     assert "showBusinessTask(payload.task)" in generate_current
     assert "/executions" not in generate_current
