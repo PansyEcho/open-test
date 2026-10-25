@@ -1,0 +1,32 @@
+openspec/changes/share-code-baselines-and-publish-cases/design.md
+  h_3484aac7699d62 128-134
+openspec/changes/share-code-baselines-and-publish-cases/specs/case-template-generation-v4/spec.md
+  h_3484aac7699d62 199-212
+openspec/changes/share-code-baselines-and-publish-cases/specs/v2-console/spec.md
+  h_3484aac7699d62 170-181
+openspec/changes/share-code-baselines-and-publish-cases/tasks.md
+  h_3484aac7699d62 268-277
+opentest/api.py
+  h_3484aac7699d62 116
+opentest/application/case_template_v4.py
+  h_3484aac7699d62 109
+opentest/web/index.html
+  h_3484aac7699d62 6,8,332-336
+opentest/web/shared-workspace.js
+  h_3484aac7699d62 74,81,849-857,873,885-900,915-922,947-949,1328-1334
+opentest/web/styles.css
+  h_3484aac7699d62 644,646,649,654-657
+tests/web/shared-workspace.test.js
+  h_3484aac7699d62 254,257-258,270-271,288,338-350,387,393-418,473,481-482,501,505-506,520-523
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.2",
+  "base_commit_sha": "0dba217f5621f516467a04a13fe134a2111db884",
+  "prompts": {},
+  "humans": {
+    "h_3484aac7699d62": {
+      "author": "shizhen <yuuu.shizhen@gmail.com>"
+    }
+  }
+}
