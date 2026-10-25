@@ -196,3 +196,17 @@ The system SHALL expose a task-scoped read-only dependency type reader that loca
 - **WHEN** `getCode()` concatenates, replaces or otherwise transforms a field before returning
 - **THEN** the bytecode reader rejects the mapping as unproven
 - **AND** it does not return the raw constructor field value as the code
+
+### Requirement: Successful scenarios derive identity from real existing business records
+The system SHALL derive a successful or idempotent scenario from a real existing business record and its current state, then query the provider interface by that real business identity and bind request fields from the returned provider object. It SHALL NOT treat an arbitrary first list row, a display value, a fixed sample or a hard-coded success result as proof that the target operation succeeded.
+
+#### Scenario: Existing completed business record yields an idempotent success
+- **WHEN** a real existing business record in a completed state is associated with the provider object returned for the same business identity
+- **THEN** the generated Case asserts the actual success response fields returned by the target operation
+- **AND** request fields are bound from the returned provider object, not from a hard-coded success result
+- **AND** the target returns the existing business result rather than creating a duplicate
+
+#### Scenario: No associated existing record is available
+- **WHEN** no real existing business record in a completed state can be associated with the provider object
+- **THEN** the system may generate verifiable failure or pending-confirmation scenarios
+- **AND** it SHALL report the missing association as a scenario-level data gap rather than claiming a success scenario was covered

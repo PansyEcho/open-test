@@ -167,3 +167,15 @@ The console SHALL present single-choice selects as styled in-page dropdowns that
 #### Scenario: Employee moves the pointer over a drawer backdrop
 - **WHEN** a detail drawer is open and the pointer moves over its backdrop
 - **THEN** keep the backdrop translucent and neutral; primary-button hover styling does not apply to it
+
+### Requirement: Regression Case details are dismissible and the selected entry name is copyable
+The regression Case page SHALL provide a close control at the top right of the Case detail panel, and SHALL provide a copy action for the selected entry's displayed interface name. Closing the detail SHALL clear the current Case detail and dependent execution or coverage contents without changing the selected entry or current tab. The copy action SHALL write the displayed interface name, SHALL be unavailable while no entry is selected, and SHALL report clipboard failures instead of claiming success.
+
+#### Scenario: Employee dismisses an open Case detail
+- **WHEN** the employee has opened a Case detail and activates its close control
+- **THEN** the detail panel and dependent execution or coverage contents are cleared while the selected entry and current tab remain unchanged
+
+#### Scenario: Employee copies the selected entry name
+- **WHEN** an entry is selected in the regression Case entry selector and the employee activates the copy action
+- **THEN** the displayed interface name, such as `RefundFacade#billSupplement`, is written to the clipboard and a confirmation is shown
+- **AND** the action is unavailable while no entry is selected, and a clipboard failure is reported without claiming success

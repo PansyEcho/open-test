@@ -265,4 +265,13 @@ OCR delegation 对本轮显式增量初审发现 1 High（冻结 r0 丢失仍重
 - [x] P20.5 真实验收：借用原任务固定 handoff 建立隔离副本，选中并执行真实 `reportQueryList` 只读查询（`operation-execution-1a29f676801a4b979cd3`）；生成并执行两个正式 `billSupplement` Case：缺少 ID 校验 `case-template-generation-fe464f247a034c87a9e6` / `case-generation-execution-f96e5cb2fc7145aaa0a9`，真实 ARC 无出票单 `case-template-generation-653a6668e3884ab1827d` / `case-generation-execution-4fc70046f5b14143850b`，均 PASSED；共享发布请求 `task-e61d739384b92f81-share-block-02` 以 `DEPENDENCY_INCOMPLETE` 明确阻塞并给出 operation/baseline/revision。
 - [x] P20.6 精确依赖类型读取：新增 `read_dependency_type`，从任务精确classpath或精确POM本地依赖中定位枚举，用字节码证明名称/code；只返回可证明常量，不伪造源码行。编译器消费该 typed evidence，专项回归 201 通过、1 跳过并覆盖无源码/无法证明两种情形；任务指令同时允许用真实只读查询响应补齐具体场景的开放Schema。
 - [x] P20.7 第三方评审 5 项修复：他人未发布契约不再复制成本人草稿（按本任务解析定义重建）；`read_dependency_type` 在 `operation_id` 门禁前处理；枚举只接受直接返回字段的 `getCode()`；实际 classpath 版本优先于 POM 兜底；typed evidence 存在时仍保留合法源码证据。关联回归 206 通过、1 跳过。
-- [ ] P20.8 后续：开工前就绪评估、场景级缺口归属与既有 `available` 发布路径。P18.5 的正常成功/处理中/钱包失败补单场景仍未完成，不由本节宣称闭环。
+- [x] P20.8 真实成功场景：先用已选退款数据库确认 `REFUND_DONE` 票号 `TTT3102161125711` 的退票单 `RF1541440724359905280`，再用该票号查询真实 BSP report（id 59417，账单对象来自 `ext`），生成并执行个人 Case `case-template-generation-d64d0285fc8545a3976d` / `case-generation-execution-df373969a9c94975b971`，PASSED：`success=true`、`supplementStatus=SUCCESS`、`needConfirm=false`、`refundSerialNo` 与 `ticketPnr` 有真实值。此前只有失败/待人工确认场景，是因为只按 report 列表构造，未先取得已完成退票票号。
+- [ ] P20.9 后续：开工前就绪评估、场景级缺口归属与既有 `available` 发布路径。P18.5 的处理中/钱包失败补单场景仍未完成，不由本节宣称闭环。
+
+## 21 回归 Case 详情关闭与入口名称复制（2026-10-25）
+
+- [x] P21.1 Case 详情右上方提供关闭按钮，关闭时清除当前详情及依赖明细，保留所选入口和当前页签。
+- [x] P21.2 回归 Case 入口选择器提供复制当前接口展示名称的操作，未选择入口时禁用，剪贴板失败明确提示。
+- [x] P21.3 补充 Node 回归并复跑静态契约校验，更新资源/页面版本并以运行中的 HTTP 页面确认新资源及交互。
+
+页面验收使用本机 8791 隔离数据服务，加载真实 `index.html` 与 `shared-workspace.js?v=20261025-03`。在 1280×900 视口中打开 `RefundFacade#billSupplement` 的 Case：关闭按钮位于详情右上方，点击后详情为空且隐藏，入口仍为原值；入口复制按钮写出 `RefundFacade#billSupplement` 到真实剪贴板并显示成功提示，清空入口时按钮禁用。shared-workspace Node 28 项全部通过，静态控制台契约 25 项通过；临时服务与无头浏览器已停止。8788 仍为开工前用户进程 PID 95342，未重启或终止；本 change 因既有真实环境验收未完成保持未归档。

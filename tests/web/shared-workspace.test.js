@@ -251,10 +251,11 @@ test("旧知识任务详情不再提供已退役的知识读取按钮", async ()
  * 构造只记录文本和子节点的 DOM，供实际生产渲染函数验证状态边界。
  * @param {string} tag 节点标签。
  * @param {string} text 初始文本。
+ * @param {string} className 可选样式名称，供关闭按钮等控件断言。
  * @returns {object} 可追加和替换内容的节点，不提供浏览器或网络副作用。
  */
-function caseNode(tag = "div", text = "") {
-  return {tag, text, value: "", children: [], dataset: {}, classList: {
+function caseNode(tag = "div", text = "", className = "") {
+  return {tag, text, className, value: "", children: [], dataset: {}, listeners: {}, classList: {
     /** 此夹具不检查样式，仅满足生产代码的类切换调用。 */
     toggle() {},
   },
@@ -266,8 +267,8 @@ function caseNode(tag = "div", text = "") {
     replaceChildren(...items) { this.children = items; },
     /** 属性不影响本夹具关注的请求范围。 */
     setAttribute() {},
-    /** 事件回调通过 sharedButton 单独捕获，不自动执行。 */
-    addEventListener() {},
+    /** 保存事件回调供测试显式触发，不自动执行。 */
+    addEventListener(name, action) { (this.listeners[name] ||= []).push(action); },
     /** 不模拟与本测试无关的 DOM 查询。 */
     querySelector() { return null; }};
 }
@@ -284,7 +285,7 @@ function caseDetailHarness() {
   // API 由各测试控制；这里仅提供渲染必需的节点，避免假执行掩盖请求身份问题。
   Object.assign(context, {element: id => panels[id], document: {getElementById: id => panels[id], createElement: caseNode},
     window: {clearTimeout() {}}, textNode: caseNode, sharedButton: (label, action) => ({label, action, dataset: {}})});
-  for (const name of ["clearSharedCaseSelection", "sharedCaseSelectionCurrent", "sharedStatus", "interfaceMutabilityLabel", "loadSharedCaseDetails"]) loadFunction(context, name);
+  for (const name of ["clearSharedCaseSelection", "closeSharedCaseDetails", "sharedCaseSelectionCurrent", "sharedStatus", "interfaceMutabilityLabel", "loadSharedCaseDetails"]) loadFunction(context, name);
   return {context, panels};
 }
 
@@ -334,6 +335,19 @@ test("旧 Case 执行闭包在选择变化后不发送业务请求", async () =>
   assert.equal(writes, 0);
 });
 
+test("Case 详情右上方关闭按钮清空当前选择并保留入口", async () => {
+  const {context, panels} = caseDetailHarness();
+  context.api = async () => caseProjection("case-a");
+  await context.loadSharedCaseDetails("case-a");
+  const close = panels["shared-case-detail"].children.find(item => item.text === "×");
+  assert.equal(close.className, "close-button shared-case-detail-close");
+  assert.equal(close.title, "关闭详情");
+  close.listeners.click[0]();
+  assert.equal(context.sharedWorkspace.selectedCase, null);
+  assert.deepEqual(panels["shared-case-detail"].children, []);
+  assert.equal(panels["shared-case-operation"].value, "facade:Query#run");
+});
+
 test("本人生成目录包含新私有入口且过滤下游依赖", async () => {
   const context = scopeHarness(), paths = [];
   context.api = async path => {
@@ -370,10 +384,36 @@ test("生成下拉按接口和类分层，不包含全部入口、下游或空�
     /** 保留生产下拉选项的可读标题与业务身份，供分层目录断言。 */
     constructor(text, value) { this.text = text; this.value = value; }
   };
-  for (const name of ["entryPlacement", "appendOperationOptions"]) loadFunction(context, name);
+  for (const name of ["entryPlacement", "sharedEntryDisplayName", "appendOperationOptions"]) loadFunction(context, name);
   context.appendOperationOptions(select, ["facade:Query#run", "facade:Refund#cancel", "database:orders", "dsf:app:query:list"], new Map());
   assert.deepEqual(select.children.map(group => group.label), ["接口 / Query", "接口 / Refund"]);
   assert.ok(select.children.every(group => group.children.length === 1 && group.children[0].value));
+});
+
+test("入口选择后可复制接口展示名称，未选择或剪贴板失败不冒充成功", async () => {
+  const context = scopeHarness(), writes = [], messages = [];
+  const select = caseNode("select");
+  select.value = "facade:RefundFacade#billSupplement";
+  Object.assign(context, {
+    element: () => select,
+    navigator: {clipboard: {writeText: async value => writes.push(value)}},
+    showToast: message => messages.push(message),
+  });
+  for (const name of ["entryPlacement", "sharedEntryDisplayName", "copySharedOperationName"]) loadFunction(context, name);
+  assert.equal(context.sharedEntryDisplayName(context.entryPlacement("facade:a.b.RefundFacade#billSupplement")), "RefundFacade#billSupplement");
+  assert.equal(context.sharedEntryDisplayName(context.entryPlacement("mq:Consumer")), "Consumer");
+  assert.equal(context.sharedEntryDisplayName(context.entryPlacement("job:a.b.CleanJob")), "CleanJob");
+  await context.copySharedOperationName();
+  assert.deepEqual(writes, ["RefundFacade#billSupplement"]);
+  assert.deepEqual(messages, ["已复制接口名称 RefundFacade#billSupplement"]);
+  // 没有选择入口时不能把空字符串写进剪贴板。
+  select.value = "";
+  await context.copySharedOperationName();
+  assert.equal(writes.length, 1);
+  select.value = "mq:Consumer";
+  context.navigator.clipboard.writeText = async () => { throw new Error("denied"); };
+  await context.copySharedOperationName();
+  assert.deepEqual(messages, ["已复制接口名称 RefundFacade#billSupplement", "无法访问剪贴板，请手动复制。"]);
 });
 
 /**
@@ -430,7 +470,7 @@ function generationDialogHarness() {
     },
   });
   // 入口分层也运行生产实现，避免缺少可选入口让门禁测试误通过。
-  for (const name of ["entryPlacement", "sharedCaseBrowseEntries", "appendOperationOptions", "openCaseGenerationDialog"]) loadFunction(context, name);
+  for (const name of ["entryPlacement", "sharedEntryDisplayName", "sharedCaseBrowseEntries", "appendOperationOptions", "openCaseGenerationDialog"]) loadFunction(context, name);
   return {context, state};
 }
 
@@ -438,8 +478,8 @@ test("有效知识目录移除入口后，授权历史 Case 仍可选择且不�
   const {context, panels} = caseDetailHarness();
   const oldCase = {...caseProjection("old-case"), operation_id: "facade:Retired#run", impact_status: "INTERFACE_REMOVED", view: "published"};
   const generateButton = generationDialogNode("button", "生成 Case");
-  for (const id of ["shared-case-operation", "case-operation", "case-entry-select", "shared-case-actions", "shared-case-tree", "shared-case-entry-search", "shared-case-search", "shared-case-list", "shared-publish-cases", "shared-refresh-history", "shared-refresh-coverage", "shared-history-case", "shared-coverage-case"]) {
-    panels[id] = generationDialogNode(id.includes("operation") || id.endsWith("-select") || id.endsWith("-case") ? "select" : "div");
+  for (const id of ["shared-case-operation", "shared-copy-operation", "case-operation", "case-entry-select", "shared-case-actions", "shared-case-tree", "shared-case-entry-search", "shared-case-search", "shared-case-list", "shared-publish-cases", "shared-refresh-history", "shared-refresh-coverage", "shared-history-case", "shared-coverage-case"]) {
+    panels[id] = generationDialogNode(id === "shared-copy-operation" ? "button" : id.includes("operation") || id.endsWith("-select") || id.endsWith("-case") ? "select" : "div");
   }
   panels["shared-case-actions"].querySelector = () => generateButton;
   Object.assign(context, {textNode: generationDialogNode,
@@ -458,10 +498,12 @@ test("有效知识目录移除入口后，授权历史 Case 仍可选择且不�
     },
   });
   // 运行实际目录合并、下拉渲染、具体入口选择和详情逻辑，而非单独断言补项算法。
-  for (const name of ["sharedCaseValueLabel", "sharedCaseVariationNames", "sharedCaseGroups", "entryPlacement", "entrySummary", "entryGroup", "readSharedEntryCatalog", "sharedCaseBrowseEntries", "appendOperationOptions", "renderSharedCaseTree", "renderSharedCases", "selectSharedOperation", "loadSharedCaseWorkspace"]) loadFunction(context, name);
+  for (const name of ["sharedCaseValueLabel", "sharedCaseVariationNames", "sharedCaseGroups", "entryPlacement", "sharedEntryDisplayName", "entrySummary", "entryGroup", "readSharedEntryCatalog", "sharedCaseBrowseEntries", "appendOperationOptions", "renderSharedCaseTree", "renderSharedCases", "selectSharedOperation", "loadSharedCaseWorkspace"]) loadFunction(context, name);
   await context.loadSharedCaseWorkspace("old-case");
   assert.equal(panels["shared-case-operation"].value, "facade:Retired#run");
   assert.match(panels["shared-case-operation"].options.find(option => option.value === "facade:Retired#run").text, /入口已移除/);
+  assert.equal(panels["shared-copy-operation"].disabled, false);
+  assert.equal(panels["shared-copy-operation"].title, "复制接口名称 Retired#run");
   assert.equal(panels["shared-history-case"].value, "old-case");
   assert.equal(context.sharedWorkspace.selectedCase.case_id, "old-case");
   assert.equal(generateButton.disabled, true);
@@ -475,6 +517,10 @@ test("有效知识目录移除入口后，授权历史 Case 仍可选择且不�
   for (const name of ["sharedCoverageReason", "loadSharedCoverage"]) loadFunction(context, name);
   await context.loadSharedCoverage(oldCase, context.sharedScope());
   assert.equal(panels["shared-case-coverage"].children.find(node => node.label === "执行我的覆盖增强").disabled, true);
+  // 清空入口后复制动作不可用，避免复制空名称。
+  panels["shared-case-operation"].value = "";
+  context.selectSharedOperation();
+  assert.equal(panels["shared-copy-operation"].disabled, true);
 });
 
 test("生成弹框仅验证模式要求部署确认，模式切换刷新真实提交门禁", async () => {
