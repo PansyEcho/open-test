@@ -1,0 +1,21 @@
+opentest/application/coverage_assistance.py
+  s_e6117e4e761c71::t_96852cf6cdeb3c 8,14,32,39-41,253,689,915-1275
+tests/v2/test_coverage_interface_projection.py
+  s_e6117e4e761c71::t_a26bc9886a409d 1-233
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.2",
+  "base_commit_sha": "6c16fdaedbd73d8f4c355c427ef1c45c8451d3ec",
+  "prompts": {},
+  "sessions": {
+    "s_e6117e4e761c71": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a17766-6a79-79d1-85bd-662c71cef859",
+        "model": "unknown"
+      },
+      "human_author": "shizhen <yuuu.shizhen@gmail.com>"
+    }
+  }
+}
