@@ -7,6 +7,7 @@ from copy import deepcopy
 import asyncio
 from pathlib import Path
 import re
+import time
 
 from fastapi import FastAPI, Request
 from fastapi.responses import FileResponse, JSONResponse
@@ -66,6 +67,90 @@ BATCHES = [{"contract_version": "case-generation-execution/v1", "execution_id": 
             "variant_results": [fixture_result(i) for i in range(1, 7)]}
            for digit, env, date in [("b", "qa", "2026-09-08T09:00:00Z"), ("c", "qa", "2026-09-08T08:30:00Z"), ("d", "isolated", "2026-09-08T08:00:00Z")]]
 
+# 共享工作台覆盖增强验收数据；页面和接口都走真实生产资产，只替换内存数据。
+SHARED_OPERATION = "facade:example.RefundFacade#billSupplement"
+SHARED_BASELINE = {"baseline_id": "baseline-fixture", "system_id": SYSTEM,
+                   "source_commit": "a" * 40, "selected_revision": "fixture-v1",
+                   "created_at": "2026-10-26T05:00:00Z"}
+SHARED_INTERFACE = {"operation_id": SHARED_OPERATION, "baseline_interface_id": 1,
+                    "interface_id": 1, "status": "READY", "contract_revision": 0,
+                    "operation_summary": "账单补单", "scan_id": "scan-fixture"}
+SHARED_CASE = {"case_id": "case-fixture-1", "baseline_id": "baseline-fixture",
+               "baseline_interface_id": 1, "operation_id": SHARED_OPERATION,
+               "generation_id": GENERATION, "source_scan_id": "scan-fixture",
+               "view": "published", "publication_revision": 1,
+               "template_id": "inspection", "title": "BSP已退款完成退票单重复补单幂等成功",
+               "coverage_kind": "business", "impact_status": "CURRENT",
+               "input_contract": {}, "data_functions": [], "knowledge_dependencies": [],
+               "variant": deepcopy(VARIANTS[0])}
+SHARED_ADDED_CASES = [
+    {"case_id": "case-added-1", "title": "无原交易单时拒绝补单", "variant": 0},
+    {"case_id": "case-added-2", "title": "退票类型待人工确认", "variant": 1},
+    {"case_id": "case-added-3", "title": "退款金额为零的边界校验", "variant": 2},
+    {"case_id": "case-added-4", "title": "下游服务超时返回处理", "variant": 3},
+    {"case_id": "case-added-5", "title": "重复补单的幂等校验", "variant": 4},
+    {"case_id": "case-added-6", "title": "已退款完成状态校验", "variant": 5},
+]
+SHARED_CASES = [SHARED_CASE] + [
+    {**SHARED_CASE, "case_id": item["case_id"], "title": item["title"],
+     "variant": deepcopy(VARIANTS[item["variant"]])}
+    for item in SHARED_ADDED_CASES
+]
+SHARED_CASE_BY_ID = {item["case_id"]: item for item in SHARED_CASES}
+SHARED_COVERAGE = {
+    "enhancement_id": "coverage-fixture",
+    "operation_id": SHARED_OPERATION,
+    "status": "COMPLETED",
+    "stage": "FINISHED",
+    "environment_id": "qa",
+    "latest_at": "2026-10-26T06:32:00Z",
+    "reason_codes": [],
+    "baseline": {"status": "VALID", "valid": True, "line": {"covered": 52, "missed": 20, "percent": 72.2},
+                 "method": {"covered": 3, "missed": 1, "percent": 75.0},
+                 "branch": {"covered": 12, "missed": 8, "percent": 60.0},
+                 "scope_status": "PARTIAL", "scope_reason": "仅纳入可信已解析调用闭包。",
+                 "candidate_gap_count": 3, "deferred_gap_count": 0},
+    "verification": {"status": "VALID", "valid": True, "line": {"covered": 60, "missed": 10, "percent": 85.6},
+                     "method": {"covered": 4, "missed": 0, "percent": 100.0},
+                     "branch": {"covered": 16, "missed": 4, "percent": 80.0},
+                     "scope_status": "PARTIAL", "scope_reason": "仅纳入可信已解析调用闭包。",
+                     "candidate_gap_count": 3, "deferred_gap_count": 0},
+    "coverage_phase": "verification", "line_percent": 85.6,
+    "added_cases": [
+        {"case_id": "case-added-1", "variant_id": VARIANTS[0]["variant_id"], "generation_id": GENERATION,
+         "title": "无原交易单时拒绝补单", "view": "published", "verification": "PASSED", "execution_status": "COMPLETED"},
+        {"case_id": "case-added-2", "variant_id": VARIANTS[1]["variant_id"], "generation_id": GENERATION,
+         "title": "退票类型待人工确认", "view": "published", "verification": "PASSED", "execution_status": "COMPLETED"},
+        {"case_id": "case-added-3", "variant_id": VARIANTS[2]["variant_id"], "generation_id": GENERATION,
+         "title": "退款金额为零的边界校验", "view": "published", "verification": "PASSED", "execution_status": "COMPLETED"},
+        {"case_id": "case-added-4", "variant_id": VARIANTS[3]["variant_id"], "generation_id": GENERATION,
+         "title": "下游服务超时返回处理", "view": "published", "verification": "PASSED", "execution_status": "COMPLETED"},
+        {"case_id": "case-added-5", "variant_id": VARIANTS[4]["variant_id"], "generation_id": GENERATION,
+         "title": "重复补单的幂等校验", "view": "published", "verification": "PASSED", "execution_status": "COMPLETED"},
+        {"case_id": "case-added-6", "variant_id": VARIANTS[5]["variant_id"], "generation_id": GENERATION,
+         "title": "已退款完成状态校验", "view": "published", "verification": "PASSED", "execution_status": "COMPLETED"},
+    ],
+    "added_case_counts": {"total": 6, "passed": 6, "failed": 0, "pending": 0},
+    "uncovered": [
+        {"source_path": "app/validator/src/main/java/com/ly/flight/chainsaas/refund/validator/RefundValidator.java",
+         "class_name": "com/ly/flight/chainsaas/refund/validator/RefundValidator", "method_name": "validateRefund",
+         "ranges": [{"start": 92, "end": 99}], "line_count": 8, "whole_method": True, "kinds": ["METHOD"]},
+        {"source_path": "app/facade-impl/src/main/java/com/ly/flight/chainsaas/refund/facade/impl/BillSupplementService.java",
+         "class_name": "com/ly/flight/chainsaas/refund/facade/impl/BillSupplementService", "method_name": "handleSupplement",
+         "ranges": [{"start": 216, "end": 227}], "line_count": 12, "whole_method": True, "kinds": ["METHOD"]},
+        {"source_path": "app/facade-impl/src/main/java/com/ly/flight/chainsaas/refund/facade/impl/RefundCallbackHandler.java",
+         "class_name": "com/ly/flight/chainsaas/refund/facade/impl/RefundCallbackHandler", "method_name": "onFailure",
+         "ranges": [{"start": 68, "end": 73}], "line_count": 6, "whole_method": True, "kinds": ["METHOD"]},
+    ],
+    "uncovered_summary": {"location_count": 3, "line_count": 26, "whole_method_count": 3,
+                          "candidate_gap_count": 3, "deferred_gap_count": 0},
+    "source_available": True, "attribution": "UNVERIFIED", "verified_resolved_count": None,
+    "anchor_case": {"case_id": "case-fixture-1", "variant_id": VARIANTS[0]["variant_id"],
+                    "generation_id": GENERATION, "view": "published"},
+    "case_count": 1, "verification_case_count": 7,
+    "scope_status": "PARTIAL", "scope_reason": "仅纳入可信已解析调用闭包。",
+    "candidate_gap_count": 3, "deferred_gap_count": 0,
+}
 
 @app.get("/console")
 def console() -> FileResponse:
@@ -102,6 +187,33 @@ async def fixture_api(path: str, request: Request):
         return JSONResponse({"detail": "隔离验收服务不支持该写操作"}, status_code=403)
     # 非Case页面只获得空目录，避免启动源码扫描、Agent或真实业务工具。
     if path == "health": return {"version": "0.2.0 · 隔离验收", "page_version": VERSION}
+    if path == "auth/session": return {"authenticated": True, "csrf_token": "fixture-csrf",
+        "expires_at": time.time() + 3600, "employee": {"user_id": "1214259", "name": "隔离验收",
+        "display_name": "隔离验收-1214259"}}
+    if path.endswith("/baselines"): return {"baselines": [SHARED_BASELINE]}
+    if path.endswith("/interfaces"): return {"items": [SHARED_INTERFACE]}
+    if path.endswith("/context"): return {"context": {}}
+    if path.endswith("/console-summary"): return {"entry_count": 1, "resource_count": 0}
+    if path.endswith("/cases"): return {"items": SHARED_CASES}
+    if "/cases/" in path:
+        case = SHARED_CASE_BY_ID.get(path.rsplit("/", 1)[-1])
+        if case is None: return JSONResponse({"detail": "Case不存在"}, status_code=404)
+        return case
+    if path.endswith("/case-executions"): return {"executions": []}
+    if path.endswith("/coverage/source"):
+        source = request.query_params.get("path", "")
+        location = next((item for item in SHARED_COVERAGE["uncovered"]
+                         if source.endswith(item["source_path"])), None)
+        if location is None:
+            return JSONResponse({"detail": "未知源码路径"}, status_code=404)
+        start = max(1, int(request.query_params.get("start_line", "1")))
+        end = min(start + 799, int(request.query_params.get("end_line", str(start + 20))))
+        uncovered = [number for number in range(location["ranges"][0]["start"], location["ranges"][0]["end"] + 1)
+                     if start <= number <= end]
+        return {"path": source, "start_line": start, "end_line": end, "total_lines": 400,
+                "lines": [{"number": number, "text": f"// 隔离源码第 {number} 行"} for number in range(start, end + 1)],
+                "uncovered_lines": uncovered}
+    if path.endswith("/coverage"): return {"coverage": SHARED_COVERAGE}
     if path == "systems": return {"systems": [
         {"system_id": SYSTEM, "name": "开发验收（隔离测试数据）", "source_path": "/test-only"},
         {"system_id": "presentation.empty.system", "name": "无环境验收", "source_path": "/test-empty"},

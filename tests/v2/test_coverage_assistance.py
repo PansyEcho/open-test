@@ -12,7 +12,9 @@ import pytest
 from opentest.adapters.coverage import CoverageUnavailable
 from opentest.adapters.case_template_v4_store import CaseGenerationExecutionStoreV4
 from opentest.application.case_template_v4 import CaseTemplateV4Service, CaseTemplateV4RuntimeServices
-from opentest.application.coverage_assistance import ActiveCoverageMeasurement, CoverageAssistanceService
+from opentest.application.coverage_assistance import (
+    ActiveCoverageMeasurement, COVERAGE_PREFLIGHT_SECONDS, CoverageAssistanceService,
+)
 from opentest.domain.case_template_v4 import CaseGenerationExecutionRequestV4, CaseGenerationExecutionV4
 from opentest.domain.coverage import (
     ArtifactFileIdentity, CoverageArtifactSelection, CoverageAnalysisResult, CoverageCounts,
@@ -171,6 +173,27 @@ def test_no_reset_permission_skips_only_coverage() -> None:
     assert service.execution_starting(execution) is None
     assert service.finish.call_args.args[1:] == ("SKIPPED", "RESET_NOT_AUTHORIZED")
     service.discovery.discover.assert_not_called()
+
+
+def test_preflight_budget_is_temporarily_180_seconds(monkeypatch) -> None:
+    """预检预算先临时放宽到 180 秒，避免发现和取材耗时叠加后无法进入测量。"""
+
+    service = assistance()
+    now = 1000.0
+    service.app.local_settings.read_coverage_connection.return_value = SimpleNamespace(
+        jacoco_reset_allowed=True, skyeye_endpoint="", jacoco_port=6300,
+        skyeye_log_environment_override="")
+    service.app.local_settings.read_skyeye_settings.return_value = SimpleNamespace(
+        skyeye_app_id="fixture", skyeye_api_token="fixture")
+    service.app.runtime_settings.read.return_value = SimpleNamespace(
+        jacoco_java_command="java", jacoco_cli_path="/fixture/jacococli.jar")
+    service.records.measurement_lock.side_effect = CoverageUnavailable("COVERAGE_LOCK_BUSY", "锁忙")
+    monkeypatch.setattr("opentest.application.coverage_assistance.time.monotonic", lambda: now)
+    execution = SimpleNamespace(execution_id="case-bound", system_id="refund",
+                                generation_id="generation-base", environment_id="qa")
+    assert service.execution_starting(execution) is None
+    assert service.records.measurement_lock.call_args.args == ("refund", now + 180.0, "qa")
+    assert COVERAGE_PREFLIGHT_SECONDS == 180.0
 
 
 def test_dump_timeout_releases_lock_and_syncs_task(tmp_path: Path) -> None:

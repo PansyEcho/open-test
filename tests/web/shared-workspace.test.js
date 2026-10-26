@@ -109,50 +109,195 @@ test("覆盖缺材料提供中文原因且未知原因不伪造成功",()=>{
   assert.match(context.sharedCoverageReason("NEW_UNKNOWN_CODE"),/未完成/);
 });
 
-test("覆盖查询必须绑定选中的单个Case", async () => {
-  const {context} = coverageHarness("COMPLETED", "VALID");
-  const requests = [];
-  context.api = async path => {requests.push(path); return {coverage_assistance: null};};
-  const item = {case_id: "case-a", generation_id: "generation-a", view: "published"};
-  await context.loadSharedCoverage(item, context.sharedScope());
-  assert.match(requests[0], /[?&]case_id=case-a(?:&|$)/);
-});
-
-/** 为覆盖详情构造最小可见面板；模拟材料只用于验证按钮和请求边界。 */
-function coverageHarness(status, verificationStatus) {
-  const context = scopeHarness();
-  const children = [];
-  const panel = {replaceChildren: () => {children.length = 0;}, appendChild: item => children.push(item)};
-  const coverage = {status, enhancement_id: "enhancement-a", verification: {status: verificationStatus}};
-  context.sharedWorkspace.selectedCase = {case_id: "case-a"};
-  // 注入测量状态而不模拟真实采集，直接运行生产详情渲染和重试回调。
-  Object.assign(context, {window: {clearTimeout: () => {}}, element: () => panel,
-    textNode: (tag, text) => ({tag, text}), sharedButton: (label, action) => ({label, action}),
-    api: async () => ({coverage_assistance: coverage})});
-  for (const name of ["sharedStatus", "sharedCoverageReason", "sharedCaseSelectionCurrent", "loadSharedCoverage"]) loadFunction(context, name);
-  return {context, children};
+/** 创建覆盖页面测试需要的轻量 DOM 节点，保留子节点、属性和事件。 */
+function coverageNode(tag = "div", text = "", className = "") {
+  const node = {tag, text, className, children: [], listeners: {}, dataset: {}, style: {},
+    classes: new Set(String(className || "").split(/\s+/).filter(Boolean))};
+  node.classList = {
+    add(name) { node.classes.add(name); },
+    toggle(name, on) { if (on === undefined ? !node.classes.has(name) : on) node.classes.add(name); else node.classes.delete(name); },
+    contains(name) { return node.classes.has(name); },
+  };
+  node.append = (...items) => node.children.push(...items);
+  node.appendChild = item => { node.children.push(item); return item; };
+  node.replaceChildren = (...items) => { node.children = [...items]; };
+  node.setAttribute = (name, value) => { node[name] = value; };
+  node.addEventListener = (name, action) => { (node.listeners[name] ||= []).push(action); };
+  node.querySelector = () => null;
+  Object.defineProperty(node, "textContent", {get: () => node.text, set: value => { node.text = value; }});
+  return node;
 }
 
-test("部分完成但复测无效或跳过可以重试，取消部署确认不写请求", async () => {
-  // 有效复测的部分完成可能是未解决缺口，不允许误当采集失败重复执行。
-  for (const [status, verificationStatus, retryable] of [
-    ["PARTIAL", "INVALID", true], ["PARTIAL", "SKIPPED", true],
-    ["PARTIAL", "VALID", false], ["COMPLETED", "VALID", false],
-    ["FAILED", "INVALID", true], ["SKIPPED", "SKIPPED", true],
-  ]) {
-    const {context, children} = coverageHarness(status, verificationStatus);
-    const item = {case_id: "case-a", generation_id: "generation-a", view: "published", variant: {variant_id: "variant-a"}};
-    await context.loadSharedCoverage(item, context.sharedScope());
-    const retry = children.find(child => child.label === "重新执行覆盖增强");
-    assert.equal(Boolean(retry), retryable, `${status}/${verificationStatus}`);
-    if (retry) {
-      context.confirmSharedDeployment = () => false;
-      let writes = 0;
-      context.api = async () => {writes += 1;};
-      await retry.action();
-      assert.equal(writes, 0);
-    }
+/** 递归收集节点文本，用于断言摘要不显示伪造的零覆盖。 */
+function coverageTexts(node, output = []) {
+  if (node?.text) output.push(String(node.text));
+  for (const child of node?.children || []) coverageTexts(child, output);
+  return output;
+}
+
+/** 递归收集带指定 class 的节点，用于断言进度条等非文本状态。 */
+function coverageClassNodes(node, className, output = []) {
+  if (String(node?.className || "").split(/\s+/).includes(className)) output.push(node);
+  for (const child of node?.children || []) coverageClassNodes(child, className, output);
+  return output;
+}
+
+/** 在渲染树中按 label 查找生产按钮，兼容 sharedButton 节点。 */
+function coverageButton(node, label) {
+  if (node?.label === label) return node;
+  for (const child of node?.children || []) {
+    const found = coverageButton(child, label);
+    if (found) return found;
   }
+  return null;
+}
+
+/** 构造接口覆盖测试上下文：真实生产渲染函数、隔离网络和不执行的任务。 */
+function coverageHarness(coverage) {
+  const context = scopeHarness();
+  const panel = coverageNode();
+  const operation = {value: "facade:Refund#billSupplement"};
+  const requests = [];
+  Object.assign(context.sharedWorkspace, {caseTab: "coverage", caseSelectionEpoch: 0,
+    cases: [{case_id: "case-a", operation_id: operation.value, generation_id: "generation-a",
+      view: "published", variant: {variant_id: "variant-a"}}]});
+  Object.assign(context, {
+    document: {hidden: false, createElement: tag => coverageNode(tag)},
+    window: {clearTimeout: () => {}, setTimeout: () => 1},
+    element: id => id === "shared-case-coverage" ? panel : id === "shared-case-operation" ? operation : coverageNode(),
+    textNode: (tag, text, className) => coverageNode(tag, text, className),
+    sharedButton: (label, action, style = "secondary") => Object.assign(coverageNode("button", label, style), {label, action}),
+    confirmSharedDeployment: async () => false,
+    api: async path => { requests.push(path); return {coverage}; },
+  });
+  for (const name of ["sharedStatus", "sharedCoverageReason", "sharedCoverageSelectionCurrent",
+    "sharedCoveragePercent", "sharedCoverageAnchorCase", "sharedCoverageEntryRemoved",
+    "sharedCoverageVerificationLabel", "entryPlacement", "sharedEntryDisplayName",
+    "loadInterfaceCoverage", "renderInterfaceCoverage", "sharedCoverageSignature", "renderCoverageSummary",
+    "renderCoverageCases", "renderCoverageCaseTable", "renderCoverageUncovered", "showCoverageSource",
+    "startInterfaceCoverage"]) loadFunction(context, name);
+  return {context, panel, requests, operation};
+}
+
+/** 返回页面依赖的最小已完成覆盖投影。 */
+function interfaceCoverage(overrides = {}) {
+  return {status: "COMPLETED", enhancement_id: "enhancement-a", updated_at: "2026-10-26T05:00:00Z",
+    latest_at: "2026-10-26T05:00:00Z", reason_codes: [], scope_reason: "仅纳入可信已解析调用。",
+    baseline: {valid: true, status: "VALID", line: {percent: 40.0}, reason_codes: []},
+    verification: {valid: true, status: "VALID", line: {percent: 80.0}, reason_codes: []},
+    added_case_counts: {total: 1, passed: 1, failed: 0, pending: 0},
+    added_cases: [{case_id: "case-added", variant_id: "variant-added", generation_id: "generation-enhanced",
+      title: "新增成功场景", view: "mine", verification: "PASSED"}],
+    uncovered: [{source_path: "RefundValidator.java", class_name: "demo/RefundValidator",
+      method_name: "validateRefund", ranges: [{start: 92, end: 104}], line_count: 13,
+      whole_method: true, kinds: ["METHOD"]}],
+    uncovered_summary: {location_count: 1, line_count: 13, whole_method_count: 1,
+      candidate_gap_count: 1, deferred_gap_count: 0},
+    anchor_case: {case_id: "case-a", variant_id: "variant-a", generation_id: "generation-a", view: "published"},
+    ...overrides};
+}
+
+test("接口覆盖增强按 operation 读取且不携带 case_id", async () => {
+  const {context, panel, requests} = coverageHarness(interfaceCoverage());
+  await context.loadInterfaceCoverage(context.sharedScope());
+  assert.equal(requests.length, 1);
+  assert.match(requests[0], /\/coverage\?operation_id=facade%3ARefund%23billSupplement/);
+  assert.doesNotMatch(requests[0], /case_id=/);
+  assert.ok(coverageTexts(panel).some(text => /80\.0%/.test(text)));
+});
+
+test("覆盖轮询内容未变化时不重建页面", async () => {
+  const {context, panel} = coverageHarness(interfaceCoverage());
+  await context.loadInterfaceCoverage(context.sharedScope());
+  const rendered = panel.children;
+  await context.loadInterfaceCoverage(context.sharedScope());
+  assert.equal(panel.children, rendered);
+});
+
+test("接口覆盖摘要对无效测量显示暂无而不是零", async () => {
+  const coverage = interfaceCoverage({
+    baseline: {valid: false, status: "SKIPPED", line: {percent: null}, reason_codes: ["COVERAGE_PREFLIGHT_TIMEOUT"]},
+    verification: {valid: false, status: "PENDING", line: {percent: null}, reason_codes: []},
+    uncovered: [], uncovered_summary: {location_count: 0, line_count: 0, whole_method_count: 0,
+      candidate_gap_count: 0, deferred_gap_count: 0},
+  });
+  const {context, panel} = coverageHarness(coverage);
+  await context.loadInterfaceCoverage(context.sharedScope());
+  const texts = coverageTexts(panel);
+  assert.ok(texts.filter(text => text === "暂无").length >= 2);
+  assert.ok(texts.every(text => !/0\.0%/.test(text)));
+  assert.equal(coverageClassNodes(panel, "shared-coverage-bar-fill")[0].style.width, "0%");
+});
+
+test("已完成轮次可再次执行，运行中按钮禁用", async () => {
+  const completed = coverageHarness(interfaceCoverage());
+  await completed.context.loadInterfaceCoverage(completed.context.sharedScope());
+  const retry = coverageButton(completed.panel, "再次执行增强");
+  assert.equal(retry.disabled, false);
+  const running = coverageHarness(interfaceCoverage({status: "RUNNING"}));
+  await running.context.loadInterfaceCoverage(running.context.sharedScope());
+  const pending = coverageButton(running.panel, "再次执行增强");
+  assert.equal(pending.disabled, true);
+  assert.equal(pending.text, "增强进行中");
+});
+
+test("新增Case把未通过项单独展示且成功页签只计通过数", async () => {
+  const coverage = interfaceCoverage({
+    added_case_counts: {total: 2, passed: 1, failed: 1, pending: 0},
+    added_cases: [
+      {case_id: "case-passed", variant_id: "variant-passed", generation_id: "generation-enhanced",
+       title: "通过场景", view: "published", verification: "PASSED"},
+      {case_id: "case-failed", variant_id: "variant-failed", generation_id: "generation-enhanced",
+       title: "失败场景", view: "published", verification: "FAILED"},
+    ],
+  });
+  const {context, panel} = coverageHarness(coverage);
+  await context.loadInterfaceCoverage(context.sharedScope());
+  const texts = coverageTexts(panel);
+  assert.ok(texts.includes("增强成功 Case 1"));
+  assert.ok(texts.includes("未通过 / 待验证"));
+  assert.ok(texts.includes("失败场景"));
+  assert.ok(texts.includes("通过场景"));
+});
+
+test("覆盖投影读取失败不伪装成没有记录", async () => {
+  const {context, panel} = coverageHarness(null);
+  context.api = async () => ({coverage: null, error: "coverage_unavailable"});
+  await context.loadInterfaceCoverage(context.sharedScope());
+  const texts = coverageTexts(panel);
+  assert.ok(texts.some(text => /覆盖增强读取失败/.test(text)));
+  assert.ok(texts.every(text => !text.includes("还没有覆盖增强记录")));
+});
+
+test("取消部署确认不写覆盖增强请求", async () => {
+  const {context, panel, requests} = coverageHarness(interfaceCoverage());
+  await context.loadInterfaceCoverage(context.sharedScope());
+  const retry = coverageButton(panel, "再次执行增强");
+  context.confirmSharedDeployment = async () => false;
+  await retry.action();
+  assert.equal(requests.length, 1);
+});
+
+test("未覆盖代码按缺口读取固定源码并标出未覆盖行", async () => {
+  const {context, requests} = coverageHarness(interfaceCoverage());
+  const source = coverageNode();
+  context.api = async path => {
+    requests.push(path);
+    return {path: "RefundValidator.java", start_line: 88, end_line: 96, total_lines: 120,
+      lines: Array.from({length: 9}, (_, index) => ({number: 88 + index, text: `code-${88 + index}`})),
+      uncovered_lines: [92, 93]};
+  };
+  await context.showCoverageSource(interfaceCoverage().uncovered[0], source, interfaceCoverage(),
+    context.sharedScope(), "facade:Refund#billSupplement");
+  assert.match(requests[0], /\/coverage\/source\?enhancement_id=enhancement-a/);
+  const uncovered = [];
+  (function walk(node) {
+    if (!node || typeof node !== "object") return;
+    if (String(node.className || "").includes("coverage-code-line") && node.classes?.has("uncovered")) uncovered.push(node);
+    for (const child of node.children || []) walk(child);
+  })(source);
+  assert.equal(uncovered.length, 2);
+  assert.ok(coverageTexts(source).includes("code-92"));
 });
 
 test("工作台统计必须带基准环境和视图，无基准不读系统最新扫描", async () => {
@@ -478,7 +623,7 @@ test("有效知识目录移除入口后，授权历史 Case 仍可选择且不�
   const {context, panels} = caseDetailHarness();
   const oldCase = {...caseProjection("old-case"), operation_id: "facade:Retired#run", impact_status: "INTERFACE_REMOVED", view: "published"};
   const generateButton = generationDialogNode("button", "生成 Case");
-  for (const id of ["shared-case-operation", "shared-copy-operation", "case-operation", "case-entry-select", "shared-case-actions", "shared-case-tree", "shared-case-entry-search", "shared-case-search", "shared-case-list", "shared-publish-cases", "shared-refresh-history", "shared-refresh-coverage", "shared-history-case", "shared-coverage-case"]) {
+  for (const id of ["shared-case-operation", "shared-copy-operation", "case-operation", "case-entry-select", "shared-case-actions", "shared-case-tree", "shared-case-entry-search", "shared-case-search", "shared-case-list", "shared-publish-cases", "shared-refresh-history", "shared-history-case", "shared-case-coverage"]) {
     panels[id] = generationDialogNode(id === "shared-copy-operation" ? "button" : id.includes("operation") || id.endsWith("-select") || id.endsWith("-case") ? "select" : "div");
   }
   panels["shared-case-actions"].querySelector = () => generateButton;
@@ -512,11 +657,18 @@ test("有效知识目录移除入口后，授权历史 Case 仍可选择且不�
   const generationEntries = await context.readSharedEntryCatalog(context.sharedScope(), "published");
   assert.deepEqual(Array.from(generationEntries, entry => entry.operation_id), ["facade:Query#run"]);
   assert.equal(context.sharedWorkspace.operationViews.has("facade:Retired#run"), false);
-  // 覆盖栏目仍可读取历史，但不能通过增强按钮重新执行业务目标。
-  context.api = async () => ({coverage_assistance: null});
-  for (const name of ["sharedCoverageReason", "loadSharedCoverage"]) loadFunction(context, name);
-  await context.loadSharedCoverage(oldCase, context.sharedScope());
-  assert.equal(panels["shared-case-coverage"].children.find(node => node.label === "执行我的覆盖增强").disabled, true);
+  // 覆盖栏目仍可读取历史，但不能通过接口增强按钮重新执行业务目标。
+  context.sharedWorkspace.caseTab = "coverage";
+  context.api = async path => {
+    if (path.includes("/coverage?")) return {coverage: null};
+    throw new Error(`unexpected coverage read: ${path}`);
+  };
+  for (const name of ["sharedCoverageReason", "sharedCoverageSelectionCurrent", "sharedCoveragePercent",
+    "sharedCoverageAnchorCase", "sharedCoverageEntryRemoved", "sharedCoverageVerificationLabel",
+    "loadInterfaceCoverage", "renderInterfaceCoverage", "sharedCoverageSignature", "renderCoverageSummary",
+    "renderCoverageCases", "renderCoverageUncovered", "startInterfaceCoverage", "refreshSharedCasePane"]) loadFunction(context, name);
+  await context.loadInterfaceCoverage(context.sharedScope());
+  assert.equal(coverageButton(panels["shared-case-coverage"], "执行覆盖增强").disabled, true);
   // 清空入口后复制动作不可用，避免复制空名称。
   panels["shared-case-operation"].value = "";
   context.selectSharedOperation();
@@ -566,16 +718,6 @@ test("执行记录只展示实际请求响应与断言，不转储内部证据",
   const step = container.children[0].children.find(item => item.tag === "details");
   assert.notEqual(step.open, true);
   assert.ok(step.children.filter(item => item.tag === "details").every(item => item.open !== true));
-});
-
-test("无效覆盖测量即使携带计数也不能显示为有效零覆盖", async () => {
-  const {context, children} = coverageHarness("COMPLETED", "VALID");
-  context.api = async () => ({coverage_assistance: {status: "COMPLETED", baseline: {status: "INVALID", analysis: {scope_counts: {
-    method: {covered: 0, missed: 2}, line: {covered: 0, missed: 8}, branch: {covered: 0, missed: 3},
-  }}}}});
-  await context.loadSharedCoverage({case_id: "case-a", generation_id: "generation-a", view: "published"}, context.sharedScope());
-  assert.ok(children.some(item => /第一次测量：尚无有效计数/.test(item.text)));
-  assert.ok(children.every(item => !/方法 0 已覆盖/.test(item.text)));
 });
 
 test("同一场景的状态子用例按模板归组并标出变化参数", () => {

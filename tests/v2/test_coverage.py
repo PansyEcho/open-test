@@ -127,7 +127,7 @@ def test_gap_units_are_mutually_exclusive(tmp_path: Path) -> None:
     analyzer = CoverageAnalyzer(JacocoCollector("java", "unused.jar"))
     result = analyzer._analyze_xml(root, method_lines, _artifact(tmp_path), scope, (1, 0))
     assert [(gap.kind, gap.location.line, gap.location.end_line) for gap in result.gaps] == [
-        ("METHOD", 10, None), ("BRANCH_LINE", 20, None), ("LINE_BLOCK", 21, 22)]
+        ("METHOD", 10, 11), ("BRANCH_LINE", 20, None), ("LINE_BLOCK", 21, 22)]
     assert result.candidate_gap_count == 3 and result.deferred_gap_count == 0
     assert result.scope_counts.line.covered == 2 and result.scope_counts.line.missed == 4
 
@@ -428,10 +428,12 @@ def test_ftp_actual_layout_separates_war_and_source_and_lists_current_directory(
     assert ftp.voidcmd.call_count == 2
 
 
-def _archive_ftp(monkeypatch: pytest.MonkeyPatch, directories: dict, files: dict) -> Mock:
+def _archive_ftp(monkeypatch: pytest.MonkeyPatch, directories: dict, files: dict,
+                 modified: dict[str, str] | None = None) -> Mock:
     """以独立会话替代 FTP 传输，保留真实连接边界的错误分类。
 
-    directories 将绝对目录映射到直属条目或读取异常，files 将文件映射到大小或异常。
+    directories 将绝对目录映射到直属条目或读取异常，files 将文件映射到大小或异常，
+    modified 可选地按路径覆盖 MDTM；未覆盖时使用固定时间，便于构造唯一或并列候选。
     返回聚合调用记录和 connections 列表验证访问范围及关闭；不连接网络。
     """
 
@@ -448,8 +450,14 @@ def _archive_ftp(monkeypatch: pytest.MonkeyPatch, directories: dict, files: dict
             raise size
         return size
 
+    def file_modified(command: str) -> str:
+        """按路径返回可控 MDTM，未指定文件使用固定时间避免测试依赖执行时刻。"""
+
+        path = command.removeprefix("MDTM ")
+        return f"213 {modified.get(path, '20261022030000') if modified else '20261022030000'}"
+
     client.size.side_effect = file_size
-    client.sendcmd.return_value = "213 20261022030000"
+    client.sendcmd.side_effect = file_modified
 
     def connect(**kwargs) -> Mock:
         """模拟 ftplib.FTP 的构造契约，各连接的当前目录互不影响并集中记录调用。"""
@@ -596,22 +604,31 @@ def test_local_artifact_wrong_commit_cannot_fall_back_to_archive(tmp_path: Path,
 
 
 @pytest.mark.parametrize("matches,expected_reason", [(0, "DEPLOYED_ARTIFACT_UNAVAILABLE"), (2, "ARTIFACT_BUILD_AMBIGUOUS")])
-def test_ftp_auto_selection_rejects_absent_or_multiple_commit_builds(
+def test_ftp_auto_selection_rejects_absent_or_same_time_commit_builds(
     matches: int, expected_reason: str, monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    """没有匹配或同 commit 多构建都跳过，不读取时间后挑最新，也不下载其他 commit。"""
+    """没有匹配或同commit最新构建时间并列都跳过，不由目录顺序或构建号决出胜者。"""
 
     base = "/archive/demo.app/war/qa"
     commits = [COMMIT] if matches else ["b" * 40]
-    client = _archive_ftp(monkeypatch, {base: ["version-1", "version-2"],
-        base + "/version-1": commits, base + "/version-2": commits}, {})
+    directories = {base: ["version-1", "version-2"],
+        base + "/version-1": commits, base + "/version-2": commits}
+    files = {}
+    if matches:
+        for version in ("version-1", "version-2"):
+            directories[base + f"/{version}/" + COMMIT] = ["actual.war"]
+            files[base + f"/{version}/" + COMMIT + "/actual.war"] = 42
+    client = _archive_ftp(monkeypatch, directories, files)
     selection = CoverageArtifactSelection(app_uk="demo.app", archive_host="fixture.invalid", archive_root="/archive",
         archive_username_ref="${ENV:OPENTEST_FTP_USER}", archive_password_ref="${ENV:OPENTEST_FTP_PASSWORD}")
     with pytest.raises(CoverageUnavailable) as failure:
         CoverageArtifactReader()._prepare_ftp_direct(selection, COMMIT, time.monotonic() + 10)
     assert failure.value.reason_code == expected_reason
-    client.size.assert_not_called()
-    client.sendcmd.assert_not_called()
+    if matches:
+        assert client.size.call_count == 2
+    else:
+        client.size.assert_not_called()
+    client.connections[0].close.assert_called_once_with()
 
 
 @pytest.mark.parametrize("failure", [ftplib.error_perm("550 denied"), ftplib.error_temp("450 busy"), TimeoutError()])
@@ -879,3 +896,46 @@ def test_total_deadline_also_interrupts_blocking_dns(monkeypatch: pytest.MonkeyP
     assert marker.is_file()
     assert failure.value.reason_code == "COVERAGE_PREFLIGHT_TIMEOUT"
     assert time.monotonic() - started < 1.9
+
+
+def test_ftp_multiple_commit_builds_selects_latest_war_mtime(monkeypatch: pytest.MonkeyPatch) -> None:
+    """同commit多构建按唯一WAR的MDTM选择最新，不按目录名、版本号或文件名猜测。"""
+
+    base = "/archive/demo.app/war/qa"
+    older = base + "/version-old/" + COMMIT
+    newer = base + "/version-new/" + COMMIT
+    directories = {base: ["version-old", "version-new"],
+        base + "/version-old": [COMMIT], base + "/version-new": [COMMIT],
+        older: ["refundcore.war"], newer: ["refundcore.war"]}
+    files = {older + "/refundcore.war": 41, newer + "/refundcore.war": 42,
+             "/archive/demo.app/qa/version-new/" + COMMIT + "/out.tar.gz": 12}
+    modified = {older + "/refundcore.war": "20261016165635", newer + "/refundcore.war": "20261022145722"}
+    client = _archive_ftp(monkeypatch, directories, files, modified)
+    selection = CoverageArtifactSelection(app_uk="demo.app", archive_host="fixture.invalid", archive_root="/archive",
+        archive_username_ref="${ENV:OPENTEST_FTP_USER}", archive_password_ref="${ENV:OPENTEST_FTP_PASSWORD}")
+    frozen = CoverageArtifactReader()._prepare_ftp_direct(selection, COMMIT, time.monotonic() + 10)
+    assert frozen.selection.archive_version == "version-new"
+    assert frozen.artifact.path == newer + "/refundcore.war"
+    assert frozen.source.path == "/archive/demo.app/qa/version-new/" + COMMIT + "/out.tar.gz"
+    # 多构建才读取候选WAR时间；选中的WAR和源码身份随后再次固定。
+    assert client.size.call_count == 4
+    assert client.sendcmd.call_count == 4
+
+
+def test_ftp_multiple_commit_builds_with_same_war_mtime_stay_ambiguous(monkeypatch: pytest.MonkeyPatch) -> None:
+    """最新构建时间并列时仍按歧义跳过，不能用版本名或目录顺序打破平局。"""
+
+    base = "/archive/demo.app/war/qa"
+    directories = {base: ["version-1", "version-2"],
+        base + "/version-1": [COMMIT], base + "/version-2": [COMMIT],
+        base + "/version-1/" + COMMIT: ["refundcore.war"], base + "/version-2/" + COMMIT: ["refundcore.war"]}
+    files = {base + "/version-1/" + COMMIT + "/refundcore.war": 41,
+             base + "/version-2/" + COMMIT + "/refundcore.war": 42}
+    client = _archive_ftp(monkeypatch, directories, files)
+    selection = CoverageArtifactSelection(app_uk="demo.app", archive_host="fixture.invalid", archive_root="/archive",
+        archive_username_ref="${ENV:OPENTEST_FTP_USER}", archive_password_ref="${ENV:OPENTEST_FTP_PASSWORD}")
+    with pytest.raises(CoverageUnavailable) as failure:
+        CoverageArtifactReader()._prepare_ftp_direct(selection, COMMIT, time.monotonic() + 10)
+    assert failure.value.reason_code == "ARTIFACT_BUILD_AMBIGUOUS"
+    assert client.size.call_count == 2
+    client.connections[0].close.assert_called_once_with()

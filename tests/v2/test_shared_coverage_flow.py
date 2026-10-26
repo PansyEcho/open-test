@@ -222,7 +222,9 @@ def retry_fixture() -> tuple[Mock, CoverageEnhancement, PublicationScope, Covera
     app.publications.require_executable.side_effect = require_case
     app.publications.get_case.side_effect = require_case
     app.case_template_v4.generations.get.return_value = SimpleNamespace(generation_id="generation-enhanced", status="READY",
-        owner_user_id="employee-a", baseline_id="baseline-fixed", system_id="refund", operation_id="Api#query", source_scan_id="scan-fixed", case_bindings=[
+        owner_user_id="employee-a", baseline_id="baseline-fixed", system_id="refund", operation_id="Api#query", source_scan_id="scan-fixed",
+        source_scopes=[SimpleNamespace(source_system_id="refund", source_baseline=SimpleNamespace(commit="a" * 40))],
+        case_bindings=[
             SimpleNamespace(case_id="case-enhanced", variant_id="variant-enhanced"),
             SimpleNamespace(case_id="unselected-enhanced", variant_id="unselected-variant")])
     executions = {
@@ -241,6 +243,7 @@ def retry_fixture() -> tuple[Mock, CoverageEnhancement, PublicationScope, Covera
         return workflows[workflow.enhancement_id]
 
     app.coverage_assistance.records.get.side_effect = workflows.get
+    app.coverage_assistance.records.running_for_operation.return_value = None
     app.coverage_assistance.records.create.side_effect = create_workflow
     app.coverage_assistance.records.save.side_effect = create_workflow
     raw = CoverageRawCapture(exec_artifact_id="exec-original", deployed_artifact_id="binary-original", source_artifact_id="source-original")
@@ -267,7 +270,11 @@ def test_manual_new_root_enforces_policy_and_original_lineage(eligibility):
     app.store.get_system.return_value = SimpleNamespace(coverage_assistance=None if eligibility == "unconfigured"
         else SimpleNamespace(enabled=eligibility != "disabled"))
     generation = SimpleNamespace(generation_id="generation-fixed", system_id="refund",
-        predecessor_generation_id="generation-parent" if eligibility in {"ancestor", "broken"} else "")
+        predecessor_generation_id="generation-parent" if eligibility in {"ancestor", "broken"} else "",
+        status="READY", baseline_id="baseline-fixed", operation_id="Api#query",
+        source_scan_id="scan-fixed", case_bindings=[
+            SimpleNamespace(case_id="case-fixed", variant_id="variant-fixed"),
+            SimpleNamespace(case_id="case-second", variant_id="variant-second")])
     parent = SimpleNamespace(generation_id="generation-parent", system_id="refund", predecessor_generation_id="")
     generations = {generation.generation_id: generation, parent.generation_id: parent}
     app.case_template_v4.generations.get.side_effect = lambda system_id, generation_id: generations.get(generation_id)
@@ -285,7 +292,7 @@ def test_manual_new_root_enforces_policy_and_original_lineage(eligibility):
     if eligibility == "eligible":
         created = retry_coverage(app, scope, "case-fixed", request)
         assert created.retry_of == "" and created.root_enhancement_id == created.enhancement_id
-        assert created.environment_id == "uat" and created.case_selection == previous.case_selection[:1]
+        assert created.environment_id == "uat" and len(created.case_selection) == 2
         app.case_template_v4.prepare_execution.assert_called_once()
         app.case_template_v4.dispatch_execution.assert_called_once()
     else:
@@ -331,6 +338,21 @@ def test_retry_missing_verification_material_only_resumes_exact_existing_enhance
     app.coverage_assistance.schedule_analysis.assert_not_called()
 
 
+def test_retry_invalid_baseline_remeasures_instead_of_reusing_failed_probe() -> None:
+    """上一轮基线测量无效（如class ID不一致）时不能复用旧探针，必须重新测量当前部署。"""
+
+    app, previous, scope, request = retry_fixture()
+    previous.status = "FAILED"
+    previous.baseline = previous.baseline.model_copy(
+        update={"status": "INVALID", "reason_codes": ["JACOCO_CLASS_MISMATCH"]})
+    resumed = retry_coverage(app, scope, "case-enhanced", request)
+    assert resumed.stage == "BASELINE_EXECUTING"
+    assert resumed.baseline.status == "PENDING"
+    assert resumed.baseline_case_execution_id == "new-baseline-execution"
+    app.case_template_v4.prepare_execution.assert_called_once()
+    app.coverage_assistance.schedule_analysis.assert_not_called()
+
+
 def test_retry_missing_baseline_material_remeasures_original_full_selection() -> None:
     """即使从增强Case点击重试，缺失基线也必须重测原基线全集，再继续现有增强Case的复测。"""
 
@@ -372,7 +394,7 @@ def test_partial_retry_requires_explicit_failed_verification(status) -> None:
 
     app, previous, scope, request = retry_fixture()
     previous.verification.status = status
-    with pytest.raises(KnowledgeValidationError, match="只有失败或跳过"):
+    with pytest.raises(KnowledgeValidationError, match="只有失败、跳过或已完成"):
         retry_coverage(app, scope, "case-enhanced", request)
     app.coverage_assistance.records.create.assert_not_called()
 
@@ -446,3 +468,25 @@ def test_remeasured_baseline_continues_saved_verification_analysis_without_new_m
     service.schedule_analysis.assert_called_once_with(saved.enhancement_id, "verification")
     service.advance.assert_not_called()
     assert app.case_template_v4.dispatch_execution.call_count == 1
+
+
+def test_completed_round_starts_new_round_from_enhanced_case_set() -> None:
+    """已完成轮次再次执行时以增强后的Case集为新基线，并保留独立新根。"""
+
+    app, previous, scope, request = retry_fixture()
+    previous.status = "COMPLETED"
+    previous.verification.status = "VALID"
+    app.coverage_assistance.records.running_for_operation.return_value = None
+    created = retry_coverage(app, scope, "case-enhanced", request)
+    assert created.status == "RUNNING" and created.stage == "BASELINE_EXECUTING"
+    assert created.base_generation_id == "generation-enhanced"
+    assert created.enhanced_generation_id == "" and created.round_used == 0
+    assert created.retry_of == previous.enhancement_id
+    assert created.root_enhancement_id == created.enhancement_id
+    assert [(item.case_id, item.generation_id) for item in created.case_selection] == [
+        ("case-enhanced", "generation-enhanced")]
+    system_id, generation_id, command = app.case_template_v4.prepare_execution.call_args.args
+    assert (system_id, generation_id) == ("refund", "generation-enhanced")
+    assert command.selected_cases == created.case_selection
+    app.case_template_v4.dispatch_execution.assert_called_once()
+    app.coverage_assistance.records.save_report.assert_not_called()
