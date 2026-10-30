@@ -766,7 +766,10 @@ def test_single_case_edit_pins_only_selected_parameter_values(publication):
 
 
 def test_coverage_seed_from_other_employee_uses_only_selected_case_and_fresh_ids(publication, tmp_path):
-    """别人共享的单Case可创建本人补充任务，但原私有同批内容和原草稿身份均不能被复制或替换。"""
+    """别人共享的单Case可创建本人补充任务，但原私有同批内容和原草稿身份均不能被复制或替换。
+
+    publication提供共享权限夹具，tmp_path隔离新handoff；变体保留真实种子模板身份以模拟编译产物。
+    """
 
     from types import SimpleNamespace
     from unittest.mock import Mock
@@ -802,7 +805,10 @@ def test_coverage_seed_from_other_employee_uses_only_selected_case_and_fresh_ids
         assert seeded.editing_case_id == ""
         assert len(seeded.draft_submission.case_templates) == 1
         assert "PRIVATE-SIBLING" not in seeded.draft_submission.model_dump_json()
-        frozen = engine._freeze_case_bindings(seeded, [generation.variants[0]])
+        # 真实编译输出引用重命名后的种子模板，不能把原模板身份冒充成覆盖种子的编译结果。
+        seeded_variant = generation.variants[0].model_copy(update={
+            "template_id": seeded.draft_submission.case_templates[0].template_id})
+        frozen = engine._freeze_case_bindings(seeded, [seeded_variant])
     assert frozen.case_bindings[0].case_id not in {"case-public", "case-private"}
     assert service.get_case(scope, "case-public").generation_id == generation.generation_id
     assert service.list_cases(scope.model_copy(update={"user_id": "employee-b"}), "mine") == []

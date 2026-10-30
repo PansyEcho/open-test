@@ -688,7 +688,7 @@ def test_relations_are_read_only_and_environment_profiles_are_project_owned() ->
     script = (web_root / "app.js").read_text(encoding="utf-8")
     # 关系只读，不残留手工白名单、用途或跨系统环境映射编辑器。
     assert "/relations`" in script
-    assert "当前项目直接引用的下游系统" in html
+    assert "发现关系不等于授权" in html
     for retired in ("dependency-provider", "dependency-role", "dependency-purposes", "dependency-environments", "dependency-operations", "save-dependency"):
         assert retired not in html
     assert "/dependency-bindings" not in script

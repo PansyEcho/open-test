@@ -36,6 +36,7 @@ from opentest.application.case_template_v4 import (
 )
 from opentest.application.operations import OperationCapabilityCatalog
 from opentest.application.operation_input_knowledge import OperationInputKnowledgeBuilder
+from opentest.application.web_generation import WebGenerationService
 from opentest.domain.case_template_v4 import (
     CaseGenerationExecutionRequestV4,
     CaseGenerationExecutionV4,
@@ -60,7 +61,9 @@ from opentest.domain.errors import (
     KnowledgeNotFoundError,
     KnowledgeValidationError,
 )
+from opentest.domain.shared_workspace import InterfaceKnowledgeRef
 from opentest.domain.models import (
+    DsfOperationDefinition,
     KnowledgeNode,
     KnowledgeNodeKind,
     OperationCapability,
@@ -647,6 +650,48 @@ def test_selecting_own_database_returns_its_data_phase_functions(tmp_path: Path)
     phases = {item["function_id"]: item["allowed_phases"] for item in info["runtime_functions"]}
     assert phases == {database_id: ["ORACLE"], f"{database_id}:query": ["DATA"], f"{database_id}:data": ["DATA"]}
     assert handoffs.get(handoff_id).source_scopes[0].selected_operation_ids == [database_id]
+
+
+def test_frozen_dependency_contract_selects_capability_from_its_scan() -> None:
+    """已冻结依赖契约必须使用契约所属scan的能力，不能配目标scan的同名接口。"""
+
+    old_scan = "scan-refund-v4-old"
+    contract = _query_list_contract().model_copy(update={"source_scan_id": old_scan})
+    reference = InterfaceKnowledgeRef(
+        baseline_interface_id=1, interface_id=2, contract_revision=3,
+    )
+    handoff = CaseTemplateHandoffV4(
+        handoff_id="case-template-handoff-" + "c" * 20, system_id=SYSTEM_ID, entry_id=CANCEL_ID,
+        source_scan_id=SCAN_ID, baseline_id="baseline-demo", owner_user_id="employee-1",
+        status="WAITING_FOR_AGENT",
+        source_scopes=[CaseTemplateSourceScope(
+            source_system_id=SYSTEM_ID, source_scan_id=SCAN_ID,
+            source_baseline=SourceBaseline(source_path="/tmp/refund-demo"),
+        )],
+        knowledge_dependencies=[reference],
+    )
+    provider = OperationCapability(
+        operation_id=QUERY_LIST_ID, system_id=SYSTEM_ID, business_name="queryList",
+        kind=OperationKind.FACADE, mutability=OperationMutability.READ_ONLY,
+        input_schema={"type": "object"}, source_scan_id=SCAN_ID, executable=True,
+    )
+    rebound = provider.model_copy(update={"source_scan_id": old_scan})
+    catalog = Mock()
+    catalog.derive.return_value = [rebound]
+    service = CaseTemplateV4Service(Mock(), Mock(), Mock(), Mock())
+    service.runtime = SimpleNamespace(operation_catalog=catalog)
+    publications = Mock()
+    publications.store.contract.return_value = {
+        "system_id": SYSTEM_ID, "operation_id": QUERY_LIST_ID, "scan_id": old_scan,
+        "contract": contract.model_dump(mode="json"),
+    }
+    with patch("opentest.application.case_template_v4.PublicationService", return_value=publications):
+        selected, selected_reference, selected_contract = service._visible_dependency_knowledge(handoff, provider)
+
+    assert selected.source_scan_id == old_scan
+    assert selected_reference == reference
+    assert selected_contract.source_scan_id == old_scan
+    assert catalog.derive.call_args.kwargs["include_registered"] is True
 
 
 def _compile_golden(runtime_registry: RuntimeFunctionRegistry | None = None) -> tuple[list, list]:
@@ -1463,6 +1508,27 @@ def test_v4_catalog_runtime_scope_exposes_authorized_non_target_operations() -> 
     assert [item.operation_id for item in selected] == [
         QUERY_LIST_ID, other_facade.operation_id, DATABASE_ID, outer.operation_id,
     ]
+
+
+def test_data_handoff_permissions_use_publication_owner_without_owner_field() -> None:
+    """独立数据handoff没有owner_user_id，权限过滤不能因此抛AttributeError。"""
+
+    service = CaseTemplateV4Service(Mock(), Mock(), Mock(), Mock())
+    service.runtime = SimpleNamespace()
+    service.dependency_access = Mock()
+    service.dependency_access.filter_capabilities.return_value = []
+    handoff = SimpleNamespace(
+        source_scopes=[],
+        system_id=SYSTEM_ID,
+        environment_id="qa",
+        publication_scope=SimpleNamespace(user_id="data-owner"),
+    )
+
+    result = service._runtime_capabilities(handoff, enforce_permissions=True)
+
+    assert result == []
+    service.dependency_access.filter_capabilities.assert_called_once_with(
+        SYSTEM_ID, "data-owner", "qa", [], target_system_id=SYSTEM_ID)
 
 
 def test_submit_runtime_scope_does_not_use_source_read_audit_as_permission(tmp_path: Path) -> None:
@@ -4120,3 +4186,135 @@ def test_unbound_shared_source_never_reads_current_working_directory() -> None:
         service._require_current_source_scopes(handoff)
     service.source_repository.capture.assert_not_called()
     service.artifacts.require_source_snapshot.assert_not_called()
+
+
+def test_resolve_downstream_updates_only_its_caller_scan(monkeypatch) -> None:
+    """同系统多scan时解析下游只更新调用方scan，不能覆盖其他scan的已选操作。"""
+
+    system_id = "ifightchainsaas.java.refund.core"
+    baseline = SourceBaseline(source_path="/tmp/refund-demo")
+    new_scope = CaseTemplateSourceScope(
+        source_system_id=system_id, source_scan_id="scan-new", source_baseline=baseline,
+        selected_operation_ids=["database:demo:datasource"],
+    )
+    old_scope = new_scope.model_copy(update={
+        "source_scan_id": "scan-old", "selected_operation_ids": ["database:demo:legacy"],
+    })
+    handoff = CaseTemplateHandoffV4(
+        handoff_id="case-template-handoff-" + "f" * 20, system_id=system_id,
+        entry_id="facade:demo.RefundFacade#billSupplement", source_scan_id="scan-new",
+        status="WAITING_FOR_AGENT", revision=2, source_scopes=[new_scope, old_scope],
+    )
+    writes = []
+    cases = SimpleNamespace(
+        handoffs=SimpleNamespace(
+            get=Mock(return_value=handoff),
+            processing_scope=Mock(return_value=nullcontext()),
+            write=Mock(side_effect=lambda value: writes.append(value)),
+        ),
+        _require_revisable_handoff=Mock(),
+    )
+    application = SimpleNamespace(
+        case_template_v4=cases, store=Mock(),
+        knowledge=SimpleNamespace(artifacts=Mock()),
+    )
+    service = WebGenerationService.__new__(WebGenerationService)
+    service.application = application
+    task = SimpleNamespace(
+        operation="case-generation", system_id=system_id, task_id="task-0123456789abcdef",
+        trace_id="trace-demo", active_handoff_id=handoff.handoff_id,
+    )
+    operation = DsfOperationDefinition(
+        operation_id="dsf:demo.provider:service:query", provider_system_id="demo.provider",
+        gs_name="dsf.demo", service_name="service", version="1", action="query",
+        source_refs=[SourceReference(path="DemoFacade.java", symbol="demo.Facade#query", line=1)],
+    )
+    contract = OperationInputKnowledgeContract(
+        contract_version="operation-contract/v2", target_id=operation.operation_id,
+        source_scan_id="scan-new", status="READY", request_schema={}, contract_revision=3,
+    )
+    seen = []
+
+    class FakeSearch:
+        """记录解析器实际收到的scan顺序并返回固定定义。"""
+
+        def __init__(self, *args):
+            pass
+
+        def resolve_with_contract(self, system_id, scopes, request):
+            seen.extend(scopes)
+            return operation, contract
+
+    monkeypatch.setattr("opentest.application.downstream_interfaces.DownstreamInterfaceSearchService", FakeSearch)
+    result = service._offline_tool(task, "resolve_downstream_operation", {
+        "expected_revision": 2, "downstream_system": "demo", "interface_name": "demo.Facade",
+        "method_name": "query",
+    })
+
+    assert result["contract_revision"] == 3
+    assert [scope.source_scan_id for scope in seen] == ["scan-new", "scan-old"]
+    assert [scope.source_scan_id for scope in writes[0].source_scopes] == ["scan-new", "scan-old"]
+    assert writes[0].source_scopes[0].selected_operation_ids == ["database:demo:datasource"]
+    assert writes[0].source_scopes[0].resolved_operations == [operation]
+    assert writes[0].source_scopes[1] == old_scope
+
+
+def test_frozen_external_dependency_restores_registered_definition() -> None:
+    """冻结的外部依赖在原scope丢失后，必须从契约所属scan的已登记定义恢复。"""
+
+    frozen_scan = "scan-refund-v4-frozen"
+    old_scan = "scan-refund-v4-old"
+    operation_id = "dsf:java.account.supplement.core:distribution:reportQueryList"
+    definition = DsfOperationDefinition(
+        operation_id=operation_id, provider_system_id="java.account.supplement.core",
+        gs_name="dsf.java.account.supplement.core", service_name="distribution",
+        version="1.0.0.3", action="reportQueryList",
+        request_schema={"type": "object", "properties": {"page": {"type": "integer"}}},
+        response_schema={"type": "object", "properties": {"list": {}}},
+        source_refs=[SourceReference(path="ReportFacade.class",
+                                     symbol="demo.ReportFacade#reportQueryList", line=1)],
+    )
+    contract = OperationInputKnowledgeContract(
+        contract_version="operation-contract/v2", contract_revision=4,
+        target_id=operation_id, source_scan_id=frozen_scan, status="READY",
+        request_schema=definition.request_schema, response_schema=definition.response_schema,
+    )
+    reference = InterfaceKnowledgeRef(
+        baseline_interface_id=3, interface_id=4, contract_revision=4,
+    )
+    handoff = CaseTemplateHandoffV4(
+        handoff_id="case-template-handoff-" + "d" * 20, system_id=SYSTEM_ID, entry_id=CANCEL_ID,
+        source_scan_id=SCAN_ID, baseline_id="baseline-demo", owner_user_id="employee-1",
+        status="WAITING_FOR_AGENT",
+        source_scopes=[CaseTemplateSourceScope(
+            source_system_id=SYSTEM_ID, source_scan_id=old_scan,
+            source_baseline=SourceBaseline(source_path="/tmp/refund-demo"),
+        )],
+        knowledge_dependencies=[reference],
+    )
+    provider = OperationCapability(
+        operation_id=operation_id, system_id=SYSTEM_ID, business_name="reportQueryList · 外部DSF",
+        kind=OperationKind.EXTERNAL_DSF, mutability=OperationMutability.READ_ONLY,
+        provider_kind=OperationProviderKind.EXTERNAL_DSF_PROXY,
+        provider_definition=definition, input_schema=definition.request_schema,
+        source_scan_id=old_scan, executable=True,
+    )
+    rebound = provider.model_copy(update={"source_scan_id": frozen_scan})
+    catalog = Mock()
+    catalog.derive.side_effect = lambda *args, **kwargs: [rebound] if kwargs.get("include_registered") else []
+    service = CaseTemplateV4Service(Mock(), Mock(), Mock(), Mock())
+    service.runtime = SimpleNamespace(operation_catalog=catalog)
+    publications = Mock()
+    publications.store.contract.return_value = {
+        "system_id": SYSTEM_ID, "operation_id": operation_id, "scan_id": frozen_scan,
+        "contract": contract.model_dump(mode="json"),
+    }
+    with patch("opentest.application.case_template_v4.PublicationService", return_value=publications):
+        selected, selected_reference, selected_contract = service._visible_dependency_knowledge(handoff, provider)
+
+    assert selected.source_scan_id == frozen_scan
+    assert selected.provider_definition == definition
+    assert selected.executable is True
+    assert selected_reference == reference
+    assert selected_contract.contract_revision == 4
+    assert catalog.derive.call_args.kwargs["include_registered"] is True

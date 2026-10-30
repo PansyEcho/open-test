@@ -99,6 +99,29 @@ def test_scope_follows_resolved_edges_and_does_not_expand_overloads() -> None:
     assert scope_from_manifest(manifest, "facade:run").methods == []
 
 
+def test_scope_includes_uniquely_bound_partial_signature_edge() -> None:
+    """目标方法已唯一确定、仅参数描述符缺失时仍纳入范围，供实际字节码绑定。"""
+
+    start = _method("run")
+    child = _method("child", "SaasOrderVO").model_copy(
+        update={"resolution_status": SemanticResolutionStatus.PARTIAL, "confidence": 0.65})
+    edge = SemanticCallEdge(caller_symbol_id=start.symbol_id, callee_symbol_id=child.symbol_id,
+                            callee_expression="child", source_ref=start.source_ref,
+                            resolution_status=SemanticResolutionStatus.PARTIAL, confidence=0.75,
+                            unresolved_reason="dependency_method_signature_unavailable")
+    manifest = ScanManifest(scan_id="scan-one", system_id="demo", baseline=SourceBaseline(source_path="/tmp", commit=COMMIT),
+        entries=[EntryPoint(entry_id="facade:run", system_id="demo", kind=KnowledgeNodeKind.FACADE,
+                            display_name="run", source_id="demo.Service#run", source_path="src/main/java/demo/Service.java")],
+        semantic_analysis=SemanticAnalysisResult(system_id="demo", methods=[start, child], call_edges=[edge]))
+    scope = scope_from_manifest(manifest, "facade:run")
+    assert [(item.method.method_name, item.distance) for item in scope.methods] == [("run", 0), ("child", 1)]
+    assert "部分参数描述符" in scope.scope_reason
+    assert [(item.caller_method, item.expression) for item in scope.scope_limitations] == [("run", "child")]
+    untrusted = edge.model_copy(update={"unresolved_reason": "symbol_solver_unresolved"})
+    manifest.semantic_analysis.call_edges = [untrusted]
+    assert [item.method.method_name for item in scope_from_manifest(manifest, "facade:run").methods] == ["run"]
+
+
 def test_descriptor_unknown_never_binds_all_overloads() -> None:
     """扫描类型变量无法解析时，两个重载必须保持未知。"""
 
@@ -130,6 +153,31 @@ def test_gap_units_are_mutually_exclusive(tmp_path: Path) -> None:
         ("METHOD", 10, 11), ("BRANCH_LINE", 20, None), ("LINE_BLOCK", 21, 22)]
     assert result.candidate_gap_count == 3 and result.deferred_gap_count == 0
     assert result.scope_counts.line.covered == 2 and result.scope_counts.line.missed == 4
+
+
+def test_whole_method_gap_precedes_shallow_branch_gap(tmp_path: Path) -> None:
+    """整方法未执行优先于浅层分支碎片，避免深层业务方法被挤出行动清单。"""
+
+    root = ET.Element("report")
+    package = ET.SubElement(root, "package", name="demo")
+    klass = ET.SubElement(package, "class", name="demo/Service", sourcefilename="Service.java")
+    shallow = ET.SubElement(klass, "method", name="shallow", desc="()V", line="10")
+    ET.SubElement(shallow, "counter", type="METHOD", missed="0", covered="1")
+    deep = ET.SubElement(klass, "method", name="deep", desc="()V", line="30")
+    ET.SubElement(deep, "counter", type="METHOD", missed="1", covered="0")
+    source = ET.SubElement(package, "sourcefile", name="Service.java")
+    ET.SubElement(source, "line", nr="10", mi="0", ci="3", mb="1", cb="1")
+    ET.SubElement(source, "line", nr="30", mi="2", ci="0", mb="0", cb="0")
+    ET.SubElement(root, "counter", type="METHOD", missed="1", covered="1")
+    ET.SubElement(root, "counter", type="LINE", missed="1", covered="1")
+    ET.SubElement(root, "counter", type="BRANCH", missed="1", covered="1")
+    scope = CoverageAnalysisScope(commit=COMMIT, methods=[
+        CoverageScopeMethod(method=_method("shallow"), distance=1),
+        CoverageScopeMethod(method=_method("deep"), distance=3)])
+    analyzer = CoverageAnalyzer(JacocoCollector("java", "unused.jar"))
+    result = analyzer._analyze_xml(root, {("demo/Service", "shallow", "()V"): {10},
+        ("demo/Service", "deep", "()V"): {30}}, _artifact(tmp_path), scope, (1, 0))
+    assert [(gap.kind, gap.location.method_name) for gap in result.gaps] == [("METHOD", "deep"), ("BRANCH_LINE", "shallow")]
 
 
 def test_gap_limit_preserves_deferred_count(tmp_path: Path) -> None:

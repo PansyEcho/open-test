@@ -216,32 +216,22 @@ test("environment selectors ignore actual filter names and unavailable profiles"
   }
 });
 
-/** 系统目录保留上下游深度，合并DSF外部引用与MQ下游，并展示接口关系类型与源码证据。 */
-test("relations page renders bounded directions, source evidence and gaps", async () => {
+/** 关系证据保留DSF/MQ类型、固定扫描与源码位置；权限页不把发现当成授权。 */
+test("relations evidence keeps interface types, fixed scans and source locations", () => {
   const nodes = [];
   const list = {replaceChildren(){nodes.length=0;},appendChild(node){nodes.push(node);}};
-  const status = {textContent:""};
-  const requests = [];
-  const catalog = {upstream:[{system_id:"booking",depth:1}],downstream:[{system_id:"report",depth:2}],
-    external_systems:[{gs_name:"dsf.resource.core",interfaces:[{operation_id:"external:resource#query"}]}],
+  const catalog = {
     relations:[{source_system_id:"booking",target_system_id:"refund",relation_type:"DSF",evidence:[{system_id:"booking",source_scan_id:"scan-booking",source_ref:{path:"src/Client.java",line:12,symbol:"submit"},detail:"已确认DSF引用"}]},
       {source_system_id:"refund",target_system_id:"report",relation_type:"MQ",evidence:[]}],
     interface_relations:[{source_system_id:"booking",target_system_id:"refund",relation_type:"DSF",source_operation_id:"facade:booking#submit",target_operation_id:"facade:refund#apply"},
       {source_system_id:"refund",target_system_id:"report",relation_type:"MQ",source_operation_id:"mq:refund#notify",target_operation_id:"mq:report#consume"}],
-    gaps:[{system_id:"report",code:"MISSING_TOPIC",message:"缺少Topic配置"}],};
-  const context = vm.createContext({captureSystemScope:()=>({systemId:"refund"}),isCurrentSystemScope:()=>true,
-    currentExternalSystems:[{gs_name:"historical-system"}],scanCatalog:null,renderKnowledgeTree:()=>{},
-    element:(id)=>id === "dependency-list" ? list : status,
+    gaps:[{system_id:"report",code:"MISSING_TOPIC",message:"缺少Topic配置"}],
+  };
+  const context = vm.createContext({
     textNode:(tag,text)=>({tag,text,children:[],append(...items){this.children.push(...items);},appendChild(item){this.children.push(item);}}),
-    api:async(url,options)=>{requests.push({url,options});return catalog;},
   });
-  vm.runInContext(sourceFunction("appendRelationEvidence") + sourceFunction("renderSystemRelations") + sourceFunction("loadDependencies"), context);
-  await vm.runInContext("loadDependencies()", context);
-  assert.deepEqual(requests, [{url:"/systems/refund/relations",options:undefined}]);
+  vm.runInContext(sourceFunction("appendRelationEvidence") + sourceFunction("appendDependencyEvidence"), context);
+  vm.runInContext("appendDependencyEvidence(dependencyList, catalog)", Object.assign(context, {dependencyList:list, catalog}));
   const output = JSON.stringify(nodes);
-  for (const content of ["上游", "下游", "第 1 层", "dsf.resource.core", "1 个引用接口", "DSF", "MQ", "src/Client.java:12", "scan-booking", "缺少Topic配置"]) assert.ok(output.includes(content), content);
-  // 已闭合MQ关系的下游即使不在DSF外部引用中也要显示，并保留扫描给出的层级。
-  assert.ok(output.includes("report · 第 2 层"));
-  // 系统关系始终读取latest；它不能覆盖知识库已选历史扫描的外部引用树。
-  assert.equal(vm.runInContext("currentExternalSystems[0].gs_name", context), "historical-system");
+  for (const content of ["DSF", "MQ", "src/Client.java:12", "scan-booking", "缺少Topic配置"]) assert.ok(output.includes(content), content);
 });

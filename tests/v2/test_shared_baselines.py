@@ -411,6 +411,26 @@ def test_creation_refresh_exposes_resumable_state_after_submitter_exit(monkeypat
     assert progress["status"] == "FAILED" and progress["run_id"] == run.run_id
 
 
+def test_shared_rescan_uses_local_resource_filter_not_logical_environment():
+    """重扫使用本机已配置的test/auto filter，不能把逻辑环境uat直接当后缀。"""
+
+    service, run = creation_service()
+    run.dependency_artifact_id = "dependency-one"
+    run.environment_id = "uat"
+    service.application.local_settings = SimpleNamespace(
+        read_resource_config_environment=Mock(return_value="test"))
+    service.application.source_analysis = SimpleNamespace(
+        analyze_shared=Mock(return_value=SimpleNamespace(scan_id="scan-new")))
+    service.store.get_baseline = Mock(return_value=SimpleNamespace(selected_revision="release/first"))
+    service._checkpoint = Mock()
+    service._scan(run, Path("/unused-source"))
+    request, source = service.application.source_analysis.analyze_shared.call_args.args
+    assert request.environment == "uat"
+    assert request.resource_config_environment == "test"
+    assert source.baseline_id == run.baseline_id
+    assert run.scan_id == "scan-new"
+
+
 def test_resource_exception_keeps_knowledge_stage_and_partial_outcome(monkeypatch):
     """资源连接异常保存失败结论仍继续知识生成；最终为PARTIAL而不是反复卡在资源阶段。"""
 

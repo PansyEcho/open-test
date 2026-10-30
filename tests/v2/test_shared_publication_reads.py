@@ -196,7 +196,7 @@ def test_batch_reads_fail_closed_on_corrupt_compressed_content(publication):
 
 @pytest.mark.parametrize("view", ["published", "mine"])
 def test_interface_summaries_skip_knowledge_bodies_and_keep_visibility(publication, monkeypatch, view):
-    """列表摘要与完整列表可见范围一致，只读用途摘要，不传输知识正文或其他员工草稿。"""
+    """列表摘要保持完整列表的身份可见范围，额外返回索引计数且不下载契约或知识正文。"""
 
     service, database, scope = publication
     for identity in range(1, 4):
@@ -208,13 +208,15 @@ def test_interface_summaries_skip_knowledge_bodies_and_keep_visibility(publicati
     queries = observe_queries(database, monkeypatch)
 
     summaries = service.list_interface_summaries(scope, view)
-    # 身份、状态和修订字段逐项与完整列表一致，只是正文换成摘要。
-    assert [{key: value for key, value in item.items() if key not in {"operation_summary", "has_knowledge"}} for item in summaries] == [
+    # 身份、状态和修订逐项一致；新增Case计数独立验收，不能误视作完整详情字段。
+    assert [{key: value for key, value in item.items() if key not in {"operation_summary", "has_knowledge", "case_count"}} for item in summaries] == [
         {key: value for key, value in item.items() if key not in {"contract", "knowledge"}} for item in full]
+    assert all(item["case_count"] == 0 for item in summaries)
     assert [item["operation_summary"] for item in summaries] == [item["contract"]["operation_summary"] for item in full]
     assert all(item["has_knowledge"] for item in summaries)
     assert len(queries) == 3 and "knowledge_json IS NOT NULL" in queries[-1][0]
     assert "COMPRESS(c.knowledge_json)" not in queries[-1][0]
+    assert "COMPRESS(c.contract_json)" not in queries[-1][0]
     assert "PRIVATE" not in json.dumps(summaries, ensure_ascii=False)
 
 

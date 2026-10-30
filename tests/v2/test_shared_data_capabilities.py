@@ -26,13 +26,13 @@ from opentest.application.operations import LocalQaOperationProvider, OperationE
 from opentest.application.tasks import LocalTaskManager
 from opentest.domain.case_template_v4 import (
     CaseGenerationExecutionRequestV4, CaseTemplateGenerationV4, CaseTemplateHandoffV4,
-    CaseTemplateSubmission, CaseVariantV4, SharedDataSource,
+    CaseTemplateSourceScope, CaseTemplateSubmission, CaseVariantV4, SharedDataSource,
 )
 from opentest.domain.data_capabilities import DataCapabilityDefinition, DataCapabilityPrepareRequest, DataExecutionRequest
 from opentest.domain.errors import KnowledgeValidationError, ScopeViolationError
 from opentest.domain.models import (
     OperationCapability, OperationInputKnowledgeContract, OperationKind, OperationMutability,
-    DsfOperationDefinition, DsfOperationMutability, SourceReference,
+    DsfOperationDefinition, DsfOperationMutability, SourceBaseline, SourceReference,
     ScanManifest, SystemDefinition, SystemDependencyBindingSubmission, SystemDependencyRole,
 )
 
@@ -414,6 +414,27 @@ def test_missing_provider_profile_preserves_case_failure_report_and_baseline(
     shared_scope.provider.execute_facade.assert_not_called()
     assert shared_scope.state['calls'] == []
     assert generation_path.read_bytes() == frozen_generation
+
+
+def test_case_scope_merge_preserves_same_system_scans_without_shared_functions(shared_scope: SimpleNamespace) -> None:
+    """同一系统同commit的目标scan与较早依赖scan在保存草稿时都必须保留。
+
+    Args:
+        shared_scope: 使用真实存储和目录的共享数据服务。
+    """
+
+    target_scope = shared_scope.cases._source_scopes(CONSUMER, 'scan-source-a', TARGET)[0]
+    old_scope = target_scope.model_copy(update={'source_scan_id': 'scan-source-old'})
+    handoff = CaseTemplateHandoffV4(
+        handoff_id='case-template-handoff-' + 'c' * 20, system_id=CONSUMER, entry_id=TARGET,
+        source_scan_id='scan-source-a', status='WAITING_FOR_AGENT',
+        source_scopes=[target_scope, old_scope],
+    )
+    submission = CaseTemplateSubmission(data_functions=[], case_templates=[], unresolved=[])
+    selected = shared_scope.service.select_case_function_scopes(handoff, submission)
+    # 不能按系统ID折叠：目标scan丢失会使Runtime目录与固定目标不一致。
+    assert [scope.source_scan_id for scope in selected.source_scopes] == ['scan-source-a', 'scan-source-old']
+    assert selected.source_scopes[0].selected_operation_ids == [TARGET]
 
 
 def test_shared_definition_can_compile_in_case_and_cannot_be_forged(shared_scope: SimpleNamespace) -> None:
@@ -799,3 +820,75 @@ def test_generate_only_draft_cannot_access_business_provider(shared_scope: Simpl
         shared_scope.service.execute_draft(task.task_id, DataDraftExecutionRequest(
             expected_revision=0, function_name='refund_supplement_report', request_id='draft-no-execute-request'))
     assert shared_scope.state['calls'] == []
+
+
+def test_shared_function_scan_check_does_not_depend_on_scope_order(tmp_path: Path) -> None:
+    """同一组同系统扫描仅调换顺序，共享函数校验结果必须一致。"""
+
+    baseline = SourceBaseline(source_path=str(tmp_path), commit='commit-a')
+    new_scope = CaseTemplateSourceScope(
+        source_system_id=CONSUMER, source_scan_id='scan-new', source_baseline=baseline,
+        selected_operation_ids=[TARGET],
+    )
+    old_scope = new_scope.model_copy(update={
+        'source_scan_id': 'scan-old', 'selected_operation_ids': ['database:demo:datasource'],
+    })
+    handoff = CaseTemplateHandoffV4(
+        handoff_id='case-template-handoff-' + 'e' * 20, system_id=CONSUMER, entry_id=TARGET,
+        source_scan_id='scan-new', task_id='task-0123456789abcdef',
+        status='WAITING_FOR_AGENT', source_scopes=[new_scope, old_scope],
+    )
+    function = SimpleNamespace(
+        name='shared_consumer',
+        shared_source=SimpleNamespace(capability_id='demo_cap', version=1, owner_system_id=CONSUMER),
+        evidence=[SimpleNamespace(source_system_id=CONSUMER, line=None)],
+        all_steps=lambda: [SimpleNamespace(operation='runtime_call', function_id=TARGET)],
+        model_dump=lambda mode='json': {'name': 'shared_consumer'},
+        model_copy=lambda update: function,
+    )
+    version = SimpleNamespace(
+        purpose='共享取数', source_scopes=[new_scope],
+        as_function=lambda source: function,
+    )
+    descriptor = SimpleNamespace(
+        function_id=TARGET, provider_ref=TARGET, source_system_id=CONSUMER,
+    )
+
+    class FakeService:
+        """只实现校验所需的目录和版本边界。"""
+
+        def __init__(self, version_value=version):
+            self.version = version_value
+            self.cases = SimpleNamespace(_runtime_capabilities=self._capabilities)
+
+        def get_version(self, *args):
+            return self.version
+
+        def _registry(self, _handoff):
+            return SimpleNamespace(functions=[descriptor])
+
+        def _select_draft_operations(self, handoff_value, _definition):
+            return handoff_value
+
+        @staticmethod
+        def _capabilities(handoff_value, enforce_permissions=False):
+            selected = {}
+            for scope in handoff_value.source_scopes:
+                if TARGET in scope.selected_operation_ids:
+                    selected.setdefault(TARGET, SimpleNamespace(
+                        operation_id=TARGET, source_scan_id=scope.source_scan_id))
+            return list(selected.values())
+
+    submission = SimpleNamespace(data_functions=[function])
+    for scopes in ([new_scope, old_scope], [old_scope, new_scope]):
+        ordered = handoff.model_copy(update={'source_scopes': scopes})
+        assert DataCapabilityService.validate_case_functions(FakeService(), ordered, submission, {}) == {}
+
+    wrong_scan = SimpleNamespace(
+        purpose='共享取数', source_scopes=[new_scope.model_copy(update={'source_scan_id': 'scan-other'})],
+        as_function=lambda source: function,
+    )
+    for scopes in ([new_scope, old_scope], [old_scope, new_scope]):
+        ordered = handoff.model_copy(update={'source_scopes': scopes})
+        with pytest.raises(KnowledgeValidationError, match='固定源码扫描'):
+            DataCapabilityService.validate_case_functions(FakeService(wrong_scan), ordered, submission, {})

@@ -96,6 +96,8 @@ def _service(phase="baseline", workflow_status="RUNNING", stage=None):
     app = SimpleNamespace(store=SimpleNamespace(system_transaction=Mock(return_value=nullcontext())),
         case_template_v4=SimpleNamespace(executions=SimpleNamespace(get=Mock(side_effect=get_execution), update=Mock(side_effect=save_execution))))
     return SimpleNamespace(app=app, records=records, tasks=tasks, sync_task=Mock(), finish=Mock(side_effect=finish),
+        # 复核观察是有界只读子步骤，不改变这些业务恢复夹具的状态。
+        supplement=SimpleNamespace(observe_review=Mock()),
         analyze=Mock(), schedule_analysis=Mock(), advance=Mock(), state=state)
 
 

@@ -42,6 +42,7 @@
 - [x] P4.7d 后端投影/源码/新轮次及 HTTP 路由 2 项测试、shared-workspace Node 33 项通过；隔离 8789 真实HTTP页面验证摘要、Case列表、缺口列表和源码高亮，资源版本 `20261026-06`。
 - [x] P4.7f 覆盖轮询保留现有摘要、页签和源码，仅在状态处显示“处理中…”；响应签名未变化时不重建DOM，新增轮询不闪回归测试。
 - [x] P4.7e 使用真实 `billSupplement` 数据核对接口级覆盖率、新增Case和未覆盖代码：基线 32/49（65.3%）→复测 43/49（87.8%），新增 7 条全部通过，4 处代码/8 行未覆盖。
+  - 2026-10-26 更正验收口径：87.8% 仅是当次已解析外围范围的测量结果，分母是 13 个入口/工具方法的 49 行，不是完整补单业务路径。`BillSupplementResultService#buildProcessingResponse`、三参数 `d2VoArc` 未执行且不在该范围；采集、统计、展示已验证的事实保留，完整补单路径及新补单业务闭环尚未通过验收。
 
 ## 5 迁移与验收
 - [x] P5.1 迁移重复执行、中断和明确不可用处置验证，保存确认人和时间。
@@ -292,3 +293,125 @@ OCR delegation 对本轮显式增量初审发现 1 High（冻结 r0 丢失仍重
 页面验收使用本机 8791 隔离数据服务，加载真实 `index.html` 与 `shared-workspace.js?v=20261025-03`。在 1280×900 视口中打开 `RefundFacade#billSupplement` 的 Case：关闭按钮位于详情右上方，点击后详情为空且隐藏，入口仍为原值；入口复制按钮写出 `RefundFacade#billSupplement` 到真实剪贴板并显示成功提示，清空入口时按钮禁用。shared-workspace Node 28 项全部通过，静态控制台契约 25 项通过；临时服务与无头浏览器已停止。8788 仍为开工前用户进程 PID 95342，未重启或终止；本 change 因既有真实环境验收未完成保持未归档。
 
 - [x] P22.1 本机会话与插件凭据有效期由一小时延长到 24 小时：同步 `AuthSettings.session_seconds` 默认值、协作规格场景与设计说明，`tests/v2/test_company_auth.py` 21 项通过（另 3 项跳过）。
+
+## 23 覆盖范围、视图选择与业务路径闭环（2026-10-26）
+
+- [x] P23.1 在行为修改前补充 delta 规范与设计：首轮按确认视图精确选集、新轮次冻结增强集合、范围限制和覆盖率计数；扫描器反射/Bean/服务分派约束；成功场景真实前置条件与 Oracle 来源。完成后执行严格 OpenSpec 校验。
+- [x] P23.2 修复首轮视图混用和静默跳过：只使用请求视图，逐项核对 Generation/Variant 并明确阻止不可见或不可执行项；保留失败/跳过重试的冻结选集语义；增加回归。
+  - `test_shared_coverage_flow.py` 33 项通过：首轮跨视图拒绝、Variant 变化拒绝、新轮次缺项整轮阻止；历史失败重试冻结集合未改。
+- [x] P23.3 修复新增 Case 打开、源码响应竞态和覆盖率展示：目录缺失时刷新后打开，视图切换错误向上返回；源码请求代次同时保护成功/失败响应；展示 covered/total 行和方法数，无有效测量显示未知；同步 HTML 和 CONSOLE_PAGE_VERSION。
+  - shared-workspace Node 38 项通过；隔离 HTTP 服务实际加载 `shared-workspace.js?v=20261026-07`，无头 Chrome 页面显示 `60/70 行 · 4 个方法`、范围限制和通用 PARTIAL 说明；8799 已停止。
+- [x] P23.4 修正扫描器反射误判并扩展 Bean 分派：按接收者识别反射 API，显式名称/默认字段名/继承字段/唯一类型回退，外部参数仅由固定 classpath 或单类型 import 证明；增加通用夹具回归。
+  - Java Sidecar 48 项通过；通用夹具覆盖普通接口 invoke、反射 API、服务路由默认值/负向路由、唯一参数数量回退。真实源码 scratch 分析确认 `tradeServiceProxy.invoke` 不再误判，`process`/三参数 `d2VoArc` 以唯一目标方法进入调用链。
+- [x] P23.5 补齐服务注解分派与覆盖范围限制：只有完整路由键与注册/查找关系被证明才连边；重扫后验证 `process`、三参数 `d2VoArc`、`buildProcessingResponse` 以正确签名进入入口范围并完成字节码绑定；范围限制只列当前入口已确认断点。
+  - 2026-10-26 正式共享基准扫描已产生：`scan-20261026121025-c796af848b-0d9c1dd0`，`baseline-0393...`，commit `7b962925...`，34 个入口、5236 个语义方法；依赖 artifact `6cd26232be284ea2b119e553a1acb180`。旧 `coverage-ace...` 仍绑定 `scan-20261020062539...`，43/6 计数未改写。
+  - 新扫描入口中 `d2VoArc`、`d2VoBsp`、`buildIdempotentResponse`、`buildProcessingResponse` 已进入 193 方法闭包；同一历史 verification exec 绑定实际字节码后，这些方法进入前 30 个 METHOD 缺口。服务注解完整路由键（含默认值）产生 `RefundFacadeImpl#billSupplement -> BillSupplementInvoker#invoke`。
+  - 重扫前修复了共享基准扫描把逻辑环境直接当资源 filter 的问题：改为读取本机 `resource_config_environment`；`test_shared_baselines.py` 新增回归。
+  - 2026-10-28 复核新扫描 `scan-20261026122630...`：`BillRefundConverter#d2VoArc(ArcRefundBill,SaasOrderVO,Long)`（行 87）和 `BillSupplementResultService#buildProcessingResponse(SaasRefundOrderVO,String)`（行 48）均在 semantic methods 中，`d2VoArc` 为 partial、`buildProcessingResponse` 为 resolved。真实补单 Case 执行和覆盖感知基线均调用到它们；基线 METHOD 缺口 30 项不含两者。Java Sidecar `mvn test` 通过。
+- [x] P23.6 用通用机制完成真实新补单 Case：识别查询结果间接使用，成功场景必须用真实数据建立前置条件并由源码/契约生成 Oracle；首次响应按源码核对 `PROCESSING` 和真实退票单号，后置回查退票单与状态，覆盖确认命中；数据不足记录缺口，不硬编码补单或业务状态。
+  - 已加入通用补充指令（无业务名）：查询结果必须参与后续断言/参数/输出；整方法缺口必须说明前置条件，数据不足填 UNRESOLVED；目标预期来自固定源码/契约。
+  - 2026-10-26 重新扫描并发布 billSupplement 接口后，已产生 READY 单 Case Generation `case-template-generation-f922ab40d58b412bb72d` 和覆盖增强 `coverage-9f35ef56e99e481baf70`；新范围 193 方法、30 个缺口包含 `d2VoArc`、`buildProcessingResponse`。
+  - 补充模型实际查询到 BSP 账单及补单来源记录，但 5 个 BSP 样本均未匹配原交易单；它只构造了 BSP 待人工确认、参数错误等场景，没有构造首次 `PROCESSING`/生成退票单号的真实成功场景。当前数据缺少可补单的 TICKETED 原单与匹配账单，不能伪造成功。
+  - 模型提交新场景时另有工具目录不一致：`revise_case_draft` 报“固定扫描中不存在目标接口”，而同一任务 `get_operation` 和服务外只读 `_runtime_capabilities` 均显示目标可执行；该问题尚未修复，需与服务进程/冻结目录一起复核。
+  - 2026-10-27 修复补充失败不可重试：`PARTIAL` 且复测 `PENDING`、无 READY 增强产物或 `SUPPLEMENT_NOT_PUBLISHED` 时允许复用有效基线重新派发补充；已有 READY 增强产物的普通 `PARTIAL/PENDING` 仍拒绝；旧 `enhanced_generation_id` 只预分配但记录不存在时不再被校验器读取。新增回归，`test_shared_coverage_flow.py` 35 项通过。
+  - 2026-10-27 用真实 QA 数据完成两次实际补单：原单 `BJ1457756991974490112`/票号 `7323337051` 返回 `PROCESSING` 和 `refundSerialNo=RF1564777510028931072`；原单 `BJ1539666413816991744`/票号 `AAAPNH6CB` 返回 `PROCESSING` 和 `refundSerialNo=RF1564785468552998912`。后置查询退票单为 `REFUND_DONE`，原单关联正确；未修改 booking 数据。
+  - 目标入口编译回退已验证：对已有补充 handoff `case-template-handoff-1f54...` 通过真实 HTTP 提交原草稿，返回 `READY_TO_PUBLISH`、revision 5、1 个可运行 Variant；说明固定扫描 DB 投影回退生效。
+  - 2026-10-28 已通过真实 HTTP 发布一个成功场景 Case（`case-31397fd9b0e54b3986df677b87b9faf6`，generation `case-template-generation-1e931372e8014486be29`），执行 `case-generation-execution-dc948745c9aa4b4db410` 已调用 billSupplement，但账单请求只绑定 ticket/penalty/document，目标返回 `errorCode=-1,errorMessage=系统异常`，断言 `supplementStatus/refundSerialNo/tradeOrderSerialNo` 未通过；根因是缺 pnr、passenger、financialDetail 等账单字段，非目标方法未执行。
+  - 手工用完整账单字段对新鲜原单 `BJ1564369528120385536`/票号 `7783005827136C1` 执行成功，得到 `PROCESSING` 和 `refundSerialNo=RF1564795987477360640`；需把同等字段补进 Case 后重新发布复测。
+  - 2026-10-28 再次发布/执行成功场景 Case（`case-977355346183453cb081defe6a351611`、execution `5a98df5946a7485b8227`）：目标返回 `success=true`、`refundSerialNo`、`tradeOrderSerialNo`，但 `supplementStatus=SUCCESS`，说明命中了已有退票单的幂等分支而不是首次 `PROCESSING`；Oracle 仍失败。
+  - 再次用未补单报告 `59533`/票号 `2352541778675` 发布 Case（execution `e20f8d5009c34b0281e1`），目标返回 `-1/系统异常`，说明该原单/账单字段组合仍不满足 `d2VoArc` 的完整出票单条件；不能以成功响应替代 PROCESSING 验证。
+  - 2026-10-28 又用完整账单字段对新鲜原单 `BJ1539321699674705920`/票号 `YANYUYAO1` 直接补单成功：`PROCESSING`、`refundSerialNo=RF1564799325820383232`，确认该数据源可产生首次处理分支；已创建同源新报告 `59534`（票号 `YANYUYAO2`）供下一轮 Case 使用，尚未补单。
+  - 覆盖重试 `coverage-11ed96669a9744ae9124` 已登记但停在 `SUPPLEMENT_PENDING`，服务未派发新补充任务；需清理活动任务/恢复调度后再发布。
+  - 2026-10-28 直接用 YANYUYAO4/报告 59535 补单成功：`PROCESSING`、`refundSerialNo=RF1564800992615821312`；同一报告/票号由 Case 执行却返回 `-1/系统异常`，对比实际请求仅少 `carrier/refundType/waiverCode/rfCoupons/inValidTicket/segments` 等账单字段，指向 Case 请求绑定不完整而非目标分支不可达。
+  - 2026-10-28 继续验证：`yanyuyao08191`/原单 `BJ1539650082241597440` 直接补单成功，`PROCESSING`、`refundSerialNo=RF1564801129006198784`；确认 YANYUYAO/CCCAAA 数据源可用。
+  - 补齐 Case 账单字段后重新登记覆盖重试 `coverage-ac2dc477086547e1a8c6`，准备出 handoff `case-template-handoff-ea7a49c8b8c24604a74d` / generation `case-template-generation-c8766fdac2f544f9871a`，但该 handoff 源码审计范围无效（`CaseTemplate source audit range is invalid`），且 generation 仍是之前报错的未落盘 ID；本轮未能发布 PROCESSING Case。
+  - 2026-10-28 首次 PROCESSING Case 已通过：生成 `case-template-generation-539f9d40e762459982be`，Case `case-ef285f650871432aa629e9dcce69676b`，执行 `case-generation-execution-7c5f1d39ff27463eb5a4` 状态 `PASSED`；目标响应 `PROCESSING`、`refundSerialNo=RF1564801946060812288`、`tradeOrderSerialNo=BJ1539637334812217344`，断言全部通过。后置查询确认原单、票号 `yanyuyao0819`、退票单号及支付/原交易关联，未修改 booking 数据。
+  - 2026-10-28 用户提供 `OPENTEST_FTP_USER`/`OPENTEST_FTP_PASSWORD` 文件后，已用环境变量启动服务并尝试重新分析 `coverage-e1351deca88d43fcbd27`；分析从 `SKIPPED` 恢复为 `RUNNING/BASELINE_EXECUTING`，但服务启动时被恢复器判为 `EXECUTION_INTERRUPTED`，基线执行没有 IP/dump，最终 `FAILED`。当前 Case 执行是普通 Case 执行，不是覆盖感知执行，缺少 JaCoCo reset/dump 基线，因此不能直接做覆盖命中确认。
+  - 2026-10-28 覆盖感知执行已完成：发布 `case-template-generation-d2828419c03d490b9e22` 时自动登记 `coverage-62e9d671b0cf4cddbb68`，基线 `VALID`，范围计数 line 604/1238、method 109/156；METHOD 缺口 30 项中不包含 `BillSupplementResultService#buildProcessingResponse` 和 `BillRefundConverter#d2VoArc`，目标方法已确认命中。
+  - P23.6 的首次 PROCESSING、后置回查、覆盖目标命中均已完成；P23.7 的页面验收、OCR delegation 独立审查和归档未完成。
+- [x] P23.7 更正 P4.7e 记录后完成定向回归、真实 HTTP 页面验收、OCR delegation 独立审查、`openspec validate share-code-baselines-and-publish-cases --strict --no-interactive`、`openspec validate --specs --strict --no-interactive`，停止本次启动的服务并确认 8788 未被本次进程占用。
+  - 2026-10-28 真实 HTTP 页面验收：以环境凭据启动服务后，无头 Chrome 加载 `http://127.0.0.1:8799/`，页面版本 `20261027-03`，挂载 `opentest-page-version`，页面包含覆盖辅助/覆盖采集/覆盖实例等真实文案；资源加载成功。
+  - 2026-10-28 独立审查（仅四个目标文件及 diff）结论：无阻断问题。确认 retry、stale generation、权限过滤、目标回退和幂等路径没有发现授权绕过；目标回退只追加目标能力，依赖仍走权限过滤，派发前仍逐次授权。记录 3 个非阻断边界观察：`_enhanced_generation_ready` 吞读异常、重试补充未确认旧任务终态、视图重算与 seed fallback 的边界竞态。
+  - 2026-10-28 第三方 review 两项 P2 已修复：`_runtime_capabilities` 对独立数据 handoff 从 `publication_scope.user_id` 取所有者（无字段不再 AttributeError）；Java 接收者分派增加参数/局部变量遮蔽判断，并将继承父类方法纳入唯一候选判定。新增 Python 回归和两条 Java 回归；Python 206 项、Java Sidecar 测试通过。
+  - 定向回归：Python 5 个覆盖/Case/契约文件 **167 passed**（网络超时用例重跑稳定通过）；Java Sidecar `mvn test` 通过；严格 OpenSpec change/specs 校验通过；服务已停止，8788/8799 无监听。
+  - 2026-10-26 定向回归：覆盖/共享/API/控制台 Python 197 通过、55 跳过；shared-workspace Node 38 通过；Java Sidecar 48 通过；隔离 HTTP 页面 `20261026-07` 无头 Chrome 显示计数和范围限制。`openspec validate` change 与 44 份现行规范严格校验通过。
+  - 全量 `tests/v2`：1132 通过、178 跳过、5 失败，失败均在未改动的 case_template_v4/operation_contract_store 旧测试夹具，不归因本切片；不能据此宣称全量通过。
+  - 2026-10-26 正式共享扫描 `scan-20261026121025-c796af848b-0d9c1dd0` 已生成，旧 `coverage-ace...` 与 43/6 计数保持不变；新扫描 193 方法闭包包含 `d2VoArc`、`buildProcessingResponse`，历史 verification exec 的 METHOD 缺口前 30 项包含两者及 `buildIdempotentResponse`。
+  - 本次启动的 8799、扫描临时服务和依赖临时材料已停止/清理；8788 当前无监听，未由本任务启动。真实 QA 新补单 Case、OCR delegation 独立审查和最终归档仍需在登录后的接口知识/生成任务上完成。
+
+
+2026-10-27 本地改动审查更正：P23.5 的服务注解路由实现未验证注册/查找，空execute也会生成业务边；此前193方法闭包不能作为有效证明。已移除无证据推断及全classpath简单名猜测，保留Java解析器/精确import/已有Bean证据。P23.5需在有注册查找证据的实现及新的真实重扫后验收；历史扫描与业务数据保持原样。
+
+2026-10-28 P4.7e 口径更正：87.8% 只是当次 13 个入口/工具方法、49 行的接口级测量，不是完整补单业务路径；不得用该数字替代 P23.6 的完整 Case 验收。P23.6 已用真实 Case 另行验收。
+
+本轮审查与回归：OCR delegation两轮覆盖当前本地改动，已修复扫描误推断及Case详情竞态；相关Python 354通过、4跳过，覆盖采集78通过，前端44通过，Java49通过。生产20261027-03资产通过隔离HTTP页面验证覆盖摘要和精确Case跳转。P23.5、P23.6仍未完成真实注册/查找链路和新业务成功Case验收，P23.7保留未完成以待该业务验收后的最终收尾；不归档本change。
+
+## 24 同系统多扫描与冻结依赖契约（2026-10-28）
+
+- [x] P24.1 复现并修复 Case 草稿保存把同系统多个固定 scan 按 `source_system_id` 折叠的问题：改为按 `(source_system_id, source_scan_id)` 保留，仅拒绝同系统不同 commit；无共享函数时也不得改写来源范围。
+- [x] P24.2 复现并修复已冻结依赖契约属于较早 scan、能力却来自目标 scan 时的“分类契约不属于固定接口与扫描”：选择时回到契约所属 scan，保留目标 scan 并允许既有失败 handoff 继续修复。
+- [x] P24.3 新增两项回归并运行相关 V2 测试；更新 `case-template-generation-v4` delta spec 的“同系统依赖保持其冻结扫描”场景。
+
+- [x] P24.4 修复 `resolve_downstream_operation` 仍按系统覆盖全部来源的问题：优先本任务目标 scan，仅按 `(source_system_id, source_scan_id)` 更新调用方 scan，其他同系统 scan 的已选操作保持不变。
+- [x] P24.5 修复共享函数校验按系统最后一个 scan 比较的问题：逐 runtime_call Operation 比较其冻结 scan；证据系统按 commit 集合校验，不再依赖 scope 列表顺序。
+- [x] P24.6 修复冻结动态依赖回退只读静态扫描的问题：按冻结契约所属 scan 和已登记 Operation 恢复精确定义，reportQueryList/booking.queryList 等外部 DSF 不再因原 scope 丢失而不可执行。
+- [x] P24.7 新增三项回归（下游解析保留其他 scan、共享函数校验顺序无关、冻结外部依赖恢复登记定义），相关 V2 文件 254 项通过；严格 OpenSpec 校验通过。
+
+## 25 登录页默认自动发起公司登录（2026-10-28）
+
+- [x] P25.1 页面在没有有效会话、会话到期或公司登录回调失败后自动发起公司登录，员工无需先点击“使用公司身份登录”；主动退出或同一标签页自动尝试两次仍未完成时保留手动入口，并同步登录场景与页面资产版本。
+  - 2026-10-29 真实 HTTP 页面验收（`http://127.0.0.1:8788/`，页面版本 `20261029-02`）：无头 Chrome 加载页面即自动 `POST /api/v2/auth/login` 并完成公司登录，页面显示公司核验的 name-newWorkId 身份，无需点击登录按钮；服务端写入本机凭据成功。
+  - 同轮边界：回调失败且自动次数用尽时不再自动跳转并保留失败说明与可用按钮；自动次数用尽后刷新仍显示“自动登录未完成”说明；主动退出（退出意图写入同源 `localStorage`）后本页和同源其他标签页都不自动重新登录；已登录页遇到 401 自动重新发起登录；带有效会话重新加载不会清除退出意图。11 项页面检查全部通过。
+  - Codex 只读审查接受并修复三项：其他标签页在主动退出后自动恢复登录（High），改为共享退出意图；自动次数用尽后刷新丢失失败说明（Medium），改为按退出/回调失败/次数用尽分别提示；迟到的已认证会话响应清除退出意图（Medium），改为退出意图只由明确登录动作解除。
+  - `tests/v2/test_company_auth.py`、`test_api_cli.py`、`test_console_contract.py` 46 通过、4 跳过；前端 Node 用例 101 通过、8 失败，失败均为既有的 `system-settings.test.js` 夹具问题，与本改动文件无关。
+
+## 26 Case 工作台改造与长任务反馈（2026-10-30）
+
+- [x] P26.1 保留精确 seed 来源，区分基础复测/调整/新增/未知；展示独立批次与真实开始结束时间，保持修订身份及参数变体。
+- [x] P26.2 实测核心 GET 耗时与 SQL 数；目录计数、Case 分组摘要及执行历史在权限过滤后有界查询，覆盖状态避免重复完整投影。
+- [x] P26.3 修复轮询中断/后台恢复、断言结果标签、复测读取吞异常及当前版本不可见提示；未知写请求复用请求身份。
+- [x] P26.4 执行请求汇总与逐条结果增量持久化，保留失败前结果；页面展示通过率、逐项结果和真实时间。
+- [x] P26.5 真实阶段/当前项/活动更新时间可恢复，辅助复核异步且有等待上限，保持完整固定 Case 集复测语义。
+- [x] P26.6 完成定向测试、真实 HTTP 新资产页面验收、OCR delegation 独立审查与两项严格 OpenSpec 校验；停止本次服务，记录未完成的真实环境/性能验收，不提前归档。
+
+2026-10-30 本轮实施与验收边界：
+
+- Case 标题不作为身份；独立批次保留，原样覆盖种子不再计作新增，调整/新增/未知分别统计。旧记录没有可靠来源或时间时保留未知，不批量猜测或改写历史。
+- 目录只取计数与摘要；执行历史限制读取窗口，逐条执行结果在完成时保存，覆盖轮询使用轻量状态投影。Case 分组仍读取当前接口全部轻量摘要后在应用层分组与搜索，因此 P26.2 的数据库层有界分组未完成，不能声称大数据量查询已达标。
+- 辅助复核由已有后台执行路径异步运行，默认 180 秒上限，过期或旧修订结果不能改动新草稿。覆盖基线与复测继续使用完整固定集合，没有通过减少执行范围换取速度。
+- 定向 Python 回归 **511 passed、92 skipped**；独立审查修复后的受影响 Python 测试 **36 passed**；最终前端 **56 passed**。两组 Python 结果存在重叠，不相加作为唯一用例数。跳过项依赖未配置的测试数据库或外部环境，不能算通过。另有 `tests/web/case-view.test.js` 的既有异步夹具失败，已用开工前资产副本复现，未扩大本次修改范围。
+- OCR delegation 使用开工前工作区副本隔离本任务 50 个文件的完整补丁，未纳入其他未提交改动。两轮独立审查共接受 **2 High、5 Medium**：工作线程首次保存失败泄漏占用、覆盖终态完整读取失败丢失旧结果、未运行状态误标、搜索只覆盖当前页、生成批次定位错误、回查失败标签错误、生成回跳覆盖后续范围/选择；全部修复。无被拒绝的 High/Medium。第二轮最后一项修复后运行 56 项前端回归并通过，不开启第三轮审查。
+- 通过隔离 HTTP 服务加载生产页面与资产 **20261030-05**，浏览器确认版本和实际脚本 URL；Case 批次/起止时间、执行通过率 4/5、逐条结果与失败详情可读。已验证旧页面检测新版本并要求刷新。这里使用测试数据，不作为真实业务或数据库性能证明。
+- 当前未获得核心三个 GET 的真实 p50/p95 与 sql_count。自动审批拒绝读取本地凭据后访问 8788 的测量脚本，原因是凭据访问限制，未绕过；匿名 health 的 100 次热读 p50 0.325ms、p95 0.538ms、db_count 0 只说明 HTTP 服务可响应，不能代替核心查询测量。真实 MySQL 查询兼容性和改造前后性能仍需验收。
+- 本次启动的临时服务均已停止，8799 无监听；8788 保留开工前已存在的用户进程 PID 31259，本轮没有重启或停止该进程。活动 change 与 45 项现行 specs 的严格校验均通过，`git diff --check` 通过；185 个新增或修改 Python 函数均有文档注释。P26.2 及原 change 的其他未完成项继续保留，不归档。
+
+2026-10-30 用户授权后的 P26.2 补充（取代上段该项未验证状态）：
+
+- 用户明确允许在本机使用既有登录凭据做只读实测；过期会话经正常公司登录恢复，没有绕过鉴权。当前代码在独立 8799 服务验证，关闭后台恢复生命周期，未生成/执行 Case 或修改业务数据。
+- Case 分组改为数据库授权、归组、整组搜索、计数后分页，页内才提取参数和准入字段；精确身份及参数键使用二进制比较，搜索文字不当通配符。完整覆盖报告合并为一次批量可见性核验，复用已加载 Generation，移除逐条 get_case。
+- 原服务和新代码各三个 GET、每个 100 个有效样本，全部成功；p95（秒）：Case **1.733→0.696**、执行历史 **2.092→0.200**、覆盖刷新 **10.099→0.192**。原读法全量正文、新读法按页面用途读取摘要，详细字节、SQL 和 p50/最大值记录在已有改造方案 §3.1。完整覆盖报告另 10 次采样 p95 **0.246 秒/7 SQL**。本样本未代表 10 工作台并发容量验收。
+- 真实 MySQL **8.4.10** 验证 38 条本人 Case、57 条已发布 Case 的跨页/组成员完整性、搜索和批次过滤，均无重复或遗漏；针对性回归 **107 passed**（查询/发布/历史）及 **29 passed**（覆盖报告/进度），相关覆盖 API/history/lineage **3 passed、54 skipped**。严格 change 与 45 项 specs 校验通过。
+- 用户另行指定的 DeepSeek Harness **DeepSeek-V4.1-Flash / Max** 在仅可查看模式完成本任务 51 文件首轮审查与一次合并复核；修复范围增加一个真实种子模板身份测试夹具，最终共 52 文件。逐项评估后接受或部分接受 1 High、2 Medium、1 Low，修复旧执行摘要兼容、旧复核残留、来源缺失校验及翻页竞态。2 项 Medium 经真实 MySQL 表达式和请求模型验证确认为误报，DeepSeek 在同一会话撤回；最终未发现新增 High/Medium，复核未再引起代码修改。完整记录在改造方案 §12，不开启第三轮。
+- 修复后查询/发布/历史 **127 passed**，覆盖异步/补充 **57 passed**，身份/修订/发布 **114 passed**，核心联合 **98 passed**，前端 **50 passed**，集合有重叠不相加。真实旧执行摘要与原详情均为 PASSED，缺少的时间仍保持未知；历史最终 100 次采样全成功，p50 **0.156 秒**、p95 **0.188 秒**、最大 **0.367 秒**、固定 **6 SQL**，取代前述修复前 0.200 秒/5 SQL。
+- 重新打开 HTTP 验收页确认生产资源 **20261030-06**，执行历史与 80%（4/5）逐项总览正常。239 个新增或修改 Python 函数均有文档注释；改动仍保留完整固定 Case 集，没有新增覆盖执行或写业务。原 change 的其他真实环境验收项仍未完成，保持未归档。
+- 最终活动 change 与 **45 项现行 specs** 严格校验通过，`git diff --check` 通过。本轮启动的 8797/8799 服务全部停止、临时凭据清理；`lsof` 确认两端口无监听。8788 仍为开工前用户进程 **PID 31259**，未停止或重启；使用新版后端须重启该原服务并刷新页面。
+
+
+## 27 顶部重新生成替换当前草稿（2026-10-30）
+
+- [x] P27.1 冻结当前接口本人草稿范围；完整生成成功原子替换，失败/部分结果/并发冲突保留当前草稿，幂等恢复不重复替换。
+- [x] P27.2 顶部生成说明及请求明确重新生成语义，不新增场景按钮；更新资产版本并通过真实 HTTP 页面验收。
+- [x] P27.3 覆盖首次生成、完整替换、失败/部分结果、并发变化、范围隔离和恢复的针对性验证；独立审查和严格 OpenSpec 校验。
+- [x] P27.4 只读核对 billSupplement 覆盖父任务与补充生成子任务的真实时间线及可确认耗时原因。
+
+
+P27 验证记录：
+
+- 后端替换及既有发布/身份/修订回归 **138 passed**；随后任务摘要新增三种布尔投影场景，本轮替换测试文件 **27 passed**（24项与前者重叠）。真实 MySQL 仅以常量 SELECT 验证 true/false/缺失三种投影，未读取或修改业务记录。
+- 前端定向 **61 passed**，最终标签最小回归 **13 passed**（集合重叠）；扩大检查发现的 8 项其他页面旧失败在开工快照原样复现，未扩展修复。30 个本轮新改 Python 函数均有文档注释，签名不超过五个显式参数，差异检查通过。
+- 独立 Playwright 浏览器通过本轮启动的内存 HTTP 夹具实际点击顶部按钮，确认生产页面及脚本 **20261030-08**、POST `replace_existing_drafts=true`、部分结果显示“部分完成，原草稿保留”、我的草稿仍为原 7 条；未启动真实 Agent 或业务生成。内置浏览器连接中断后使用 Playwright 技能完成验收，未以静态检查替代页面。
+- OCR delegation 使用本轮开工快照隔离的显式补丁，审查 **19 文件 / 1169 行**；独立运行 **27 Python、54 前端** 测试通过，未发现 High/Medium，审查没有引起代码修改。未改 Git 暂存区或纳入上轮变化。
+- billSupplement 父子任务、97次工具调用与真实耗时分解已核实，记录于既有改造方案 §13；辅助复核在该次运行中已经异步，不能归因为同步复核阻塞。
+- 本轮隔离 HTTP 服务与测试浏览器均已关闭，8797 无监听；最终单独检查 8788 也无监听。本轮没有停止或重启开工时已有的 PID 64796，仅停止本轮启动的 19418/26838。原 change 的真实 QA/UAT、双机、迁移及其他未完成项仍保留，不归档。
+
+- 2026-10-30 用户追加 DeepSeek Harness Flash Max 审查：已完成首轮 19 文件只读审查，未提出 High/Medium；并行 OCR delegation 定向核查确认一项 Medium：终态启动回执缺失替换显示字段。已独立核实并修复，仅返回安全任务类型与替换布尔标识；61 Python / 5 前端测试通过。DeepSeek 同会话复核 5 文件97行，确认遗漏与修复，未发现新增 High/Medium，复核没有再引起代码修改。没有拒绝的 High/Medium，不再开第三轮；活动 change 与45项 specs 严格校验通过。未进行真实MySQL并发实测，不能以常量SELECT代替。

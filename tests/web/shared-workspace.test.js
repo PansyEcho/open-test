@@ -16,7 +16,7 @@ function loadFunction(context, name, source = sharedSource) {
 
 /** 构造个人基准与环境的最小浏览器上下文；不读本机偏好或发真实业务请求。 */
 function scopeHarness() {
-  const context=vm.createContext({sharedWorkspace:{baseline:{baseline_id:"base-a"},environment:"qa",caseView:"published",requests:new Map()},systemId:()=>"system-a",systemRequestGeneration:1,crypto:{randomUUID:()=>"isolated-request"}});
+  const context=vm.createContext({sharedWorkspace:{baseline:{baseline_id:"base-a"},environment:"qa",caseView:"published",requests:new Map()},systemId:()=>"system-a",systemRequestGeneration:1,URLSearchParams, crypto:{randomUUID:()=>"isolated-request"}});
   for (const name of ["sharedScope","sharedScopeCurrent","sharedPath","sharedRequestId"]) loadFunction(context,name);
   return context;
 }
@@ -171,7 +171,7 @@ function coverageHarness(coverage) {
     api: async path => { requests.push(path); return {coverage}; },
   });
   for (const name of ["sharedStatus", "sharedCoverageReason", "sharedCoverageSelectionCurrent",
-    "sharedCoveragePercent", "sharedCoverageAnchorCase", "sharedCoverageEntryRemoved",
+    "sharedCoveragePercent", "sharedCoverageCounts", "sharedCoverageAnchorCase", "sharedCoverageEntryRemoved",
     "sharedCoverageVerificationLabel", "entryPlacement", "sharedEntryDisplayName",
     "loadInterfaceCoverage", "renderInterfaceCoverage", "sharedCoverageSignature", "renderCoverageSummary",
     "renderCoverageCases", "renderCoverageCaseTable", "renderCoverageUncovered", "showCoverageSource",
@@ -183,8 +183,12 @@ function coverageHarness(coverage) {
 function interfaceCoverage(overrides = {}) {
   return {status: "COMPLETED", enhancement_id: "enhancement-a", updated_at: "2026-10-26T05:00:00Z",
     latest_at: "2026-10-26T05:00:00Z", reason_codes: [], scope_reason: "仅纳入可信已解析调用。",
-    baseline: {valid: true, status: "VALID", line: {percent: 40.0}, reason_codes: []},
-    verification: {valid: true, status: "VALID", line: {percent: 80.0}, reason_codes: []},
+    baseline: {valid: true, status: "VALID", line: {covered: 2, missed: 3, percent: 40.0},
+      method: {covered: 1, missed: 1}, reason_codes: []},
+    verification: {valid: true, status: "VALID", line: {covered: 8, missed: 2, percent: 80.0},
+      method: {covered: 3, missed: 0}, reason_codes: [],
+      scope_limitations: [{caller_class: "AbstractFacade", caller_method: "execute",
+        expression: "invoke", reason: "reflection_target_not_static", line: 120}]},
     added_case_counts: {total: 1, passed: 1, failed: 0, pending: 0},
     added_cases: [{case_id: "case-added", variant_id: "variant-added", generation_id: "generation-enhanced",
       title: "新增成功场景", view: "mine", verification: "PASSED"}],
@@ -204,6 +208,10 @@ test("接口覆盖增强按 operation 读取且不携带 case_id", async () => {
   assert.match(requests[0], /\/coverage\?operation_id=facade%3ARefund%23billSupplement/);
   assert.doesNotMatch(requests[0], /case_id=/);
   assert.ok(coverageTexts(panel).some(text => /80\.0%/.test(text)));
+  assert.ok(coverageTexts(panel).includes("8/10 行 · 3 个方法"));
+  assert.ok(coverageTexts(panel).some(text => text.includes("不代表完整业务路径")));
+  assert.ok(coverageTexts(panel).includes("范围限制"));
+  assert.ok(coverageTexts(panel).some(text => text.includes("AbstractFacade#execute → invoke")));
 });
 
 test("覆盖轮询内容未变化时不重建页面", async () => {
@@ -298,6 +306,114 @@ test("未覆盖代码按缺口读取固定源码并标出未覆盖行", async ()
   })(source);
   assert.equal(uncovered.length, 2);
   assert.ok(coverageTexts(source).includes("code-92"));
+});
+
+/** 构造覆盖页打开新增Case的轻量上下文，记录目录刷新与详情读取。 */
+function coverageCaseOpenHarness(item, options = {}) {
+  const context = scopeHarness();
+  const viewSelect = {value: "mine"};
+  const detail = coverageNode();
+  const messages = [], viewChanges = [], reloads = [], details = [], tabs = [];
+  Object.assign(context.sharedWorkspace, {caseView: options.caseView || "mine", cases: [],
+    selectedCase: null, coverageSourceEpoch: 0});
+  Object.assign(context, {
+    element: id => id === "shared-case-view" ? viewSelect
+      : id === "shared-case-operation" ? {value: "facade:Refund#billSupplement"}
+      : id === "shared-case-detail" ? detail : coverageNode(),
+    textNode: coverageNode,
+    showToast: message => messages.push(message),
+    clearSharedCaseSelection: () => { context.sharedWorkspace.selectedCase = null; },
+    changeSharedCaseView: async preferredId => {
+      viewChanges.push(preferredId);
+      if (options.changeFails) throw new Error("目录读取失败");
+      context.sharedWorkspace.caseView = viewSelect.value;
+      context.sharedWorkspace.cases = options.casesAfterChange || [];
+    },
+    loadSharedCaseWorkspace: async preferredId => {
+      reloads.push(preferredId);
+      context.sharedWorkspace.cases = options.reloadCases || [item];
+    },
+    selectSharedCaseTab: async tab => { tabs.push(tab); },
+    loadSharedCaseDetails: async caseId => {
+      details.push(caseId);
+      context.sharedWorkspace.selectedCase = options.detailCase || item;
+    },
+  });
+  for (const name of ["sharedCoverageCaseMatches", "openSharedCoverageCase"]) loadFunction(context, name);
+  return {context, item, messages, viewChanges, reloads, details, tabs, detail};
+}
+
+test("新增Case不在旧目录时刷新后按精确版本打开", async () => {
+  const item = {case_id: "case-added", variant_id: "variant-added", generation_id: "generation-enhanced",
+    view: "mine", title: "新增场景"};
+  const harness = coverageCaseOpenHarness(item);
+  await harness.context.openSharedCoverageCase(item, "facade:Refund#billSupplement", harness.context.sharedScope());
+  assert.deepEqual(harness.reloads, ["case-added"]);
+  assert.deepEqual(harness.details, ["case-added"]);
+  assert.equal(harness.context.sharedWorkspace.selectedCase.case_id, "case-added");
+  assert.deepEqual(harness.messages, []);
+});
+
+test("新增Case目录中版本已变化时拒绝打开原测量内容", async () => {
+  const item = {case_id: "case-added", variant_id: "variant-added", generation_id: "generation-enhanced",
+    view: "mine", title: "新增场景"};
+  const harness = coverageCaseOpenHarness(item, {reloadCases: [{case_id: "case-added",
+    generation_id: "generation-enhanced", variant: {variant_id: "variant-new"}}]});
+  await harness.context.openSharedCoverageCase(item, "facade:Refund#billSupplement", harness.context.sharedScope());
+  assert.deepEqual(harness.details, []);
+  assert.ok(harness.messages.some(message => message.includes("内容已更新")));
+});
+
+test("视图切换失败时不打开Case并保留错误提示", async () => {
+  const item = {case_id: "case-added", variant_id: "variant-added", generation_id: "generation-enhanced",
+    view: "published", title: "新增场景"};
+  const harness = coverageCaseOpenHarness(item, {caseView: "mine", changeFails: true});
+  await harness.context.openSharedCoverageCase(item, "facade:Refund#billSupplement", harness.context.sharedScope());
+  assert.deepEqual(harness.details, []);
+  assert.ok(harness.messages.includes("目录读取失败"));
+});
+
+test("源码请求迟到成功或失败不能覆盖后来选择的缺口", async () => {
+  const {context} = coverageHarness(interfaceCoverage());
+  const source = coverageNode();
+  const pending = [];
+  context.api = () => new Promise((resolve, reject) => pending.push({resolve, reject}));
+  const locationA = {source_path: "A.java", ranges: [{start: 10, end: 10}]};
+  const locationB = {source_path: "B.java", ranges: [{start: 20, end: 20}]};
+  const first = context.showCoverageSource(locationA, source, interfaceCoverage(),
+    context.sharedScope(), "facade:Refund#billSupplement");
+  const second = context.showCoverageSource(locationB, source, interfaceCoverage(),
+    context.sharedScope(), "facade:Refund#billSupplement");
+  pending[1].resolve({path: "B.java", start_line: 20, end_line: 20, lines: [{number: 20, text: "B"}],
+    uncovered_lines: []});
+  await second;
+  pending[0].resolve({path: "A.java", start_line: 10, end_line: 10, lines: [{number: 10, text: "A"}],
+    uncovered_lines: []});
+  await first;
+  const texts = coverageTexts(source);
+  assert.ok(texts.some(text => text.includes("B.java")));
+  assert.ok(texts.every(text => !text.includes("A.java")));
+});
+
+test("源码旧请求失败不能覆盖新选择", async () => {
+  const {context} = coverageHarness(interfaceCoverage());
+  const source = coverageNode();
+  const pending = [];
+  context.api = () => new Promise((resolve, reject) => pending.push({resolve, reject}));
+  const locationA = {source_path: "A.java", ranges: [{start: 10, end: 10}]};
+  const locationB = {source_path: "B.java", ranges: [{start: 20, end: 20}]};
+  const first = context.showCoverageSource(locationA, source, interfaceCoverage(),
+    context.sharedScope(), "facade:Refund#billSupplement");
+  const second = context.showCoverageSource(locationB, source, interfaceCoverage(),
+    context.sharedScope(), "facade:Refund#billSupplement");
+  pending[1].resolve({path: "B.java", start_line: 20, end_line: 20, lines: [{number: 20, text: "B"}],
+    uncovered_lines: []});
+  await second;
+  pending[0].reject(new Error("old failure"));
+  await first;
+  const texts = coverageTexts(source);
+  assert.ok(texts.some(text => text.includes("B.java")));
+  assert.ok(texts.every(text => !text.includes("old failure")));
 });
 
 test("工作台统计必须带基准环境和视图，无基准不读系统最新扫描", async () => {
@@ -636,14 +752,14 @@ test("有效知识目录移除入口后，授权历史 Case 仍可选择且不�
     },
     /** 模拟授权 API 的实际投影：目录不含删除入口，但历史 Case 仍携带移除影响状态。 */
     api: async path => {
-      if (path.endsWith("/cases?view=published")) return {items: [oldCase]};
+      if (path.includes("/cases?view=published")) return {items: [oldCase]};
       if (path.endsWith("/interfaces?view=published")) return {items: [{operation_id: "facade:Query#run"}]};
       if (path.includes("/cases/old-case?")) return oldCase;
       throw new Error(`unexpected read: ${path}`);
     },
   });
   // 运行实际目录合并、下拉渲染、具体入口选择和详情逻辑，而非单独断言补项算法。
-  for (const name of ["sharedCaseValueLabel", "sharedCaseVariationNames", "sharedCaseGroups", "entryPlacement", "sharedEntryDisplayName", "entrySummary", "entryGroup", "readSharedEntryCatalog", "sharedCaseBrowseEntries", "appendOperationOptions", "renderSharedCaseTree", "renderSharedCases", "selectSharedOperation", "loadSharedCaseWorkspace"]) loadFunction(context, name);
+  for (const name of ["sharedCaseBatchLabel", "sharedPageControls", "loadSharedCasePage", "sharedCaseValueLabel", "sharedCaseVariationNames", "sharedCaseGroups", "entryPlacement", "sharedEntryDisplayName", "entrySummary", "entryGroup", "readSharedEntryCatalog", "sharedCaseBrowseEntries", "appendOperationOptions", "renderSharedCaseTree", "renderSharedCases", "selectSharedOperation", "loadSharedCaseWorkspace"]) loadFunction(context, name);
   await context.loadSharedCaseWorkspace("old-case");
   assert.equal(panels["shared-case-operation"].value, "facade:Retired#run");
   assert.match(panels["shared-case-operation"].options.find(option => option.value === "facade:Retired#run").text, /入口已移除/);
@@ -704,9 +820,24 @@ test("生成弹框仅验证模式要求部署确认，模式切换刷新真实�
   assert.equal(context.sharedWorkspace.generationSelection.executionMode, "generate_and_verify");
 });
 
+/** 顶部与入口列表共用同一确认说明，不增加场景分支，也不以当前搜索/批次缩小替换范围。 */
+test("生成确认明确完整成功才替换所选接口本人全部草稿", async () => {
+  const {context, state} = generationDialogHarness();
+  context.sharedWorkspace.caseBatch = "filtered-old-generation";
+  await context.openCaseGenerationDialog("facade:Query#run");
+  const notice = state.dialog.body.children.find(node => node.className === "muted").text;
+  assert.match(notice, /当前基准下所选接口的全部本人草稿/);
+  assert.match(notice, /不受搜索、分页或批次筛选影响/);
+  assert.match(notice, /完整生成成功后才替换/);
+  assert.match(notice, /失败或仅有部分结果时保留原草稿/);
+  assert.match(notice, /已发布内容不变/);
+  assert.equal(state.dialog.title, "生成 Case");
+});
+
 test("执行记录只展示实际请求响应与断言，不转储内部证据", () => {
   const context = scopeHarness(), container = caseNode();
   Object.assign(context, {textNode: caseNode, document: {createElement: caseNode}});
+  loadFunction(context, "sharedExecutionLabel");
   loadFunction(context, "renderSharedExecutionResults");
   context.renderSharedExecutionResults(container, [{status: "COMPLETED", environment_id: "qa", execution_id: "internal-id",
     variant_result: {status: "COMPLETED", secret_evidence: "DO-NOT-RENDER", assertions: [{passed: true, actual_path: "$.success"}],
@@ -764,13 +895,234 @@ test("同场景多子用例先显示场景行，展开后才显示状态变体",
     Option: function (text) { return caseNode("option", text); },
     sharedStatus: status => status,
   });
-  for (const name of ["sharedCaseGroups", "sharedCaseVariationNames", "sharedCaseValueLabel", "renderSharedCases"]) loadFunction(context, name);
+  for (const name of ["loadSharedCasePage", "sharedCaseBatchLabel", "sharedPageControls", "sharedCaseGroups", "sharedCaseVariationNames", "sharedCaseValueLabel", "renderSharedCases"]) loadFunction(context, name);
   context.renderSharedCases();
-  const body = panels["shared-case-list"].children[0].children[1];
+  const body = panels["shared-case-list"].children.find(child => child.tag === "table").children[1];
   assert.equal(body.children.length, 3);
   assert.equal(body.children[0].className, "shared-case-group-row");
   assert.equal(body.children[0].children[0].children[0].text, "▸ 取消成功");
   assert.equal(body.children[1].hidden, true);
   assert.equal(body.children[2].hidden, true);
   assert.match(body.children[1].children[0].children[0].text, /state：WAIT_REFUND（2）/);
+});
+
+/** 覆盖页请求A未返回时改选B，旧响应不能清空B或展示错误版本提示。 */
+test("覆盖页迟到详情不能清空新选Case", async () => {
+  const item = {case_id: "case-a", generation_id: "gen-a", variant_id: "variant-a", view: "mine"};
+  const harness = coverageCaseOpenHarness(item, {reloadCases: [item]});
+  let finish;
+  harness.context.loadSharedCaseDetails = async () => {
+    harness.context.sharedWorkspace.caseSelectionEpoch = 1;
+    await new Promise(resolve => { finish = resolve; });
+  };
+  const opening = harness.context.openSharedCoverageCase(item, "facade:Refund#billSupplement", harness.context.sharedScope());
+  // 允许目录及页签的异步步骤进入详情请求，然后模拟用户的新选择。
+  await new Promise(setImmediate);
+  assert.equal(typeof finish, "function");
+  harness.context.sharedWorkspace.caseSelectionEpoch = 2;
+  const newer = {case_id: "case-b", generation_id: "gen-b", variant: {variant_id: "variant-b"}};
+  harness.context.sharedWorkspace.selectedCase = newer;
+  finish();
+  await opening;
+  assert.equal(harness.context.sharedWorkspace.selectedCase, newer);
+  assert.deepEqual(harness.messages, []);
+});
+
+/** 终态详情读失败必须保留已展示的运行证据，并继续只读轮询。 */
+test("覆盖终态 full 失败不清空旧结果且继续刷新", async () => {
+  const {context, panel} = coverageHarness(interfaceCoverage({status:"RUNNING"}));
+  await context.loadInterfaceCoverage(context.sharedScope());
+  const previous = panel.children;
+  // 与真实 DOM 一样找到已渲染的同步状态节点，错误只更新提示而不清空结果。
+  panel.querySelector = selector => coverageClassNodes(panel, selector.slice(1))[0] || null;
+  let scheduled = 0;
+  context.window.setTimeout = () => { scheduled++; return 1; };
+  context.api = async path => path.includes("representation=summary")
+    ? {coverage:interfaceCoverage({status:"COMPLETED"})}
+    : {coverage:null,error:"coverage_unavailable"};
+  await context.loadInterfaceCoverage(context.sharedScope(), true);
+  assert.equal(panel.children, previous);
+  assert.equal(context.sharedWorkspace.coveragePayload.status, "RUNNING");
+  assert.equal(scheduled, 1);
+  assert.ok(coverageTexts(panel).every(text => !text.includes("还没有覆盖增强记录")));
+});
+
+/** 正常未运行与当前版本不可见有不同的文案和动作。 */
+test("not_found 是从未增强，不是旧版本不可查看", async () => {
+  const {context, panel} = coverageHarness(null);
+  context.api = async () => ({coverage:null,availability:"not_found"});
+  await context.loadInterfaceCoverage(context.sharedScope());
+  const texts = coverageTexts(panel);
+  assert.ok(texts.some(text => text.includes("还没有覆盖增强记录")));
+  assert.ok(texts.every(text => !text.includes("已有覆盖记录")));
+  assert.equal(coverageButton(panel, "执行覆盖增强").disabled, false);
+});
+
+/** 完成通知传 Generation 身份时，必须查询授权批次而不是伪装成 Case ID。 */
+test("生成完成跨接口回跳定位新批次", async () => {
+  const context = scopeHarness(), requests = [], opened = [];
+  context.sharedWorkspace.caseView = "mine";
+  const generation = "case-template-generation-" + "a".repeat(20);
+  const newCase = {case_id:"case-new",generation_id:generation,operation_id:"facade:New#run"};
+  const panels = {
+    "shared-case-operation": {value:"facade:Old#run",replaceChildren(){},appendChild(){}},
+    "shared-case-search": {value:"原来的搜索"}, "shared-publish-cases": {},
+  };
+  Object.assign(context, {element:id=>panels[id],
+    readSharedEntryCatalog:async()=>[{operation_id:"facade:Old#run",knowledgeView:"mine"},{operation_id:"facade:New#run",knowledgeView:"mine"}],
+    sharedCaseBrowseEntries:entries=>entries, entrySummary:()=>"", appendOperationOptions:()=>{},
+    selectSharedOperation:()=>{context.sharedWorkspace.caseBatch="";},renderSharedCases:()=>{},
+    loadSharedCaseDetails:async id=>opened.push(id),
+    api:async path=>{requests.push(path); return path.includes("directory_only=true") ? {operations:[{operation_id:newCase.operation_id}]} : {items:[newCase],batches:[{generation_id:generation}]};},
+  });
+  loadFunction(context,"loadSharedCasePage"); loadFunction(context,"loadSharedCaseWorkspace");
+  await context.loadSharedCaseWorkspace(generation);
+  assert.equal(panels["shared-case-operation"].value,"facade:New#run");
+  assert.equal(context.sharedWorkspace.caseBatch,generation);
+  assert.deepEqual(opened,["case-new"]);
+  assert.ok(requests.some(path=>path.includes("generation_id="+generation)));
+  assert.ok(requests.every(path=>!path.includes("/cases/"+generation)));
+});
+
+/** 未替换成功的产物没有mine成员，不能跳到空新批次，也不能清除旧列表搜索条件。 */
+test("部分或失败产物的完成定位保留原草稿批次和搜索", async () => {
+  const context = scopeHarness(), requests = [], opened = [];
+  const generation = "case-template-generation-" + "f".repeat(20);
+  const oldCase = {case_id:"case-old",generation_id:"old-generation",operation_id:"facade:Query#run"};
+  context.sharedWorkspace.caseView = "mine";
+  context.sharedWorkspace.caseBatch = oldCase.generation_id;
+  const panels = {
+    "shared-case-operation": {value:oldCase.operation_id,replaceChildren(){},appendChild(){}},
+    "shared-case-search": {value:"原草稿搜索"}, "shared-publish-cases": {},
+  };
+  Object.assign(context, {element:id=>panels[id],
+    readSharedEntryCatalog:async()=>[{operation_id:oldCase.operation_id,knowledgeView:"mine"}],
+    sharedCaseBrowseEntries:entries=>entries, entrySummary:()=>"", appendOperationOptions:()=>{},
+    selectSharedOperation:()=>{context.sharedWorkspace.caseBatch="";},renderSharedCases:()=>{},
+    loadSharedCaseDetails:async id=>opened.push(id),
+    api:async path=>{
+      requests.push(path);
+      if (path.includes("directory_only=true")) return {operations:[{operation_id:oldCase.operation_id}]};
+      return {items:path.includes("generation_id="+generation) ? [] : [oldCase]};
+    },
+  });
+  loadFunction(context,"loadSharedCasePage"); loadFunction(context,"loadSharedCaseWorkspace");
+  await context.loadSharedCaseWorkspace(generation);
+  assert.equal(context.sharedWorkspace.caseBatch,oldCase.generation_id);
+  assert.equal(panels["shared-case-search"].value,"原草稿搜索");
+  assert.equal(context.sharedWorkspace.cases[0].case_id,"case-old");
+  assert.deepEqual(opened,[]);
+  assert.ok(requests.at(-1).includes("generation_id=old-generation"));
+  assert.ok(!requests.at(-1).includes(generation));
+});
+
+/** 生成定位等待读取期间，后续基准或 Case 选择必须撤销旧定位的所有副作用。 */
+test("生成回跳等待分页时尊重后续基准和 Case 选择", async () => {
+  for (const change of ["baseline", "selection"]) {
+    const context = scopeHarness(), opened = [];
+    const generation = "case-template-generation-" + "b".repeat(20);
+    const oldCase = {case_id:"old-base-case",generation_id:generation,operation_id:"facade:Query#run"};
+    const panels = {
+      "shared-case-operation": {value:oldCase.operation_id,replaceChildren(){},appendChild(){}},
+      "shared-case-search": {value:""}, "shared-publish-cases": {disabled:false},
+    };
+    let releasePage, pageRequested;
+    const pendingPage = new Promise(resolve => { releasePage = resolve; });
+    const pageStarted = new Promise(resolve => { pageRequested = resolve; });
+    Object.assign(context, {element:id=>panels[id],
+      readSharedEntryCatalog:async()=>[{operation_id:oldCase.operation_id,knowledgeView:"published"}],
+      sharedCaseBrowseEntries:entries=>entries, entrySummary:()=>"", appendOperationOptions:()=>{},
+      selectSharedOperation:()=>{context.sharedWorkspace.caseSelectionEpoch=(context.sharedWorkspace.caseSelectionEpoch||0)+1;},
+      renderSharedCases:()=>{}, loadSharedCaseDetails:async id=>opened.push(id),
+      api:async path=>{
+        if (path.includes("directory_only=true")) return {operations:[{operation_id:oldCase.operation_id}]};
+        if (!path.includes("operation_id=")) return {items:[oldCase]};
+        pageRequested();
+        return pendingPage;
+      },
+    });
+    loadFunction(context,"loadSharedCasePage"); loadFunction(context,"loadSharedCaseWorkspace");
+    const loading = context.loadSharedCaseWorkspace(generation);
+    await pageStarted;
+    // 保持相同接口，专门复现旧分页已失效但外层仍试图打开旧 Case 的窗口。
+    if (change === "baseline") context.sharedWorkspace.baseline.baseline_id = "base-b";
+    else {
+      context.sharedWorkspace.caseSelectionEpoch += 1;
+      context.sharedWorkspace.selectedCase = {case_id:"user-selected-case"};
+    }
+    releasePage({items:[oldCase]});
+    await loading;
+    assert.deepEqual(opened, [], change);
+    assert.equal(panels["shared-publish-cases"].disabled, false, change);
+    if (change === "selection") assert.equal(context.sharedWorkspace.selectedCase.case_id,"user-selected-case");
+  }
+});
+
+/** 同组迟到页不能覆盖最后页，其他组的同时展开仍必须独立完成。 */
+test("分组成员翻页只接受各组最后请求", async () => {
+  const context = scopeHarness(), pending = [];
+  const panels = {"shared-case-operation": {value:"facade:Query#run"}, "shared-case-search": {value:""}};
+  let rendered = 0;
+  Object.assign(context, {element:id=>panels[id], renderSharedCases:()=>{rendered++;},
+    api:()=>new Promise(resolve=>pending.push(resolve))});
+  loadFunction(context, "loadSharedCaseGroup");
+  const oldPage = context.loadSharedCaseGroup("group-a", 2);
+  const newPage = context.loadSharedCaseGroup("group-a", 3);
+  const otherGroup = context.loadSharedCaseGroup("group-b", 1);
+  // 后发页先返回；独立分组不得因另一个组翻页而丢失结果。
+  pending[1]({pagination:{page:3},items:[{case_id:"new-page"}]});
+  pending[2]({pagination:{page:1},items:[{case_id:"other-group"}]});
+  await Promise.all([newPage, otherGroup]);
+  pending[0]({pagination:{page:2},items:[{case_id:"old-page"}]});
+  await oldPage;
+  assert.equal(context.sharedWorkspace.caseGroupMembers.get("group-a").pagination.page, 3);
+  assert.equal(context.sharedWorkspace.caseGroupMembers.get("group-b").pagination.page, 1);
+  assert.equal(rendered, 2);
+  assert.equal(context.sharedWorkspace.caseGroupRequests.size, 0);
+});
+
+/** 同 Case 的手动刷新和翻页可能交叠，旧成功及旧失败均不能改动最后一次读取。 */
+test("单 Case 历史丢弃迟到页及迟到错误", async () => {
+  for (const fails of [false, true]) {
+    const {context, panels} = caseDetailHarness(), pending = [];
+    context.sharedWorkspace.selectedCase = {case_id:"case-a",title:"当前 Case"};
+    Object.assign(context, {api:()=>new Promise((resolve,reject)=>pending.push({resolve,reject})),
+      sharedExecutionLabel:item=>item.outcome, sharedPageControls:page=>caseNode("pager", String(page.page))});
+    loadFunction(context, "loadSelectedSharedExecution");
+    const oldRead = context.loadSelectedSharedExecution("", 1);
+    const latestRead = context.loadSelectedSharedExecution("", 2);
+    pending[1].resolve({items:[{execution_id:"latest",outcome:"PASSED"}],pagination:{page:2,next_cursor:"latest-cursor"}});
+    await latestRead;
+    const currentChildren = panels["shared-case-executions"].children;
+    // 此时旧请求失败也只算过时读取，不应显示错误或抛出破坏当前面板的提示。
+    if (fails) pending[0].reject(new Error("old request failed"));
+    else pending[0].resolve({items:[{execution_id:"old",outcome:"FAILED"}],pagination:{page:1,next_cursor:"old-cursor"}});
+    assert.equal(await oldRead, null);
+    assert.equal(panels["shared-case-executions"].children, currentChildren);
+    assert.ok(currentChildren.some(item=>item.label?.includes("PASSED")));
+    assert.equal(context.sharedWorkspace.historyCursors.size, 1);
+  }
+});
+
+/** 搜索读取从第一页开始并把搜索词交给后端，避免只过滤当前页。 */
+test("搜索重置分页并查询全接口范围", async () => {
+  const context=scopeHarness(), requests=[];
+  const fields={"shared-case-operation":{value:"facade:Query#run"},"shared-case-search":{value:" 第二页目标 "}};
+  Object.assign(context,{element:id=>fields[id],renderSharedCases:()=>{},showToast:()=>{},
+    api:async path=>{requests.push(path); return {items:[],pagination:{page:1,total:0,has_more:false}};}});
+  context.sharedWorkspace.casePage=4;
+  loadFunction(context,"loadSharedCasePage");
+  await context.loadSharedCasePage(1);
+  const query=new URLSearchParams(requests[0].split("?")[1]);
+  assert.equal(query.get("page"),"1"); assert.equal(query.get("search"),"第二页目标");
+  assert.equal(query.get("operation_id"),"facade:Query#run");
+});
+
+/** 观察失败的占位断言不能把摘要的回查失败改写成业务断言失败。 */
+test("执行详情优先后端结果并兼容明确失败原因", () => {
+  const context=scopeHarness(); loadFunction(context,"sharedExecutionLabel");
+  const failure={status:"PARTIAL",failure_kind:"OBSERVATION_FAILED",assertions:[{passed:false}]};
+  assert.equal(context.sharedExecutionLabel({outcome:"OBSERVATION_FAILED",variant_result:failure}),"回查失败");
+  assert.equal(context.sharedExecutionLabel({variant_result:failure}),"回查失败");
+  assert.equal(context.sharedExecutionLabel({variant_result:{status:"PARTIAL"}}),"部分完成");
 });

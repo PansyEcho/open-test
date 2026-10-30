@@ -209,6 +209,8 @@ def retry_fixture() -> tuple[Mock, CoverageEnhancement, PublicationScope, Covera
     app.shared_baselines.store.get_baseline.return_value = SimpleNamespace(source_commit="a" * 40)
     visible = {("published", item.case_id): item for item in previous.case_selection}
     visible["mine", enhanced_selection.case_id] = enhanced_selection
+    visible["mine", "unselected-enhanced"] = CaseSelection(
+        case_id="unselected-enhanced", generation_id="generation-enhanced", variant_id="unselected-variant")
 
     def require_case(current_scope, case_id, view):
         """仅返回被明确放入当前共享或个人视图的单项版本，其他ID模拟被替换。"""
@@ -470,6 +472,93 @@ def test_remeasured_baseline_continues_saved_verification_analysis_without_new_m
     assert app.case_template_v4.dispatch_execution.call_count == 1
 
 
+def test_first_round_rejects_generation_case_only_visible_in_other_view() -> None:
+    """首轮只允许当前确认视图内的固定Case；另一视图的Case不能补齐选集。"""
+
+    app, _, scope, request = retry_fixture()
+    request = request.model_copy(update={"retry_of": None, "generation_id": "generation-fixed",
+        "variant_id": "variant-fixed", "view": "published"})
+    app.store.get_system.return_value = SimpleNamespace(coverage_assistance=SimpleNamespace(enabled=True))
+    generation = SimpleNamespace(generation_id="generation-fixed", system_id="refund", status="READY",
+        predecessor_generation_id="", baseline_id="baseline-fixed", operation_id="Api#query",
+        source_scan_id="scan-fixed",
+        case_bindings=[SimpleNamespace(case_id="case-fixed", variant_id="variant-fixed"),
+                       SimpleNamespace(case_id="case-mine-only", variant_id="variant-mine-only")])
+    app.case_template_v4.generations.get.return_value = generation
+    original_lookup = app.publications.require_executable.side_effect
+
+    def include_mine(current_scope, case_id, view):
+        """仅为另一视图提供可见Case，模拟 Generation 跨视图存在但当前视图不完整。"""
+
+        if case_id == "case-mine-only" and view == "mine":
+            return SimpleNamespace(generation_id="generation-fixed", variant=SimpleNamespace(variant_id="variant-mine-only"),
+                source_scan_id="scan-fixed", operation_id="Api#query")
+        return original_lookup(current_scope, case_id, view)
+
+    app.publications.require_executable.side_effect = include_mine
+    service = object.__new__(CoverageAssistanceService)
+    service.app, service.records = app, app.coverage_assistance.records
+    app.coverage_assistance._eligible_lineage.side_effect = service._eligible_lineage
+    with pytest.raises(KnowledgeValidationError, match="当前视图"):
+        retry_coverage(app, scope, "case-fixed", request)
+    app.case_template_v4.prepare_execution.assert_not_called()
+    app.coverage_assistance.records.create.assert_not_called()
+
+
+def test_first_round_rejects_replaced_generation_case_version() -> None:
+    """当前视图存在同Case但Variant已变化时，不能用新版本放行旧绑定。"""
+
+    app, _, scope, request = retry_fixture()
+    request = request.model_copy(update={"retry_of": None, "generation_id": "generation-fixed",
+        "variant_id": "variant-fixed", "view": "published"})
+    app.store.get_system.return_value = SimpleNamespace(coverage_assistance=SimpleNamespace(enabled=True))
+    app.case_template_v4.generations.get.return_value = SimpleNamespace(
+        generation_id="generation-fixed", system_id="refund", status="READY", predecessor_generation_id="",
+        baseline_id="baseline-fixed", operation_id="Api#query", source_scan_id="scan-fixed",
+        case_bindings=[SimpleNamespace(case_id="case-fixed", variant_id="variant-fixed"),
+                       SimpleNamespace(case_id="case-second", variant_id="variant-second")])
+    original_lookup = app.publications.require_executable.side_effect
+
+    def replaced_version(current_scope, case_id, view):
+        """模拟同Generation另一Case已发布新Variant，旧绑定必须被拒绝。"""
+
+        if case_id == "case-second":
+            return SimpleNamespace(generation_id="generation-fixed", variant=SimpleNamespace(variant_id="variant-new"),
+                source_scan_id="scan-fixed", operation_id="Api#query")
+        return original_lookup(current_scope, case_id, view)
+
+    app.publications.require_executable.side_effect = replaced_version
+    service = object.__new__(CoverageAssistanceService)
+    service.app, service.records = app, app.coverage_assistance.records
+    app.coverage_assistance._eligible_lineage.side_effect = service._eligible_lineage
+    with pytest.raises(KnowledgeValidationError, match="当前视图"):
+        retry_coverage(app, scope, "case-fixed", request)
+    app.case_template_v4.prepare_execution.assert_not_called()
+
+
+def test_new_round_blocks_missing_enhanced_case_instead_of_shrinking() -> None:
+    """增强集合有一项不可见时整轮阻止，不能静默缩小实际执行集合。"""
+
+    app, previous, scope, request = retry_fixture()
+    previous.status = "COMPLETED"
+    previous.verification.status = "VALID"
+    app.coverage_assistance.records.running_for_operation.return_value = None
+    original_lookup = app.publications.require_executable.side_effect
+
+    def hide_enhanced(current_scope, case_id, view):
+        """模拟增强Case在当前可见范围已被替换。"""
+
+        if case_id == "unselected-enhanced":
+            raise KnowledgeNotFoundError("被替换")
+        return original_lookup(current_scope, case_id, view)
+
+    app.publications.require_executable.side_effect = hide_enhanced
+    with pytest.raises(KnowledgeValidationError, match="增强Case集包含"):
+        retry_coverage(app, scope, "case-enhanced", request)
+    app.case_template_v4.prepare_execution.assert_not_called()
+    app.coverage_assistance.records.create.assert_not_called()
+
+
 def test_completed_round_starts_new_round_from_enhanced_case_set() -> None:
     """已完成轮次再次执行时以增强后的Case集为新基线，并保留独立新根。"""
 
@@ -484,9 +573,52 @@ def test_completed_round_starts_new_round_from_enhanced_case_set() -> None:
     assert created.retry_of == previous.enhancement_id
     assert created.root_enhancement_id == created.enhancement_id
     assert [(item.case_id, item.generation_id) for item in created.case_selection] == [
-        ("case-enhanced", "generation-enhanced")]
+        ("case-enhanced", "generation-enhanced"), ("unselected-enhanced", "generation-enhanced")]
     system_id, generation_id, command = app.case_template_v4.prepare_execution.call_args.args
     assert (system_id, generation_id) == ("refund", "generation-enhanced")
     assert command.selected_cases == created.case_selection
     app.case_template_v4.dispatch_execution.assert_called_once()
     app.coverage_assistance.records.save_report.assert_not_called()
+
+
+def test_retry_partial_supplement_not_published_restarts_supplement_from_valid_baseline() -> None:
+    """补充模型未发布时复测尚未开始；重试应复用基线材料并重新派发补充，不得伪造READY产物。"""
+
+    app, previous, scope, request = retry_fixture()
+    previous.status = "PARTIAL"
+    previous.verification.status = "PENDING"
+    previous.reason_codes = ["SUPPLEMENT_NOT_PUBLISHED"]
+    previous.enhanced_generation_id = ""
+    previous.supplement_task_id = ""
+    previous.round_used = 0
+
+    request = request.model_copy(update={"generation_id": "generation-fixed", "variant_id": "variant-fixed", "view": "published"})
+    created = retry_coverage(app, scope, "case-fixed", request)
+
+    assert created.status == "RUNNING" and created.stage == "BASELINE_ANALYZING"
+    assert created.enhanced_generation_id == "" and created.supplement_task_id == ""
+    assert created.retry_of == previous.enhancement_id
+    assert created.baseline.analysis == previous.baseline.analysis
+    assert created.case_selection == previous.case_selection
+    app.coverage_assistance.schedule_analysis.assert_called_once_with(created.enhancement_id)
+    app.coverage_assistance.resume_verification.assert_not_called()
+    app.case_template_v4.prepare_execution.assert_not_called()
+
+
+def test_retry_partial_missing_enhanced_generation_does_not_require_old_generation() -> None:
+    """旧补充只预分配了生成ID但记录不存在时，重试不能先读该ID而失败。"""
+
+    app, previous, scope, request = retry_fixture()
+    previous.status = "PARTIAL"
+    previous.verification.status = "PENDING"
+    previous.reason_codes = ["SUPPLEMENT_NOT_PUBLISHED"]
+    previous.enhanced_generation_id = "generation-missing"
+    previous.supplement_task_id = ""
+    previous.round_used = 0
+    app.case_template_v4.generations.get.side_effect = lambda system_id, generation_id: None
+    request = request.model_copy(update={"generation_id": "generation-fixed", "variant_id": "variant-fixed", "view": "published"})
+    created = retry_coverage(app, scope, "case-fixed", request)
+    assert created.stage == "BASELINE_ANALYZING"
+    assert created.enhanced_generation_id == ""
+    assert created.supplement_task_id == ""
+    app.coverage_assistance.resume_verification.assert_not_called()

@@ -20,3 +20,7 @@
 ## Impact
 
 涉及持久层、公司登录、源码及知识服务、Case 发布、覆盖链路、API、MCP 插件和控制台。数据表、事务、验收及本期边界遵循 [定稿开发计划](../../../docs/discussions/shared-baselines-case-publication-development-plan.md)。保留工作树已有修改，独立评审只覆盖本次差异。
+
+- 本轮按已批准的 Case 工作台改造方案（docs/discussions/case-workbench-improvement-plan.md）完善 Case 来源与批次、真实时间、执行总览、摘要分页、可恢复进度和覆盖辅助复核，保留固定范围与员工权限。
+
+- 顶部“生成 Case”改为重新生成当前接口的本人草稿集合：启动时冻结旧集合，完整生成成功才原子替换；失败、部分产物或并发修改保留旧草稿，不增加“新增场景”入口。

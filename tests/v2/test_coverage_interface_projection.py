@@ -12,7 +12,7 @@ import pytest
 from opentest.application.coverage_assistance import CoverageAssistanceService
 from opentest.domain.coverage import (
     ArtifactFileIdentity, CodeCoverageGap, CodeLocation, CoverageAnalysisResult,
-    CoverageArtifactSelection, CoverageCounts, FrozenCoverageArtifact,
+    CoverageArtifactSelection, CoverageCounts, CoverageScopeLimitation, FrozenCoverageArtifact,
 )
 from opentest.domain.coverage_workflow import (
     CoverageEnhancement, CoverageMeasurement, CoverageRawCapture, CoverageReport,
@@ -35,6 +35,8 @@ def _analysis(line_covered: int, line_missed: int, gaps: list[CodeCoverageGap]) 
     counts = _counts(line_covered, line_missed)
     return CoverageAnalysisResult(raw_counts=counts, scope_counts=counts, matched_class_count=3,
         uncomparable_class_count=0, scope_status="PARTIAL", scope_reason="仅纳入可信已解析调用。",
+        scope_limitations=[CoverageScopeLimitation(caller_class="AbstractFacade", caller_method="execute",
+            expression="invoke", reason="reflection_target_not_static", line=120)],
         gaps=gaps, candidate_gap_count=len(gaps) + 2, deferred_gap_count=2)
 
 
@@ -92,8 +94,16 @@ def _workflow(gaps: list[CodeCoverageGap]) -> tuple[CoverageEnhancement, Coverag
             case_bindings=[SimpleNamespace(case_id=item.case_id, variant_id=item.variant_id) for item in base_cases]),
         "generation-enhanced": SimpleNamespace(generation_id="generation-enhanced", status="READY",
             baseline_id="baseline-a", operation_id=workflow.operation_id, source_scan_id="scan-interface",
-            case_bindings=[SimpleNamespace(case_id=item.case_id, variant_id=item.variant_id) for item in [*base_cases, *added_cases]]),
+            case_bindings=[SimpleNamespace(case_id=item.case_id, variant_id=item.variant_id,
+                origin_kind="COVERAGE_REUSED" if item in base_cases else "COVERAGE_NEW") for item in [*base_cases, *added_cases]]),
     }
+    # 标题来自本轮不可变编译结果，权限索引本身不需要携带完整 Case。
+    enhanced = generations["generation-enhanced"]
+    enhanced.variants = [SimpleNamespace(variant_id=item.variant_id, template_id="template-" + item.case_id)
+                         for item in enhanced.case_bindings]
+    enhanced.submission = SimpleNamespace(case_templates=[
+        SimpleNamespace(template_id="template-" + item.case_id, title=item.case_id)
+        for item in enhanced.case_bindings])
     return workflow, report, cases, generations
 
 
@@ -105,6 +115,19 @@ def _service(workflow: CoverageEnhancement, report: CoverageReport,
     service.records = Mock()
     service.records.latest_for_operation.return_value = workflow
     service.records.report.return_value = report
+
+    def visible_cases(scope, selections):
+        """模拟批量索引只返回精确当前指针，提供实际视图但不加载完整 Case。"""
+
+        visible = {}
+        # 旧 Generation 即使仍保留正文，也不等于该 Case 的当前版本仍可见。
+        for item in selections:
+            case = cases.get(item.case_id)
+            if case is not None and (case.generation_id, case.variant.variant_id) == (item.generation_id, item.variant_id):
+                visible[item.case_id] = {"case_id": item.case_id, "generation_id": item.generation_id,
+                                        "variant_id": item.variant_id, "view": "mine"}
+        return visible
+
     execution = SimpleNamespace(generation_id="generation-enhanced", environment_id="qa",
         selected_cases=[CaseSelection(case_id="case-added-1", generation_id="generation-enhanced", variant_id="variant-added-1"),
                         CaseSelection(case_id="case-added-2", generation_id="generation-enhanced", variant_id="variant-added-2")],
@@ -115,9 +138,12 @@ def _service(workflow: CoverageEnhancement, report: CoverageReport,
             generations=SimpleNamespace(get=lambda system_id, generation_id: generations[generation_id]),
             executions=SimpleNamespace(get=lambda system_id, execution_id: execution),
         ),
-        publications=SimpleNamespace(get_case=lambda scope, case_id, view: cases[case_id]),
+        publications=SimpleNamespace(get_case=Mock(side_effect=AssertionError("must not read cases one by one")),
+            visible_case_selections=Mock(side_effect=visible_cases)),
         object_storage=None,
     )
+    # 任务时间由已保存事实提供；这些旧记录缺时间，不伪造当前时间。
+    service.tasks = SimpleNamespace(get=Mock(return_value=SimpleNamespace(started_at=None, ended_at=None, progress=None)))
     return service
 
 
@@ -137,7 +163,7 @@ def test_interface_projection_returns_line_percent_added_cases_and_uncovered_loc
     assert coverage["baseline"]["line"]["percent"] == 40.0
     assert coverage["verification"]["line"]["percent"] == 80.0
     assert coverage["line_percent"] == 80.0
-    assert coverage["added_case_counts"] == {"total": 2, "passed": 1, "failed": 1, "pending": 0}
+    assert coverage["added_case_counts"] == {"total": 2, "passed": 1, "failed": 1, "pending": 0, "unknown": 0}
     assert [(item["case_id"], item["verification"]) for item in coverage["added_cases"]] == [
         ("case-added-1", "PASSED"), ("case-added-2", "FAILED")]
     assert coverage["uncovered_summary"] == {"location_count": 3, "line_count": 26,
@@ -146,6 +172,7 @@ def test_interface_projection_returns_line_percent_added_cases_and_uncovered_loc
     assert coverage["anchor_case"] == {"case_id": "case-base-1", "variant_id": "variant-base-1",
         "generation_id": "generation-base", "view": "mine"}
     assert coverage["scope_status"] == "PARTIAL" and coverage["attribution"] == "UNVERIFIED"
+    assert coverage["verification"]["scope_limitations"][0]["expression"] == "invoke"
     assert service.records.latest_for_operation.call_args.args == (
         "refund", "baseline-a", workflow.operation_id, "employee-a", "qa")
 
@@ -173,7 +200,7 @@ def test_interface_projection_tolerates_unpublished_enhanced_generation() -> Non
     assert coverage["status"] == "RUNNING"
     assert coverage["line_percent"] == 40.0
     assert coverage["added_cases"] == []
-    assert coverage["added_case_counts"] == {"total": 0, "passed": 0, "failed": 0, "pending": 0}
+    assert coverage["added_case_counts"] == {"total": 0, "passed": 0, "failed": 0, "pending": 0, "unknown": 0}
     assert coverage["anchor_case"]["case_id"] == "case-base-1"
 
 
@@ -184,7 +211,128 @@ def test_interface_projection_returns_none_without_visible_round() -> None:
     service.records = Mock()
     service.records.latest_for_operation.return_value = None
     assert service.interface_projection("refund", "baseline-a", "employee-a",
-                                         "facade:Refund#billSupplement", "qa") == {"coverage": None}
+                                         "facade:Refund#billSupplement", "qa") == {"coverage": None, "availability": "not_found"}
+
+
+@pytest.mark.parametrize("binding_count", [1, 40])
+def test_full_projection_uses_one_batch_for_all_bindings_and_anchor(binding_count: int) -> None:
+    """新增数量增加时仍只做一次权限批查，标题与入口不触发单项 Case 查询。"""
+
+    workflow, report, cases, generations = _workflow([])
+    enhanced = generations["generation-enhanced"]
+    selected = [CaseSelection(case_id=f"new-{index}", generation_id=enhanced.generation_id,
+                              variant_id=f"variant-new-{index}") for index in range(binding_count)]
+    # 每条绑定有独立模板，防止仅测试共用模板时掩盖逐项读取。
+    enhanced.case_bindings = [SimpleNamespace(case_id=item.case_id, variant_id=item.variant_id,
+                                             origin_kind="COVERAGE_NEW") for item in selected]
+    enhanced.variants = [SimpleNamespace(variant_id=item.variant_id, template_id="template-" + item.case_id)
+                         for item in selected]
+    enhanced.submission.case_templates = [SimpleNamespace(template_id="template-" + item.case_id,
+                                                          title="已授权标题 " + item.case_id) for item in selected]
+    cases.update({item.case_id: _case(item.case_id, item.generation_id, item.variant_id, "不得读取的单项标题")
+                  for item in selected})
+    service = _service(workflow, report, cases, generations)
+    execution = service.app.case_template_v4.executions.get(workflow.system_id, workflow.verification_case_execution_id)
+    execution.selected_cases, execution.variant_results = selected, []
+    service.app.case_template_v4.generations.get = Mock(return_value=enhanced)
+
+    response = service.interface_projection("refund", "baseline-a", "employee-a", workflow.operation_id, "qa", "mine")
+
+    assert response["availability"] == "available"
+    coverage = response["coverage"]
+    assert coverage["added_case_counts"]["total"] == binding_count
+    assert [item["title"] for item in coverage["added_cases"]] == ["已授权标题 " + item.case_id for item in selected]
+    assert coverage["anchor_case"]["case_id"] == "case-base-1"
+    service.app.publications.visible_case_selections.assert_called_once()
+    service.app.publications.get_case.assert_not_called()
+    service.app.case_template_v4.generations.get.assert_called_once_with("refund", "generation-enhanced")
+
+
+@pytest.mark.parametrize("visibility", ["missing", "generation_changed", "variant_changed"])
+def test_unselected_hidden_binding_keeps_counts_without_disclosing_title(visibility: str) -> None:
+    """未进入复测的绑定失去精确权限时保留占位计数，既不泄露标题也不使整轮失效。"""
+
+    workflow, report, cases, generations = _workflow([])
+    enhanced = generations["generation-enhanced"]
+    hidden = SimpleNamespace(case_id="case-private-added", variant_id="variant-private", origin_kind="COVERAGE_NEW")
+    enhanced.case_bindings.append(hidden)
+    enhanced.variants.append(SimpleNamespace(variant_id=hidden.variant_id, template_id="template-private"))
+    enhanced.submission.case_templates.append(SimpleNamespace(template_id="template-private", title="不得泄露的来源标题"))
+    # 同 Case ID 的新版本同样不能授权读取本轮旧模板标题。
+    if visibility != "missing":
+        cases[hidden.case_id] = _case(hidden.case_id,
+            "other-generation" if visibility == "generation_changed" else enhanced.generation_id,
+            "other-variant" if visibility == "variant_changed" else hidden.variant_id, "当前其他版本标题")
+    service = _service(workflow, report, cases, generations)
+    response = service.interface_projection("refund", "baseline-a", "employee-a", workflow.operation_id, "qa", "mine")
+
+    assert response["availability"] == "available"
+    coverage = response["coverage"]
+    assert coverage["added_case_counts"]["total"] == 3
+    assert coverage["case_origin_counts"] == {"reused": 2, "adjusted": 0, "new": 3, "unknown": 0}
+    assert coverage["origin_case_items"][-1]["title"] == "Case " + hidden.case_id[-8:]
+    assert "不得泄露" not in str(response) and "当前其他版本标题" not in str(response)
+    service.app.publications.visible_case_selections.assert_called_once()
+    service.app.publications.get_case.assert_not_called()
+
+
+@pytest.mark.parametrize("changed_key", ["generation_id", "variant_id"])
+def test_anchor_requires_exact_version_and_uses_authorized_view(changed_key: str) -> None:
+    """入口跳过 Case ID 相同但版本不符的候选，只返回下一条精确命中的实际视图。"""
+
+    workflow, report, cases, generations = _workflow([])
+    service = _service(workflow, report, cases, generations)
+    visible = {item.case_id: {**item.model_dump(), "view": "published"} for item in workflow.case_selection}
+    # 直接给出冲突候选，验证调用方不会依赖批量服务恰好已过滤这一实现细节。
+    visible[workflow.case_selection[0].case_id][changed_key] = "changed"
+    anchor = service._anchor_case(workflow.case_selection, visible)
+    assert anchor == {**workflow.case_selection[1].model_dump(), "view": "published"}
+    visible.pop(workflow.case_selection[1].case_id)
+    assert service._anchor_case(workflow.case_selection, visible) is None
+    service.app.publications.get_case.assert_not_called()
+
+
+@pytest.mark.parametrize("missing_case", ["case-base-1", "case-added-1", "empty"])
+def test_full_projection_rejects_incomplete_fixed_selection(missing_case: str) -> None:
+    """基础或复测任一固定项缺失及空全集均不可查看，不把剩余条目冒充完整覆盖。"""
+
+    workflow, report, cases, generations = _workflow([])
+    service = _service(workflow, report, cases, generations)
+    if missing_case == "empty":
+        workflow.case_selection = []
+        execution = service.app.case_template_v4.executions.get(workflow.system_id, workflow.verification_case_execution_id)
+        execution.selected_cases = []
+    else:
+        cases.pop(missing_case)
+    # 权限失效必须在报告和任务内容投影之前结束。
+    response = service.interface_projection("refund", "baseline-a", "employee-a", workflow.operation_id, "qa")
+    assert response["availability"] == "selection_unavailable" and response["coverage"] is None
+    service.records.report.assert_not_called()
+    service.tasks.get.assert_not_called()
+    service.app.publications.get_case.assert_not_called()
+
+
+def test_full_projection_distinguishes_batch_failure_from_selection_loss() -> None:
+    """批量权限存储故障保持读取失败语义，不能降级为旧选择已失效或无覆盖记录。"""
+
+    workflow, report, cases, generations = _workflow([])
+    service = _service(workflow, report, cases, generations)
+    service.app.publications.visible_case_selections.side_effect = RuntimeError("metadata unavailable")
+    response = service.interface_projection("refund", "baseline-a", "employee-a", workflow.operation_id, "qa")
+    assert response["availability"] == "coverage_unavailable" and response["coverage"] is None
+    service.app.publications.get_case.assert_not_called()
+
+
+def test_visible_binding_without_fixed_template_is_unavailable() -> None:
+    """精确绑定可见但编译模板缺失属于内容损坏，不能伪造普通占位标题掩盖故障。"""
+
+    workflow, report, cases, generations = _workflow([])
+    # 与既有单项 Case 投影一致，可见绑定必须具有完整固定 Variant 和模板。
+    generations["generation-enhanced"].submission.case_templates = []
+    service = _service(workflow, report, cases, generations)
+    response = service.interface_projection("refund", "baseline-a", "employee-a", workflow.operation_id, "qa")
+    assert response["availability"] == "coverage_unavailable" and response["coverage"] is None
+    service.app.publications.get_case.assert_not_called()
 
 
 def test_source_snippet_reads_only_fixed_material_and_marks_uncovered_lines(tmp_path: Path) -> None:

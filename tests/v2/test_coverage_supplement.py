@@ -80,12 +80,12 @@ def _fixture(tmp_path: Path):
     engine = SimpleNamespace(generations=SimpleNamespace(get=Mock(return_value=generation)),
         handoffs=SimpleNamespace(get=Mock(side_effect=handoff_get), processing_scope=Mock(side_effect=lambda identity: nullcontext()), find_successor=Mock(return_value=None)),
         executions=SimpleNamespace(get=Mock(return_value=execution)))
-    settings = SimpleNamespace(case_template_v4_model="generator", codex_model="fallback", coverage_review_model="reviewer",
+    settings = SimpleNamespace(case_template_v4_model="generator", codex_model="fallback", coverage_review_model="reviewer", coverage_review_timeout_seconds=180,
         case_template_v4_reasoning_effort="high", codex_reasoning_effort="medium")
     app = SimpleNamespace(case_template_v4=engine, runtime_settings=SimpleNamespace(read=Mock(return_value=settings)),
         store=SimpleNamespace(system_transaction=Mock(side_effect=lambda system_id: nullcontext())),
         continue_case_task=Mock(return_value={"handoff": child}), web_generation=SimpleNamespace(start=Mock(side_effect=start), recover=Mock()),
-        agent_runner=SimpleNamespace(run=Mock(side_effect=RuntimeError("offline model")), attach=Mock(),
+        agent_runner=SimpleNamespace(run=Mock(side_effect=RuntimeError("offline model")), start=Mock(), attach=Mock(), cancel=Mock(),
             list_events=Mock(return_value=[]), read_state=Mock(return_value={})), knowledge=Mock(), knowledge_root=tmp_path)
     service = SimpleNamespace(app=app, tasks=tasks, records=records, finish=Mock(side_effect=finish))
     state.execution, state.settings, state.base = execution, settings, base
@@ -293,21 +293,28 @@ def test_review_uses_fixed_snapshot_real_call_context_and_independent_runner(tmp
             display_name="query", source_id=caller.symbol_id, source_path="Service.java")],
         semantic_analysis=SemanticAnalysisResult(system_id="demo-system", methods=[caller, callee], call_edges=[edge]))
     supplement.app.knowledge.artifacts.read.return_value = manifest
-    supplement.app.knowledge.artifacts.require_source_snapshot.return_value = snapshot
+    # 保存请求只能验证已有本机快照，不进入 S3 下载/物化入口。
+    supplement.app.knowledge.artifacts.source_snapshot_path.return_value = snapshot
+    supplement.app.knowledge.git_repository.validate_materialized_revision.return_value = snapshot
     output = tmp_path / "review.json"
     output.write_text(json.dumps({"reviews": [{"gap_id": "gap-one", "verdict": "REJECT", "reason": "从入口可到达"}]}))
-    supplement.app.agent_runner.run.side_effect = None
-    supplement.app.agent_runner.run.return_value = SimpleNamespace(exit_code=0, elapsed_seconds=2.5, output_path=str(output))
+    supplement.app.agent_runner.attach.return_value = SimpleNamespace(exit_code=0, elapsed_seconds=2.5, output_path=str(output))
     response = supplement.accept_dispositions(state.child,
         [CoverageDisposition(gap_id="gap-one", action="IGNORE", reason="认为无人调用")], SimpleNamespace(handoff_id=state.child.handoff_id, revision=state.child.revision))
-    request, source_root, evidence_root = supplement.app.agent_runner.run.call_args.args
+    request, source_root, evidence_root = supplement.app.agent_runner.start.call_args.args
+    assert response["coverage_review"]["status"] == "running"
+    supplement.app.agent_runner.attach.assert_not_called()
+    # 后续维护只在 worker 终态后解析输出，核心保存已先返回。
+    supplement.app.agent_runner.read_state.return_value = {"status": "completed"}
+    supplement.observe_review(state.workflow.enhancement_id)
     assert source_root == snapshot and evidence_root == tmp_path / ".opentest" / "agent-runs"
     assert request.task_id == "" and request.resume_session_id == "" and request.model == "reviewer"
     assert "service.query" not in request.prompt
     assert caller.symbol_id in request.prompt and callee.symbol_id in request.prompt
     assert "class Service" in request.prompt and "不可信证据" in request.prompt
-    supplement.app.knowledge.artifacts.require_source_snapshot.assert_called_once_with(
-        "demo-system", baseline, supplement.app.knowledge.git_repository)
+    supplement.app.knowledge.artifacts.require_source_snapshot.assert_not_called()
+    supplement.app.knowledge.git_repository.validate_materialized_revision.assert_called_once_with(
+        baseline, snapshot, supplement.app.knowledge.artifacts.source_snapshot_root)
     assert state.workflow.gaps[0].review.verdict == "REJECT"
     assert state.workflow.model_runs[1].elapsed_seconds == 2.5
     assert response["workflow"]["gaps"][0]["decision"]["action"] == "UNRESOLVED"
@@ -347,7 +354,9 @@ def test_review_recovery_attaches_original_identity_without_new_run(tmp_path: Pa
     supplement.advance("coverage-unit")
     proposal = CoverageDisposition(gap_id="gap-one", action="IGNORE", reason="待核实框架代码")
     state.workflow.gaps[0].proposal = proposal
-    original = CoverageModelRun(role="REVIEW", run_id="agent-" + "d" * 16, status="RUNNING", provider="codex", model="original-model")
+    original = CoverageModelRun(role="REVIEW", run_id="agent-" + "d" * 16, status="RUNNING", provider="codex", model="original-model",
+        handoff_id=state.child.handoff_id, handoff_revision=state.child.revision, gap_ids=["gap-one"])
+    supplement.app.agent_runner.read_state.return_value = {"status": "completed"}
     state.workflow.model_runs.append(original)
     if available:
         output = tmp_path / "original-review.json"

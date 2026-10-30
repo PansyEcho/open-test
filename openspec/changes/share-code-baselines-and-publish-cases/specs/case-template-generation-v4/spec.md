@@ -48,6 +48,19 @@ The system SHALL reject whole-Generation continuation of terminal shared-baselin
 - **AND** a target rescanned at the same commit uses only its newly selected target scan, without inheriting the old target scan
 - **AND** later publication changes do not mutate an already active task's frozen references
 
+#### Scenario: Same-system dependency stays on its frozen scan
+
+- **WHEN** a Case freezes a dependency contract from an earlier same-commit scan of the target system and later selects that dependency while the target remains on the current scan
+- **THEN** selection uses the capability from the frozen contract's scan and keeps the current target scan in the handoff
+- **AND** draft scope merging preserves every same-system scan identity and rejects only different code baselines, never pairing a frozen contract with a capability from another scan
+
+#### Scenario: Downstream resolution and shared-function checks keep scan identity
+
+- **WHEN** a Case has multiple same-system scans and resolves a downstream dependency or validates an embedded shared function
+- **THEN** resolution updates only the caller's exact scan and leaves other selected scans unchanged
+- **AND** shared-function validation compares every called operation's frozen scan, independent of scope list order
+- **AND** a frozen dynamic dependency recovers its registered definition from its contract scan when the original source scope is gone
+
 #### Scenario: Data preparation and cleanup use distinct dependency identities
 
 - **WHEN** a selected Case calls a database Runtime function such as an operation's `:query` or `:data` alias, or references an interface only through cleanup
@@ -187,6 +200,27 @@ The system SHALL expose a task-scoped read-only dependency type reader that loca
 - **THEN** the compiler still accepts the source-proven value
 - **AND** typed evidence cannot invalidate existing valid source evidence
 
+### Requirement: 成功场景必须用真实数据建立并验证前置条件
+
+系统 SHALL 仅在运行期查询结果参与后续 predicate、目标参数、输出、match_source 或验证步骤时，把它作为场景证据。只执行但未使用的查询 MAY 作为诊断记录，SHALL NOT 被表述为前置条件已被证明。成功/业务处理场景 SHALL 至少包含对实际目标响应身份、状态或关联关系的必经断言；目标预期值 SHALL 来自固定源码/契约，通用编译器/执行器 SHALL NOT 写死业务状态值。
+
+#### Scenario: 查询结果被间接使用
+- **WHEN** 运行期查询结果经过转换、传给后续调用、用于 match_source 或验证步骤
+- **THEN** 校验识别该间接使用，不把它误报为死查询
+
+#### Scenario: 查询执行但未被使用
+- **WHEN** 只读查询结果未被任何后续 predicate、参数、输出、match_source 或验证步骤消费
+- **THEN** 仅记录为诊断证据缺口，不把它当作目标业务前置条件已成立的证明
+
+#### Scenario: 成功响应被断言
+- **WHEN** 生成的场景期望成功或业务处理分支
+- **THEN** 场景包含对实际目标响应身份、状态或关联关系的必需断言
+- **AND** 预期值来自固定源码/契约；通用编译器/执行器不硬编码业务状态
+
+#### Scenario: 数据不足
+- **WHEN** 合理查询和现有数据准备能力无法建立前置条件
+- **THEN** 把受影响场景记录为数据缺口，不伪造成功，也不用无关的幂等或失败场景替代
+
 #### Scenario: Actual classpath wins over POM fallback
 - **WHEN** the exact classpath and a local POM fallback contain different versions of the requested type
 - **THEN** the reader uses the actual classpath version
@@ -210,3 +244,14 @@ The system SHALL derive a successful or idempotent scenario from a real existing
 - **WHEN** no real existing business record in a completed state can be associated with the provider object
 - **THEN** the system may generate verifiable failure or pending-confirmation scenarios
 - **AND** it SHALL report the missing association as a scenario-level data gap rather than claiming a success scenario was covered
+
+### Requirement: 逐项执行证据与真实生命周期
+系统 SHALL 在每条 Variant 完成后先持久化其结果与实际开始结束时间，再推进完成计数；使用既有行锁、执行所有权和最新记录合并，终态不可被迟到回调覆盖，异常退出保留已完成证据。生成时间 SHALL 来自 Task 的实际工作启动与首次真实终态，不用产物创建时间冒充启动。
+
+#### Scenario: 中途失败
+- **WHEN** 10条执行中前3条已完成而后续异常
+- **THEN** 页面立即可见前3条结果，最终失败保留这些证据，其余明确未执行或失败
+
+#### Scenario: 等待与恢复
+- **WHEN** 任务排队、等待原生 Agent 或恢复执行
+- **THEN** 排队不伪造启动，等待不展示结束，恢复不重置首次启动，首次终态时间保持稳定

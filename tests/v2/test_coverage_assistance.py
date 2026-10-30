@@ -27,18 +27,19 @@ from test_case_template_v4 import _create_order_generation
 
 
 def case_service(tmp_path: Path) -> CaseTemplateV4Service:
-    """组装真实 Execution store，替换业务执行和源码目录以隔离测量编排测试。"""
+    """在tmp_path组装真实Execution存储并返回隔离服务；目录及业务调用替换为受控夹具。"""
 
     generation = _create_order_generation()
     generations, handoffs = Mock(), Mock()
     generations.get.return_value = generation
     handoffs.get.return_value = SimpleNamespace(system_id=generation.system_id,
-        generation_id=generation.generation_id, source_scopes=[], model_copy=Mock())
+        generation_id=generation.generation_id, source_scopes=[], task_id="", model_copy=Mock())
     runtime = CaseTemplateV4RuntimeServices(Mock(), Mock(), Mock(), Mock(), CaseGenerationExecutionStoreV4(tmp_path))
     service = CaseTemplateV4Service(Mock(), Mock(), generations, handoffs, runtime)
     # 测试关心提交/执行边界，固定目录解析不访问目标项目或业务环境。
     service._runtime_registry_for_execution = Mock(return_value=SimpleNamespace())
-    service._generation_scope_selection = Mock(return_value=SimpleNamespace())
+    # 正式handoff已有可选task_id；本组没有生成任务，明确使用空值而非不完整的空对象。
+    service._generation_scope_selection = Mock(return_value=handoffs.get.return_value)
     service._runtime_capabilities = Mock(return_value=[])
     service.coverage_assistance = Mock()
     return service
@@ -105,7 +106,7 @@ def test_prepare_defers_submit_until_explicit_dispatch(tmp_path: Path) -> None:
 
 @pytest.mark.parametrize("broken", [False, True])
 def test_finish_always_syncs_coverage_and_preserves_case_outcome(tmp_path: Path, broken: bool) -> None:
-    """真实执行出口在成功或业务异常时都进入覆盖 finally，业务失败仍向上抛出。"""
+    """在tmp_path验证覆盖finally与真实时间；broken控制业务抛错，成功/失败均保留执行身份。"""
 
     service = case_service(tmp_path)
     generation = service.generations.get.return_value
@@ -119,16 +120,22 @@ def test_finish_always_syncs_coverage_and_preserves_case_outcome(tmp_path: Path,
                 service._finish_execution(prepared.running, generation, prepared.runtime_registry, "trace")
         else:
             service._finish_execution(prepared.running, generation, prepared.runtime_registry, "trace")
-    service.coverage_assistance.execution_starting.assert_called_once_with(prepared.running)
-    service.coverage_assistance.execution_finished.assert_called_once()
+    service.coverage_assistance.execution_starting.assert_called_once()
+    started = service.coverage_assistance.execution_starting.call_args.args[0]
+    # 登记时尚未开始；worker真实启动只推进时间，不能改变冻结选择和执行归属。
+    assert prepared.running.started_at is None and started.started_at is not None
+    assert started.model_dump(exclude={"started_at", "updated_at"}) == prepared.running.model_dump(exclude={"started_at", "updated_at"})
+    service.coverage_assistance.execution_finished.assert_called_once_with(
+        started, service.coverage_assistance.execution_starting.return_value)
     stored = service.executions.get(generation.system_id, prepared.running.execution_id)
     assert stored.status != "RUNNING"
+    assert stored.started_at == started.started_at and stored.ended_at >= started.started_at
     if broken:
         assert stored.status == "FAILED"
 
 
 def test_setup_failure_still_finishes_dedicated_task(tmp_path: Path) -> None:
-    """运行目录构建异常尚未 reset，也必须经过同一 finally 终结专属任务。"""
+    """在tmp_path验证目录构建异常仍执行finally；保留真实启动时间且不得提前reset。"""
 
     service = case_service(tmp_path)
     generation = service.generations.get.return_value
@@ -138,7 +145,14 @@ def test_setup_failure_still_finishes_dedicated_task(tmp_path: Path) -> None:
     with pytest.raises(ValueError, match="catalog failed"):
         service._finish_execution(prepared.running, generation, prepared.runtime_registry, "trace")
     service.coverage_assistance.execution_starting.assert_not_called()
-    service.coverage_assistance.execution_finished.assert_called_once_with(prepared.running, None)
+    service.coverage_assistance.execution_finished.assert_called_once()
+    started, measurement = service.coverage_assistance.execution_finished.call_args.args
+    # 构建目录属于已实际开始的worker；失败收尾保留起点，但未取得任何覆盖测量窗口。
+    assert measurement is None and prepared.running.started_at is None and started.started_at is not None
+    assert started.model_dump(exclude={"started_at", "updated_at"}) == prepared.running.model_dump(exclude={"started_at", "updated_at"})
+    stored = service.executions.get(generation.system_id, prepared.running.execution_id)
+    assert stored.status == "FAILED" and stored.started_at == started.started_at
+    assert stored.ended_at >= started.started_at
 
 
 def test_closed_pool_settles_before_finish_entry(tmp_path: Path) -> None:
@@ -245,7 +259,9 @@ def test_report_write_failure_preserves_business_result_and_never_dispatches_ana
     service.execution_finished(execution, active)
     # dump 已完成仍需释放锁；报告未保存时不推进有效分析阶段或派发后续步骤。
     active.lease.release.assert_called_once()
-    service.records.save.assert_not_called()
+    # 允许记录真实 dump 耗时，但原始包保存失败不能把测量写成 VALID 或推进分析。
+    assert all(call.args[0].stage == "BASELINE_EXECUTING" for call in service.records.save.call_args_list)
+    assert service.records.get.return_value.baseline.phase_timings[-1].phase == "dump"
     service.tasks._executor.submit.assert_not_called()
     failed = service.finish.call_args.args[0]
     assert failed.baseline.status == "INVALID"
